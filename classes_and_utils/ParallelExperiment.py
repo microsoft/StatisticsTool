@@ -90,7 +90,7 @@ class ParallelExperiment:
         Accepts a bb_id and display its frame by calling self.frame_visualization()
 
     """
-    def __init__(self, statistic_funcs, files_dir, save_stats_dir, segmentation_funcs=None):
+    def __init__(self, statistic_funcs, files_dir, save_stats_dir, image_width, image_height, segmentation_funcs=None):
         self.files_dir = files_dir
         self.statistic_funcs = statistic_funcs
         self.save_stats_dir = save_stats_dir
@@ -98,6 +98,8 @@ class ParallelExperiment:
         self.masks = None
         self.ID_storage = {}
         self.segmented_ID = {}
+        self.image_width = image_width
+        self.image_height = image_height
 
 
 
@@ -413,14 +415,14 @@ class ParallelExperiment:
         :param image: the frame of the selected bounding box
         :return: encoded image for html use and a matplotlib figure, of the relevant frame with an overlay of its bounding boxes
         """
-        # size of the image that is shown to the user
-        image_size = 500
         # if an image is availble we resize it to a fixed size and save its dimensions for bounding box scaling
+        print(self.image_width, self.image_height)
         if image is not None:
             shape = np.shape(image)
             orig_image_width, orig_image_height = shape[0], shape[1]
             #result = cv2.resize(image, (image_size, image_size))
         # when the image is not available we use a black background to display the bounding boxes
+        #TODO take care of that possibility
         else:
             orig_image_width, orig_image_height = image_size, image_size
             result = np.zeros((image_size, image_size, 3), dtype=np.uint8)
@@ -560,7 +562,7 @@ class ParallelExperiment:
 
 
 
-def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentation_funcs, threshold):
+def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentation_funcs, threshold, image_width, image_height):
     """
 
     :param save_stats_dir: same as in ParallelExperiment
@@ -568,9 +570,11 @@ def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentati
     :param files_dir: same as in ParallelExperiment
     :param segmentation_funcs: same as in ParallelExperiment
     :param threshold: the threshold to use (above the threshold a prediction is TP)
+    :param image_width: the image width size to reshape to
+    :param image_height: the image height size to reshapw to
     :return:
     """
-    exp = ParallelExperiment(save_stats_dir=save_stats_dir, statistic_funcs=statistic_funcs, files_dir=files_dir, segmentation_funcs=segmentation_funcs)
+    exp = ParallelExperiment(save_stats_dir=save_stats_dir, statistic_funcs=statistic_funcs, files_dir=files_dir, segmentation_funcs=segmentation_funcs, image_width=image_width, image_height=image_height)
     exp.combine_from_text(False)
     exp.get_segmentation_masks(float(threshold))
     return exp

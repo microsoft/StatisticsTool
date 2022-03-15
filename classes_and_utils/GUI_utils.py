@@ -135,6 +135,8 @@ def unpack_new_config(request):
     """
     new_config_name = request.form.get('name')
     threshold = request.form.get('Threshold')
+    image_width = request.form.get('image_width')
+    image_height = request.form.get('image_height')
     reading_func_name = request.form.get('Reading_func')
     overlap_func_name = request.form.get('overlap_func')
     evaluation_func_name = request.form.get("evaluation_func")
@@ -142,7 +144,7 @@ def unpack_new_config(request):
     partitioning_func_name = request.form.get('partitioning_func')
     new_config = [
         {"File Reading Function": reading_func_name, "Overlap Function": overlap_func_name, "Threshold": threshold,
-         "Evaluation Function": evaluation_func_name,
+         "Evaluation Function": evaluation_func_name, "Image Width": image_width, "Image Height": image_height,
          "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name}]
     return new_config, new_config_name
 
@@ -183,6 +185,8 @@ def unpack_calc_config_dict(config_dict):
     overlap_func_name = config_dict["Overlap Function"]
     evaluation_func_name = config_dict["Evaluation Function"]
     threshold = config_dict["Threshold"]
+    image_width = config_dict["Image Width"]
+    image_height = config_dict["Image Height"]
     statistics_func_name = config_dict["Statistics Functions"]
     partitioning_func_name = config_dict["Partitioning Functions"]
 
@@ -192,7 +196,7 @@ def unpack_calc_config_dict(config_dict):
     evaluation_func = getattr(EvalutationFunctions, evaluation_func_name)
     statistics_func = getattr(StatisticsFunctions, statistics_func_name)
     partitioning_func = getattr(PartitioningFunctions, partitioning_func_name)
-    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, threshold
+    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, threshold, image_width, image_height
 
 
 def get_path_lists(prd_dir, GT_dir, images_dir):
@@ -234,7 +238,7 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, threshold = unpack_calc_config_dict(
+    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, threshold, image_width, image_height = unpack_calc_config_dict(
         config_dict)
     # extract matching lists of absolute paths for the predictions, labels and images
     GT_list_abs, prd_list_abs, images_folders_list, images_folders_list_abs = get_path_lists(prd_dir, GT_dir,
@@ -248,7 +252,7 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
 
     exp = combine_video_results(save_stats_dir=save_stats_dir, statistic_funcs=statistics_funcs,
                                 files_dir=single_video_hash_saving_dir, segmentation_funcs=partitioning_func,
-                                threshold=threshold)
+                                threshold=threshold, image_width=image_width, image_height=image_height)
     save_object(exp, os.path.join(save_stats_dir, 'report_' + config_file_name.replace('.json', '') + '.pkl'))
     return exp
 
