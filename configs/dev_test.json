@@ -4,7 +4,7 @@
         "Overlap Function": "Dice",
         "Threshold": "0.85",
         "Image Width": "500",
-        "Image Height": "600",
+        "Image Height": "500",
         "Evaluation Function": "Zvi_evaluation_func",
         "Statistics Functions": "precision_recall",
         "Partitioning Functions": "size_horizontal_vertical"

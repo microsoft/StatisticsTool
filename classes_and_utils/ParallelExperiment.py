@@ -98,8 +98,8 @@ class ParallelExperiment:
         self.masks = None
         self.ID_storage = {}
         self.segmented_ID = {}
-        self.image_width = image_width
-        self.image_height = image_height
+        self.image_width = int(image_width)
+        self.image_height = int(image_height)
 
 
 
@@ -416,16 +416,15 @@ class ParallelExperiment:
         :return: encoded image for html use and a matplotlib figure, of the relevant frame with an overlay of its bounding boxes
         """
         # if an image is availble we resize it to a fixed size and save its dimensions for bounding box scaling
-        print(self.image_width, self.image_height)
         if image is not None:
             shape = np.shape(image)
-            orig_image_width, orig_image_height = shape[0], shape[1]
-            #result = cv2.resize(image, (image_size, image_size))
+            orig_image_height, orig_image_width = shape[0], shape[1]
+            result = cv2.resize(image, (self.image_width, self.image_height))
         # when the image is not available we use a black background to display the bounding boxes
         #TODO take care of that possibility
         else:
-            orig_image_width, orig_image_height = image_size, image_size
-            result = np.zeros((image_size, image_size, 3), dtype=np.uint8)
+            orig_image_width, orig_image_height = self.image_width, self.image_height
+            result = np.zeros((self.image_width, self.image_height, 3), dtype=np.uint8)
         # iterating over the frame's GT and prediction bounding boxes
         for i, bb_list in enumerate([frame_labels, frame_prds]):
             for temp_bb in bb_list:
@@ -444,10 +443,18 @@ class ParallelExperiment:
                     bb_width = w
                     bb_height = h
 
+                # Match the BB to the image after the resize
+                width_ratio = self.image_width / orig_image_width
+                height_ratio = self.image_height / orig_image_height
+                bb_x_top_left = bb_x_coordinate * width_ratio
+                bb_y_top_left = bb_y_coordinate * height_ratio
+                bb_x_bottom_right = (bb_x_coordinate + bb_width) * width_ratio
+                bb_y_bottom_right = (bb_y_coordinate + bb_height) * height_ratio
+
                 # represents the top left corner of rectangle
-                start_point = (int(bb_x_coordinate), int(bb_y_coordinate))
+                start_point = (int(bb_x_top_left), int(bb_y_top_left))
                 # represents the bottom right corner of rectangle
-                end_point = (int(bb_x_coordinate) + int(bb_width)), (int(bb_y_coordinate) + int(bb_height))
+                end_point = (int(bb_x_bottom_right), int(bb_y_bottom_right))
                 # green for labels, blue for predictions
                 color = (0, 255, 0) if i == 0 else (0, 0, 255)
                 # Line thickness of 1 px
@@ -456,10 +463,10 @@ class ParallelExperiment:
                 if np.array_equal(temp_bb, selected_bb, equal_nan=True) or np.array_equal(temp_bb, matched, equal_nan=True):
                     thickness = 3
                 # Draw a rectangle that represents the bounding box
-                cv2.rectangle(image, start_point, end_point, color, thickness)
+                cv2.rectangle(result, start_point, end_point, color, thickness)
 
         fig = plt.figure()
-        plt.imshow(image)
+        plt.imshow(result)
         red_patch = mpatches.Patch(color=(0, 0, 1), label='Prediction')
         green_patch = mpatches.Patch(color=(0, 1, 0), label='GT')
         plt.legend(ncol=2, loc='lower left', fontsize='small', handles=[red_patch, green_patch], bbox_to_anchor=(0, 1))
