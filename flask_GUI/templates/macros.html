@@ -1,0 +1,43 @@
+{% macro stat_print(stats, row_name, column_name, sub_row_name, name) %}
+
+
+{% if row_name: %}
+
+    {% if column_name: %}
+
+        {% if sub_row_name: %}
+            {% set mytup = (row_name, column_name, sub_row_name, name) %}
+
+        {% else: %}
+        {% set mytup = (row_name, column_name, name) %}
+        {% endif %}
+
+    {% else: %}
+    {% set mytup = (row_name, name) %}
+    {% endif %}
+
+{% else: %}
+{% set mytup = (name,) %}
+{% endif %}
+
+
+{% if name in ['TP', 'FP', 'FN']: %}
+
+{% if mytup|length > 1: %}
+<a target="iframe2" href='/update_list?tup={{mytup}}'> {{name}} = {{stats[mytup]}} </a> <br>
+{% else:%}
+<a target="iframe2" href='/update_list?tup={{mytup}}'> {{name}} = {{stats[name]}} </a> <br>
+{% endif %}
+
+
+{% else: %}
+
+{% if mytup|length > 1: %}
+{{name}} = {{stats[mytup]}} <br>
+{% else:%}
+{{name}} = {{stats[name]}} <br>
+{% endif %}
+
+{% endif %}
+
+{% endmacro %}

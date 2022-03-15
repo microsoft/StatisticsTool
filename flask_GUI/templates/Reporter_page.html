@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>Reporter</title>
+
+
+
+    <style>
+        #table1 {
+          font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+          border-collapse: collapse;
+          width: 100%;
+        }
+
+        #table1 td, #table1 th {
+          border: 1px solid #ddd;
+          padding: 8px;
+        }
+
+        #table1 tr:nth-child(even){background-color: #f2f2f2;}
+
+        #table1 tr:hover {background-color: #ddd;}
+
+        #table1 th {
+          padding-top: 12px;
+          padding-bottom: 12px;
+          text-align: left;
+          background-color: #4CAF50;
+          color: white;
+        }
+    </style>
+</head>
+
+<script>
+function loadDoc(url, target_div, cFunction) {
+  var xhttp;
+  xhttp=new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      cFunction(this, target_div);
+    }
+  };
+  xhttp.open("GET", url, true);
+  xhttp.send();
+}
+
+function myFunction(xhttp, target_div) {
+  document.getElementById(target_div).innerHTML = xhttp.responseText;
+}
+
+</script>
+<style>
+button {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  margin: 4px 2px;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+button:hover {background-color: #3e8e41}
+
+button:active {
+  background-color: #3e8e41;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+
+input[type=submit]{
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  margin: 4px 2px;
+  cursor: pointer;
+  font-size: 20px;
+}
+input[type=submit]:hover {background-color: #3e8e41}
+input[type=submit]:active {
+  background-color: #3e8e41;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+
+.header{
+  padding: 5px;
+  text-align: center;
+  color: #3e8e41;
+  font-size: 30px;
+}
+
+.custom-select select {
+  display: none; /*hide original SELECT element: */
+}
+
+.select-selected {
+  background-color: #4CAF50;
+}
+
+/* Style the arrow inside the select element: */
+.select-selected:after {
+  position: absolute;
+  content: "";
+  top: 14px;
+  right: 10px;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-color: #fff transparent transparent transparent;
+}
+
+
+</style>
+
+
+<body>
+
+    <div class="container">
+
+    <div class="header" style="text-align: center;position:relative;">
+        <div class="row">
+            <form action="/" style="position:relative; top: 0px; left: -330px;">
+                <input type="submit" value="Back"/>
+            </form>
+            <h1 style="position:relative; top: 0px; left: 400px;">Statistics Tool </h1>
+        </div>
+    </div>
+
+
+<div class="row">
+
+            <form action="/stats"  method="POST" target="my_iframe" style="position:relative; top: 0px; left: -200px;">
+                <label style="font-size:20px"> Choose Partitions: </label><br>
+                    {%for i in range(num_part): %}
+                                  <label for="partition"{{i}}> # {{i+1}} </label>
+
+                                  <select style ="background-color:#4CAF50;" name="partition{{i}}" id="partition"{{i}} >
+                                          {% for option in (opt):%}
+                                        <option value="{{option}}">{{option}}</option>
+                                          {%endfor%}
+                                  </select>
+                    {%endfor%}
+
+                <button type="submit" > Show Statistics </button>
+
+                    </form>
+
+
+</div>
+<div class="row" style="position:relative;">
+
+        <div id="place_for_table" class="col-md-4" style="text-align: left">
+        <iframe id="iframe" name="my_iframe" frameborder="0"  style="text-align: left; position:relative; top: 0px; left: -205px;" height="900" width="950"  ></iframe>
+        </div>
+
+
+
+            <iframe  name="iframe2" frameborder="0" style="position:relative; top: -100px; left: 420px;" height="300" width="750"   ></iframe>
+
+
+
+            <iframe  name="iframe3" frameborder=0" style="position:relative; top: -700px; left: 800px;" height="620" width="750"   ></iframe>
+
+
+
+</div>
+
+
+
+    </div>
+
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>
+

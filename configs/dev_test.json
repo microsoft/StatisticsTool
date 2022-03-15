@@ -1,0 +1,10 @@
+[
+    {
+        "File Reading Function": "statistics_tool_reader_ben",
+        "Overlap Function": "Dice",
+        "Threshold": "0.85",
+        "Evaluation Function": "Zvi_evaluation_func",
+        "Statistics Functions": "precision_recall",
+        "Partitioning Functions": "size_horizontal_vertical"
+    }
+]

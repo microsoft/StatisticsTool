@@ -1,0 +1,128 @@
+<script>
+  function myFunction1() {
+  var form = document.getElementById('myform');
+  var x = document.getElementById("myDIV");
+  form.onsubmit = function() {
+  form.target = 'message_iframe';
+  form.action = 'calculating_page';
+    if (x.style.display === "none") {
+    x.style.display = "block";
+  }
+  };
+}
+
+</script>
+<style>
+input[type=submit]{
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+  padding: 23px 32px;
+  background-color: white;
+  color: black;
+  border: 2px solid #4CAF50;
+}
+
+input[type=submit]:hover {
+  background-color: #4CAF50;
+  color: white;
+  }
+
+</style>
+<div class="row">
+        <div style="">
+                        <form action="/" style="position:absolute; top: -5px; left: 0px;">
+                        <input type="submit" value="Back"/>
+                        </form>
+        </div>
+
+        <div class="header" style="text-align: center; font-family: Arial, Helvetica, sans-serif;">
+            <div class="col-12">
+                  <h1 style="color: #3e8e41;"> <B>Statistics-Tool</B> </h1>
+                <hr>
+            </div>
+        </div>
+<br>
+     <div class="header" style="text-align: left; color: #3e8e41;">
+        <div class="col-12">
+              <h3 style="font-family: Arial, Helvetica, sans-serif;"> Run New Report </h3>
+        </div>
+     </div>
+</div>
+
+
+
+
+<div class="row">
+    <div id="first" class="col-4">
+        <form id="myform"  method="POST" style="text-align: center">
+            <table>
+            <tr>
+
+                <td>    <label style="font-family: Arial, Helvetica, sans-serif;"> Task Configuration: </label> </td>
+
+                <td>
+                    <select id="Configuration" name="Configuration" value="${item.value}" style ="background-color:#4CAF50; font-family: Arial, Helvetica, sans-serif; width:100%;max-width:100%;">
+                        {% for config in possible_configs: %}
+                        <option value="{{config}}"> {{config}} </option>
+                        {%endfor%}
+                    </select>
+                </td>
+
+                 <td><a href="/show" action="/show" target="add_config_iframe" onclick="this.href='show?codice=${item.key.codice}&Configuration='+document.getElementById('Configuration').value"> Show </a></td>
+                <td> / </td>
+                <td><a href="/add_config" action="/add_config" target="add_config_iframe"> Add </a></td>
+
+            </tr>
+
+            <tr>
+                 <td><label for="1" style="font-family: Arial, Helvetica, sans-serif;">Predictions Directory:</label></td>
+                 <td> <input type="text" SIZE="30" id="1" name="Predictions Directory" required> </td>
+            </tr>
+
+            <tr>
+                <td><label for="2" style="font-family: Arial, Helvetica, sans-serif;">Ground Truth Directory:</label></td>
+                <td><input type="text" SIZE="30" id="2" name="Ground Truth Directory" required></td>
+            </tr>
+            <tr>
+                <td><label for="3" style="font-family: Arial, Helvetica, sans-serif;">Reporter Output Directory:</label></td>
+                <td><input type="text" SIZE="30" id="3" name="Reporter Output Directory" required></td>
+            </tr>
+
+            <tr>
+                <td><label for="4" style="font-family: Arial, Helvetica, sans-serif;">Images Directory:</label></td>
+                <td><input type="text" SIZE="30" id="4" name="Images Directory" required></td>
+            </tr>
+
+            <tr>
+                <td><input type="submit" name="calculate" value="Run" onclick="myFunction1()"></td>
+            </tr>
+
+            </table>
+        </form>
+        <br>
+        <br>
+    </div>
+
+    <div id="second" name="second" class="col-4">
+     <iframe name="add_config_iframe" id="add_config_iframe" frameborder="0" style=" position:absolute; top: 100px; left: 700px;" height="500" width="410" > </iframe>
+    </div>
+
+</div>
+
+
+<div  id="myDIV" style="display:none;">
+    <iframe name="message_iframe" frameborder="0" srcdoc="<p>Calculating...</p>" style=" position:relative; top: -120px; left: 170px;" height="500" width="500" > </iframe>
+</div>
+
+
+
+<div>
+    <iframe name="help_iframe" frameborder="0" style=" position:relative; top: -315px; left: 1170px;" height="700" width="700" > </iframe>
+</div>

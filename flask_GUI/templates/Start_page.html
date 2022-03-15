@@ -1,0 +1,113 @@
+<style>
+input[type=button] {
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+input[type=button] {
+  padding: 25px 32px;
+  background-color: white;
+  color: black;
+  border: 2px solid #4CAF50;
+}
+
+
+input[type=button]:hover {
+  background-color: #4CAF50;
+  color: white;
+}
+
+[type="file"] {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute !important;
+  white-space: nowrap;
+  width: 1px;
+}
+[type="file"] + label {
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+  padding: 25px 32px;
+  background-color: white;
+  color: black;
+  border: 2px solid #4CAF50;
+}
+
+[type="file"]:focus + label,
+[type="file"] + label:hover {
+  background-color: #4CAF50;
+  color: white;
+}
+
+</style>
+
+<div class="row">
+
+        <div class="header" style="text-align: center; color: green;">
+        <div class="col-12">
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+
+              <h1 style="font-family: Arial, Helvetica, sans-serif;">Welcome to Statistics-Tool </h1>
+        </div>
+
+                    <br>
+                    <br>
+
+
+</div>
+
+<div class="row">
+
+    <div class="col-md-4" style="text-align: center;">
+        <div>
+        <input type="button" onclick="location.href='/create_new_report';" value="New Report" />
+        </div>
+    </div>
+
+
+
+    <div class="col-md-4" style="text-align: center;">
+        <div>
+          <form id="form1" action="/Reporter" method="post" enctype="multipart/form-data" >
+          <input type="file" name="myFile" id="myFile" onchange="form.submit()" accept=".pkl">
+          <label id="myFile2" for="myFile" style="font-family: Arial, Helvetica, sans-serif;">Load Report</label>
+          </form>
+
+
+        </div>
+    </div>
+
+
+
+
+
+
+</div>
+
+
+
+
