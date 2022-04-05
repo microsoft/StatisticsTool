@@ -41,6 +41,8 @@ def calculating():
     global exp
     # calculate the intermediate results for all the videos then combine them
     exp = manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_saving_dir, save_stats_dir, images_dir, config_dict)
+    if exp == 'TypeError':
+        return render_template('Bad_format.html')
     return render_template('message.html')
 
 @app.route('/add_config', methods=['GET', 'POST'])

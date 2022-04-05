@@ -185,8 +185,14 @@ def unpack_calc_config_dict(config_dict):
     overlap_func_name = config_dict["Overlap Function"]
     evaluation_func_name = config_dict["Evaluation Function"]
     threshold = config_dict["Threshold"]
-    image_width = config_dict["Image Width"]
-    image_height = config_dict["Image Height"]
+    if "Image Width" in config_dict.keys():
+        image_width = config_dict["Image Width"]
+        image_height = config_dict["Image Height"]
+    # Case Image width and height weren't supplied in the JSON
+    else:
+        # Set default size 500x500
+        image_width = 500
+        image_height = 500
     statistics_func_name = config_dict["Statistics Functions"]
     partitioning_func_name = config_dict["Partitioning Functions"]
 
@@ -243,16 +249,21 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
     # extract matching lists of absolute paths for the predictions, labels and images
     GT_list_abs, prd_list_abs, images_folders_list, images_folders_list_abs = get_path_lists(prd_dir, GT_dir,
                                                                                              images_dir)
-    # extract all the intermediate results from the raw prediction-label files
-    run_multiple_Videos(GT_path_list=GT_list_abs, pred_path_list=prd_list_abs, images_folders_list=images_folders_list,
-                        image_folder_fullpath_list=images_folders_list_abs, detection_metric=overlap_func,
-                        readerFunction=reading_func, save_stats_dir=single_video_hash_saving_dir,
-                        evaluation_func=evaluation_func)
-    # combine the intermediate results for further statistics and example extraction
 
+    try:
+        # extract all the intermediate results from the raw prediction-label files
+        run_multiple_Videos(GT_path_list=GT_list_abs, pred_path_list=prd_list_abs, images_folders_list=images_folders_list,
+                            image_folder_fullpath_list=images_folders_list_abs, detection_metric=overlap_func,
+                            readerFunction=reading_func, save_stats_dir=single_video_hash_saving_dir,
+                            evaluation_func=evaluation_func)
+    except TypeError:
+        return 'TypeError'
+
+    # combine the intermediate results for further statistics and example extraction
     exp = combine_video_results(save_stats_dir=save_stats_dir, statistic_funcs=statistics_funcs,
                                 files_dir=single_video_hash_saving_dir, segmentation_funcs=partitioning_func,
                                 threshold=threshold, image_width=image_width, image_height=image_height)
+
     save_object(exp, os.path.join(save_stats_dir, 'report_' + config_file_name.replace('.json', '') + '.pkl'))
     return exp
 
