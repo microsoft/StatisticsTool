@@ -33,7 +33,7 @@ def statistic_tool_reader_zvi(path):
     # changing the name of the current frame number column name to the statistics tool accepted name - 'frame_id'
     old_frame_column_name = "frame_number"
     new_frame_column_name = 'frame_id'
-    df.rename(columns={old_frame_column_name: new_frame_column_name}, inplace=True)
+    return df.rename(columns={old_frame_column_name: new_frame_column_name}, inplace=True)
 
 def statistics_tool_reader_ben(path):
     # the user should define a function that reads his input data as pandas dataframe for example from csv to pandas:
