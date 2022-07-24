@@ -517,7 +517,7 @@ class ParallelExperiment:
         # extracting the values of the asked for example bounding box as a list
         selected_bb = selected_bb_d['x'] + selected_bb_d['y'] + selected_bb_d['width'] + selected_bb_d['height'] + selected_bb_d['Index'] + selected_bb_d['matching']
         relevant_frame = selected_bb_d['frame_id'][0]
-        image_folder = selected_bb_d['images_folder'][0]
+        image_folder = os.path.dirname(selected_bb_d['images_folder'][0])
         # filtering out images that don't have the frame number in them before a more exact filtering
         optional_images_names = [name for name in os.listdir(image_folder) if str(relevant_frame) in name]
         frame_image = None
@@ -526,8 +526,8 @@ class ParallelExperiment:
             dots = [i.start() for i in re.finditer("\.", opt)]
             lines = [i.start() for i in re.finditer("_", opt)]
             last_dot_idx = dots[-1]
-            last_line_idx = lines[-1]
-            opt_frame_number = int(opt[last_line_idx+1: last_dot_idx])
+            last_line_idx = lines[-1]+1 if len(lines)>0 else 0
+            opt_frame_number = int(opt[last_line_idx: last_dot_idx])
             if opt_frame_number == int(relevant_frame):
                 frame_image = cv2.imread(os.path.join(image_folder, opt))
                 if frame_image is not None:

@@ -47,8 +47,10 @@ def serial_num(file_name):
         dot_occurrences) == 0, "file name: " + file_name + " file names are not allowed to have dots in them please change that"
     # find all indices of under line occurrences in the file name
     line_occurrences = [i.start() for i in re.finditer("_", file_name)]
-    assert len(line_occurrences) > 0, "file name: " + file_name + " does not include a serial of the form _xxxx"
+    #assert len(line_occurrences) > 0, "file name: " + file_name + " does not include a serial of the form _xxxx"
     # the serial number should be after the last underline
+    if len(line_occurrences) == 0:
+        return int(file_name)
     last_line_occ = line_occurrences[-1]
     return int(file_name[last_line_occ + 1:])
 
