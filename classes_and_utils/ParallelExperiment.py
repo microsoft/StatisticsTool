@@ -1,6 +1,8 @@
-import pandas as pd, os, numpy as np, cv2, base64, matplotlib, re
+import pathlib
+import pandas as pd, os, numpy as np, base64, matplotlib, re
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import cv2
 import matplotlib.patches as mpatches
 from io import BytesIO
 from classes_and_utils.utils import loading_json
@@ -482,6 +484,32 @@ class ParallelExperiment:
         else:
             self.label_or_prd = 'label'
 
+    def read_image(self, frame_id, images_folder):
+        frame = None
+        if pathlib.Path(images_folder).suffix == ".mp4":
+            vid = cv2.VideoCapture(images_folder)
+            vid.set(cv2.CAP_PROP_POS_FRAMES, int(frame_id))
+            _, frame = vid.read()
+        else:
+            # filtering out images that don't have the frame number in them before a more exact filtering
+            optional_images_names = [name for name in os.listdir(images_folder) if str(frame_id) in name]
+            
+            # finding the exact frame image by using the correct images names form: blabla_framenumber.bla
+            for opt in optional_images_names:
+                dots = [i.start() for i in re.finditer("\.", opt)]
+                lines = [i.start() for i in re.finditer("_", opt)]
+                last_dot_idx = dots[-1]
+                last_line_idx = lines[-1]+1 if len(lines)>0 else 0
+                opt_frame_number = int(opt[last_line_idx: last_dot_idx])
+                if opt_frame_number == int(frame_id):
+                    frame = cv2.imread(os.path.join(images_folder, opt))
+                    break
+        
+        if frame is not None:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        return frame
+                
     def visualize(self, bb_id, from_file=False, label_file_dir=None, prd_file_dir=None):
         """
         this function searches the right bounding box and its frame and calls self.frame_visualization() to visualize it
@@ -517,23 +545,10 @@ class ParallelExperiment:
         # extracting the values of the asked for example bounding box as a list
         selected_bb = selected_bb_d['x'] + selected_bb_d['y'] + selected_bb_d['width'] + selected_bb_d['height'] + selected_bb_d['Index'] + selected_bb_d['matching']
         relevant_frame = selected_bb_d['frame_id'][0]
-        image_folder = os.path.dirname(selected_bb_d['images_folder'][0])
-        # filtering out images that don't have the frame number in them before a more exact filtering
-        optional_images_names = [name for name in os.listdir(image_folder) if str(relevant_frame) in name]
-        frame_image = None
-        # finding the exact frame image by using the correct images names form: blabla_framenumber.bla
-        for opt in optional_images_names:
-            dots = [i.start() for i in re.finditer("\.", opt)]
-            lines = [i.start() for i in re.finditer("_", opt)]
-            last_dot_idx = dots[-1]
-            last_line_idx = lines[-1]+1 if len(lines)>0 else 0
-            opt_frame_number = int(opt[last_line_idx: last_dot_idx])
-            if opt_frame_number == int(relevant_frame):
-                frame_image = cv2.imread(os.path.join(image_folder, opt))
-                if frame_image is not None:
-                    frame_image = cv2.cvtColor(frame_image, cv2.COLOR_BGR2RGB)
-                break
-
+        image_folder = selected_bb_d['images_folder'][0]
+        
+        frame_image = self.read_image(relevant_frame, image_folder)
+        
         # inserting the relevant frame's bounding boxes into two lists of labels and predictions
         for idx, data in enumerate([self.combined_label_dataframe, self.combined_prd_dataframe]):
             relevant_video = data.loc[data.index == video_name]

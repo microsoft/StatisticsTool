@@ -32,7 +32,26 @@ Returns:
 pandas dataframe, empty frame function (or None)
 """
 
+def statistic_tool_reader_presence_calssification(path):
+    with open(path,'r') as file:
+        lines = file.readlines()
+        
+        line = json.loads(lines[1])
+        
+        df = pd.DataFrame(columns=['frame_id','x','y','width','height']) 
+        for line in lines[1:]:
+            line = json.loads(line)
+            if 'type' not in line['keys'] or line['keys']['type'] != 'presence':
+                continue
+            
+            frame_id = line['keys']['frame_id']
+            if int(line['message']['HumanPresence'])>0:
+                
+                data={'frame_id':frame_id,'x':0,'y':0,'width':10,'height':10}
+                df=df.append(data,ignore_index=True)
 
+        df = df.astype({'frame_id': np.int})
+        return df, None    
 
 def statistic_tool_reader_presence_algo_logs(path):
     with open(path,'r') as file:
@@ -43,10 +62,9 @@ def statistic_tool_reader_presence_algo_logs(path):
     df = pd.DataFrame(columns=['frame_id','x','y','width','height']) 
     for line in lines[1:]:
         line = json.loads(line)
-        if line['keys']['type'] == 'system_state':
+        if 'type' not in line['keys'] or line['keys']['type'] != 'objects' or not line['message']['objects']:
             continue
-        if not line['message']['objects']:
-           continue
+
         frame_id = line['keys']['frame_id']
         for obj in line['message']['objects']:
             if obj["Source"] != "BODY_DETECTION":

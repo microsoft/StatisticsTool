@@ -1,3 +1,4 @@
+from datetime import datetime
 import sys, os
 
 sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
@@ -62,6 +63,8 @@ def folder_func(output_dir):
     :return: Boolean, indicates whether the folder was empty or not
     """
     try:
+        output_dir=os.path.join(output_dir, datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
+        os.makedirs(output_dir)
         # check that output dir is empty
         if len(os.listdir(output_dir)) > 0:
             empty = False
