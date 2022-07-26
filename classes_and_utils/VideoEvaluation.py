@@ -1,4 +1,7 @@
+from genericpath import isdir
 import numpy as np, os
+
+import pandas
 from classes_and_utils.utils import save_json
 
 
@@ -39,7 +42,9 @@ class VideoEvaluation:
            a function that will load the data in case of saving the data after calculating overlap matrix (default None) don't forget to add ".json"
        dictionary_list : list
            a list that contains each frames bounding boxes data and overlap matrix (first object is the image folder name)
-       empty_frames : set
+       empty_frames_pred : set
+            a set that contains the indices of empty GT rows (GT with no label on it), determined byempty_frames : set
+       empty_frames_GT : set
             a set that contains the indices of empty GT rows (GT with no label on it), determined by
        Methods
        -------
@@ -67,7 +72,8 @@ class VideoEvaluation:
         self.file_loading_func = file_loading_func
         self.image_folder = image_folder
         self.dictionary_list = [image_folder]
-        self.empty_frames = set()
+        self.empty_frames_GT = set()
+        self.empty_frames_pred = set()
 
     def load_data(self, path, GT):
         """
@@ -75,6 +81,10 @@ class VideoEvaluation:
         :param GT: Boolean that indicates whether this current file is a GT or prediction
         :return: dictionary of the form: {frame_number: list of bounding boxes data}
         """
+        #if path is directory take the first file
+        #TODO: implement method to choose best file, maybe by name
+        if os.path.isdir(path):
+            path = os.path.join(path,os.listdir(path)[0])
         # load file from path using a user specified function that returns a pandas dataframe representation of the data
         df, self.empty_GT_frame_func = self.readerFunction(path)
         # keep values from same frame together in a dictionary
@@ -85,9 +95,12 @@ class VideoEvaluation:
             frame_num = row['frame_id']
             # if the file belongs to GT and the user specified an "empty_GT_frame_func" then empty frames numbers will
             # be saved in a set and will not be saved in the dictionary
-            if GT and self.empty_GT_frame_func:
+            if self.empty_GT_frame_func:
                 if self.empty_GT_frame_func(row):
-                    self.empty_frames.add(frame_num)
+                    if GT:
+                        self.empty_frames_GT.add(frame_num)
+                    else:
+                        self.empty_frames_pred.add(frame_num)
                     continue
             # adding keys for later use ('state' - eg:FP/TP/FN, 'matching' -  matching predictions/labels index)
             row['state'] = None
@@ -110,18 +123,19 @@ class VideoEvaluation:
         # Iterate over all frames in the predictions data and compare predictions-labels of the same frame to yield an overlap matrix
         for frame_num in pred_frame_hash:
             # if a prediction frame has no GT (not even an empty one) we do not include it into our calculations
-            if frame_num not in label_frame_hash and frame_num not in self.empty_frames:
+            if frame_num not in label_frame_hash and frame_num not in self.empty_frames_GT:
                 continue
             prd_BB_list = pred_frame_hash[frame_num]
             # initialize a dictionary for each frame that will collect all the frame's data including an overlap matrix
             temp_d = {'frame_num': frame_num, 'predictions': [], 'labels': [], 'matrix': []}
             # if a frame exists at the predictions file but not in the labels file we save the prediction as FP
-            if frame_num in self.empty_frames:
+            if frame_num in self.empty_frames_GT and frame_num not in self.empty_frames_pred:
                 for prd_BB in prd_BB_list:
                     prd_BB['state'] = 'FP'
                     temp_d['predictions'].append(prd_BB)
                 self.dictionary_list.append(temp_d)
                 continue
+           
             # if frame number exists in both label and predictions data an overlap matrix is calculated
             label_BB_list = label_frame_hash[frame_num]
             temp_d['matrix'] = np.zeros((len(prd_BB_list), len(label_BB_list)))

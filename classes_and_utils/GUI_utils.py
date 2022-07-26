@@ -63,8 +63,6 @@ def folder_func(output_dir):
     :return: Boolean, indicates whether the folder was empty or not
     """
     try:
-        output_dir=os.path.join(output_dir, datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
-        os.makedirs(output_dir)
         # check that output dir is empty
         if len(os.listdir(output_dir)) > 0:
             empty = False
@@ -168,6 +166,10 @@ def unpack_calc_request(request, current_file_directory):
     prd_dir = request.form.get('Predictions Directory')
     GT_dir = request.form.get('Ground Truth Directory')
     output_dir = request.form.get('Reporter Output Directory')
+    
+    output_dir=os.path.join(output_dir, datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
+    os.makedirs(output_dir)
+    
     single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
     save_stats_dir = os.path.join(output_dir, "saved by user")
     images_dir = request.form.get('Images Directory')
@@ -224,9 +226,9 @@ def get_path_lists(prd_dir, GT_dir, images_dir):
     GT_list = os.listdir(GT_dir)
     images_folders_list = os.listdir(images_dir)
     # sort the lists by serial number
-    prd_list.sort(key=serial_num)
-    GT_list.sort(key=serial_num)
-    images_folders_list.sort(key=serial_num)
+    prd_list.sort()
+    GT_list.sort()
+    images_folders_list.sort()
     # get absolute path
     prd_list_abs = [os.path.join(prd_dir, name) for name in prd_list]
     GT_list_abs = [os.path.join(GT_dir, name) for name in GT_list]

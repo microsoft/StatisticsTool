@@ -58,6 +58,8 @@ def Report():
         path_to_save = os.path.join(path_to_save, 'reports')
         path_to_save = os.path.join(path_to_save, pckl_file.filename)
         # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
+        if not os.path.exists(os.path.dirname(path_to_save)):
+            os.makedirs(os.path.dirname(path_to_save))
         pckl_file.save(path_to_save)
         global exp
         exp = load_object(path_to_save)

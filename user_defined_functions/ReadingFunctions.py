@@ -37,8 +37,8 @@ def statistic_tool_reader_presence_calssification(path):
         lines = file.readlines()
         
         line = json.loads(lines[1])
+        records = []
         
-        df = pd.DataFrame(columns=['frame_id','x','y','width','height']) 
         for line in lines[1:]:
             line = json.loads(line)
             if 'type' not in line['keys'] or line['keys']['type'] != 'presence':
@@ -48,17 +48,19 @@ def statistic_tool_reader_presence_calssification(path):
             if int(line['message']['HumanPresence'])>0:
                 
                 data={'frame_id':frame_id,'x':0,'y':0,'width':10,'height':10}
-                df=df.append(data,ignore_index=True)
+            else:
+                data={'frame_id':frame_id,'x':0,'y':0,'width':0,'height':0}
+            records.append(data)
 
-        df = df.astype({'frame_id': np.int})
-        return df, None    
+    df = pd.DataFrame.from_records(records)
+    return df, lambda x: x['width']==0    
 
 def statistic_tool_reader_presence_algo_logs(path):
     with open(path,'r') as file:
         lines = file.readlines()
     
     line = json.loads(lines[1])
-    
+    records = []
     df = pd.DataFrame(columns=['frame_id','x','y','width','height']) 
     for line in lines[1:]:
         line = json.loads(line)
@@ -71,10 +73,11 @@ def statistic_tool_reader_presence_algo_logs(path):
                 continue
             bb = obj['BoundingBox']
             data={'frame_id':frame_id,'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']}
-            df=df.append(data,ignore_index=True)
+            records.append(data)
 
-    df = df.astype({'frame_id': np.int})
-    return df, None
+    df = pd.DataFrame.from_records(records)
+    
+    return df
 
 
 def statistic_tool_reader_zvi(path):

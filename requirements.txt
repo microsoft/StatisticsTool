@@ -6,3 +6,4 @@ pandas
 opencv_python
 matplotlib
 itsdangerous
+xlsxwriter
