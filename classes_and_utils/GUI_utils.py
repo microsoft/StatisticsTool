@@ -260,7 +260,7 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
     try:
         # extract all the intermediate results from the raw prediction-label files
         run_multiple_Videos(GT_path_list=GT_list_abs, pred_path_list=prd_list_abs, images_folders_list=images_folders_list,
-                            image_folder_fullpath_list=images_folders_list_abs, detection_metric=overlap_func,
+                            image_folder_fullpath_list=images_folders_list_abs, overlap_function==overlap_func,
                             readerFunction=reading_func, save_stats_dir=single_video_hash_saving_dir,
                             evaluation_func=evaluation_func)
     except TypeError:
