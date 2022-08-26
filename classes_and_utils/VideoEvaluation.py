@@ -1,7 +1,7 @@
 from genericpath import isdir
 import numpy as np, os
 
-import pandas
+import pandas as pd
 from classes_and_utils.utils import save_json
 
 
@@ -23,7 +23,7 @@ class VideoEvaluation:
            the path to the video's prediction data structure file
        frame_column_name : str
            the frame number column name in the original data structure
-       detection_metric : function
+       overlap_function : function
            a function to evaluate the overlap between a prediction and a label (e.g IOU)
        readerFunction : function
            a function to read the original data structure as a pandas dataframe
@@ -40,7 +40,7 @@ class VideoEvaluation:
            a path in which to save the data which indludes an overlap matrix before the Decide_state method (default None)
        file_loading_func : function
            a function that will load the data in case of saving the data after calculating overlap matrix (default None) don't forget to add ".json"
-       dictionary_list : list
+       comp_data : list
            a list that contains each frames bounding boxes data and overlap matrix (first object is the image folder name)
        empty_frames_pred : set
             a set that contains the indices of empty GT rows (GT with no label on it), determined byempty_frames : set
@@ -58,12 +58,12 @@ class VideoEvaluation:
 
        """
 
-    def __init__(self, GT_path, pred_path, detection_metric, readerFunction, save_stats_dir,
+    def __init__(self, GT_path, pred_path, overlap_function, readerFunction, save_stats_dir,
                  evaluation_func, image_folder, empty_GT_frame_func=None, saving_mat_file_dir=None,
                  file_loading_func=None):
         self.GT_path = GT_path
         self.pred_path = pred_path
-        self.detection_metric = detection_metric
+        self.overlap_function = overlap_function
         self.readerFunction = readerFunction
         self.save_stats_dir = save_stats_dir
         self.evaluation_func = evaluation_func
@@ -71,11 +71,11 @@ class VideoEvaluation:
         self.saving_mat_file_dir = saving_mat_file_dir
         self.file_loading_func = file_loading_func
         self.image_folder = image_folder
-        self.dictionary_list = [image_folder]
+        self.comp_data = [image_folder]
         self.empty_frames_GT = set()
         self.empty_frames_pred = set()
 
-    def load_data(self, path, GT):
+    def load_data_old(self, path, GT):
         """
         :param path: path to predictions/GT file in its raw form
         :param GT: Boolean that indicates whether this current file is a GT or prediction
@@ -112,96 +112,100 @@ class VideoEvaluation:
                 frame_hash[frame_num] = [row]
         return frame_hash
 
+    def load_data(self, pred_path, gt_path):
+        
+        
+        if os.path.isdir(pred_path):
+            pred_path = os.path.join(pred_path,os.listdir(pred_path)[0])
+        if os.path.isdir(gt_path):
+            gt_path = os.path.join(gt_path,os.listdir(gt_path)[0])
+
+        pred_data = self.readerFunction(pred_path)
+        gt_data = self.readerFunction(gt_path)
+        pred_data.set_index('frame_id',drop=True,inplace=True)
+        gt_data.set_index('frame_id',drop=True,inplace=True)
+
+        gt_data.rename(columns={'prediction': 'gt'}, inplace=True)
+        loaded_dataframe = pd.concat([pred_data,gt_data],axis=1)  
+    
+        return loaded_dataframe
+
     def compare(self):
         """
         :return: a list of dictionaries each belongs to a different frame:
           each dictionary contains the data of the frame's bounding boxes (predictions & labels) and an overlap matrix
         """
         # load the per frame bounding box hash table (dictionary) for labels and predictions
-        label_frame_hash = self.load_data(self.GT_path, GT=True)
-        pred_frame_hash = self.load_data(self.pred_path, GT=False)
+        loaded_data = self.load_data(self.pred_path, self.GT_path)
+        #pred_Data = self.load_data(self.pred_path)
+        # label_frame_hash = self.load_data(self.GT_path, GT=True)
+        # pred_frame_hash = self.load_data(self.pred_path, GT=False)
         # Iterate over all frames in the predictions data and compare predictions-labels of the same frame to yield an overlap matrix
-        for frame_num in pred_frame_hash:
+        loaded_data['matrix'] = ''
+        for frame_num in loaded_data.index:
+            
+            prediction = loaded_data.loc[frame_num]['prediction']
+            
+            gt = loaded_data.loc[frame_num]['gt']
             # if a prediction frame has no GT (not even an empty one) we do not include it into our calculations
-            if frame_num not in label_frame_hash and frame_num not in self.empty_frames_GT:
+            if prediction is 'Nan' or gt is 'Nan':
                 continue
-            prd_BB_list = pred_frame_hash[frame_num]
-            # initialize a dictionary for each frame that will collect all the frame's data including an overlap matrix
-            temp_d = {'frame_num': frame_num, 'predictions': [], 'labels': [], 'matrix': []}
-            # if a frame exists at the predictions file but not in the labels file we save the prediction as FP
-            if frame_num in self.empty_frames_GT and frame_num not in self.empty_frames_pred:
-                for prd_BB in prd_BB_list:
-                    prd_BB['state'] = 'FP'
-                    temp_d['predictions'].append(prd_BB)
-                self.dictionary_list.append(temp_d)
-                continue
-           
-            # if frame number exists in both label and predictions data an overlap matrix is calculated
-            label_BB_list = label_frame_hash[frame_num]
-            temp_d['matrix'] = np.zeros((len(prd_BB_list), len(label_BB_list)))
-            for i, prd_BB in enumerate(prd_BB_list):
-                temp_d['predictions'].append(prd_BB)
-                for j, label_BB in enumerate(label_BB_list):
-                    overlap = self.detection_metric(prd_BB, label_BB)
-                    temp_d['matrix'][i, j] = round(overlap, 2)
-                    if i == 0:
-                        temp_d['labels'].append(label_BB)  # adding the labels only once (not every loop)
-
-            temp_d['matrix'] = temp_d['matrix'].tolist()
-            self.dictionary_list.append(temp_d)
-
-        # Iterate over all frames in label data
-        for frame_num in label_frame_hash:
-            label_BB_list = label_frame_hash[frame_num]
-            # if a frame exists at the labels file but not in the predictions file we save the labels as FN
-            if frame_num not in pred_frame_hash:
-                temp_d = {'frame_num': frame_num, 'predictions': [], 'labels': [], 'matrix': []}
-                for label_BB in label_BB_list:
-                    label_BB['state'] = 'FN'
-                    temp_d['labels'].append(label_BB)
-                self.dictionary_list.append(temp_d)
-                continue
+            
+            if type(prediction) is not list:
+                prediction = [prediction]
+            if type(gt) is not list:
+                prediction = [gt]        
+            if not len(gt) or not len(prediction):
+                mat=[]
+            else:
+                mat = np.zeros((len(prediction), len(gt)))
+            for i, prd_BB in enumerate(prediction):
+                for j, label_BB in enumerate(gt):
+                    overlap = self.overlap_function(prd_BB, label_BB)
+                    mat[i, j] = round(overlap, 2)
+      
+            loaded_data.loc[frame_num]['matrix']=mat
+        
+        self.comp_data = loaded_data
         # option to save midway - for future development (don't forget to end the path with ".json")
         if self.saving_mat_file_dir:
-            save_json(self.saving_mat_file_dir, self.dictionary_list)
+            save_json(self.saving_mat_file_dir, self.comp_data)
 
     def Decide_state(self, from_file=False):
         """
-        :param from_file: Boolean, loading self.dictionary_list from a file or not - for future development
+        :param from_file: Boolean, loading self.comp_data from a file or not - for future development
         :return: saves this video intermediate results as a json file in self.save_stats_dir:
-        the intermediate results are the same as in self.dictionary_list but with a matching between labels and predictions
+        the intermediate results are the same as in self.comp_data but with a matching between labels and predictions
         """
         # if we saved midway this is how we can load it back - for future development
         if from_file:
             assert self.file_loading_func, 'file_loading_func was not set !'
-            list_of_dict = self.file_loading_func(self.saving_mat_file_dir)
+            comp_data = self.file_loading_func(self.saving_mat_file_dir)
         else:
-            list_of_dict = self.dictionary_list
+            comp_data = self.comp_data
 
-        for idx, temp_d in enumerate(list_of_dict):
-            # the first object in self.dictionary_list is the name of the image folder of the video (see init)
-            if idx == 0:
-                continue
+        for frame_num in comp_data.index:
+            
             # calling a user specified self.evaluation_func that accepts a frame dictionary and matches predictions & labels
-            list_of_dict[idx] = self.evaluation_func(temp_d)
+            self.evaluation_func(comp_data.loc[frame_num])
         # saving a json file of this video's intermediate results
-        save_json(self.save_stats_dir, list_of_dict)
+        save_json(self.save_stats_dir, comp_data.to_dict())
 
 
-def run_one_video(GT_path, pred_path, image_folder, detection_metric, readerFunction, save_stats_dir, evaluation_func, file_loading_func=None, empty_GT_frame_func=None, saving_mat_file_dir=None):
+def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunction, save_stats_dir, evaluation_func, file_loading_func=None, empty_GT_frame_func=None, saving_mat_file_dir=None):
     """
     :params - same as VideoEvaluation class
     :return: performs all the class methods of VideoEvaluation and saves intermediate results
     """
     V = VideoEvaluation(GT_path=GT_path, pred_path=pred_path,
-                        detection_metric=detection_metric, readerFunction=readerFunction, save_stats_dir=save_stats_dir,
+                        overlap_function=overlap_function, readerFunction=readerFunction, save_stats_dir=save_stats_dir,
                         evaluation_func=evaluation_func, image_folder=image_folder, file_loading_func=file_loading_func,
                         empty_GT_frame_func=empty_GT_frame_func, saving_mat_file_dir=None)
     V.compare()
     V.Decide_state()
 
 
-def run_multiple_Videos(GT_path_list, pred_path_list, images_folders_list, image_folder_fullpath_list, detection_metric,
+def run_multiple_Videos(GT_path_list, pred_path_list, images_folders_list, image_folder_fullpath_list, overlap_function,
                         readerFunction, save_stats_dir, evaluation_func, file_loading_func=None,
                         saving_mat_file_dir=None):
     """
@@ -210,7 +214,7 @@ def run_multiple_Videos(GT_path_list, pred_path_list, images_folders_list, image
     :param pred_path_list: a list of paths to predictions files
     :param images_folders_list: a list of image folders names
     :param image_folder_fullpath_list: a list of image folders full path
-    :param detection_metric: same as in VideoEvaluation
+    :param overlap_function: same as in VideoEvaluation
     :param readingFunction: a function that defines several file reading procedures
     :param save_stats_dir: same as in VideoEvaluation
     :param evaluation_func: same as in VideoEvaluation
@@ -222,7 +226,7 @@ def run_multiple_Videos(GT_path_list, pred_path_list, images_folders_list, image
         # the save_stats_file - where the intermediate results are saved:
         # is defined by save_stats_dir and the folders name
         save_stats_file = os.path.join(save_stats_dir, image_folder_name + '.json')
-        run_one_video(GT_path, pred_path, image_folder_fullpath, detection_metric, readerFunction, save_stats_file, evaluation_func, file_loading_func=None, saving_mat_file_dir=None)
+        run_one_video(GT_path, pred_path, image_folder_fullpath, overlap_function, readerFunction, save_stats_file, evaluation_func, file_loading_func=None, saving_mat_file_dir=None)
 
 
 

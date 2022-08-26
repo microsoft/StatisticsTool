@@ -25,39 +25,35 @@ Returns the same input dictionary after the changes
 
 def Zvi_evaluation_func(temp_d):
 
-    predictions_d_list = temp_d['predictions'].copy()  # predictions list of dictionaries for current frame index
-    labels_d_list = temp_d['labels'].copy() # labels list of dictionaries for current frame index (copy is to avoid looping while changing the original)
+    predictions_d_list = temp_d['prediction']  # predictions list of dictionaries for current frame index
+    labels_d_list = temp_d['gt'] # labels list of dictionaries for current frame index (copy is to avoid looping while changing the original)
+
+    for i in range(len(predictions_d_list)):
+        predictions_d_list[i]['state'] = 0
+        
+    # label that don't have a match is a FN
+    for j in range(len(labels_d_list)):
+        labels_d_list[j]['state'] = 0
 
     overlap_mat = temp_d['matrix']  # columns are labels and rows are predictions
-    if overlap_mat:
+    if len(overlap_mat) > 0:
         prd_ind, label_ind = linear_sum_assignment(overlap_mat, maximize=True)
 
         # prediction that don't have a match is a FP
-        for i in range(len(predictions_d_list)):
-            if i in prd_ind:  # prediction has a matching label
-                continue
-            else:
-                temp_d['predictions'][i]['state'] = 'FP'
 
-        # label that don't have a match is a FN
-        for j in range(len(labels_d_list)):
-            if j in label_ind:  # label has a matching prediction
-                continue
-            else:
-                temp_d['labels'][j]['state'] = 'FN'
 
         # labels and predictions that have a match will be evaluated according to their overlap (threshold dependent)
         for i, j in zip(prd_ind, label_ind):
-            temp_d['labels'][j]['state'] = overlap_mat[i][j]
-            temp_d['predictions'][i]['state'] = overlap_mat[i][j]
-            temp_d['labels'][j]['matching'] = temp_d['predictions'][i]['Index']
-            temp_d['predictions'][i]['matching'] = temp_d['labels'][j]['Index']
+            labels_d_list[j]['state'] = overlap_mat[i][j]
+            predictions_d_list[i]['state'] = overlap_mat[i][j]
+            labels_d_list[j]['matching'] = i
+            predictions_d_list[i]['matching'] =j
     return temp_d
 
 def label_centric_greedy_evaluation(temp_d):
     threshold = 0.2
-    predictions_d_list = temp_d['predictions'].copy()  # predictions list of dictionaries for current frame index
-    labels_d_list = temp_d['labels'].copy() # labels list of dictionaries for current frame index (copy is to avoid looping while changing the original)
+    predictions_d_list = temp_d['predictions']  # predictions list of dictionaries for current frame index
+    labels_d_list = temp_d['labels'] # labels list of dictionaries for current frame index (copy is to avoid looping while changing the original)
     overlap_mat = temp_d['matrix']  # columns are labels and rows are predictions
     if overlap_mat:
         matching_predictions_list = []
@@ -73,18 +69,18 @@ def label_centric_greedy_evaluation(temp_d):
                     match = prd_idx
             # match labels and prediction - save the best overlap and the index of the matching prediction
             if match is not None:
-                temp_d['labels'][label_idx]['state'] = max_overlap
-                temp_d['labels'][label_idx]['matching'] = temp_d['predictions'][match]['Index']
-                temp_d['predictions'][match]['state'] = max_overlap
-                temp_d['predictions'][match]['matching'] = temp_d['labels'][label_idx]['Index']
+                labels_d_list[label_idx]['state'] = max_overlap
+                labels_d_list[label_idx]['matching'] = match
+                predictions_d_list[match]['state'] = max_overlap
+                predictions_d_list[match]['matching'] = label_idx
                 matching_predictions_list.append(match)
             else:
                 # when theres no match the labels is FN
-                temp_d['labels'][label_idx]['state'] = 'FN'
+                labels_d_list[label_idx]['state'] = 0
         # when theres no match the prediction is FP
         for prd_idx in range(len(predictions_d_list)):
             if prd_idx not in matching_predictions_list:
-                temp_d['predictions'][prd_idx]['state'] = 'FP'
+                predictions_d_list[prd_idx]['state'] = 0
     return temp_d
 
 
