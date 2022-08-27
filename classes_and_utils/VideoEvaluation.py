@@ -122,12 +122,13 @@ class VideoEvaluation:
 
         pred_data = self.readerFunction(pred_path)
         gt_data = self.readerFunction(gt_path)
-        pred_data.set_index('frame_id',drop=True,inplace=True)
-        gt_data.set_index('frame_id',drop=True,inplace=True)
-
+        #pred_data.set_index('frame_id',drop=True,inplace=True)
+        #gt_data.set_index('frame_id',drop=True,inplace=True)
+        
         gt_data.rename(columns={'prediction': 'gt'}, inplace=True)
-        loaded_dataframe = pd.concat([pred_data,gt_data],axis=1)  
-    
+        #loaded_dataframe = pd.concat([pred_data,gt_data],axis=1)  
+        loaded_dataframe = pred_data.merge(gt_data, left_on='frame_id', right_on='frame_id',how='inner')
+        
         return loaded_dataframe
 
     def compare(self):
@@ -147,10 +148,7 @@ class VideoEvaluation:
             prediction = loaded_data.loc[frame_num]['prediction']
             
             gt = loaded_data.loc[frame_num]['gt']
-            # if a prediction frame has no GT (not even an empty one) we do not include it into our calculations
-            if prediction is 'Nan' or gt is 'Nan':
-                continue
-            
+           
             if type(prediction) is not list:
                 prediction = [prediction]
             if type(gt) is not list:
@@ -164,7 +162,7 @@ class VideoEvaluation:
                     overlap = self.overlap_function(prd_BB, label_BB)
                     mat[i, j] = round(overlap, 2)
       
-            loaded_data.loc[frame_num]['matrix']=mat
+            loaded_data['matrix'][frame_num]=mat
         
         self.comp_data = loaded_data
         # option to save midway - for future development (don't forget to end the path with ".json")
@@ -184,12 +182,16 @@ class VideoEvaluation:
         else:
             comp_data = self.comp_data
 
-        for frame_num in comp_data.index:
-            
+        for ind in comp_data.index:
+            frame_data = comp_data.loc[ind]
             # calling a user specified self.evaluation_func that accepts a frame dictionary and matches predictions & labels
-            self.evaluation_func(comp_data.loc[frame_num])
-        # saving a json file of this video's intermediate results
-        save_json(self.save_stats_dir, comp_data.to_dict())
+            self.evaluation_func(frame_data)
+            gt_list = frame_data['gt'] 
+            predictions_list = frame_data['prediction'] 
+            for x in gt_list: 
+                if x['state']==0: 
+                    predictions_list.append({'matching':x,'state':0}) 
+        
 
 
 def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunction, save_stats_dir, evaluation_func, file_loading_func=None, empty_GT_frame_func=None, saving_mat_file_dir=None):
@@ -203,7 +205,12 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
                         empty_GT_frame_func=empty_GT_frame_func, saving_mat_file_dir=None)
     V.compare()
     V.Decide_state()
-
+    V.comp_data = V.comp_data.explode('prediction')
+    V.comp_data = V.comp_data.reset_index()
+    V.comp_data = V.comp_data.drop(['matrix','gt'],axis=1)
+    # saving a json file of this video's intermediate results
+    #save_json(self.save_stats_dir, comp_data.to_dict())
+    V.comp_data.to_json(save_stats_dir)
 
 def run_multiple_Videos(GT_path_list, pred_path_list, images_folders_list, image_folder_fullpath_list, overlap_function,
                         readerFunction, save_stats_dir, evaluation_func, file_loading_func=None,
