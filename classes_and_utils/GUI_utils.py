@@ -260,7 +260,7 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
     try:
         # extract all the intermediate results from the raw prediction-label files
         run_multiple_Videos(GT_path_list=GT_list_abs, pred_path_list=prd_list_abs, images_folders_list=images_folders_list,
-                            image_folder_fullpath_list=images_folders_list_abs, overlap_function==overlap_func,
+                            image_folder_fullpath_list=images_folders_list_abs, overlap_function=overlap_func,
                             readerFunction=reading_func, save_stats_dir=single_video_hash_saving_dir,
                             evaluation_func=evaluation_func)
     except TypeError:
@@ -464,8 +464,13 @@ def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stat
     video_names, v_idx_arr = np.unique(arr_of_examples[:, 0], return_inverse=True)
     per_video_example_hash = {}
     # getting the list in a hierarchy of the form:  1. video 2. frame 3. bouding box index
+    
     for i, vid_name in enumerate(video_names):
         per_video_example_hash[vid_name] = {}
+
+        # v = arr_of_examples[arr_of_examples[:,0]==vid_name]
+        # f = arr_of_examples[arr_of_examples[:,0]==vid_name,2]
+        # per_video_example_hash[vid_name]=dict(zip(f,v))
         temp_vid_indices = v_idx_arr == i
         temp_video_examples = arr_of_examples[temp_vid_indices, :]
         temp_unique_frames = np.unique(temp_video_examples[:, 2])
