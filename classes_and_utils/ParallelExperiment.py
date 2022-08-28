@@ -146,23 +146,16 @@ class ParallelExperiment:
 
         """
         saved_files_paths = [file for file in os.listdir(self.files_dir)]
-        prd_dataframe_dict, label_dataframe_dict = {}, {}
         # loop over the intermediate results files and aggregate the data using self.OneFileProcedure(file_name)
         datafrme_dict = []
         for file_name in saved_files_paths:
             df = pd.read_json (os.path.join(self.files_dir, file_name))
             datafrme_dict.append(df)
             continue
-            predictions_dataframe, labels_dataframe = self.OneFileProcedure(file_name)
-            prd_dataframe_dict[file_name] = predictions_dataframe
-            label_dataframe_dict[file_name] = labels_dataframe
+          
         # concatenate the dictionary of dataframes into a single dataframe
-        self.comp_data = pd.concat(datafrme_dict).drop('index',axis=1).reset_index(drop=True,inplace=True)
-        return
-        self.combined_prd_dataframe = pd.concat(prd_dataframe_dict).reset_index(level=1, drop=True)
-        self.combined_label_dataframe = pd.concat(label_dataframe_dict).reset_index(level=1, drop=True)
-
-        # option to save the aggregated dataframes
+        self.comp_data = pd.concat(datafrme_dict).reset_index(drop=True)
+              
         if save_dataframe:
             self.combined_prd_dataframe.to_csv(os.path.join(self.save_stats_dir, 'combined prediction dataframe.csv'))
             self.combined_label_dataframe.to_csv(os.path.join(self.save_stats_dir, 'combined labels dataframe.csv'))
@@ -178,8 +171,8 @@ class ParallelExperiment:
         :return: Boolean masks of TP, FP, FN that indicates which row in the predictions dataframe is TP/FP
                  and which row in the labels dataframe is a FN (row = bounding box)
         """
-        FN_mask = ((comp_data['matching'].notnull()) & (comp_data['state']<threshold))
-        FP_mask = ((comp_data['x'].notnull()) | (comp_data['state']<threshold))
+        FN_mask = ((comp_data['x_gt'].notnull()) & (comp_data['state']<threshold))
+        FP_mask = ((comp_data['x'].notnull()) & (comp_data['state']<threshold))
         TP_mask = (comp_data['state']>threshold)
         
         return TP_mask, FP_mask, FN_mask
@@ -202,18 +195,11 @@ class ParallelExperiment:
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
         TP_mask, FP_mask, FN_mask = self.get_TP_FP_FN_masks(self.comp_data, threshold, from_file)
         # calculate the boolean masks of the partitions (which row/bounding box in the dataframes belongs to which partition)
-        #self.wanted_segmentations = self.segmentation_funcs(self.combined_prd_dataframe, self.combined_label_dataframe, from_file)
+        self.wanted_segmentations = self.segmentation_funcs(self.comp_data, from_file)
         # initialize self.masks with the total masks for TP/FP/FN
         self.masks = {'total_stats': {'TP': TP_mask, 'FP': FP_mask, 'FN': FN_mask}}
         # Add the segmentation masks to self.masks
-        #self.masks.update(self.wanted_segmentations)
-
-        # creating a dictionary with the total ids of the prediction and labels
-        # for name, dataframe in zip(['prediction', 'label'], [self.combined_prd_dataframe, self.combined_label_dataframe]):
-        #     video_name = dataframe.index.values.copy()[:, np.newaxis]
-        #     Index = dataframe['Index'].values.copy()[:, np.newaxis]
-        #     frame = dataframe['frame_id'].values.copy()[:, np.newaxis]
-        #     self.ID_storage[name] = np.concatenate((video_name, Index, frame), axis=1)
+        self.masks.update(self.wanted_segmentations)
 
         video_name = self.comp_data['video'].values.copy()[:, np.newaxis]
         frame = self.comp_data['frame_id'].values.copy()[:, np.newaxis] 
@@ -258,9 +244,9 @@ class ParallelExperiment:
             if secondary_segmentation is None:
                 for i, seg_name in enumerate(prime_possible_partitions):
                     # for a specific partition, the partitioned - TP mask is the element wise multiplication between the total TP mask and the partition mask (same for FP/FN)
-                    TP_mask = self.masks['total_stats']['TP'] * self.masks[primary_segmentation]['prediction masks'][i]
-                    FP_mask = self.masks['total_stats']['FP'] * self.masks[primary_segmentation]['prediction masks'][i]
-                    FN_mask = self.masks['total_stats']['FN'] * self.masks[primary_segmentation]['labels masks'][i]
+                    TP_mask = self.masks['total_stats']['TP'] & self.masks[primary_segmentation]['masks'][i]
+                    FP_mask = self.masks['total_stats']['FP'] & self.masks[primary_segmentation]['masks'][i]
+                    FN_mask = self.masks['total_stats']['FN'] & self.masks[primary_segmentation]['masks'][i]
                     # the number of TP is the sum of the mask (same for FP/FN)
                     num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
                     # calculating the statistics
@@ -286,9 +272,9 @@ class ParallelExperiment:
                     self.segmented_ID[seg_name] = {}
                     for j, seg_name2 in enumerate(sec_possible_partitions):
                         # for a specific sub partition, the partitioned - TP mask is the element wise multiplication between the total TP mask and the two partitions masks (same for FP/FN)
-                        TP_mask = self.masks['total_stats']['TP'] * self.masks[primary_segmentation]['prediction masks'][i] * self.masks[secondary_segmentation]['prediction masks'][j]
-                        FP_mask = self.masks['total_stats']['FP'] * self.masks[primary_segmentation]['prediction masks'][i] * self.masks[secondary_segmentation]['prediction masks'][j]
-                        FN_mask = self.masks['total_stats']['FN'] * self.masks[primary_segmentation]['labels masks'][i] * self.masks[secondary_segmentation]['labels masks'][j]
+                        TP_mask = self.masks['total_stats']['TP'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j]
+                        FP_mask = self.masks['total_stats']['FP'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j]
+                        FN_mask = self.masks['total_stats']['FN'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j]
                         # the number of TP is the sum of the mask (same for FP/FN)
                         num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
                         # calculating the statistics
@@ -317,9 +303,9 @@ class ParallelExperiment:
                         self.segmented_ID[seg_name][seg_name2] = {}
                         for k, seg_name3 in enumerate(tert_possible_partitions):
                             # for a specific sub-sub partition, the partitioned - TP mask is the element wise multiplication between the total TP mask and the three partitions masks (same for FP/FN)
-                            TP_mask = self.masks['total_stats']['TP'] * self.masks[primary_segmentation]['prediction masks'][i] * self.masks[secondary_segmentation]['prediction masks'][j] * self.masks[tertiary_segmentation]['prediction masks'][k]
-                            FP_mask = self.masks['total_stats']['FP'] * self.masks[primary_segmentation]['prediction masks'][i] * self.masks[secondary_segmentation]['prediction masks'][j] * self.masks[tertiary_segmentation]['prediction masks'][k]
-                            FN_mask = self.masks['total_stats']['FN'] * self.masks[primary_segmentation]['labels masks'][i] * self.masks[secondary_segmentation]['labels masks'][j] * self.masks[tertiary_segmentation]['labels masks'][k]
+                            TP_mask = self.masks['total_stats']['TP'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k]
+                            FP_mask = self.masks['total_stats']['FP'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k]
+                            FN_mask = self.masks['total_stats']['FN'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k]
                             # the number of TP is the sum of the mask (same for FP/FN)
                             num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
                             # calculating the statistics
@@ -549,14 +535,14 @@ class ParallelExperiment:
         all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==frame_id) & (self.comp_data['video']==image_folder))]
         for ind in range(0,len(all_frmae_obj)):
             obj=all_frmae_obj.iloc[ind]
-            if obj['matching']:
-                label_bbs.append([obj['matching']['x'],obj['matching']['y'],obj['matching']['width'],obj['matching']['height']])
+            if not math.isnan(obj['x_gt']):
+                label_bbs.append([obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']])
             if not math.isnan(obj['x']):
                 prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
         obj = self.comp_data.loc[bb_index]
         selected_bb = [obj['x'], obj['y'], obj['width'], obj['height']]
-        if obj['matching']:
-            matched = [obj['matching']['x'],obj['matching']['y'],obj['matching']['width'],obj['matching']['height']]
+        if not math.isnan(obj['x_gt']):
+            matched = [obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']]
         # returning the output of frame_visualization which is are an encoded image (for html use) and matplotlib figure
         return self.frame_visualization(label_bbs, prd_bbs, selected_bb, matched, frame_image)
 

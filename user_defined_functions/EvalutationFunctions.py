@@ -41,9 +41,7 @@ def Zvi_evaluation_func(temp_d):
 
         # labels and predictions that have a match will be evaluated according to their overlap (threshold dependent)
         for i, j in zip(prd_ind, label_ind):
-            labels_d_list[j]['state'] = overlap_mat[i][j]
             predictions_d_list[i]['state'] = overlap_mat[i][j]
-            labels_d_list[j]['matching'] = predictions_d_list[i].copy()
             predictions_d_list[i]['matching'] =labels_d_list[j].copy()
     return temp_d
 

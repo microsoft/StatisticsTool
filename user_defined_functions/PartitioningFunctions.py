@@ -34,16 +34,20 @@ The high-level dictionary which contains at least one Partition Dictionary
 
 
 
-def size_horizontal_vertical(prd_dataframe, label_dataframe, from_file=False):
+def size_horizontal_vertical(dataframe, from_file=False):
+
+    img_width = 1280
+    img_height = 720
+
     type_ = float if from_file else object
-    prd_width = prd_dataframe['width'].values.astype(type_)
-    prd_height = prd_dataframe['height'].values.astype(type_)
-    label_width = label_dataframe['width'].values.astype(type_)
-    label_height = label_dataframe['height'].values.astype(type_)
-    prd_x = prd_dataframe['x'].values.astype(type_)
-    label_x = label_dataframe['x'].values.astype(type_)
-    prd_y = prd_dataframe['y'].values.astype(type_)
-    label_y = label_dataframe['y'].values.astype(type_)
+    prd_width = dataframe['width'].values.astype(type_)
+    prd_height = dataframe['height'].values.astype(type_)
+    label_width = dataframe['width_gt'].values.astype(type_)
+    label_height = dataframe['height_gt'].values.astype(type_)
+    prd_x = dataframe['x'].values.astype(type_)
+    label_x = dataframe['x_gt'].values.astype(type_)
+    prd_y = dataframe['y'].values.astype(type_)
+    label_y = dataframe['y_gt'].values.astype(type_)
 
     prd_y_center = (2*prd_y + prd_height)/2
     label_y_center = (2*label_y + label_height)/2
@@ -52,26 +56,33 @@ def size_horizontal_vertical(prd_dataframe, label_dataframe, from_file=False):
 
 
     # masking by the area of the bounding box
-    prd_large_mask = prd_width * prd_height > 0.1
+    prd_large_mask = prd_width + prd_height > (img_width + img_height)/2
     prd_small_mask = np.logical_not(prd_large_mask)
-    label_large_mask = label_width * label_height > 0.1
+    label_large_mask = label_width + label_height > (img_width + img_height)/2
     label_small_mask = np.logical_not(label_large_mask)
-    size = {'possible partitions': ['large', 'small'], 'prediction masks': [prd_large_mask, prd_small_mask], 'labels masks': [label_large_mask, label_small_mask]}
+    large_mask = prd_large_mask | (label_large_mask & dataframe['x'].isnull())
+    small_mask = prd_small_mask | (label_small_mask & dataframe['x'].isnull())
+
+
+    size = {'possible partitions': ['large', 'small'], 'masks': [large_mask, small_mask]}
 
     # masking by x value
-    prd_left_x = prd_x_center < 0.5
-    label_left_x = label_x_center < 0.5
+    prd_left_x = prd_x_center < img_width/2
+    label_left_x = label_x_center < img_width/2
     prd_right_x = np.logical_not(prd_left_x)
     label_right_x = np.logical_not(label_left_x)
-
-    x_position = {'possible partitions': ['right', 'left'], 'prediction masks': [prd_right_x, prd_left_x], 'labels masks': [label_right_x, label_left_x]}
+    right_mask = prd_right_x | (label_right_x & dataframe['x'].isnull())
+    left_mask = prd_left_x | (label_left_x & dataframe['x'].isnull())
+    x_position = {'possible partitions': ['right', 'left'], 'masks': [right_mask, left_mask]}
 
     # masking by y value
-    prd_upper_y = prd_y_center < 0.5  # upper because of how matplotlib shows the image - the y axis origin is at the top so the upper part has lower values
-    label_upper_y = label_y_center < 0.5
+    prd_upper_y = prd_y_center < img_height/2  # upper because of how matplotlib shows the image - the y axis origin is at the top so the upper part has lower values
+    label_upper_y = label_y_center < img_height/2
     prd_lower_y = np.logical_not(prd_upper_y)
     label_lower_y = np.logical_not(label_upper_y)
-    y_position = {'possible partitions': ['up', 'down'], 'prediction masks': [prd_upper_y, prd_lower_y], 'labels masks': [label_upper_y, label_lower_y]}
+    lower_mask = prd_lower_y | (label_lower_y & dataframe['x'].isnull())
+    upper_mask = prd_upper_y | (label_upper_y & dataframe['x'].isnull())
+    y_position = {'possible partitions': ['up', 'down'], 'masks': [upper_mask, lower_mask]}
 
     desired_masks = {'size': size, 'x position': x_position, 'y position': y_position}
 

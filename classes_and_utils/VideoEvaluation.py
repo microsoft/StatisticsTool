@@ -1,6 +1,6 @@
 from genericpath import isdir
 import numpy as np, os
-
+import math
 import pandas as pd
 from classes_and_utils.utils import save_json
 
@@ -75,42 +75,6 @@ class VideoEvaluation:
         self.empty_frames_GT = set()
         self.empty_frames_pred = set()
 
-    def load_data_old(self, path, GT):
-        """
-        :param path: path to predictions/GT file in its raw form
-        :param GT: Boolean that indicates whether this current file is a GT or prediction
-        :return: dictionary of the form: {frame_number: list of bounding boxes data}
-        """
-        #if path is directory take the first file
-        #TODO: implement method to choose best file, maybe by name
-        if os.path.isdir(path):
-            path = os.path.join(path,os.listdir(path)[0])
-        # load file from path using a user specified function that returns a pandas dataframe representation of the data
-        df, self.empty_GT_frame_func = self.readerFunction(path)
-        # keep values from same frame together in a dictionary
-        frame_hash = {}
-        for row in df.itertuples(index=True):
-            # turn each row's namedtuple into a dictionary for convenient
-            row = row._asdict()
-            frame_num = row['frame_id']
-            # if the file belongs to GT and the user specified an "empty_GT_frame_func" then empty frames numbers will
-            # be saved in a set and will not be saved in the dictionary
-            if self.empty_GT_frame_func:
-                if self.empty_GT_frame_func(row):
-                    if GT:
-                        self.empty_frames_GT.add(frame_num)
-                    else:
-                        self.empty_frames_pred.add(frame_num)
-                    continue
-            # adding keys for later use ('state' - eg:FP/TP/FN, 'matching' -  matching predictions/labels index)
-            row['state'] = None
-            row['matching'] = None
-            # if exists frame_num list in the frame_hash add row else create new list in frame_hash
-            if frame_num in frame_hash:
-                frame_hash[frame_num].append(row)
-            else:
-                frame_hash[frame_num] = [row]
-        return frame_hash
 
     def load_data(self, pred_path, gt_path):
         
@@ -122,11 +86,10 @@ class VideoEvaluation:
 
         pred_data = self.readerFunction(pred_path)
         gt_data = self.readerFunction(gt_path)
-        #pred_data.set_index('frame_id',drop=True,inplace=True)
-        #gt_data.set_index('frame_id',drop=True,inplace=True)
+       
         
         gt_data.rename(columns={'prediction': 'gt'}, inplace=True)
-        #loaded_dataframe = pd.concat([pred_data,gt_data],axis=1)  
+        
         loaded_dataframe = pred_data.merge(gt_data, left_on='frame_id', right_on='frame_id',how='inner')
         
         return loaded_dataframe
@@ -138,9 +101,7 @@ class VideoEvaluation:
         """
         # load the per frame bounding box hash table (dictionary) for labels and predictions
         loaded_data = self.load_data(self.pred_path, self.GT_path)
-        #pred_Data = self.load_data(self.pred_path)
-        # label_frame_hash = self.load_data(self.GT_path, GT=True)
-        # pred_frame_hash = self.load_data(self.pred_path, GT=False)
+       
         # Iterate over all frames in the predictions data and compare predictions-labels of the same frame to yield an overlap matrix
         loaded_data['matrix'] = ''
         for frame_num in loaded_data.index:
@@ -193,7 +154,14 @@ class VideoEvaluation:
                     predictions_list.append({'matching':x,'state':0}) 
 
         
-
+def add_dict(dict_in, key, new_obj):
+    if type(dict_in) == dict:
+        for j, p in enumerate(dict_in):
+            add_dict(dict_in[p], p, new_obj)
+    else:
+        if key in new_obj:
+            key = key+'_gt'
+        new_obj[key] = dict_in
 
 def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunction, save_stats_dir, evaluation_func, file_loading_func=None, empty_GT_frame_func=None, saving_mat_file_dir=None):
     """
@@ -206,11 +174,21 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
                         empty_GT_frame_func=empty_GT_frame_func, saving_mat_file_dir=None)
     V.compare()
     V.Decide_state()
+    V.comp_data.drop(['gt','matrix'],axis=1,inplace=True)
     V.comp_data = V.comp_data.explode('prediction')
-    V.comp_data = V.comp_data.reset_index()
-    pred=V.comp_data['prediction'].apply(pd.Series)
-    V.comp_data = V.comp_data.drop(['matrix','gt','prediction'],axis=1)
-    V.comp_data =  V.comp_data.join(pred)
+    V.comp_data = V.comp_data.reset_index(drop=True)
+    
+    new_data = []    
+    pred_arr = V.comp_data.to_numpy()
+    keys = V.comp_data.keys()
+    for row in pred_arr:
+        new_obj={}
+        for i, key in enumerate(keys):
+            add_dict(row[i],key,new_obj)
+            
+        new_data.append(new_obj)
+    V.comp_data = pd.DataFrame(new_data)
+    
     V.comp_data['video']=image_folder
     # saving a json file of this video's intermediate results
     #save_json(self.save_stats_dir, comp_data.to_dict())
