@@ -1,3 +1,4 @@
+import math
 import pathlib
 import pandas as pd, os, numpy as np, base64, matplotlib, re
 matplotlib.use('Agg')
@@ -112,6 +113,7 @@ class ParallelExperiment:
         :param file_name: the name of the single intermediate results file name to be loaded
         :return: the aggregated dataframes for predictions and ground truth
         """
+        
         list_of_dicts = loading_json(os.path.join(self.files_dir, file_name))
         # initialize two lists in order to concentrate all the labels and all the prediction bounding boxes separately
         list_of_prd_bb_dicts, list_of_label_bb_dicts = [], []
@@ -146,11 +148,17 @@ class ParallelExperiment:
         saved_files_paths = [file for file in os.listdir(self.files_dir)]
         prd_dataframe_dict, label_dataframe_dict = {}, {}
         # loop over the intermediate results files and aggregate the data using self.OneFileProcedure(file_name)
+        datafrme_dict = []
         for file_name in saved_files_paths:
+            df = pd.read_json (os.path.join(self.files_dir, file_name))
+            datafrme_dict.append(df)
+            continue
             predictions_dataframe, labels_dataframe = self.OneFileProcedure(file_name)
             prd_dataframe_dict[file_name] = predictions_dataframe
             label_dataframe_dict[file_name] = labels_dataframe
         # concatenate the dictionary of dataframes into a single dataframe
+        self.comp_data = pd.concat(datafrme_dict).drop('index',axis=1).reset_index(drop=True,inplace=True)
+        return
         self.combined_prd_dataframe = pd.concat(prd_dataframe_dict).reset_index(level=1, drop=True)
         self.combined_label_dataframe = pd.concat(label_dataframe_dict).reset_index(level=1, drop=True)
 
@@ -160,7 +168,7 @@ class ParallelExperiment:
             self.combined_label_dataframe.to_csv(os.path.join(self.save_stats_dir, 'combined labels dataframe.csv'))
 
     @staticmethod
-    def get_TP_FP_FN_masks(prd_state, label_state, threshold, from_file=False):
+    def get_TP_FP_FN_masks(comp_data, threshold, from_file=False):
         """
 
         :param prd_state: state column (which containts either overlap float or FP ) of the aggregated predictions, dataframe self.combined_prd_dataframe
@@ -170,18 +178,10 @@ class ParallelExperiment:
         :return: Boolean masks of TP, FP, FN that indicates which row in the predictions dataframe is TP/FP
                  and which row in the labels dataframe is a FN (row = bounding box)
         """
-
-        ### changing the FN and FP values to -1 so that a numerical comparison will be optional
-        label_state = np.where(label_state == 'FN', -1, label_state)
-        prd_state = np.where(prd_state == 'FP', -1, prd_state)
-        ### A BB is FP or FN for a specific threshold if its overlap value is smaller than the threshold
-        # (or was already considered FP/FN thus having a -1 value which is smaller than any positive threshold)
-        if from_file:
-            prd_state = prd_state.astype(float)
-            label_state = label_state.astype(float)
-        FP_mask = prd_state < threshold
-        FN_mask = label_state < threshold
-        TP_mask = np.logical_not(FP_mask)
+        FN_mask = ((comp_data['matching'].notnull()) & (comp_data['state']<threshold))
+        FP_mask = ((comp_data['x'].notnull()) | (comp_data['state']<threshold))
+        TP_mask = (comp_data['state']>threshold)
+        
         return TP_mask, FP_mask, FN_mask
 
     def get_segmentation_masks(self, threshold, from_file=False, label_file_dir=None, prd_file_dir=None):
@@ -200,20 +200,27 @@ class ParallelExperiment:
             self.combined_label_dataframe = pd.read_csv(os.path.join(self.save_stats_dir, label_file_dir))
 
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
-        TP_mask, FP_mask, FN_mask = self.get_TP_FP_FN_masks(self.combined_prd_dataframe['state'].values, self.combined_label_dataframe['state'].values, threshold, from_file)
+        TP_mask, FP_mask, FN_mask = self.get_TP_FP_FN_masks(self.comp_data, threshold, from_file)
         # calculate the boolean masks of the partitions (which row/bounding box in the dataframes belongs to which partition)
-        self.wanted_segmentations = self.segmentation_funcs(self.combined_prd_dataframe, self.combined_label_dataframe, from_file)
+        #self.wanted_segmentations = self.segmentation_funcs(self.combined_prd_dataframe, self.combined_label_dataframe, from_file)
         # initialize self.masks with the total masks for TP/FP/FN
         self.masks = {'total_stats': {'TP': TP_mask, 'FP': FP_mask, 'FN': FN_mask}}
         # Add the segmentation masks to self.masks
-        self.masks.update(self.wanted_segmentations)
+        #self.masks.update(self.wanted_segmentations)
 
         # creating a dictionary with the total ids of the prediction and labels
-        for name, dataframe in zip(['prediction', 'label'], [self.combined_prd_dataframe, self.combined_label_dataframe]):
-            video_name = dataframe.index.values.copy()[:, np.newaxis]
-            Index = dataframe['Index'].values.copy()[:, np.newaxis]
-            frame = dataframe['frame_id'].values.copy()[:, np.newaxis]
-            self.ID_storage[name] = np.concatenate((video_name, Index, frame), axis=1)
+        # for name, dataframe in zip(['prediction', 'label'], [self.combined_prd_dataframe, self.combined_label_dataframe]):
+        #     video_name = dataframe.index.values.copy()[:, np.newaxis]
+        #     Index = dataframe['Index'].values.copy()[:, np.newaxis]
+        #     frame = dataframe['frame_id'].values.copy()[:, np.newaxis]
+        #     self.ID_storage[name] = np.concatenate((video_name, Index, frame), axis=1)
+
+        video_name = self.comp_data['video'].values.copy()[:, np.newaxis]
+        frame = self.comp_data['frame_id'].values.copy()[:, np.newaxis] 
+        index = self.comp_data.index.to_series().values.copy()[:, np.newaxis]
+        self.ID_storage['prediction'] = np.concatenate((video_name, index, frame), axis=1)
+        self.ID_storage['label'] = self.ID_storage['prediction']
+
 
     def statistics_visualization(self, primary_segmentation=None, secondary_segmentation=None, tertiary_segmentation=None):
         """
@@ -430,7 +437,7 @@ class ParallelExperiment:
         # iterating over the frame's GT and prediction bounding boxes
         for i, bb_list in enumerate([frame_labels, frame_prds]):
             for temp_bb in bb_list:
-                (x, y, w, h, _, _) = temp_bb
+                (x, y, w, h) = temp_bb
                 # when bounding box coordinates are normalized between 0-1
                 # a pixel position in the image plane is equals to (normalized_x * image_horizontal_size, normalized_y * image_vertical_size)
                 if x <= 1 and y <= 1 and w <= 1 and h <= 1:
@@ -529,55 +536,29 @@ class ParallelExperiment:
             self.combined_prd_dataframe = pd.read_csv(os.path.join(self.save_stats_dir, prd_file_dir))
             self.combined_label_dataframe = pd.read_csv(os.path.join(self.save_stats_dir, label_file_dir))
         # the video name (image folder name) and bounding box index are needed for identification of the correct bounding box (the frame id is not necessary)
-        video_name, bb_index, _ = bb_id
-        label_bb = []
-        prd_bb = []
-        # extract the data of the relevant video from the relevant aggregated dataframe of all the videos data (either predictions or labels)
-        if self.label_or_prd == 'label':
-            relevant_dataframe = self.combined_label_dataframe
-            relevant_video = relevant_dataframe.loc[relevant_dataframe.index == video_name]
-        else:
-            relevant_dataframe = self.combined_prd_dataframe
-            relevant_video = relevant_dataframe.loc[relevant_dataframe.index == video_name]
-        # extract the data of the correct bounding box using its index in the dataframe
-        selected_bb = relevant_video.loc[relevant_video['Index'] == bb_index]
-        selected_bb_d = selected_bb.to_dict('list')
-        # extracting the values of the asked for example bounding box as a list
-        selected_bb = selected_bb_d['x'] + selected_bb_d['y'] + selected_bb_d['width'] + selected_bb_d['height'] + selected_bb_d['Index'] + selected_bb_d['matching']
-        relevant_frame = selected_bb_d['frame_id'][0]
-        image_folder = selected_bb_d['images_folder'][0]
         
-        frame_image = self.read_image(relevant_frame, image_folder)
+        _, bb_index,frame_id = bb_id
         
-        # inserting the relevant frame's bounding boxes into two lists of labels and predictions
-        for idx, data in enumerate([self.combined_label_dataframe, self.combined_prd_dataframe]):
-            relevant_video = data.loc[data.index == video_name]
-            bbs_from_frame = relevant_video[relevant_video['frame_id'] == relevant_frame]
-            for row in bbs_from_frame.itertuples():
-                row_d = row._asdict()
-                # '_1' is the name of the numerical index (both the image folder name and numerical index are indices)
-                bb = [float(row_d[key]) for key in ['x', 'y', 'width', 'height']] + [row_d['_1'], row_d['matching']]
-                # changing None to np.nan for comparison in frame_visualization()
-                bb = [value if value is not None else np.nan for value in bb]
-                if idx == 0:
-                    label_bb.append(bb)
-                else:
-                    prd_bb.append(bb)
+        image_folder=self.comp_data.loc[bb_index]['video']
+        frame_image = self.read_image(frame_id, image_folder)
 
-        matched = None
-        # changing None to np.nan for comparison in frame_visualization()
-        selected_bb = [value if value is not None else np.nan for value in selected_bb]
-        # searching for the matching prediction/label for the desired bounding box (if its a label the match will be a prediction and wise versa)
-        if self.label_or_prd == 'label':
-            for bb in prd_bb:
-                if bb[-2] == selected_bb[-1]:
-                    matched = bb
-        else:
-            for bb in label_bb:
-                if bb[-2] == selected_bb[-1]:
-                    matched = bb
+        label_bbs = []
+        prd_bbs = []
+        matched = []
+
+        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==frame_id) & (self.comp_data['video']==image_folder))]
+        for ind in range(0,len(all_frmae_obj)):
+            obj=all_frmae_obj.iloc[ind]
+            if obj['matching']:
+                label_bbs.append([obj['matching']['x'],obj['matching']['y'],obj['matching']['width'],obj['matching']['height']])
+            if not math.isnan(obj['x']):
+                prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
+        obj = self.comp_data.loc[bb_index]
+        selected_bb = [obj['x'], obj['y'], obj['width'], obj['height']]
+        if obj['matching']:
+            matched = [obj['matching']['x'],obj['matching']['y'],obj['matching']['width'],obj['matching']['height']]
         # returning the output of frame_visualization which is are an encoded image (for html use) and matplotlib figure
-        return self.frame_visualization(label_bb, prd_bb, selected_bb, matched, frame_image)
+        return self.frame_visualization(label_bbs, prd_bbs, selected_bb, matched, frame_image)
 
 
 

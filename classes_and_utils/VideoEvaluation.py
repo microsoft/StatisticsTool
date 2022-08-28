@@ -191,6 +191,7 @@ class VideoEvaluation:
             for x in gt_list: 
                 if x['state']==0: 
                     predictions_list.append({'matching':x,'state':0}) 
+
         
 
 
@@ -207,7 +208,10 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
     V.Decide_state()
     V.comp_data = V.comp_data.explode('prediction')
     V.comp_data = V.comp_data.reset_index()
-    V.comp_data = V.comp_data.drop(['matrix','gt'],axis=1)
+    pred=V.comp_data['prediction'].apply(pd.Series)
+    V.comp_data = V.comp_data.drop(['matrix','gt','prediction'],axis=1)
+    V.comp_data =  V.comp_data.join(pred)
+    V.comp_data['video']=image_folder
     # saving a json file of this video's intermediate results
     #save_json(self.save_stats_dir, comp_data.to_dict())
     V.comp_data.to_json(save_stats_dir)
