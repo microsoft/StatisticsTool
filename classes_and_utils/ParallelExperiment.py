@@ -406,6 +406,8 @@ class ParallelExperiment:
             shape = np.shape(image)
             orig_image_height, orig_image_width = shape[0], shape[1]
             result = cv2.resize(image, (self.image_width, self.image_height))
+        else:
+            result = np.full((self.image_height, self.image_width), 125, dtype=np.uint8)
         text = data.to_string()
         y0, dy = 80, 100
         
