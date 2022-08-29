@@ -171,8 +171,10 @@ class ParallelExperiment:
         :return: Boolean masks of TP, FP, FN that indicates which row in the predictions dataframe is TP/FP
                  and which row in the labels dataframe is a FN (row = bounding box)
         """
-        FN_mask = ((comp_data['x_gt'].notnull()) & (comp_data['state']<threshold))
-        FP_mask = ((comp_data['x'].notnull()) & (comp_data['state']<threshold))
+        #first key from 'detection' key in input
+        key = comp_data.keys()[1]
+        FN_mask = ((comp_data[key+'_gt'].notnull()) & (comp_data['state']<threshold))
+        FP_mask = ((comp_data[key].notnull()) & (comp_data['state']<threshold))
         TP_mask = (comp_data['state']>threshold)
         
         return TP_mask, FP_mask, FN_mask
@@ -399,6 +401,29 @@ class ParallelExperiment:
                 ids = self.segmented_ID[primary][secondary][tertiary][state]
                 return ids
 
+    def frame_visualization_no_bb(self, data, image):
+        if image is not None:
+            shape = np.shape(image)
+            orig_image_height, orig_image_width = shape[0], shape[1]
+            result = cv2.resize(image, (self.image_width, self.image_height))
+        text = data.to_string()
+        y0, dy = 80, 100
+        
+        for ind,i in enumerate(data.keys()):
+            y = y0 + ind*dy
+            result = cv2.putText(result, f'{i} - {data.values[ind]}', (50, y ), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 8, cv2.LINE_AA)
+       # result=cv2.putText(result, data.to_string(), (10,450), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 8, cv2.LINE_4)
+        fig = plt.figure()
+        plt.imshow(result)
+        red_patch = mpatches.Patch(color=(0, 0, 1), label='Prediction')
+        green_patch = mpatches.Patch(color=(0, 1, 0), label='GT')
+        plt.legend(ncol=2, loc='lower left', fontsize='small', handles=[red_patch, green_patch], bbox_to_anchor=(0, 1))
+        # used example in https://matplotlib.org/3.3.0/faq/howto_faq.html to show matplotlib figure on a web app
+        output = BytesIO()
+        fig.savefig(output, format="png")
+        ret_data = base64.b64encode(output.getbuffer()).decode("ascii")
+        return ret_data, fig
+
     def frame_visualization(self, frame_labels, frame_prds, selected_bb, matched, image):
         """
         Overlay a frame's bounding boxes on top of the frame
@@ -525,12 +550,15 @@ class ParallelExperiment:
         
         _, bb_index,frame_id = bb_id
         
-        image_folder=self.comp_data.loc[bb_index]['video']
+        data = self.comp_data.loc[bb_index]
+        image_folder=data['video']
         frame_image = self.read_image(frame_id, image_folder)
 
         label_bbs = []
         prd_bbs = []
         matched = []
+        if 'x' not in data:
+            return self.frame_visualization_no_bb(data, frame_image)
 
         all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==frame_id) & (self.comp_data['video']==image_folder))]
         for ind in range(0,len(all_frmae_obj)):

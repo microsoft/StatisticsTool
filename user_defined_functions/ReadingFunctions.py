@@ -54,9 +54,9 @@ def statistic_tool_reader_presence_calssification(path):
             frame_id = line['keys']['frame_id']
             if int(line['message']['HumanPresence'])>0:
                 
-                data={'frame_id':frame_id, 'prediction': True}
+                data={'frame_id':frame_id, 'prediction': [{'classification':1.0}]}
             else:
-                data={'frame_id':frame_id, 'prediction': False}
+                data={'frame_id':frame_id, 'prediction': [{'classification':0.0}]}
             records.append(data)
 
     df = pd.DataFrame.from_records(records)

@@ -113,7 +113,7 @@ class VideoEvaluation:
             if type(prediction) is not list:
                 prediction = [prediction]
             if type(gt) is not list:
-                prediction = [gt]        
+                gt = [gt]        
             if not len(gt) or not len(prediction):
                 mat=[]
             else:

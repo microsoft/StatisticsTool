@@ -32,7 +32,8 @@ The high-level dictionary which contains at least one Partition Dictionary
 
 
 
-
+def no_partitioning(dataframe, from_file=False):
+    return {}
 
 def size_horizontal_vertical(dataframe, from_file=False):
 
