@@ -68,13 +68,10 @@ class VideoEvaluation:
         self.readerFunction = readerFunction
         self.save_stats_dir = save_stats_dir
         self.evaluation_func = evaluation_func
-        self.empty_GT_frame_func = empty_GT_frame_func
         self.saving_mat_file_dir = saving_mat_file_dir
         self.file_loading_func = file_loading_func
         self.image_folder = image_folder
-        self.comp_data = [image_folder]
-        self.empty_frames_GT = set()
-        self.empty_frames_pred = set()
+        self.comp_data = []
 
 
     def load_data(self, pred_path, gt_path):
@@ -164,8 +161,7 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
                         overlap_function=overlap_function, readerFunction=readerFunction, save_stats_dir=save_stats_dir,
                         evaluation_func=evaluation_func, image_folder=image_folder, file_loading_func=file_loading_func,
                         empty_GT_frame_func=empty_GT_frame_func, saving_mat_file_dir=None)
-    frames = V.compare()
-    #V.Decide_state()
+    V.compare()
     
     V.comp_data = V.comp_data.explode('predictions')
     V.comp_data = V.comp_data.reset_index(drop=True)
