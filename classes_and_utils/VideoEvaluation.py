@@ -124,13 +124,14 @@ class VideoEvaluation:
                     overlap = self.overlap_function(prd_BB['prediction'], label_BB['prediction'])
                     mat[i, j] = round(overlap, 2)
            
-            self.evaluation_func(prediction, gt, mat)
+            self.evaluation_func(prediction, mat)
 
             gts = []
             for ind, x in enumerate(prediction): 
                 if 'matching' in x:
                     gts.append(x['matching'])
                     x['matching'] = gt[x['matching']]
+                
             for ind, x in enumerate(gt): 
                 if ind not in gts  and 'prediction' in x and x['prediction']: 
                     prediction.append({'matching':x,'state':0, 'detection': False}) 
@@ -142,36 +143,15 @@ class VideoEvaluation:
         if self.saving_mat_file_dir:
             save_json(self.saving_mat_file_dir, self.comp_data)
 
-    def Decide_state(self, from_file=False):
-        """
-        :param from_file: Boolean, loading self.comp_data from a file or not - for future development
-        :return: saves this video intermediate results as a json file in self.save_stats_dir:
-        the intermediate results are the same as in self.comp_data but with a matching between labels and predictions
-        """
-        # if we saved midway this is how we can load it back - for future development
-        if from_file:
-            assert self.file_loading_func, 'file_loading_func was not set !'
-            comp_data = self.file_loading_func(self.saving_mat_file_dir)
-        else:
-            comp_data = self.comp_data
-
-        for ind in comp_data.index:
-            frame_data = comp_data.loc[ind]
-            # calling a user specified self.evaluation_func that accepts a frame dictionary and matches predictions & labels
-            self.evaluation_func(frame_data)
-            gt_list = frame_data['gt'] 
-            predictions_list = frame_data['predictions'] 
-            for x in gt_list: 
-                if x['state']==0 and 'prediction' in x and x['prediction']: 
-                    predictions_list.append({'matching':x,'state':0, 'detection': False}) 
-
         
-def add_dict(dict_in, key, new_obj):
+def add_dict(dict_in, key, new_obj, add_gt=False):
     if type(dict_in) == dict:
+        if key == 'matching':
+            add_gt=True
         for j, p in enumerate(dict_in):
-            add_dict(dict_in[p], p, new_obj)
+            add_dict(dict_in[p], p, new_obj, add_gt)
     else:
-        if key in new_obj:
+        if add_gt:
             key = key+'_gt'
         new_obj[key] = dict_in
 

@@ -22,22 +22,16 @@ b. the overlap matrix columns corresponds to the index in the labels list (j'th 
 
 
 
-def Zvi_evaluation_func(predictions_dict_list, labels_dict_list, overlap_mat):
-
+def Zvi_evaluation_func(predictions_dict_list, overlap_mat):
     for i in range(len(predictions_dict_list)):
         predictions_dict_list[i]['state'] = 0
-        
-    # label that don't have a match is a FN
-    for j in range(len(labels_dict_list)):
-        labels_dict_list[j]['state'] = 0
 
-   
     if len(overlap_mat) > 0:
         prd_ind, label_ind = linear_sum_assignment(overlap_mat, maximize=True)
 
         # labels and predictions that have a match will be evaluated according to their overlap (threshold dependent)
         for i, j in zip(prd_ind, label_ind):
             predictions_dict_list[i]['state'] = overlap_mat[i][j]
-            predictions_dict_list[i]['matching'] = j
-            labels_dict_list[j]['matching']=i
-            labels_dict_list[j]['state'] = overlap_mat[i][j]
+            if overlap_mat[i][j] > 0:
+                predictions_dict_list[i]['matching'] = j
+
