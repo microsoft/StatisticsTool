@@ -106,37 +106,6 @@ class ParallelExperiment:
 
 
 
-    def OneFileProcedure(self, file_name):
-        """
-        Loads a single video intermediate results, and aggregates two dataframes with bounding box data,
-        one for predictions and one for ground truth
-        :param file_name: the name of the single intermediate results file name to be loaded
-        :return: the aggregated dataframes for predictions and ground truth
-        """
-        
-        list_of_dicts = loading_json(os.path.join(self.files_dir, file_name))
-        # initialize two lists in order to concentrate all the labels and all the prediction bounding boxes separately
-        list_of_prd_bb_dicts, list_of_label_bb_dicts = [], []
-        # the images folder path is stored as the first object in the list of dictionaries
-        images_folder = list_of_dicts[0]
-        for idx, temp_d in enumerate(list_of_dicts):
-            if idx == 0:
-                continue
-            # there is a 'prediction' key and a 'labels' in the frame dictionary the
-            # value of each one of them is a list of dictionaries, one for each bounding box
-            for PrdOrLabel in ['prediction', 'labels']:
-                bb_d_list = temp_d[PrdOrLabel]
-                for bb_d in bb_d_list:
-                    # adding the image folder information to each bounding box
-                    bb_d['images_folder'] = images_folder
-                    if PrdOrLabel == 'prediction':
-                        list_of_prd_bb_dicts.append(bb_d)
-                    else:
-                        list_of_label_bb_dicts.append(bb_d)
-        # turn lists into pandas dataframes
-        predictions_dataframe = pd.DataFrame(list_of_prd_bb_dicts)
-        labels_dataframe = pd.DataFrame(list_of_label_bb_dicts)
-        return predictions_dataframe, labels_dataframe
 
     def combine_from_text(self, save_dataframe=False):
         """
@@ -146,7 +115,7 @@ class ParallelExperiment:
 
         """
         saved_files_paths = [file for file in os.listdir(self.files_dir)]
-        # loop over the intermediate results files and aggregate the data using self.OneFileProcedure(file_name)
+        
         datafrme_dict = []
         for file_name in saved_files_paths:
             df = pd.read_json (os.path.join(self.files_dir, file_name))
