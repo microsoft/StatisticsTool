@@ -1,3 +1,4 @@
+from cProfile import label
 from genericpath import isdir
 import numpy as np, os
 import math
@@ -88,7 +89,7 @@ class VideoEvaluation:
         gt_data = self.readerFunction(gt_path)
        
         
-        gt_data.rename(columns={'prediction': 'gt'}, inplace=True)
+        gt_data.rename(columns={'predictions': 'gt'}, inplace=True)
         
         loaded_dataframe = pred_data.merge(gt_data, left_on='frame_id', right_on='frame_id',how='inner')
         
@@ -106,7 +107,7 @@ class VideoEvaluation:
         loaded_data['matrix'] = ''
         for frame_num in loaded_data.index:
             
-            prediction = loaded_data.loc[frame_num]['prediction']
+            prediction = loaded_data.loc[frame_num]['predictions']
             
             gt = loaded_data.loc[frame_num]['gt']
            
@@ -120,10 +121,13 @@ class VideoEvaluation:
                 mat = np.zeros((len(prediction), len(gt)))
             for i, prd_BB in enumerate(prediction):
                 for j, label_BB in enumerate(gt):
-                    overlap = self.overlap_function(prd_BB, label_BB)
+                    # if there is no object in row and only 1 key (it suppose to be 'detection' key) no detections and don't calculate overlap
+                    if 'prediction' not in prd_BB.keys() or 'prediction' not in label_BB.keys():
+                        continue
+                    overlap = self.overlap_function(prd_BB['prediction'], label_BB['prediction'])
                     mat[i, j] = round(overlap, 2)
       
-            loaded_data['matrix'][frame_num]=mat
+            loaded_data.at[frame_num,'matrix'] = mat
         
         self.comp_data = loaded_data
         # option to save midway - for future development (don't forget to end the path with ".json")
@@ -148,10 +152,10 @@ class VideoEvaluation:
             # calling a user specified self.evaluation_func that accepts a frame dictionary and matches predictions & labels
             self.evaluation_func(frame_data)
             gt_list = frame_data['gt'] 
-            predictions_list = frame_data['prediction'] 
+            predictions_list = frame_data['predictions'] 
             for x in gt_list: 
-                if x['state']==0: 
-                    predictions_list.append({'matching':x,'state':0}) 
+                if x['state']==0 and 'prediction' in x and x['prediction']: 
+                    predictions_list.append({'matching':x,'state':0, 'detection': False}) 
 
         
 def add_dict(dict_in, key, new_obj):
@@ -175,7 +179,7 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
     V.compare()
     V.Decide_state()
     V.comp_data.drop(['gt','matrix'],axis=1,inplace=True)
-    V.comp_data = V.comp_data.explode('prediction')
+    V.comp_data = V.comp_data.explode('predictions')
     V.comp_data = V.comp_data.reset_index(drop=True)
     
     new_data = []    
@@ -188,7 +192,7 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
             
         new_data.append(new_obj)
     V.comp_data = pd.DataFrame(new_data)
-    
+    V.comp_data.loc[V.comp_data['detection_gt'].isnull(), 'detection_gt']=False
     V.comp_data['video']=image_folder
     # saving a json file of this video's intermediate results
     #save_json(self.save_stats_dir, comp_data.to_dict())
@@ -214,6 +218,7 @@ def run_multiple_Videos(GT_path_list, pred_path_list, images_folders_list, image
     for GT_path, pred_path, image_folder_fullpath, image_folder_name in zip(GT_path_list, pred_path_list, image_folder_fullpath_list, images_folders_list):
         # the save_stats_file - where the intermediate results are saved:
         # is defined by save_stats_dir and the folders name
+        print(f"Start compare files: {pred_path} with: {GT_path}")
         save_stats_file = os.path.join(save_stats_dir, image_folder_name + '.json')
         run_one_video(GT_path, pred_path, image_folder_fullpath, overlap_function, readerFunction, save_stats_file, evaluation_func, file_loading_func=None, saving_mat_file_dir=None)
 

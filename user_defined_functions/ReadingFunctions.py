@@ -19,24 +19,30 @@ A reading function should:
 1. Read the input file (The type of the file is defined by the user according to user prefference)
 2. Convert the input data to panda's data frame format. The data frame should have at least the following columns:
     a. frame_id
-    b. detection:
-        one of the following:
+    b. predictions (1 or more) - array with predictions results for the current frame:
+        each element in the array should be dictionary with at least the following keys:
+            a. detection (mandatory) - True/False : For TP/FP calculation.
+            b. predictioon (not mandatory) - prediction dictionary for comparing between gt/prediction
+
+        If the  prediction is bounding box in the format below, it can be shown as rectangles on frame view:
         - Bounding box columns, using the following names:
                         i.   'x' is the minimal x coordinate
                         ii.  'y' is the minimal y coordinate
                         iii. 'width' is the width of the bounding box (column name will be 'width')
                         iv.  'height' is the height of the bounding box (column name will be 'height')
-        - classification:
-                    class name
-    
         
+        exmaples for output:
 
-4. Define a function that identify empty frames in GT data (frames with no labels):
-    a. returns True if the row loaded from the data is an empty frame, false otherwise
-    b. could be None (optional function)
+            {'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':'Active'}}]}
+            {'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':'Not_Active'}}]}
+           
+            {'frame_id': frame_id, 'predictions' [{'detection':True, 'prediction':{'object_id':1, 'x':10,'y':20,'width':10,'height':10}}]}
+            {'frame_id': frame_id, 'predictions' [{'detection':False}]}
+
+
 
 Returns:
-pandas dataframe, empty frame function (or None)
+pandas dataframe
 """
 
 def statistic_tool_reader_presence_calssification(path):
@@ -54,9 +60,9 @@ def statistic_tool_reader_presence_calssification(path):
             frame_id = line['keys']['frame_id']
             if int(line['message']['HumanPresence'])>0:
                 
-                data={'frame_id':frame_id, 'prediction': [{'classification':1.0}]}
+                data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
             else:
-                data={'frame_id':frame_id, 'prediction': [{'classification':0.0}]}
+                data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
             records.append(data)
 
     df = pd.DataFrame.from_records(records)
@@ -76,13 +82,17 @@ def statistic_tool_reader_presence_algo_logs(path):
 
         detections = []
         frame_id = line['keys']['frame_id']
+       
         for obj in line['message']['objects']:
             if obj["Source"] != "BODY_DETECTION":
                 continue
             bb = obj['BoundingBox']
-            detections.append({'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']})
-            
-        records.append({'frame_id': frame_id, 'prediction':detections})
+            detections.append({'detection':True, 'prediction':{'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']}})
+
+        if len(detections) == 0:
+            detections=[{'detection':False}]
+
+        records.append({'frame_id': frame_id, 'predictions':detections})
     
     df = pd.DataFrame.from_records(records)  
     

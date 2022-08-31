@@ -45,7 +45,7 @@ class ParallelExperiment:
             for example: {'total_stats': {'TP': TP_bolean_mask, ... }, 'size':{'possible partitions': ['large', 'small'], 'prediction masks': [prd_large_mask, prd_small_mask], 'labels masks': [label_large_mask, label_small_mask]}}
         ID_storage : dictionary
             A dictionary that holds the ids of bounding boxes in two arrays (id = (video name, index in original data structure, frame number))
-            the keys are 'predictions', 'labels' (one array for predictions and one for labels)
+            the keys are 'prediction', 'labels' (one array for predictions and one for labels)
         segmented_ID : dictionary
             A dictionary that holds the id's for the segmented examples.
             for one partition: id_dict = {'primary partition option 1':{'TP': array_of_TP_ids, 'FP': array_of_FP_ids ....}, 'primary partition option 2' : {'TP': array_of_TP_ids, 'FP': array_of_FP_ids ....}]
@@ -122,14 +122,14 @@ class ParallelExperiment:
         for idx, temp_d in enumerate(list_of_dicts):
             if idx == 0:
                 continue
-            # there is a 'predictions' key and a 'labels' in the frame dictionary the
+            # there is a 'prediction' key and a 'labels' in the frame dictionary the
             # value of each one of them is a list of dictionaries, one for each bounding box
-            for PrdOrLabel in ['predictions', 'labels']:
+            for PrdOrLabel in ['prediction', 'labels']:
                 bb_d_list = temp_d[PrdOrLabel]
                 for bb_d in bb_d_list:
                     # adding the image folder information to each bounding box
                     bb_d['images_folder'] = images_folder
-                    if PrdOrLabel == 'predictions':
+                    if PrdOrLabel == 'prediction':
                         list_of_prd_bb_dicts.append(bb_d)
                     else:
                         list_of_label_bb_dicts.append(bb_d)
@@ -172,9 +172,9 @@ class ParallelExperiment:
                  and which row in the labels dataframe is a FN (row = bounding box)
         """
         #first key from 'detection' key in input
-        key = comp_data.keys()[1]
-        FN_mask = ((comp_data[key+'_gt'].notnull()) & (comp_data['state']<threshold))
-        FP_mask = ((comp_data[key].notnull()) & (comp_data['state']<threshold))
+        key = 'detection'
+        FN_mask = ((comp_data[key+'_gt']) & (comp_data['state']<threshold))
+        FP_mask = ((comp_data[key]) & (comp_data['state']<threshold))
         TP_mask = (comp_data['state']>threshold)
         
         return TP_mask, FP_mask, FN_mask
@@ -417,7 +417,7 @@ class ParallelExperiment:
        # result=cv2.putText(result, data.to_string(), (10,450), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 8, cv2.LINE_4)
         fig = plt.figure()
         plt.imshow(result)
-        red_patch = mpatches.Patch(color=(0, 0, 1), label='Prediction')
+        red_patch = mpatches.Patch(color=(0, 0, 1), label='prediction')
         green_patch = mpatches.Patch(color=(0, 1, 0), label='GT')
         plt.legend(ncol=2, loc='lower left', fontsize='small', handles=[red_patch, green_patch], bbox_to_anchor=(0, 1))
         # used example in https://matplotlib.org/3.3.0/faq/howto_faq.html to show matplotlib figure on a web app
@@ -426,7 +426,7 @@ class ParallelExperiment:
         ret_data = base64.b64encode(output.getbuffer()).decode("ascii")
         return ret_data, fig
 
-    def frame_visualization(self, frame_labels, frame_prds, selected_bb, matched, image):
+    def frame_visualization(self, data, bb_index, image):
         """
         Overlay a frame's bounding boxes on top of the frame
 
@@ -437,6 +437,24 @@ class ParallelExperiment:
         :param image: the frame of the selected bounding box
         :return: encoded image for html use and a matplotlib figure, of the relevant frame with an overlay of its bounding boxes
         """
+        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==frame_id) & (self.comp_data['video']==image_folder))]
+        
+        label_bbs = []
+        prd_bbs = []
+        matched = []
+
+        for ind in range(0,len(all_frmae_obj)):
+            obj=all_frmae_obj.iloc[ind]
+            if not math.isnan(obj['x_gt']):
+                label_bbs.append([obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']])
+            if not math.isnan(obj['x']):
+                prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
+        obj = data[bb_index]
+        selected_bb = [obj['x'], obj['y'], obj['width'], obj['height']]
+        if not math.isnan(obj['x_gt']):
+            matched = [obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']]
+            
+      
         # if an image is availble we resize it to a fixed size and save its dimensions for bounding box scaling
         if image is not None:
             shape = np.shape(image)
@@ -489,7 +507,7 @@ class ParallelExperiment:
 
         fig = plt.figure()
         plt.imshow(result)
-        red_patch = mpatches.Patch(color=(0, 0, 1), label='Prediction')
+        red_patch = mpatches.Patch(color=(0, 0, 1), label='prediction')
         green_patch = mpatches.Patch(color=(0, 1, 0), label='GT')
         plt.legend(ncol=2, loc='lower left', fontsize='small', handles=[red_patch, green_patch], bbox_to_anchor=(0, 1))
         # used example in https://matplotlib.org/3.3.0/faq/howto_faq.html to show matplotlib figure on a web app
@@ -556,25 +574,13 @@ class ParallelExperiment:
         image_folder=data['video']
         frame_image = self.read_image(frame_id, image_folder)
 
-        label_bbs = []
-        prd_bbs = []
-        matched = []
+       
         if 'x' not in data:
             return self.frame_visualization_no_bb(data, frame_image)
 
-        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==frame_id) & (self.comp_data['video']==image_folder))]
-        for ind in range(0,len(all_frmae_obj)):
-            obj=all_frmae_obj.iloc[ind]
-            if not math.isnan(obj['x_gt']):
-                label_bbs.append([obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']])
-            if not math.isnan(obj['x']):
-                prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
-        obj = self.comp_data.loc[bb_index]
-        selected_bb = [obj['x'], obj['y'], obj['width'], obj['height']]
-        if not math.isnan(obj['x_gt']):
-            matched = [obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']]
+        
         # returning the output of frame_visualization which is are an encoded image (for html use) and matplotlib figure
-        return self.frame_visualization(label_bbs, prd_bbs, selected_bb, matched, frame_image)
+        return self.frame_visualization(frame_id, bb_index, frame_image)
 
 
 

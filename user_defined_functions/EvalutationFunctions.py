@@ -25,7 +25,7 @@ Returns the same input dictionary after the changes
 
 def Zvi_evaluation_func(temp_d):
 
-    predictions_d_list = temp_d['prediction']  # predictions list of dictionaries for current frame index
+    predictions_d_list = temp_d['predictions']  # predictions list of dictionaries for current frame index
     labels_d_list = temp_d['gt'] # labels list of dictionaries for current frame index (copy is to avoid looping while changing the original)
 
     for i in range(len(predictions_d_list)):
@@ -43,9 +43,12 @@ def Zvi_evaluation_func(temp_d):
         for i, j in zip(prd_ind, label_ind):
             predictions_d_list[i]['state'] = overlap_mat[i][j]
             predictions_d_list[i]['matching'] =labels_d_list[j].copy()
+            labels_d_list[j]['matching']=i
+            labels_d_list[j]['state'] = overlap_mat[i][j]
+
     return temp_d
 def classification_evaluation(temp_d):
-    predictions_d_list = temp_d['prediction']  # predictions list of dictionaries for current frame index
+    predictions_d_list = temp_d['predictions']  # predictions list of dictionaries for current frame index
     labels_d_list = temp_d['gt'] # labels list of dictionaries for current frame index (copy is to avoid looping while changing the original)
     overlap_mat = temp_d['matrix']  # columns are labels and rows are predictions
     
@@ -67,7 +70,7 @@ def classification_evaluation(temp_d):
 
 def label_centric_greedy_evaluation(temp_d):
     threshold = 0.2
-    predictions_d_list = temp_d['prediction']  # predictions list of dictionaries for current frame index
+    predictions_d_list = temp_d['predictions']  # predictions list of dictionaries for current frame index
     labels_d_list = temp_d['gt'] # labels list of dictionaries for current frame index (copy is to avoid looping while changing the original)
     overlap_mat = temp_d['matrix']  # columns are labels and rows are predictions
     if overlap_mat:
