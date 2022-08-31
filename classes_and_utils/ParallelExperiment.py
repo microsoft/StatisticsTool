@@ -175,7 +175,7 @@ class ParallelExperiment:
         key = 'detection'
         FN_mask = ((comp_data[key+'_gt']) & (comp_data['state']<threshold))
         FP_mask = ((comp_data[key]) & (comp_data['state']<threshold))
-        TP_mask = (comp_data['state']>threshold)
+        TP_mask = ((comp_data[key]) &(comp_data['state']>threshold))
         
         return TP_mask, FP_mask, FN_mask
 
@@ -426,7 +426,7 @@ class ParallelExperiment:
         ret_data = base64.b64encode(output.getbuffer()).decode("ascii")
         return ret_data, fig
 
-    def frame_visualization(self, data, bb_index, image):
+    def frame_visualization(self, bb_index, image):
         """
         Overlay a frame's bounding boxes on top of the frame
 
@@ -437,7 +437,9 @@ class ParallelExperiment:
         :param image: the frame of the selected bounding box
         :return: encoded image for html use and a matplotlib figure, of the relevant frame with an overlay of its bounding boxes
         """
-        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==frame_id) & (self.comp_data['video']==image_folder))]
+
+        bb_obj=self.comp_data.loc[bb_index]
+        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==bb_obj['frame_id']) & (self.comp_data['video']==bb_obj['video']))]
         
         label_bbs = []
         prd_bbs = []
@@ -449,10 +451,10 @@ class ParallelExperiment:
                 label_bbs.append([obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']])
             if not math.isnan(obj['x']):
                 prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
-        obj = data[bb_index]
-        selected_bb = [obj['x'], obj['y'], obj['width'], obj['height']]
+        
+        selected_bb = [bb_obj['x'], bb_obj['y'], bb_obj['width'], bb_obj['height']]
         if not math.isnan(obj['x_gt']):
-            matched = [obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']]
+            matched = [bb_obj['x_gt'],bb_obj['y_gt'],bb_obj['width_gt'],bb_obj['height_gt']]
             
       
         # if an image is availble we resize it to a fixed size and save its dimensions for bounding box scaling
@@ -466,7 +468,7 @@ class ParallelExperiment:
             orig_image_width, orig_image_height = self.image_width, self.image_height
             result = np.zeros((self.image_width, self.image_height, 3), dtype=np.uint8)
         # iterating over the frame's GT and prediction bounding boxes
-        for i, bb_list in enumerate([frame_labels, frame_prds]):
+        for i, bb_list in enumerate([label_bbs, prd_bbs]):
             for temp_bb in bb_list:
                 (x, y, w, h) = temp_bb
                 # when bounding box coordinates are normalized between 0-1
@@ -580,7 +582,7 @@ class ParallelExperiment:
 
         
         # returning the output of frame_visualization which is are an encoded image (for html use) and matplotlib figure
-        return self.frame_visualization(frame_id, bb_index, frame_image)
+        return self.frame_visualization(bb_index, frame_image)
 
 
 

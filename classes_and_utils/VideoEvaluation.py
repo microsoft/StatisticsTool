@@ -102,14 +102,11 @@ class VideoEvaluation:
         """
         # load the per frame bounding box hash table (dictionary) for labels and predictions
         loaded_data = self.load_data(self.pred_path, self.GT_path)
-       
-        # Iterate over all frames in the predictions data and compare predictions-labels of the same frame to yield an overlap matrix
-        loaded_data['matrix'] = ''
-        for frame_num in loaded_data.index:
-            
-            prediction = loaded_data.loc[frame_num]['predictions']
-            
-            gt = loaded_data.loc[frame_num]['gt']
+        
+        frames = loaded_data.to_dict()
+        for frame_num in frames['frame_id']:
+            prediction = frames['predictions'][frame_num]
+            gt = frames['gt'][frame_num]
            
             if type(prediction) is not list:
                 prediction = [prediction]
@@ -126,10 +123,21 @@ class VideoEvaluation:
                         continue
                     overlap = self.overlap_function(prd_BB['prediction'], label_BB['prediction'])
                     mat[i, j] = round(overlap, 2)
-      
-            loaded_data.at[frame_num,'matrix'] = mat
+           
+            self.evaluation_func(prediction, gt, mat)
+
+            gts = []
+            for ind, x in enumerate(prediction): 
+                if 'matching' in x:
+                    gts.append(x['matching'])
+                    x['matching'] = gt[x['matching']]
+            for ind, x in enumerate(gt): 
+                if ind not in gts  and 'prediction' in x and x['prediction']: 
+                    prediction.append({'matching':x,'state':0, 'detection': False}) 
         
-        self.comp_data = loaded_data
+        self.comp_data = pd.DataFrame.from_dict(frames)
+        self.comp_data.drop('gt',axis=1,inplace=True)
+        
         # option to save midway - for future development (don't forget to end the path with ".json")
         if self.saving_mat_file_dir:
             save_json(self.saving_mat_file_dir, self.comp_data)
@@ -176,13 +184,13 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
                         overlap_function=overlap_function, readerFunction=readerFunction, save_stats_dir=save_stats_dir,
                         evaluation_func=evaluation_func, image_folder=image_folder, file_loading_func=file_loading_func,
                         empty_GT_frame_func=empty_GT_frame_func, saving_mat_file_dir=None)
-    V.compare()
-    V.Decide_state()
-    V.comp_data.drop(['gt','matrix'],axis=1,inplace=True)
+    frames = V.compare()
+    #V.Decide_state()
+    
     V.comp_data = V.comp_data.explode('predictions')
     V.comp_data = V.comp_data.reset_index(drop=True)
     
-    new_data = []    
+    new_data = []   
     pred_arr = V.comp_data.to_numpy()
     keys = V.comp_data.keys()
     for row in pred_arr:

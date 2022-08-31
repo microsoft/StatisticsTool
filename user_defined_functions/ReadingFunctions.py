@@ -31,11 +31,13 @@ A reading function should:
                         iii. 'width' is the width of the bounding box (column name will be 'width')
                         iv.  'height' is the height of the bounding box (column name will be 'height')
         
-        exmaples for output:
+        exmaples for output rows in the dataframe:
 
+            classification example:           
             {'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':'Active'}}]}
             {'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':'Not_Active'}}]}
            
+            detection example:
             {'frame_id': frame_id, 'predictions' [{'detection':True, 'prediction':{'object_id':1, 'x':10,'y':20,'width':10,'height':10}}]}
             {'frame_id': frame_id, 'predictions' [{'detection':False}]}
 
