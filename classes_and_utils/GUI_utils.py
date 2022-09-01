@@ -245,7 +245,7 @@ def get_path_lists(prd_dir, GT_dir, images_dir):
         if name not in GT_list:
             continue
         if name in images_folders_list_base:
-            images_folders_list_abs.append(os.path.join(images_dir, name))
+            images_folders_list_abs.append(os.path.join(images_dir, images_folders_list[images_folders_list_base.index(name)]))
             new_images_folder_list.append(name)
         else:
             images_folders_list_abs.append('no_video')
