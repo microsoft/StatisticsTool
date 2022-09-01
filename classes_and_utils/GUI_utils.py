@@ -229,11 +229,29 @@ def get_path_lists(prd_dir, GT_dir, images_dir):
     prd_list.sort()
     GT_list.sort()
     images_folders_list.sort()
+    images_folders_list_base = [os.path.basename(k).split('.')[0] for k in images_folders_list]
     # get absolute path
-    prd_list_abs = [os.path.join(prd_dir, name) for name in prd_list]
-    GT_list_abs = [os.path.join(GT_dir, name) for name in GT_list]
-    images_folders_list_abs = [os.path.join(images_dir, name) for name in images_folders_list]
-    return GT_list_abs, prd_list_abs, images_folders_list, images_folders_list_abs
+    prd_list_abs = []
+    for name in prd_list:
+        if name in GT_list:
+            prd_list_abs.append(os.path.join(prd_dir, name))
+    GT_list_abs=[]
+    for name in GT_list:
+        if name in prd_list:
+            GT_list_abs.append(os.path.join(GT_dir, name))
+    images_folders_list_abs = []
+    new_images_folder_list = []
+    for name in prd_list:
+        if name not in GT_list:
+            continue
+        if name in images_folders_list_base:
+            images_folders_list_abs.append(os.path.join(images_dir, name))
+            new_images_folder_list.append(name)
+        else:
+            images_folders_list_abs.append('no_video')
+            new_images_folder_list.append('no_video')
+
+    return GT_list_abs, prd_list_abs, new_images_folder_list, images_folders_list_abs
 
 
 def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_saving_dir, save_stats_dir, images_dir,
@@ -464,21 +482,15 @@ def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stat
     video_names, v_idx_arr = np.unique(arr_of_examples[:, 0], return_inverse=True)
     per_video_example_hash = {}
     # getting the list in a hierarchy of the form:  1. video 2. frame 3. bouding box index
+    per_video_example_hash = dict.fromkeys(video_names)
+    for key in per_video_example_hash.keys():
+        per_video_example_hash[key] = {}
     
-    for i, vid_name in enumerate(video_names):
-        per_video_example_hash[vid_name] = {}
-
-        # v = arr_of_examples[arr_of_examples[:,0]==vid_name]
-        # f = arr_of_examples[arr_of_examples[:,0]==vid_name,2]
-        # per_video_example_hash[vid_name]=dict(zip(f,v))
-        temp_vid_indices = v_idx_arr == i
-        temp_video_examples = arr_of_examples[temp_vid_indices, :]
-        temp_unique_frames = np.unique(temp_video_examples[:, 2])
-        for unique_frame in temp_unique_frames:
-            temp_frame_indices = arr_of_examples[:, 2] == unique_frame
-            indices_for_this_video_and_frame = np.logical_and(temp_frame_indices, temp_vid_indices)
-            examples_for_this_video_and_frame = arr_of_examples[indices_for_this_video_and_frame, :]
-            per_video_example_hash[vid_name][unique_frame] = examples_for_this_video_and_frame
+    for example in arr_of_examples:
+        
+            if example[2] not in per_video_example_hash[example[0]]:
+                per_video_example_hash[example[0]][example[2]] = []
+            ((per_video_example_hash[example[0]])[example[2]]).append(example)
     return per_video_example_hash, save_path
 
 
