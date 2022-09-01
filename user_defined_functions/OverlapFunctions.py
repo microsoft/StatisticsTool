@@ -4,12 +4,12 @@ Overlap Function instructions:
 ------------------------------
 
 Input:
-a. a dictionary that contains a prediction bounding box data (after modifications in Reading function)
-b. a dictionary that contains a GT bounding box data (after modifications in Reading function)
+prediction and groun truth dictionaries that contains prediction and label dictionaries with the same keys and values as added in user defined reading function
+
 
 An Overlap function should:
 1. Extract the relevant information from dictionaries (e.g the XYWH coordinates for detection tasks)
-2. calculate a metric
+2. return overlap score between pred and label. The score will be used with the threshold to determine if the pred and the label are the same detection.
 
 Returns:
 A numerical score
