@@ -17,7 +17,7 @@ A numerical score
 """
 
 def Classification_True_False(pred_row, labels_row):
-    if pred_row == labels_row:
+    if pred_row.keys() == labels_row.keys():
         return 1.0
     return 0.0 
 def IOU(pred_row, labels_row):

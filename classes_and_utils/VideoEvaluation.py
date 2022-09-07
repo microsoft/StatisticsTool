@@ -152,6 +152,44 @@ def add_dict(dict_in, key, new_obj, add_gt=False):
             key = key+'_gt'
         new_obj[key] = dict_in
 
+
+def transform_data(comp_data):
+    key = 'detection'
+    in_event = False
+    prediction = comp_data[key]
+    label = comp_data[key+'_gt']
+    frames = comp_data['frame_id']
+    events = []
+    new_event = {}
+    last_frame=-1
+    for ind, (pred, gt) in enumerate(zip(prediction, label)):
+        if pred or gt:
+            if not in_event:
+                new_event = comp_data.iloc[ind].to_dict()
+                new_event[key]=False
+                new_event[key+"_gt"]=False
+                in_event = True
+            
+            if pred:
+                new_event[key]=True
+            if gt:
+                new_event[key+'_gt']=True
+
+                
+        elif frames[ind] != last_frame:
+                new_event['end_frame'] = last_frame
+                events.append(new_event)
+                in_event = False
+        last_frame = frames[ind]
+
+    if in_event:
+        new_event['end_frame'] = last_frame
+        events.append(new_event)
+        in_event = False
+
+    transform_data = pd.DataFrame.from_records(events)
+    return transform_data
+
 def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunction, save_stats_dir, evaluation_func, file_loading_func=None, empty_GT_frame_func=None, saving_mat_file_dir=None):
     """
     :params - same as VideoEvaluation class
@@ -178,6 +216,9 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
     V.comp_data = pd.DataFrame(new_data)
     V.comp_data.loc[V.comp_data['detection_gt'].isnull(), 'detection_gt']=False
     V.comp_data['video']=image_folder
+
+    V.comp_data=transform_data(V.comp_data)
+
     # saving a json file of this video's intermediate results
     #save_json(self.save_stats_dir, comp_data.to_dict())
     V.comp_data.to_json(save_stats_dir)

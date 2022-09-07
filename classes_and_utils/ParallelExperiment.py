@@ -142,11 +142,12 @@ class ParallelExperiment:
         """
         #first key from 'detection' key in input
         key = 'detection'
-        FN_mask = ((comp_data[key+'_gt']) & (comp_data['state']<threshold))
-        FP_mask = ((comp_data[key]) & (comp_data['state']<threshold))
-        TP_mask = ((comp_data[key]) &(comp_data['state']>threshold))
+        FN_mask = ((comp_data[key+'_gt']==True) & ((comp_data['state']<threshold) | (comp_data[key]==False) ))
+        FP_mask = ((comp_data[key]==True) & ((comp_data['state']<threshold) | ( comp_data[key+'_gt']==False)))
+        TP_mask = ((comp_data[key]==True) &((comp_data['state']>threshold) & (comp_data[key+'_gt']==True)))
         
         return TP_mask, FP_mask, FN_mask
+               
 
     def get_segmentation_masks(self, threshold, from_file=False, label_file_dir=None, prd_file_dir=None):
         """
@@ -173,9 +174,15 @@ class ParallelExperiment:
         self.masks.update(self.wanted_segmentations)
 
         video_name = self.comp_data['video'].values.copy()[:, np.newaxis]
-        frame = self.comp_data['frame_id'].values.copy()[:, np.newaxis] 
+        frame = self.comp_data['frame_id'].values.astype(int).copy()[:, np.newaxis] 
         index = self.comp_data.index.to_series().values.copy()[:, np.newaxis]
-        self.ID_storage['prediction'] = np.concatenate((video_name, index, frame), axis=1)
+        if 'end_frame' in self.comp_data.keys():
+            end_frames = self.comp_data['end_frame'].values.astype(int).copy()[:, np.newaxis]
+        else:
+            end_frames = frame
+        
+        self.ID_storage['prediction'] = np.concatenate((video_name, index, frame, end_frames), axis=1)
+        
         self.ID_storage['label'] = self.ID_storage['prediction']
 
 
@@ -378,11 +385,11 @@ class ParallelExperiment:
         else:
             result = np.full((self.image_height, self.image_width), 125, dtype=np.uint8)
         text = data.to_string()
-        y0, dy = 80, 100
+        y0, dy = 60, 70
         
         for ind,i in enumerate(data.keys()):
             y = y0 + ind*dy
-            result = cv2.putText(result, f'{i} - {data.values[ind]}', (50, y ), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 8, cv2.LINE_AA)
+            result = cv2.putText(result, f'{i} - {data.values[ind]}', (50, y ), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 4, cv2.LINE_AA)
        # result=cv2.putText(result, data.to_string(), (10,450), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 8, cv2.LINE_4)
         fig = plt.figure()
         plt.imshow(result)
@@ -539,7 +546,7 @@ class ParallelExperiment:
             self.combined_label_dataframe = pd.read_csv(os.path.join(self.save_stats_dir, label_file_dir))
         # the video name (image folder name) and bounding box index are needed for identification of the correct bounding box (the frame id is not necessary)
         
-        _, bb_index,frame_id = bb_id
+        _, bb_index,frame_id,_ = bb_id
         
         data = self.comp_data.loc[bb_index]
         image_folder=data['video']
