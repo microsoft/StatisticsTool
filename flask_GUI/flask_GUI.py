@@ -15,7 +15,6 @@ app = Flask(__name__)
 # getting the options for each type of necessary function
 file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs = options_for_funcs()
 
-
 #### Route for homepage ####
 @app.route('/', methods=['GET', 'POST'])
 def homepage():
@@ -77,8 +76,8 @@ def show_stats():
 
 @app.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    state, cl_and_choice, mytup, save_path, per_video_example_hash = manage_list_request(request, exp)
-    return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash)
+    state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon = manage_list_request(request, exp)
+    return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon)
 
 @app.route('/show_im', methods=['GET', 'POST'])
 def show_image():

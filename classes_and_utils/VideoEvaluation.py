@@ -216,8 +216,8 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
     V.comp_data = pd.DataFrame(new_data)
     V.comp_data.loc[V.comp_data['detection_gt'].isnull(), 'detection_gt']=False
     V.comp_data['video']=image_folder
-
-    V.comp_data=transform_data(V.comp_data)
+   
+    #V.comp_data=transform_data(V.comp_data)
 
     # saving a json file of this video's intermediate results
     #save_json(self.save_stats_dir, comp_data.to_dict())

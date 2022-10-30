@@ -93,7 +93,7 @@ class ParallelExperiment:
         Accepts a bb_id and display its frame by calling self.frame_visualization()
 
     """
-    def __init__(self, statistic_funcs, files_dir, save_stats_dir, image_width, image_height, segmentation_funcs=None):
+    def __init__(self, statistic_funcs, files_dir, save_stats_dir, image_width, image_height,segmentation_funcs,video_annotation_dict):
         self.files_dir = files_dir
         self.statistic_funcs = statistic_funcs
         self.save_stats_dir = save_stats_dir
@@ -103,6 +103,9 @@ class ParallelExperiment:
         self.segmented_ID = {}
         self.image_width = int(image_width)
         self.image_height = int(image_height)
+        self.video_annotation_dict = video_annotation_dict
+    
+        
 
 
 
@@ -202,7 +205,7 @@ class ParallelExperiment:
             TP, FP, FN = sum(self.masks['total_stats']['TP']), sum(self.masks['total_stats']['FP']), sum(self.masks['total_stats']['FN'])
             # calculating the statistics
             statistics_dict = self.statistic_funcs(TP, FP, FN)
-            state_dict = {'TP': TP, 'FP': FP, 'FN': FN}
+            state_dict = {'TP': TP, 'FP': FP, 'FN': FN, 'TOTAL_FRAMES': len(self.comp_data['frame_id'])}
             # getting the ids of the TP/FP/FN examples
             self.segmented_ID['total'] = {'TP': self.ID_storage["prediction"][self.masks['total_stats']['TP']], 'FP': self.ID_storage['prediction'][self.masks['total_stats']['FP']], 'FN': self.ID_storage['label'][self.masks['total_stats']['FN']]}
             # turning the dictionaries into pandas dataframes
@@ -565,7 +568,7 @@ class ParallelExperiment:
 
 
 
-def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentation_funcs, threshold, image_width, image_height):
+def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentation_funcs, threshold, image_width, image_height,video_annotation_dict):
     """
 
     :param save_stats_dir: same as in ParallelExperiment
@@ -577,7 +580,7 @@ def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentati
     :param image_height: the image height size to reshapw to
     :return:
     """
-    exp = ParallelExperiment(save_stats_dir=save_stats_dir, statistic_funcs=statistic_funcs, files_dir=files_dir, segmentation_funcs=segmentation_funcs, image_width=image_width, image_height=image_height)
+    exp = ParallelExperiment(save_stats_dir=save_stats_dir, statistic_funcs=statistic_funcs, files_dir=files_dir, segmentation_funcs=segmentation_funcs, image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict)
     exp.combine_from_text(False)
     exp.get_segmentation_masks(float(threshold))
     return exp

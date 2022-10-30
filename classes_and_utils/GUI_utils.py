@@ -9,7 +9,7 @@ from classes_and_utils.VideoEvaluation import run_multiple_Videos
 from inspect import getmembers, isfunction
 from classes_and_utils.utils import loading_json, save_json
 import re, pickle
-
+import json
 
 def save_object(obj, filename):
     """
@@ -274,6 +274,9 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
     # extract matching lists of absolute paths for the predictions, labels and images
     GT_list_abs, prd_list_abs, images_folders_list, images_folders_list_abs = get_path_lists(prd_dir, GT_dir,
                                                                                              images_dir)
+    video_annotation_dict = {}
+    for gt, pred, vid in zip(GT_list_abs, prd_list_abs, images_folders_list_abs):
+        video_annotation_dict[vid]={"pred":pred+".json","gt":gt+".json"}
 
     try:
         # extract all the intermediate results from the raw prediction-label files
@@ -287,7 +290,7 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
     # combine the intermediate results for further statistics and example extraction
     exp = combine_video_results(save_stats_dir=save_stats_dir, statistic_funcs=statistics_funcs,
                                 files_dir=single_video_hash_saving_dir, segmentation_funcs=partitioning_func,
-                                threshold=threshold, image_width=image_width, image_height=image_height)
+                                threshold=threshold, image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict)
 
     save_object(exp, os.path.join(save_stats_dir, 'report_' + config_file_name.replace('.json', '') + '.pkl'))
     return exp
@@ -416,6 +419,8 @@ def unpack_list_request(request, masks):
     # request came from examples_list.html to save the example list
     else:
         mytup = request.args.get('mytup')
+    
+    if "save_list" in request.args:
         save = True
     # mytup is a tuple that varies in size and include the names of the selected
     # row, sub row, column (partitions) if exists, and the name of the state chosen from the table.
@@ -449,7 +454,11 @@ def unpack_list_request(request, masks):
             for cl in opt:
                 if tertiary in masks[cl]['possible partitions']:
                     cl_and_choice[cl] = tertiary
-    return state, total, primary, secondary, tertiary, save, cl_and_choice, mytup
+
+    export_sheldon = False
+    if 'sheldon' in request.args:
+        export_sheldon = True
+    return state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon
 
 
 def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stats_dir, state):
@@ -463,8 +472,8 @@ def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stat
     :return:
     """
     # removing the .json for display
-    for example in arr_of_examples:
-        example[0] = example[0].replace(".json", "")
+    # for example in arr_of_examples:
+    #     example[0] = example[0].replace(".json", "")
     save_path = None
     # saving the examples as a list of lists
     if save:
@@ -486,11 +495,24 @@ def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stat
     for key in per_video_example_hash.keys():
         per_video_example_hash[key] = {}
     
-    for example in arr_of_examples:
+    start_frame = -1
+    prev_frame = -999
+    prev_vid = ''
+    for ind, example in enumerate(arr_of_examples):
+        if example[2] - prev_frame > 1 or prev_vid != example[0]:
+            prev_vid = example[0]
+            start_frame = example[2]
+            
+        prev_frame = example[2]
+        if start_frame not in per_video_example_hash[example[0]]:
+            start_frame = example[2]
+            per_video_example_hash[example[0]][start_frame] = {}
+            (((per_video_example_hash[example[0]])[start_frame]))['frames']  = []
+
         
-            if example[2] not in per_video_example_hash[example[0]]:
-                per_video_example_hash[example[0]][example[2]] = []
-            ((per_video_example_hash[example[0]])[example[2]]).append(example)
+        (((per_video_example_hash[example[0]])[start_frame])['frames']).append(example)
+        ((per_video_example_hash[example[0]])[start_frame])['end_frame'] = example[2]
+
     return per_video_example_hash, save_path
 
 
@@ -502,13 +524,45 @@ def manage_list_request(request, exp):
     :return: all the parameter needed to show and save the list of examples asked by the user
     """
     # get the names of requested states and partitions, a save boolean and a dictionary of {partition_class: selected_option} (example {"vehicles":"bus"})
-    state, total, primary, secondary, tertiary, save, cl_and_choice, mytup = unpack_list_request(request, exp.masks)
+    state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon = unpack_list_request(request, exp.masks)
     # extracting the example list for requested partitions and state
     list_of_examples = exp.get_ids(state=state, total=total, primary=primary, secondary=secondary, tertiary=tertiary)
     # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see
     per_video_example_hash, save_path = parameters_4_collapsing_list(list_of_examples, cl_and_choice, save,
                                                                      exp.save_stats_dir, state)
-    return state, cl_and_choice, mytup, save_path, per_video_example_hash
+
+    saved_sheldon = None
+    if export_sheldon:
+        saved_sheldon = export_list_to_sheldon(per_video_example_hash, exp.video_annotation_dict, exp.save_stats_dir)
+    return state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon
+
+
+def export_list_to_sheldon(images_list, video_annotation_dict,output_dir):
+    sheldon_list = []
+    for file in images_list:
+        for event in images_list[file]:
+            sheldon_link={}
+            sheldon_link['keys']={}
+            sheldon_link['keys']['type']='debug'
+            sheldon_link['message']={}
+            sheldon_link['message']['IsChecked']='False'
+            vid = images_list[file][event]['frames'][0][0]
+            sheldon_link['message']['Video Location']=vid
+            sheldon_link['message']['Primary MetaData']=video_annotation_dict[vid]['pred']
+            sheldon_link['message']['Secondary MetaData']=video_annotation_dict[vid]['gt']
+            sheldon_link['message']['Frame Number']= images_list[file][event]['frames'][0][2]
+            sheldon_link['message']['end_frame'] = images_list[file][event]['end_frame']
+            sheldon_list.append(json.dumps(sheldon_link))
+    
+    saved_file = output_dir+"/sheldon_list.log"
+    with open(saved_file, 'w') as f:
+        for event in sheldon_list:
+            f.write(event+'\n')
+        
+    return saved_file
+
+
+
 
 
 def manage_image_request(request, exp):

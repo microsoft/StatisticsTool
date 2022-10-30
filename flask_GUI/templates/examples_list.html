@@ -52,13 +52,23 @@ window.onload = function  () {
     </div>
 
 <div style="position:relative;">
-<form action="/update_list?mytup={{mytup}}" method="post">
-<button type="submit"> Save list </button>
-</form>
-{% if save_path:%}
-<p style="font-family: Arial, Helvetica, sans-serif;"> list was saved to: <br>
-    {{save_path}} </p>
-{%endif%}
+    <tr><td>
+    <form action="/update_list?mytup={{mytup}}&save_list=true" method="post">
+        <button type="submit"> Save list </button>
+    </form></td>
+    <tr><td><form action="/update_list?mytup={{mytup}}&sheldon=true" method="post">
+        <button type="submit"> Export to Sheldon </button>    
+    </form></td></tr>
+
+    {% if save_path:%}
+    <p style="font-family: Arial, Helvetica, sans-serif;"> List was saved to: <br>
+        {{save_path}} </p>
+    {%endif%}
+    
+    {% if saved_sheldon:%}
+    <p style="font-family: Arial, Helvetica, sans-serif;"> Sheldon file path: <br>
+        {{saved_sheldon}} </p>
+    {%endif%}
 </div>
 
 <div style="position:relative;top: 0px; left: 0px;">
@@ -69,10 +79,10 @@ window.onload = function  () {
                 <ul>
                    {% for frame_key in per_video_example_hash[vid_key]: %}
                     <li >
-                        <span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;"> Frame # {{frame_key}}-{{per_video_example_hash[vid_key][frame_key][0][3]}}</span>
+                        <span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;"> Frame # {{frame_key}}-{{per_video_example_hash[vid_key][frame_key]["end_frame"]}}</span>
                         <ul>
-                            {% for example_name in per_video_example_hash[vid_key][frame_key]: %}
-                           <li><a style="font-family: Arial, Helvetica, sans-serif;" target="iframe3" href="/show_im?example_name={{example_name}}"> Index # {{example_name[1]}}</a> </li>
+                            {% for example_name in per_video_example_hash[vid_key][frame_key]["frames"]: %}
+                           <li><a style="font-family: Arial, Helvetica, sans-serif;" target="iframe3" href="/show_im?example_name={{example_name}}"> Frame - {{example_name[2]}}, Index # {{example_name[1]}}</a> </li>
                             {%endfor%}
                         </ul>
                     </li>
