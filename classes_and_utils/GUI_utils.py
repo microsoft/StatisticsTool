@@ -540,13 +540,11 @@ def manage_list_request(request, exp):
 def export_list_to_sheldon(images_list, video_annotation_dict,output_dir, states):
     sheldon_list = []
     header = {}
-    header['keys']={}
-    header['message']={}
-    header['keys']['type']='header'
+    header['header']={}
     list(video_annotation_dict.values())[0]['pred']
-    header['message']['primary_metadata'] = os.path.dirname(list(video_annotation_dict.values())[0]['pred'])
-    header['message']['secondary_metadata'] = os.path.dirname(list(video_annotation_dict.values())[0]['gt'])
-    header['message']['segmentation']=list(states)
+    header['header']['primary_metadata'] = os.path.dirname(list(video_annotation_dict.values())[0]['pred'])
+    header['header']['secondary_metadata'] = os.path.dirname(list(video_annotation_dict.values())[0]['gt'])
+    header['header']['segmentation']=list(states)
     sheldon_list.append(json.dumps(header))
     for file in images_list:
         for event in images_list[file]:
