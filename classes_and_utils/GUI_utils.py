@@ -533,12 +533,21 @@ def manage_list_request(request, exp):
 
     saved_sheldon = None
     if export_sheldon:
-        saved_sheldon = export_list_to_sheldon(per_video_example_hash, exp.video_annotation_dict, exp.save_stats_dir)
+        saved_sheldon = export_list_to_sheldon(per_video_example_hash, exp.video_annotation_dict, exp.save_stats_dir, mytup)
     return state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon
 
 
-def export_list_to_sheldon(images_list, video_annotation_dict,output_dir):
+def export_list_to_sheldon(images_list, video_annotation_dict,output_dir, states):
     sheldon_list = []
+    header = {}
+    header['keys']={}
+    header['message']={}
+    header['keys']['type']='header'
+    list(video_annotation_dict.values())[0]['pred']
+    header['message']['primary_metadata'] = os.path.dirname(list(video_annotation_dict.values())[0]['pred'])
+    header['message']['secondary_metadata'] = os.path.dirname(list(video_annotation_dict.values())[0]['gt'])
+    header['message']['segmentation']=list(states)
+    sheldon_list.append(json.dumps(header))
     for file in images_list:
         for event in images_list[file]:
             sheldon_link={}
@@ -548,13 +557,13 @@ def export_list_to_sheldon(images_list, video_annotation_dict,output_dir):
             sheldon_link['message']['IsChecked']='False'
             vid = images_list[file][event]['frames'][0][0]
             sheldon_link['message']['Video Location']=vid
-            sheldon_link['message']['Primary MetaData']=video_annotation_dict[vid]['pred']
-            sheldon_link['message']['Secondary MetaData']=video_annotation_dict[vid]['gt']
             sheldon_link['message']['Frame Number']= images_list[file][event]['frames'][0][2]
             sheldon_link['message']['end_frame'] = images_list[file][event]['end_frame']
             sheldon_list.append(json.dumps(sheldon_link))
     
-    saved_file = output_dir+"/sheldon_list.log"
+    name = ''
+
+    saved_file = output_dir+"/"+'-'.join(list(states)) +".json"
     with open(saved_file, 'w') as f:
         for event in sheldon_list:
             f.write(event+'\n')
