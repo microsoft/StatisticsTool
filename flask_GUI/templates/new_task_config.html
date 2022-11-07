@@ -83,8 +83,17 @@ a.button:hover {
                         {%endfor%}
                         </select>
                 </td>
-
-
+        </tr>
+        <tr>
+                <td><label style="font-family: Arial, Helvetica, sans-serif; width:100%;max-width:100%;"> Transform Function(Empty for None): </label></td>
+                <td>
+                        <select name="transform_func" style ="background-color:#4CAF50;">
+                        {% for func in transformation_funcs: %}
+                        <option value="{{func}}"> {{func}} </option>
+                        {%endfor%}
+                        </select>
+                </td>
+        </tr>
         <tr>
                 <td><label style="font-family: Arial, Helvetica, sans-serif;" for="17">Threshold:</label></td>
                 <td>

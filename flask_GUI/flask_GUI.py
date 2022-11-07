@@ -13,7 +13,7 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 # getting the options for each type of necessary function
-file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs = options_for_funcs()
+file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
 
 #### Route for homepage ####
 @app.route('/', methods=['GET', 'POST'])
@@ -46,7 +46,7 @@ def calculating():
 
 @app.route('/add_config', methods=['GET', 'POST'])
 def new_task_func():
-    return render_template('new_task_config.html', file_reading_funcs=file_reading_funcs, Evaluation_funcs=Evaluation_funcs, overlap_funcs=overlap_funcs, partition_funcs=partition_funcs, statistics_funcs=statistics_funcs)
+    return render_template('new_task_config.html', file_reading_funcs=file_reading_funcs, Evaluation_funcs=Evaluation_funcs, overlap_funcs=overlap_funcs, partition_funcs=partition_funcs, statistics_funcs=statistics_funcs,transformation_funcs=transformation_funcs)
 
 @app.route('/Reporter', methods=['GET', 'POST'])
 def Report():

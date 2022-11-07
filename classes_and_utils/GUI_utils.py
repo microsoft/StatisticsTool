@@ -3,7 +3,7 @@ import sys, os
 
 sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
 from user_defined_functions import ReadingFunctions, EvalutationFunctions, OverlapFunctions, PartitioningFunctions, \
-    PartitioningFunctions, StatisticsFunctions
+    PartitioningFunctions, StatisticsFunctions, TransformFunctions
 from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.VideoEvaluation import run_multiple_Videos
 from inspect import getmembers, isfunction
@@ -101,7 +101,10 @@ def options_for_funcs():
                        mem[1].__module__ == PartitioningFunctions.__name__]
     statistics_funcs = [mem[0] for mem in getmembers(StatisticsFunctions, isfunction) if
                         mem[1].__module__ == StatisticsFunctions.__name__]
-    return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs
+    transformation_funcs = [mem[0] for mem in getmembers(TransformFunctions, isfunction) if
+                        mem[1].__module__ == TransformFunctions.__name__]
+    transformation_funcs.append('None')
+    return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs
 
 
 def manage_new_report_page(request, current_file_directory):
@@ -141,6 +144,7 @@ def unpack_new_config(request):
     image_width = request.form.get('image_width')
     image_height = request.form.get('image_height')
     reading_func_name = request.form.get('Reading_func')
+    transform_func_name = request.form.get('transform_func')
     overlap_func_name = request.form.get('overlap_func')
     evaluation_func_name = request.form.get("evaluation_func")
     statistics_func_name = request.form.get('statistics_func')
@@ -148,7 +152,8 @@ def unpack_new_config(request):
     new_config = [
         {"File Reading Function": reading_func_name, "Overlap Function": overlap_func_name, "Threshold": threshold,
          "Evaluation Function": evaluation_func_name, "Image Width": image_width, "Image Height": image_height,
-         "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name}]
+         "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name,
+         "Transformation Function":transform_func_name}]
     return new_config, new_config_name
 
 
@@ -188,6 +193,9 @@ def unpack_calc_config_dict(config_dict):
     :return: the functions mentioned in the configuration dictionary
     """
     # extracting the configuration from the config file (which is a dictionary at this point)
+    transform_func_name = 'None'
+    if 'Transformation Function' in config_dict:
+        transform_func_name = config_dict['Transformation Function']
     reading_func_name = config_dict["File Reading Function"]
     overlap_func_name = config_dict["Overlap Function"]
     evaluation_func_name = config_dict["Evaluation Function"]
@@ -209,7 +217,10 @@ def unpack_calc_config_dict(config_dict):
     evaluation_func = getattr(EvalutationFunctions, evaluation_func_name)
     statistics_func = getattr(StatisticsFunctions, statistics_func_name)
     partitioning_func = getattr(PartitioningFunctions, partitioning_func_name)
-    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, threshold, image_width, image_height
+    transform_func = None
+    if transform_func_name != 'None':
+        transform_func = getattr(TransformFunctions, transform_func_name)
+    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height
 
 
 def get_path_lists(prd_dir, GT_dir, images_dir):
@@ -269,7 +280,7 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, threshold, image_width, image_height = unpack_calc_config_dict(
+    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height = unpack_calc_config_dict(
         config_dict)
     # extract matching lists of absolute paths for the predictions, labels and images
     GT_list_abs, prd_list_abs, images_folders_list, images_folders_list_abs = get_path_lists(prd_dir, GT_dir,
@@ -282,7 +293,7 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
         # extract all the intermediate results from the raw prediction-label files
         run_multiple_Videos(GT_path_list=GT_list_abs, pred_path_list=prd_list_abs, images_folders_list=images_folders_list,
                             image_folder_fullpath_list=images_folders_list_abs, overlap_function=overlap_func,
-                            readerFunction=reading_func, save_stats_dir=single_video_hash_saving_dir,
+                            readerFunction=reading_func, transform_func=transform_func, save_stats_dir=single_video_hash_saving_dir,
                             evaluation_func=evaluation_func)
     except TypeError:
         return 'TypeError'
@@ -511,7 +522,7 @@ def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stat
 
         
         (((per_video_example_hash[example[0]])[start_frame])['frames']).append(example)
-        ((per_video_example_hash[example[0]])[start_frame])['end_frame'] = example[2]
+        ((per_video_example_hash[example[0]])[start_frame])['end_frame'] = example[3]
 
     return per_video_example_hash, save_path
 

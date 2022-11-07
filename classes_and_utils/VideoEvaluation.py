@@ -34,19 +34,12 @@ class VideoEvaluation:
            a function that dictates how each bounding box will be classified (e.g TP/FP/FN) from the overlap matrix
        image_folder : str
            The path to the video's images folder
-       empty_GT_frame_func : function
-           a function that accepts a GT row from the labels data structures and return whether or not it is empty (no label on it)
-           and decides weather to discard it or not (default None)
        saving_mat_file_dir : str
            a path in which to save the data which indludes an overlap matrix before the Decide_state method (default None)
        file_loading_func : function
            a function that will load the data in case of saving the data after calculating overlap matrix (default None) don't forget to add ".json"
        comp_data : list
            a list that contains each frames bounding boxes data and overlap matrix (first object is the image folder name)
-       empty_frames_pred : set
-            a set that contains the indices of empty GT rows (GT with no label on it), determined byempty_frames : set
-       empty_frames_GT : set
-            a set that contains the indices of empty GT rows (GT with no label on it), determined by
        Methods
        -------
        load_data(path)
@@ -60,7 +53,7 @@ class VideoEvaluation:
        """
 
     def __init__(self, GT_path, pred_path, overlap_function, readerFunction, save_stats_dir,
-                 evaluation_func, image_folder, empty_GT_frame_func=None, saving_mat_file_dir=None,
+                 evaluation_func, image_folder, saving_mat_file_dir=None,
                  file_loading_func=None):
         self.GT_path = GT_path
         self.pred_path = pred_path
@@ -153,44 +146,8 @@ def add_dict(dict_in, key, new_obj, add_gt=False):
         new_obj[key] = dict_in
 
 
-def transform_data(comp_data):
-    key = 'detection'
-    in_event = False
-    prediction = comp_data[key]
-    label = comp_data[key+'_gt']
-    frames = comp_data['frame_id']
-    events = []
-    new_event = {}
-    last_frame=-1
-    for ind, (pred, gt) in enumerate(zip(prediction, label)):
-        if pred or gt:
-            if not in_event:
-                new_event = comp_data.iloc[ind].to_dict()
-                new_event[key]=False
-                new_event[key+"_gt"]=False
-                in_event = True
-            
-            if pred:
-                new_event[key]=True
-            if gt:
-                new_event[key+'_gt']=True
 
-                
-        elif frames[ind] != last_frame:
-                new_event['end_frame'] = last_frame
-                events.append(new_event)
-                in_event = False
-        last_frame = frames[ind]
-
-    if in_event:
-        new_event['end_frame'] = last_frame
-        events.append(new_event)
-        in_event = False
-
-    transform_data = pd.DataFrame.from_records(events)
-    return transform_data
-
-def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunction, save_stats_dir, evaluation_func, file_loading_func=None, empty_GT_frame_func=None, saving_mat_file_dir=None):
+def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunction, transform_func, save_stats_dir, evaluation_func, file_loading_func=None, saving_mat_file_dir=None):
     """
     :params - same as VideoEvaluation class
     :return: performs all the class methods of VideoEvaluation and saves intermediate results
@@ -198,7 +155,7 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
     V = VideoEvaluation(GT_path=GT_path, pred_path=pred_path,
                         overlap_function=overlap_function, readerFunction=readerFunction, save_stats_dir=save_stats_dir,
                         evaluation_func=evaluation_func, image_folder=image_folder, file_loading_func=file_loading_func,
-                        empty_GT_frame_func=empty_GT_frame_func, saving_mat_file_dir=None)
+                        saving_mat_file_dir=None)
     V.compare()
     
     V.comp_data = V.comp_data.explode('predictions')
@@ -216,15 +173,20 @@ def run_one_video(GT_path, pred_path, image_folder, overlap_function, readerFunc
     V.comp_data = pd.DataFrame(new_data)
     V.comp_data.loc[V.comp_data['detection_gt'].isnull(), 'detection_gt']=False
     V.comp_data['video']=image_folder
-   
-    #V.comp_data=transform_data(V.comp_data)
+    
+    #Add end_frame same as current frame
+    #end_frame can be manipulate in transformation function callback in order to calculate statistics per events.
+    V.comp_data['end_frame'] = V.comp_data.loc[:,'frame_id']
 
+    if transform_func:
+        V.comp_data=transform_func(V.comp_data)
+   
     # saving a json file of this video's intermediate results
     #save_json(self.save_stats_dir, comp_data.to_dict())
     V.comp_data.to_json(save_stats_dir)
 
 def run_multiple_Videos(GT_path_list, pred_path_list, images_folders_list, image_folder_fullpath_list, overlap_function,
-                        readerFunction, save_stats_dir, evaluation_func, file_loading_func=None,
+                        readerFunction, transform_func, save_stats_dir, evaluation_func, file_loading_func=None,
                         saving_mat_file_dir=None):
     """
 
@@ -245,7 +207,7 @@ def run_multiple_Videos(GT_path_list, pred_path_list, images_folders_list, image
         # is defined by save_stats_dir and the folders name
         print(f"Start compare files: {pred_path} with: {GT_path}")
         save_stats_file = os.path.join(save_stats_dir, image_folder_name + '.json')
-        run_one_video(GT_path, pred_path, image_folder_fullpath, overlap_function, readerFunction, save_stats_file, evaluation_func, file_loading_func=None, saving_mat_file_dir=None)
+        run_one_video(GT_path, pred_path, image_folder_fullpath, overlap_function, readerFunction, transform_func, save_stats_file, evaluation_func, file_loading_func=None, saving_mat_file_dir=None)
 
 
 
