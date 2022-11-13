@@ -35,6 +35,25 @@ The high-level dictionary which contains at least one Partition Dictionary
 def no_partitioning(dataframe, from_file=False):
     return {}
 
+def activity_partition(dataframe, from_file=False):
+    multiple = dataframe['Multiple People_gt'].values.astype(object)
+    relevant = dataframe['relevant_gt'].values.astype(object)
+    static = dataframe['static_gt'].values.astype(object)
+    activity = dataframe['activity_gt'].values.astype(object)
+
+    multiple_mask = multiple > 0
+    relevant_mask = relevant > 0
+    static_mask = static > 0
+    activity_mask = activity > 0
+
+    mult_dict = {'possible partitions': ['one person', 'multiple persons'], 'masks': [np.logical_not( multiple_mask), multiple_mask]}
+    relevant_dict = {'possible partitions': ['non relevant', 'relevant'], 'masks': [np.logical_not(relevant_mask), relevant_mask]}
+    static_dict = {'possible partitions': ['not static', 'ken static'], 'masks': [np.logical_not(static_mask), static_mask]}
+    activity_dict = {'possible partitions': ['no activity', 'has activity'], 'masks': [np.logical_not(activity_mask), activity_mask]}
+    desired_masks = {'Multiple': mult_dict, "Relevant":relevant_dict, "Static":static_dict, "Has Person":activity_dict}
+
+    return desired_masks
+
 def size_horizontal_vertical(dataframe, from_file=False):
 
     img_width = 1280

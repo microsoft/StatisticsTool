@@ -47,6 +47,35 @@ Returns:
 pandas dataframe
 """
 
+def statistic_tool_reader_activity_calssification(path):
+    with open(path,'r') as file:
+        lines = file.readlines()
+        
+        line = json.loads(lines[1])
+        records = []
+        
+        for line in lines[1:]:
+            line = json.loads(line)
+            if 'type' not in line['keys'] or line['keys']['type'] != 'presence':
+                continue
+            
+            frame_id = line['keys']['frame_id']
+            if int(line['message']['activity'])>0:
+                
+                data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'activity':1.0}}]}
+            else:
+                data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'activity':0.0}}]}
+            if 'static' in line['message']:
+                data['predictions'][0]['static'] = line['message']['static']
+                data['predictions'][0]['relevant'] = line['message']['relevant']
+                data['predictions'][0]['Multiple People'] = line['message']['Multiple People']
+
+
+            records.append(data)
+
+    df = pd.DataFrame.from_records(records)
+    return df   
+    
 def statistic_tool_reader_presence_calssification(path):
     with open(path,'r') as file:
         lines = file.readlines()
