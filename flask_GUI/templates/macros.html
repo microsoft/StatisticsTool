@@ -21,7 +21,7 @@
 {% endif %}
 
 
-{% if name in ['TP', 'FP', 'FN']: %}
+{% if name in ['TP', 'FP', 'FN','TP_comp', 'FP_comp', 'FN_comp']: %}
 
 {% if mytup|length > 1: %}
 <a target="iframe2" href='/update_list?tup={{mytup}}'> {{name}} = {{stats[mytup]}} </a> <br>

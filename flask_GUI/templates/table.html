@@ -28,12 +28,22 @@
                {% if seg_num==0:%}
               <tr>
                     {% for stat_name in stats:%}
-                        <th> {{stat_name}} </th>
+                        {% if stat_name.find('_comp')==-1:%}
+                            <th> {{stat_name}} </th>
+                        {%endif%}
                     {%endfor%}
               </tr>
               <tr>
                     {% for stat_name in stats:%}
-                        <td> {{stat_print(stats, "", "", "", stat_name)}} </td>
+                        
+                        {% if stat_name.find('_comp')==-1:%}
+                        <td> 
+                            {{stat_print(stats, "", "", "", stat_name)}}
+                            {%if stat_name+"_comp" in stats:%}
+                                {{stat_print(stats, "", "", "", stat_name+"_comp")}}
+                            {%endif%}
+                        </td>
+                        {%endif%}
                     {%endfor%}
               </tr>
 

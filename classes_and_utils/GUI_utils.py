@@ -11,6 +11,8 @@ from classes_and_utils.utils import loading_json, save_json
 import re, pickle
 import json
 
+COMP_STR="_comp"
+
 def save_object(obj, filename):
     """
     Saves an object using pickle in a certain path
@@ -408,12 +410,13 @@ def manage_stats_request(request, exp):
     # combined names and dictionaries of the statistics (e.g precision/recall) and states (e.g FP/FN/TP)
     wanted_statistics_names = list(set([index[-1] for index in statistics_dict])) + ['TP', 'FP', 'FN']
     statistics_dict.update(state_dict)
+    
     # get the values of the rows, columns etc. for the html table if those values exists
     columns, sub_rows, rows, wanted_seg, seg_num = stats_4_html(primary, secondary, tertiary, exp.masks)
     return statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path
 
 
-def unpack_list_request(request, masks):
+def unpack_list_request(request, main_exp, comp_exp):
     """
     Accepts a request to /update_list route and the masks boolean dictionary and return parameters for
     extraction or saving of an example list
@@ -424,21 +427,34 @@ def unpack_list_request(request, masks):
     """
     total, primary, secondary, tertiary = None, None, None, None
     save = False
-    # request came from table.html (the actual link is writen in macros.html)
+   
+    if "save_list" in request.args:
+        save = True
+    # mytup is a tuple that varies in size and include the names of the selected
+    # row, sub row, column (partitions) if exists, and the name of the state chosen from the table.
+    # mytup is a match to a key in the statistics/state dictionary
     if "tup" in request.args:
         mytup = request.args.get('tup')
     # request came from examples_list.html to save the example list
     else:
         mytup = request.args.get('mytup')
     
-    if "save_list" in request.args:
-        save = True
-    # mytup is a tuple that varies in size and include the names of the selected
-    # row, sub row, column (partitions) if exists, and the name of the state chosen from the table.
-    # mytup is a match to a key in the statistics/state dictionary
     mytup = eval(mytup)
     # the statistics chosen for example list (such as TP/FP/FN)
     state = mytup[-1]
+
+    
+    state = mytup[-1]
+    exp = main_exp
+    comp_index=-1
+    if state.endswith(COMP_STR) and len(comp_exp)>0:
+        exp=comp_exp[0]
+        state = state[:state.find(COMP_STR)]
+        comp_index = 0
+    
+    masks = exp.masks
+   
+
     # The options for possible partitions available 'time of day' 'vehicles'
     opt = [seg for seg in masks.keys() if seg != 'total_stats']
     # a dictionary that will hold the "class" of partition and the choice, for example {'vehicle': 'bus'}
@@ -469,7 +485,7 @@ def unpack_list_request(request, masks):
     export_sheldon = False
     if 'sheldon' in request.args:
         export_sheldon = True
-    return state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon
+    return comp_index, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon
 
 
 def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stats_dir, state):
@@ -530,15 +546,24 @@ def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stat
     return per_video_example_hash, save_path
 
 
-def manage_list_request(request, exp):
+def manage_list_request(request, main_exp, comp_exp):
     """
     Accepts a the requests to /update_list route and returns all the parameter needed to show and save the list of examples asked by the user
     :param request: request from either table.html (link writen in macros.html) or in examples_list.html
     :param exp: exp is an instance of ParallelExperiment
     :return: all the parameter needed to show and save the list of examples asked by the user
     """
+     # request came from table.html (the actual link is writen in macros.html)
+    
+    
     # get the names of requested states and partitions, a save boolean and a dictionary of {partition_class: selected_option} (example {"vehicles":"bus"})
-    state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon = unpack_list_request(request, exp.masks)
+    comp_index, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon = unpack_list_request(request, main_exp, comp_exp)
+    
+    if comp_index > -1:
+        exp = comp_exp[comp_index]
+    else:
+        exp = main_exp
+
     # extracting the example list for requested partitions and state
     list_of_examples = exp.get_ids(state=state, total=total, primary=primary, secondary=secondary, tertiary=tertiary)
     # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see
@@ -548,7 +573,7 @@ def manage_list_request(request, exp):
     saved_sheldon = None
     if export_sheldon:
         saved_sheldon = export_list_to_sheldon(per_video_example_hash, exp.video_annotation_dict, exp.save_stats_dir, mytup)
-    return state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon
+    return comp_index, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon
 
 
 def export_list_to_sheldon(images_list, video_annotation_dict,output_dir, states):
@@ -586,7 +611,7 @@ def export_list_to_sheldon(images_list, video_annotation_dict,output_dir, states
 
 
 
-def manage_image_request(request, exp):
+def manage_image_request(request, main_exp, comp_exp):
     """
     Accepts the requests to /show_im route and returns an encoded image and the path where the image was saved (if it was saved)
 
@@ -596,6 +621,11 @@ def manage_image_request(request, exp):
     """
     save_path = False
     # request came from examples_list.html to show an example image
+    exp = main_exp
+    comp_ind=eval(request.args.get('comp_index'))
+    if comp_ind>-1:
+        exp = comp_exp[comp_ind]
+
     if request.args.get('example_name'):
         example_id = request.args.get('example_name')
         example_id = eval(example_id.replace(" ", ","))
@@ -610,3 +640,26 @@ def manage_image_request(request, exp):
         save_path = os.path.join(os.path.join(exp.save_stats_dir, 'saved images'), name)
         fig.savefig(save_path)
     return data, save_path
+
+def update_statistics_with_comp_data(stats, names, comp_stats):
+    
+    comp_dict = {}
+    for key in stats:
+        new_key = []
+        if type(key) is str:
+            comp_dict[key+COMP_STR] = comp_stats[key]
+        else:
+            for l in range(0,len(key)): new_key.append(key[l])
+            new_key[-1]=new_key[-1]+COMP_STR
+            comp_dict[tuple(new_key)] = comp_stats[key]
+
+    stats.update(comp_dict)
+    combined_statistics_names = []
+
+    for name in names:
+        combined_statistics_names.append(name)
+        combined_statistics_names.append(name+COMP_STR)
+    names = combined_statistics_names
+
+    return stats, names
+

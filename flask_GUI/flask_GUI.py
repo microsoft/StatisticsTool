@@ -62,6 +62,12 @@ def Report():
         pckl_file.save(path_to_save)
         global exp
         exp = load_object(path_to_save)
+    global comp_exp
+    comp_exp = []
+    comp_exp.append(load_object(path_to_save))
+    if 'myFile2' in request.files:
+        comp_exp.append(load_object(path_to_save))
+
     # make a list of optional partitions which their bolean masks are available
     list_of_seg_opt = ['N/A'] + [seg for seg in exp.masks.keys() if seg != 'total_stats']
     partitions_names = ['Primary', 'Secondary', 'Tertiary']
@@ -71,17 +77,28 @@ def Report():
 @app.route('/stats', methods=['GET', 'POST'])
 def show_stats():
     statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path = manage_stats_request(request, exp)
-    return render_template('table.html', stats=statistics_dict, wanted_seg=wanted_seg, seg_num=seg_num, statistics_names=wanted_statistics_names, columns=columns, sub_rows=sub_rows, rows=rows, primary=primary, secondary=secondary, tertiary=tertiary, save_path=save_path)
+    
+    if len(comp_exp) > 0:
+        cur_exp = comp_exp[0]
+        cur_stats, _, _, _, _, _, _, _, _, _, _ = manage_stats_request(request, cur_exp)
+        statistics_dict, wanted_statistics_names = update_statistics_with_comp_data(stats=statistics_dict, names=wanted_statistics_names, comp_stats=cur_stats)
+    return render_template('table.html', stats=statistics_dict, 
+                    wanted_seg=wanted_seg, seg_num=seg_num, 
+                    statistics_names=wanted_statistics_names, 
+                    columns=columns, sub_rows=sub_rows, rows=rows, 
+                    primary=primary, 
+                    secondary=secondary, tertiary=tertiary, 
+                    save_path=save_path)
 
 
 @app.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon = manage_list_request(request, exp)
-    return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon)
+    comp_index, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon = manage_list_request(request, exp, comp_exp)
+    return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index)
 
 @app.route('/show_im', methods=['GET', 'POST'])
 def show_image():
-    data, save_path = manage_image_request(request, exp)
+    data, save_path = manage_image_request(request, exp, comp_exp)
     return render_template('example_image.html', data=data, save_path=save_path)
 
 @app.route('/show', methods=['GET', 'POST'])
