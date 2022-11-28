@@ -506,16 +506,19 @@ def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stat
     for key in per_video_example_hash.keys():
         per_video_example_hash[key] = {}
     
+    start_index = -1
     start_frame = -1
     prev_frame = -999
     prev_vid = ''
     for ind, example in enumerate(arr_of_examples):
-        if example[2] - prev_frame > 1 or prev_vid != example[0]:
+        if example[1] - prev_frame > 1 or prev_vid != example[0]:
             prev_vid = example[0]
+            start_index = example[1]
             start_frame = example[2]
             
-        prev_frame = example[2]
+        prev_frame = example[1]
         if start_frame not in per_video_example_hash[example[0]]:
+            start_index = example[1]
             start_frame = example[2]
             per_video_example_hash[example[0]][start_frame] = {}
             (((per_video_example_hash[example[0]])[start_frame]))['frames']  = []
