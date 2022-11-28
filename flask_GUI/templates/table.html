@@ -37,10 +37,15 @@
                     {% for stat_name in stats:%}
                         
                         {% if stat_name.find('_comp')==-1:%}
-                        <td> 
-                            {{stat_print(stats, "", "", "", stat_name)}}
+                        <td>
+                            <div>
+                                {{stat_print(stats, "", "", "", stat_name)}}
+                            </div> 
                             {%if stat_name+"_comp" in stats:%}
-                                {{stat_print(stats, "", "", "", stat_name+"_comp")}}
+                                <div>
+                                    {{stat_print(stats, "", "", "", stat_name+"_comp")}}
+                                    <br>
+                                </div>
                             {%endif%}
                         </td>
                         {%endif%}
@@ -61,6 +66,9 @@
                                 <td>
                                     {% for name in statistics_names:%}
                                     {{stat_print(stats, row_name, "", "", name)}}
+                                    {% if name.find('_comp')>-1:%}
+                                    <br>
+                                    {%endif%}
                                     {%endfor%}
                                 </td>
                         </tr>
@@ -83,12 +91,18 @@
                         <td>
                             {% for name in statistics_names:%}
                               {{stat_print(stats, row_name, columns[0], "", name)}}
+                              {% if name.find('_comp')>-1:%}
+                                    <br>
+                              {%endif%}
                             {%endfor%}
                         </td>
                         {% for i in range(1, columns|length):%}
                             <td>
                             {% for name in statistics_names:%}
                             {{stat_print(stats, row_name, columns[i], "", name)}}
+                            {% if name.find('_comp')>-1:%}
+                                <br>
+                            {%endif%}
                             {%endfor%}
 
                             </td>
@@ -119,6 +133,9 @@
                         <td>
                             {% for name in statistics_names: %}
                                 {{stat_print(stats, row_name, columns[i], sub_rows[0], name)}}
+                                {% if name.find('_comp')>-1:%}
+                                <br>
+                                {%endif%}
                             {%endfor%}
                         </td>
                         {%endfor%}
@@ -133,6 +150,9 @@
                                 <td>
                             {% for name in statistics_names:%}
                                  {{stat_print(stats, row_name, columns[i], sub_rows[j], name)}}
+                                 {% if name.find('_comp')>-1:%}
+                                 <br>
+                                {%endif%}
                             {%endfor%}
                                 </td>
 

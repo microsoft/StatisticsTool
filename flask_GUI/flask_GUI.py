@@ -64,8 +64,15 @@ def Report():
         exp = load_object(path_to_save)
     global comp_exp
     comp_exp = []
-    comp_exp.append(load_object(path_to_save))
-    if 'myFile2' in request.files:
+    if 'myFile2' in request.files and request.files['myFile2'].filename:
+        pckl_file = request.files['myFile2']
+        path_to_save = current_file_directory.replace('flask_GUI.py', 'static')
+        path_to_save = os.path.join(path_to_save, 'reports')
+        path_to_save = os.path.join(path_to_save, "comp_"+pckl_file.filename)
+        # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
+        if not os.path.exists(os.path.dirname(path_to_save)):
+            os.makedirs(os.path.dirname(path_to_save))
+        pckl_file.save(path_to_save)
         comp_exp.append(load_object(path_to_save))
 
     # make a list of optional partitions which their bolean masks are available

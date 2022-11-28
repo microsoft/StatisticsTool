@@ -1,14 +1,23 @@
+
 <style>
-input[type=button] {
+input[type=submit]:disabled {
   border: none;
+  color: rgb(119, 111, 111);
+  background-color: white;
+  border: 2px solid #cad4cb;
+ 
+}
+input[type=submit] {
+  padding: 25px 32px;
+  background-color: white;
+  color: black;
+  border: 2px solid #4CAF50;
+}
+
+
+input[type=submit]:hover {
+  background-color: #4CAF50;
   color: white;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
-  transition-duration: 0.4s;
-  cursor: pointer;
 }
 
 input[type=button] {
@@ -20,38 +29,6 @@ input[type=button] {
 
 
 input[type=button]:hover {
-  background-color: #4CAF50;
-  color: white;
-}
-
-[type="file"] {
-  border: 0;
-  clip: rect(0, 0, 0, 0);
-  height: 1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute !important;
-  white-space: nowrap;
-  width: 1px;
-}
-[type="file"] + label {
-  border: none;
-  color: white;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
-  transition-duration: 0.4s;
-  cursor: pointer;
-  padding: 25px 32px;
-  background-color: white;
-  color: black;
-  border: 2px solid #4CAF50;
-}
-
-[type="file"]:focus + label,
-[type="file"] + label:hover {
   background-color: #4CAF50;
   color: white;
 }
@@ -80,34 +57,50 @@ input[type=button]:hover {
 
 </div>
 
-<div class="row">
+
 
     <div class="col-md-4" style="text-align: center;">
         <div>
         <input type="button" onclick="location.href='/create_new_report';" value="New Report" />
         </div>
     </div>
-
-
-
+    <br>
+    <br>
+    <br>
     <div class="col-md-4" style="text-align: center;">
-        <div>
-          <form id="form1" action="/Reporter" method="post" enctype="multipart/form-data" >
-          <input type="file" name="myFile" id="myFile" onchange="form.submit()" accept=".pkl">
-          <label id="myFile2" for="myFile" style="font-family: Arial, Helvetica, sans-serif;">Load Report</label>
-          </form>
+    <form id = "form1" action="/Reporter" method="post" enctype="multipart/form-data">
+      <div class="col-md-4" >
+        <label for="myFile" id="file">Report File: </label>
+        <input type="file" name="myFile" id="myFile"  onchange="alertFilename()" accept=".pkl" > 
+      </div>
+      <br>
+      
+      <div class="col-md-4" >
+      <label for="myFile2" id="file2">Compare Report:</label>
+      <input type="file" name="myFile2" id="myFile2" accept=".pkl" > 
+        
+      </div>
+      <br>
+      
+      <div class="col-md-4" >
+        <input type = "submit" id="submit" value = "Load Report" disabled="true">
+      </div>
+    </form>
 
-
-        </div>
+       
     </div>
 
-
+    <script>
+      
+       function alertFilename()
+        {
+            var button = document.getElementById('submit')
+            button.disabled = false;
+        }
+      
+  </script>
 
 
 
 
 </div>
-
-
-
-
