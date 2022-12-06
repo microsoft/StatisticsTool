@@ -9,7 +9,7 @@
 
                 th, td {
                   text-align: left;
-                  padding: 8px;
+                  padding: 18px;
                   font-family: Arial;
                 }
 
@@ -21,6 +21,7 @@
                   font-family: Arial;
                 }
                 </style>
+                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
        </head>
 
 
@@ -28,27 +29,27 @@
                {% if seg_num==0:%}
               <tr>
                     {% for stat_name in stats:%}
-                        {% if stat_name.find('_comp')==-1:%}
+                        
                             <th> {{stat_name}} </th>
-                        {%endif%}
+                        
                     {%endfor%}
               </tr>
               <tr>
                     {% for stat_name in stats:%}
                         
-                        {% if stat_name.find('_comp')==-1:%}
+                        
                         <td>
                             <div>
-                                {{stat_print(stats, "", "", "", stat_name)}}
+                                {{stat_print(stats, "", "", "", stat_name, unique_stats, False)}}
                             </div> 
-                            {%if stat_name+"_comp" in stats:%}
+                            {%if stats_ref:%}
                                 <div>
-                                    {{stat_print(stats, "", "", "", stat_name+"_comp")}}
+                                    {{stat_print(stats_ref, "", "", "", stat_name, unique_stats_ref, True)}}
                                     <br>
                                 </div>
                             {%endif%}
                         </td>
-                        {%endif%}
+                        
                     {%endfor%}
               </tr>
 
@@ -65,10 +66,11 @@
                             <th> {{row_name}} </th>
                                 <td>
                                     {% for name in statistics_names:%}
-                                    {{stat_print(stats, row_name, "", "", name)}}
-                                    {% if name.find('_comp')>-1:%}
-                                    <br>
-                                    {%endif%}
+                                        {{stat_print(stats, row_name, "", "", name, unique_stats, False)}}
+                                        {%if stats_ref:%}
+                                            {{stat_print(stats_ref, row_name, "", "", name, unique_stats_ref, True)}}
+                                            <br>
+                                        {%endif%}
                                     {%endfor%}
                                 </td>
                         </tr>
@@ -90,19 +92,21 @@
                         <th> {{row_name}} </th>
                         <td>
                             {% for name in statistics_names:%}
-                              {{stat_print(stats, row_name, columns[0], "", name)}}
-                              {% if name.find('_comp')>-1:%}
+                                    {{stat_print(stats, row_name, columns[0], "", name, unique_stats, False)}}
+                                    {%if stats_ref:%}
+                                    {{stat_print(stats_ref, row_name, columns[0], "", name, unique_stats_ref, True)}}
                                     <br>
-                              {%endif%}
+                                    {%endif%}   
                             {%endfor%}
                         </td>
                         {% for i in range(1, columns|length):%}
                             <td>
                             {% for name in statistics_names:%}
-                            {{stat_print(stats, row_name, columns[i], "", name)}}
-                            {% if name.find('_comp')>-1:%}
+                                {{stat_print(stats, row_name, columns[i], "", name, unique_stats, False)}}
+                                {%if stats_ref:%}
+                                {{stat_print(stats_ref, row_name, columns[i], "", name, unique_stats_ref, True)}}
                                 <br>
-                            {%endif%}
+                                {%endif%}
                             {%endfor%}
 
                             </td>
@@ -132,8 +136,9 @@
                         {% for i in range(columns|length): %}
                         <td>
                             {% for name in statistics_names: %}
-                                {{stat_print(stats, row_name, columns[i], sub_rows[0], name)}}
-                                {% if name.find('_comp')>-1:%}
+                                {{stat_print(stats, row_name, columns[i], sub_rows[0], name,unique_stats, False)}}
+                                {%if stats_ref:%}
+                                {{stat_print(stats_ref, row_name, columns[i], sub_rows[0], name,unique_stats_ref, True)}}
                                 <br>
                                 {%endif%}
                             {%endfor%}
@@ -149,9 +154,10 @@
 
                                 <td>
                             {% for name in statistics_names:%}
-                                 {{stat_print(stats, row_name, columns[i], sub_rows[j], name)}}
-                                 {% if name.find('_comp')>-1:%}
-                                 <br>
+                                {{stat_print(stats, row_name, columns[i], sub_rows[j], name,unique_stats, False)}}
+                                {%if stats_ref:%}
+                                {{stat_print(stats_ref, row_name, columns[i], sub_rows[j], name,unique_stats_ref, True)}}
+                                <br>
                                 {%endif%}
                             {%endfor%}
                                 </td>

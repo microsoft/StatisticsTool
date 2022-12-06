@@ -9,9 +9,9 @@ from classes_and_utils.VideoEvaluation import run_multiple_Videos
 from inspect import getmembers, isfunction
 from classes_and_utils.utils import loading_json, save_json
 import re, pickle
+import numpy as np
 import json
 
-COMP_STR="_comp"
 
 def save_object(obj, filename):
     """
@@ -447,13 +447,15 @@ def unpack_list_request(request, main_exp, comp_exp):
     state = mytup[-1]
     exp = main_exp
     comp_index=-1
-    if state.endswith(COMP_STR) and len(comp_exp)>0:
+    if 'ref' in request.args and len(comp_exp)>0:
         exp=comp_exp[0]
-        state = state[:state.find(COMP_STR)]
         comp_index = 0
     
     masks = exp.masks
-   
+
+    show_unique = False
+    if 'unique' in request.args:
+        show_unique = True
 
     # The options for possible partitions available 'time of day' 'vehicles'
     opt = [seg for seg in masks.keys() if seg != 'total_stats']
@@ -485,7 +487,7 @@ def unpack_list_request(request, main_exp, comp_exp):
     export_sheldon = False
     if 'sheldon' in request.args:
         export_sheldon = True
-    return comp_index, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon
+    return comp_index, show_unique, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon
 
 
 def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stats_dir, state):
@@ -502,6 +504,8 @@ def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stat
     # for example in arr_of_examples:
     #     example[0] = example[0].replace(".json", "")
     save_path = None
+    if len(arr_of_examples) < 1:
+        return {}, None
     # saving the examples as a list of lists
     if save:
         list_of_examples = []
@@ -557,7 +561,7 @@ def manage_list_request(request, main_exp, comp_exp):
     
     
     # get the names of requested states and partitions, a save boolean and a dictionary of {partition_class: selected_option} (example {"vehicles":"bus"})
-    comp_index, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon = unpack_list_request(request, main_exp, comp_exp)
+    comp_index,show_unique, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon = unpack_list_request(request, main_exp, comp_exp)
     
     if comp_index > -1:
         exp = comp_exp[comp_index]
@@ -565,7 +569,7 @@ def manage_list_request(request, main_exp, comp_exp):
         exp = main_exp
 
     # extracting the example list for requested partitions and state
-    list_of_examples = exp.get_ids(state=state, total=total, primary=primary, secondary=secondary, tertiary=tertiary)
+    list_of_examples = exp.get_ids(show_unique=show_unique, state=state, total=total, primary=primary, secondary=secondary, tertiary=tertiary)
     # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see
     per_video_example_hash, save_path = parameters_4_collapsing_list(list_of_examples, cl_and_choice, save,
                                                                      exp.save_stats_dir, state)
@@ -641,25 +645,71 @@ def manage_image_request(request, main_exp, comp_exp):
         fig.savefig(save_path)
     return data, save_path
 
-def update_statistics_with_comp_data(stats, names, comp_stats):
-    
-    comp_dict = {}
-    for key in stats:
-        new_key = []
-        if type(key) is str:
-            comp_dict[key+COMP_STR] = comp_stats[key]
-        else:
-            for l in range(0,len(key)): new_key.append(key[l])
-            new_key[-1]=new_key[-1]+COMP_STR
-            comp_dict[tuple(new_key)] = comp_stats[key]
 
-    stats.update(comp_dict)
-    combined_statistics_names = []
+def calc_unique_detections(names, exp, ref_exp):
+    
+    unique = {}
+    unique_stats = {}
+    unique_ref = {}
+    unique_stats_ref = {}
 
     for name in names:
-        combined_statistics_names.append(name)
-        combined_statistics_names.append(name+COMP_STR)
-    names = combined_statistics_names
+        to_break = False
+        segment = exp.segmented_ID
+        segment_ref = ref_exp.segmented_ID
+        name_list = name
 
-    return stats, names
+        if type(name) is str:
+            name_list = [name]
+            segment = exp.segmented_ID['total']
+            segment_ref = ref_exp.segmented_ID['total']
+
+        for n in name_list:
+            if n not in segment:
+                to_break = True
+                break
+            segment = segment[n]
+        
+        if to_break: #if current key not in segment dictionaries
+            continue
+        
+        cur_u = unique
+        cur_u_ref = unique_ref
+        
+        for seg in name_list[:-1]:
+            if seg not in cur_u:
+                cur_u[seg] = {}
+            if seg not in cur_u_ref:
+                cur_u_ref[seg] = {}
+
+            cur_u=cur_u[seg]
+            cur_u_ref=cur_u_ref[seg]
+
+            segment_ref = segment_ref[seg]
+        segment_ref = segment_ref[name_list[-1]]
+
+        u=[]
+        u_ref=[]
+
+        for val in segment:
+            if exp.comp_data['detection'][val[1]] != ref_exp.comp_data['detection'][val[1]]:
+                u.append(val.copy())
+
+        for val in segment_ref:
+            if exp.comp_data['detection'][val[1]] != ref_exp.comp_data['detection'][val[1]]:
+                u_ref.append(val.copy())
+
+        
+        cur_u[name[-1]] = np.array(u)
+        cur_u_ref[name[-1]] = np.array(u_ref)
+
+        unique_stats[name] = len(u)
+        unique_stats_ref[name] = len(u_ref)
+
+
+    return unique, unique_ref, unique_stats, unique_stats_ref
+
+        
+
+
 

@@ -306,7 +306,7 @@ class ParallelExperiment:
 
         return statistics_df, state_df, statistics_dict, state_dict
 
-    def get_ids(self, state, total=False, primary=None, secondary=None, tertiary=None):
+    def get_ids(self, show_unique, state, total=False, primary=None, secondary=None, tertiary=None):
         """
         This function returns the ids of examples that belongs to the asked partitions and state (TP/FP/FN)
 
@@ -324,60 +324,67 @@ class ParallelExperiment:
         if total:
             return self.segmented_ID['total'][state]
 
-        assert primary in self.segmented_ID or primary is None, 'primary must be one of id_dict keys or None'
+        if not show_unique:
+            segments = self.segmented_ID
+        else:
+            segments = self.unique
+
+        
+
+        assert primary in segments or primary is None, 'primary must be one of id_dict keys or None'
         if secondary:
-            assert secondary in self.segmented_ID[primary], 'secondary must be one of id_dict[primary] keys or None'
+            assert secondary in segments[primary], 'secondary must be one of id_dict[primary] keys or None'
         if tertiary:
-            assert tertiary in self.segmented_ID[primary][secondary], 'tertiary must be one of id_dict[primary][secondary] keys or None'
+            assert tertiary in segments[primary][secondary], 'tertiary must be one of id_dict[primary][secondary] keys or None'
 
         if primary:
             # if only a primary partition is chosen
             if not secondary:
-                # if 'TP' is a key in self.segmented_ID[primary] it means that there is no second partitions in self.segmented_ID
-                if 'TP' in self.segmented_ID[primary]:
-                    return self.segmented_ID[primary][state]
+                # if 'TP' is a key in segments[primary] it means that there is no second partitions in segments
+                if 'TP' in segments[primary]:
+                    return segments[primary][state]
 
-                # there is at least a second partition in self.segmented_ID
-                sec_keys = list(self.segmented_ID[primary].keys())
-                # the first option in the second partition options in self.segmented_ID
+                # there is at least a second partition in segments
+                sec_keys = list(segments[primary].keys())
+                # the first option in the second partition options in segments
                 first_key = sec_keys[0]
-                # if 'TP' is a key in self.segmented_ID[primary][first_key] it means that there is no third partitions in self.segmented_ID
-                if 'TP' in self.segmented_ID[primary][first_key]:
+                # if 'TP' is a key in segments[primary][first_key] it means that there is no third partitions in segments
+                if 'TP' in segments[primary][first_key]:
                     # aggregate the ids
-                    ids = self.segmented_ID[primary][first_key][state]
+                    ids = segments[primary][first_key][state]
                     for i in range(1,len(sec_keys)):
-                        ids = np.concatenate((ids, self.segmented_ID[primary][sec_keys[i]][state]), axis=0)
+                        ids = np.concatenate((ids, segments[primary][sec_keys[i]][state]), axis=0)
                     return ids
 
-                # there is a third partition in self.segmented_ID
-                tert_keys = list(self.segmented_ID[primary][first_key].keys())
+                # there is a third partition in segments
+                tert_keys = list(segments[primary][first_key].keys())
                 # aggregate the ids
                 for i in range(len(sec_keys)):
                     for j in range(len(tert_keys)):
                         if i == j == 0:
-                            ids = self.segmented_ID[primary][sec_keys[i]][tert_keys[j]][state]
+                            ids = segments[primary][sec_keys[i]][tert_keys[j]][state]
                         else:
-                            ids = np.concatenate((ids, self.segmented_ID[primary][sec_keys[i]][tert_keys[j]][state]), axis=0)
+                            ids = np.concatenate((ids, segments[primary][sec_keys[i]][tert_keys[j]][state]), axis=0)
                 return ids
 
             # if a primary and a secondary partitions are chosen but not a tertiary
             elif not tertiary:
-                # if 'TP' is a key in self.segmented_ID[primary][first_key] it means that there is no third partitions in self.segmented_ID
-                if 'TP' in self.segmented_ID[primary][secondary]:
-                    return self.segmented_ID[primary][secondary][state]
+                # if 'TP' is a key in segments[primary][first_key] it means that there is no third partitions in segments
+                if 'TP' in segments[primary][secondary]:
+                    return segments[primary][secondary][state]
 
-                # there is a third partition in self.segmented_ID
-                tert_keys = list(self.segmented_ID[primary][secondary].keys())
-                # the first option in the third partition options in self.segmented_ID
+                # there is a third partition in segments
+                tert_keys = list(segments[primary][secondary].keys())
+                # the first option in the third partition options in segments
                 first_key = tert_keys[0]
                 # aggregate the ids
-                ids = self.segmented_ID[primary][secondary][first_key][state]
+                ids = segments[primary][secondary][first_key][state]
                 for i in range(1, len(tert_keys)):
-                    ids = np.concatenate((ids, self.segmented_ID[primary][secondary][tert_keys[i]][state]), axis=0)
+                    ids = np.concatenate((ids, segments[primary][secondary][tert_keys[i]][state]), axis=0)
                 return ids
             # if three partitions are chosen
             else:
-                ids = self.segmented_ID[primary][secondary][tertiary][state]
+                ids = segments[primary][secondary][tertiary][state]
                 return ids
 
     def frame_visualization_no_bb(self, data, image):

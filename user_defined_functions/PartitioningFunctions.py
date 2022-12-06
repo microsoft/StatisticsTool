@@ -77,14 +77,19 @@ def size_horizontal_vertical(dataframe, from_file=False):
 
     # masking by the area of the bounding box
     prd_large_mask = prd_width + prd_height > (img_width + img_height)/2
-    prd_small_mask = np.logical_not(prd_large_mask)
-    label_large_mask = label_width + label_height > (img_width + img_height)/2
-    label_small_mask = np.logical_not(label_large_mask)
+    prd_medium_mask = (prd_width + prd_height < (img_width + img_height)/1.3) & (prd_width + prd_height > (img_width + img_height)/3)
+    prd_small_mask = np.logical_not(prd_large_mask | prd_medium_mask)
+
+    label_large_mask = label_width + label_height > (img_width + img_height)/1.3
+    label_medium_mask = (label_width + label_height < (img_width + img_height)/1.3) & (label_width + label_height > (img_width + img_height)/3)
+    label_small_mask = np.logical_not(label_large_mask | label_medium_mask)
+
     large_mask = prd_large_mask | (label_large_mask & dataframe['x'].isnull())
     small_mask = prd_small_mask | (label_small_mask & dataframe['x'].isnull())
+    medium_mask = prd_medium_mask | (label_medium_mask & dataframe['x'].isnull())
 
 
-    size = {'possible partitions': ['large', 'small'], 'masks': [large_mask, small_mask]}
+    size = {'possible partitions': ['large', 'small','medium'], 'masks': [large_mask, small_mask, medium_mask]}
 
     # masking by x value
     prd_left_x = prd_x_center < img_width/2
