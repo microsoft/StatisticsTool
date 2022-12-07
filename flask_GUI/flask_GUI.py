@@ -109,8 +109,8 @@ def show_stats():
 
 @app.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    comp_index, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon = manage_list_request(request, exp, comp_exp)
-    return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index)
+    comp_index, unique, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon = manage_list_request(request, exp, comp_exp)
+    return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index, unique = unique)
 
 @app.route('/show_im', methods=['GET', 'POST'])
 def show_image():

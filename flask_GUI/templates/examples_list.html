@@ -45,7 +45,7 @@ window.onload = function  () {
 
     <div class="header" style="text-align: left; overflow: hidden; position:relative;">
 
-              <h1 style="font-family: Arial, Helvetica, sans-serif;"> Examples for {{state}} </h1>
+              <h1 style="font-family: Arial, Helvetica, sans-serif;"> Examples for {%if unique%}uniques {%endif%} {{state}}{%if comp_index > -1%} in ref{%endif%} </h1>
                 {% for cl in cl_and_choice: %}
               <h3 style="font-family: Arial, Helvetica, sans-serif;white-space:nowrap; display: inline-block;"> {{cl}} = {{cl_and_choice[cl]}} </h3>
                 {%endfor%}

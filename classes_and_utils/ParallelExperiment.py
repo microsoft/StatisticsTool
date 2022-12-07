@@ -318,16 +318,17 @@ class ParallelExperiment:
         :return: return the ids of the examples that belongs to the requested state and partitions
         """
 
-        # used in is_label_or_prd()
-        self.state = state
-        # if total experiment examples are asked
-        if total:
-            return self.segmented_ID['total'][state]
-
         if not show_unique:
             segments = self.segmented_ID
         else:
             segments = self.unique
+        # used in is_label_or_prd()
+        self.state = state
+        # if total experiment examples are asked
+        if total:
+            return segments['total'][state]
+
+        
 
         
 

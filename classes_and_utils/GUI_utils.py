@@ -577,7 +577,7 @@ def manage_list_request(request, main_exp, comp_exp):
     saved_sheldon = None
     if export_sheldon:
         saved_sheldon = export_list_to_sheldon(per_video_example_hash, exp.video_annotation_dict, exp.save_stats_dir, mytup)
-    return comp_index, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon
+    return comp_index, show_unique, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon
 
 
 def export_list_to_sheldon(images_list, video_annotation_dict,output_dir, states):
@@ -648,9 +648,9 @@ def manage_image_request(request, main_exp, comp_exp):
 
 def calc_unique_detections(names, exp, ref_exp):
     
-    unique = {}
+    unique_out = {}
     unique_stats = {}
-    unique_ref = {}
+    unique_ref_out = {}
     unique_stats_ref = {}
 
     for name in names:
@@ -663,6 +663,13 @@ def calc_unique_detections(names, exp, ref_exp):
             name_list = [name]
             segment = exp.segmented_ID['total']
             segment_ref = ref_exp.segmented_ID['total']
+            if 'total' not in unique_out:
+                unique_out['total'] = {}
+            unique = unique_out['total']
+            if 'total' not in unique_ref_out:
+                unique_ref_out['total'] = {}
+            unique_ref = unique_ref_out['total']
+
 
         for n in name_list:
             if n not in segment:
@@ -700,14 +707,14 @@ def calc_unique_detections(names, exp, ref_exp):
                 u_ref.append(val.copy())
 
         
-        cur_u[name[-1]] = np.array(u)
-        cur_u_ref[name[-1]] = np.array(u_ref)
+        cur_u[name_list[-1]] = np.array(u)
+        cur_u_ref[name_list[-1]] = np.array(u_ref)
 
         unique_stats[name] = len(u)
         unique_stats_ref[name] = len(u_ref)
 
 
-    return unique, unique_ref, unique_stats, unique_stats_ref
+    return unique_out, unique_ref_out,unique_stats, unique_stats_ref
 
         
 
