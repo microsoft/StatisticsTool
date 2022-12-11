@@ -668,7 +668,7 @@ def calc_unique_detections(names, exp, ref_exp):
             if 'total' not in unique_out:
                 unique_out['total'] = {}
             unique = unique_out['total']
-            if 'total' not in unique_out:
+            if 'total' not in unique_ref_out:
                 unique_ref_out['total'] = {}
             unique_ref = unique_ref_out['total']
 
