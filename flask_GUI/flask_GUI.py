@@ -93,9 +93,9 @@ def show_stats():
         cur_stats, _, _, _, _, _, _, _, _, _, _ = manage_stats_request(request, cur_exp)
         #statistics_dict, wanted_statistics_names = update_statistics_with_comp_data(stats=statistics_dict, names=wanted_statistics_names, comp_stats=cur_stats)#, exp=exp, cur_exp=cur_exp)
         keys = [x for x in statistics_dict.keys()]
-        unique, unique_ref, unique_stats, unique_stats_ref =calc_unique_detections(keys, exp, cur_exp)
-        exp.unique = unique
-        cur_exp.unique = unique_ref
+        #unique, unique_ref, unique_stats, unique_stats_ref =calc_unique_detections(keys, exp, cur_exp)
+        #exp.unique = unique
+        cur_exp.unique = None #unique_ref
     return render_template('table.html', stats=statistics_dict, stats_ref=cur_stats, 
                     wanted_seg=wanted_seg, seg_num=seg_num, 
                     statistics_names=wanted_statistics_names, 
