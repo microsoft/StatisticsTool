@@ -5,7 +5,7 @@ sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..
 from user_defined_functions import ReadingFunctions, EvalutationFunctions, OverlapFunctions, PartitioningFunctions, \
     PartitioningFunctions, StatisticsFunctions, TransformFunctions
 from classes_and_utils.ParallelExperiment import *
-from classes_and_utils.VideoEvaluation import run_multiple_Videos
+from classes_and_utils.VideoEvaluation import run_multiple_Videos, VideoEvaluation
 from inspect import getmembers, isfunction
 from classes_and_utils.utils import loading_json, save_json
 import re, pickle
@@ -303,7 +303,7 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
     # combine the intermediate results for further statistics and example extraction
     exp = combine_video_results(save_stats_dir=save_stats_dir, statistic_funcs=statistics_funcs,
                                 files_dir=single_video_hash_saving_dir, segmentation_funcs=partitioning_func,
-                                threshold=threshold, image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict)
+                                threshold=threshold, image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict, evaluation_function = evaluation_func, overlap_function = overlap_func)
 
     save_object(exp, os.path.join(save_stats_dir, 'report_' + config_file_name.replace('.json', '') + '.pkl'))
     return exp
@@ -315,6 +315,7 @@ def unpack_stats_request(request):
     :param request: request from either Reporter_page.html or table.html
     :return: partition names that were selected and a save Boolean
     """
+    unique = request.form.get('unique')
     if request.form.get('partition0'):
         # request to show statistics from Reporter_page.html
         primary = request.form.get('partition0') if request.form.get('partition0') != 'N/A' else None
@@ -331,7 +332,7 @@ def unpack_stats_request(request):
         tertiary = request.args.get('tertiary') if (
                 request.args.get('tertiary') != 'None' and secondary is not None) else None
         save = True
-    return primary, secondary, tertiary, save
+    return primary, secondary, tertiary, save, unique
 
 
 def save_tables(statistics_df, state_df, save, primary, secondary, tertiary, save_stats_dir):
@@ -400,8 +401,10 @@ def manage_stats_request(request, exp):
     :return: all the parameters needed for displaying the statistics results on table.html
     """
     # unpack the values of the request from different pages
-    primary, secondary, tertiary, save = unpack_stats_request(request)
+    primary, secondary, tertiary, save, unique = unpack_stats_request(request)
     # get the partitioned statistics
+
+   
     statistics_df, state_df, statistics_dict, state_dict = exp.statistics_visualization(primary_segmentation=primary,
                                                                                         secondary_segmentation=secondary,
                                                                                         tertiary_segmentation=tertiary)
@@ -413,7 +416,7 @@ def manage_stats_request(request, exp):
     
     # get the values of the rows, columns etc. for the html table if those values exists
     columns, sub_rows, rows, wanted_seg, seg_num = stats_4_html(primary, secondary, tertiary, exp.masks)
-    return statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path
+    return statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path, unique
 
 
 def unpack_list_request(request, main_exp, comp_exp):
@@ -646,8 +649,52 @@ def manage_image_request(request, main_exp, comp_exp):
     return data, save_path
 
 
-def calc_unique_detections(names, exp, ref_exp):
-    
+#create dictionsary for main/ref report with matched bounding box in ref/main if there is any
+def match_main_ref_detections(exp, ref_exp):
+        main_ref = {}
+        ref_main = {}
+        
+        for vid in exp.comp_data['video'].unique():
+            ref_vid = ref_exp.comp_data[ref_exp.comp_data['video'] == vid].reset_index().reset_index().set_index('frame_id')
+            main_vid = exp.comp_data[exp.comp_data['video'] == vid].reset_index().reset_index().set_index('frame_id')
+            main_vid_dict = main_vid.to_dict('records')
+            ref_vid_dict = ref_vid.to_dict('records')
+            frames = np.unique(np.concatenate([ref_vid.index.unique(),main_vid.index.unique()]))
+            for frame in frames:
+                main_ind =  main_vid['level_0'][main_vid.index==frame]
+                ref_ind =  ref_vid['level_0'][ref_vid.index==frame]
+                predictions =[main_vid_dict[i] for i in main_ind]
+                ref_predictions =[ref_vid_dict[i] for i in ref_ind]
+                
+                   
+                if not len(ref_predictions) or not len(predictions):
+                    mat=[]
+                else:
+                    mat = np.zeros((len(predictions), len(ref_predictions)))
+                
+                for i, pred in enumerate(predictions):
+                    for j, label in enumerate(ref_predictions):
+                    
+                        if not pred['detection'] or not label['detection']:
+                            continue
+                        
+                        overlap = exp.overlap_function(pred, label)
+                        mat[i, j] = round(overlap, 2)
+            
+                exp.evaluation_function(predictions, mat)
+
+                for ind, x in enumerate(predictions): 
+                    if 'matching' in x:
+                        main_ref[x['index']]=ref_predictions[x['matching']]['index']
+                        ref_main[ref_predictions[x['matching']]['index']] = x['index']
+            
+        return main_ref, ref_main
+
+def calc_unique_detections(names, exp, ref_exp, main_ref_dict, ref_main_dict):
+   
+    if main_ref_dict is None or ref_main_dict is None:
+        return
+
     unique_out = {}
     unique_stats = {}
     unique_ref_out = {}
@@ -655,33 +702,49 @@ def calc_unique_detections(names, exp, ref_exp):
     unique = unique_out
     unique_ref = unique_ref_out
 
+    #iterate over all selected partitions
     for name in names:
-        to_break = False
-        segment = exp.segmented_ID
-        segment_ref = ref_exp.segmented_ID
+       
         name_list = name
 
+        #if no partition is selected will take total stats
         if type(name) is str:
+            if name not in exp.masks['total_stats']:
+                continue
+
             name_list = [name]
-            segment = exp.segmented_ID['total']
-            segment_ref = ref_exp.segmented_ID['total']
+            mask = exp.masks['total_stats'][name]
+            mask_ref = ref_exp.masks['total_stats'][name]
             if 'total' not in unique_out:
                 unique_out['total'] = {}
             unique = unique_out['total']
             if 'total' not in unique_ref_out:
                 unique_ref_out['total'] = {}
             unique_ref = unique_ref_out['total']
+            unique[name] = {}
+            #unique = unique[name]
+            unique_ref[name] = {}
+            #unique_ref = unique_ref[name]
 
+        else: 
+            if name[-1] not in exp.masks['total_stats']:
+                continue
 
-        for n in name_list:
-            if n not in segment:
-                to_break = True
-                break
-            segment = segment[n]
-        
-        if to_break: #if current key not in segment dictionaries
-            continue
-        
+            #calculated current partition masks        
+            mask = pd.Series(True, range(exp.comp_data.shape[0]))
+            mask_ref = pd.Series(True, range(ref_exp.comp_data.shape[0]))
+            for n in name_list[:-1]:
+                for seg in exp.masks.keys():
+                    if 'possible partitions' in exp.masks[seg] and n in exp.masks[seg]['possible partitions']:
+                        cur_mask = exp.masks[seg]['masks'][exp.masks[seg]['possible partitions'].index(n)]
+                        cur_mask_ref = ref_exp.masks[seg]['masks'][ref_exp.masks[seg]['possible partitions'].index(n)]
+                        break    
+                mask = mask & cur_mask
+                mask_ref = mask_ref & cur_mask_ref
+            
+            mask = mask & exp.masks['total_stats'][name_list[-1]]
+            mask_ref = mask_ref & ref_exp.masks['total_stats'][name_list[-1]]
+
         cur_u = unique
         cur_u_ref = unique_ref
         
@@ -694,19 +757,16 @@ def calc_unique_detections(names, exp, ref_exp):
             cur_u=cur_u[seg]
             cur_u_ref=cur_u_ref[seg]
 
-            segment_ref = segment_ref[seg]
-        segment_ref = segment_ref[name_list[-1]]
-
         u=[]
         u_ref=[]
 
-        for val in segment:
-            if exp.comp_data['detection'][val[1]] != ref_exp.comp_data['detection'][val[1]]:
-                u.append(val.copy())
+        for val in mask.index[mask==True]:
+            if val not in main_ref_dict or mask_ref[main_ref_dict[val]] == False:
+                u.append(exp.ID_storage['prediction'][val])
 
-        for val in segment_ref:
-            if exp.comp_data['detection'][val[1]] != ref_exp.comp_data['detection'][val[1]]:
-                u_ref.append(val.copy())
+        for val in mask_ref.index[mask_ref==True]:
+            if val not in ref_main_dict or mask[ref_main_dict[val]] == False:
+                u_ref.append(ref_exp.ID_storage['prediction'][val])
 
         
         cur_u[name_list[-1]] = np.array(u)

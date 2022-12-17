@@ -59,9 +59,13 @@ def Report():
         # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
         if not os.path.exists(os.path.dirname(path_to_save)):
             os.makedirs(os.path.dirname(path_to_save))
+        if os.path.exists(path_to_save):
+            os.remove(path_to_save)
         pckl_file.save(path_to_save)
         global exp
         exp = load_object(path_to_save)
+        exp.main_ref_dict=None
+        exp.ref_main_dict=None
     global comp_exp
     comp_exp = []
     if 'myFile2' in request.files and request.files['myFile2'].filename:
@@ -72,30 +76,36 @@ def Report():
         # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
         if not os.path.exists(os.path.dirname(path_to_save)):
             os.makedirs(os.path.dirname(path_to_save))
+        if os.path.exists(path_to_save):
+            os.remove(path_to_save)
         pckl_file.save(path_to_save)
         comp_exp.append(load_object(path_to_save))
-
+        
     # make a list of optional partitions which their bolean masks are available
     list_of_seg_opt = ['N/A'] + [seg for seg in exp.masks.keys() if seg != 'total_stats']
     partitions_names = ['Primary', 'Secondary', 'Tertiary']
-    return render_template('Reporter_page.html', opt=list_of_seg_opt, num_part=min(len(list_of_seg_opt)-1, 3), partitions_names=partitions_names)
+    return render_template('Reporter_page.html', opt=list_of_seg_opt, num_part=min(len(list_of_seg_opt)-1, 3), partitions_names=partitions_names, calc_unique_opt=len(comp_exp)>0)
 
 
 @app.route('/stats', methods=['GET', 'POST'])
 def show_stats():
-    statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path = manage_stats_request(request, exp)
+    statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path,_ = manage_stats_request(request, exp)
     cur_stats = None
     exp.unique = None
     unique_stats = None
     unique_stats_ref = None
     if len(comp_exp) > 0:
+        
         cur_exp = comp_exp[0]
-        cur_stats, _, _, _, _, _, _, _, _, _, _ = manage_stats_request(request, cur_exp)
-        #statistics_dict, wanted_statistics_names = update_statistics_with_comp_data(stats=statistics_dict, names=wanted_statistics_names, comp_stats=cur_stats)#, exp=exp, cur_exp=cur_exp)
-        keys = [x for x in statistics_dict.keys()]
-        #unique, unique_ref, unique_stats, unique_stats_ref =calc_unique_detections(keys, exp, cur_exp)
-        #exp.unique = unique
-        cur_exp.unique = None #unique_ref
+        cur_stats, _, _, _, _, _, _, _, _, _, _, calc_unique = manage_stats_request(request, cur_exp)
+        if calc_unique and exp.main_ref_dict == None:
+            exp.main_ref_dict, exp.ref_main_dict = match_main_ref_detections(exp, comp_exp[0])
+        
+        if exp.main_ref_dict != None and exp.ref_main_dict != None:
+            keys = [x for x in statistics_dict.keys()]
+            unique, unique_ref, unique_stats, unique_stats_ref =calc_unique_detections(keys, exp, cur_exp, exp.main_ref_dict, exp.ref_main_dict)
+            exp.unique = unique
+            cur_exp.unique = unique_ref
     return render_template('table.html', stats=statistics_dict, stats_ref=cur_stats, 
                     wanted_seg=wanted_seg, seg_num=seg_num, 
                     statistics_names=wanted_statistics_names, 

@@ -152,8 +152,11 @@ input[type=submit]:active {
                     {%endfor%}
 
                 <button type="submit" > Show Statistics </button>
-
-                    </form>
+                {%if calc_unique_opt %}
+                  <input type="checkbox" id="unique" name="unique" value="Unique">
+                  <label for="vehicle1"> Calculate Unique</label><br>  
+                {%endif%}                
+              </form>
 
 
 </div>

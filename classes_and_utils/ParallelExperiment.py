@@ -93,9 +93,11 @@ class ParallelExperiment:
         Accepts a bb_id and display its frame by calling self.frame_visualization()
 
     """
-    def __init__(self, statistic_funcs, files_dir, save_stats_dir, image_width, image_height,segmentation_funcs,video_annotation_dict):
+    def __init__(self, statistic_funcs, files_dir, save_stats_dir, image_width, image_height,segmentation_funcs,video_annotation_dict, overlap_function, evaluation_function):
         self.files_dir = files_dir
         self.statistic_funcs = statistic_funcs
+        self.evaluation_function = evaluation_function
+        self.overlap_function = overlap_function
         self.save_stats_dir = save_stats_dir
         self.segmentation_funcs = segmentation_funcs
         self.masks = None
@@ -104,9 +106,9 @@ class ParallelExperiment:
         self.image_width = int(image_width)
         self.image_height = int(image_height)
         self.video_annotation_dict = video_annotation_dict
+        
     
         
-
 
 
 
@@ -576,7 +578,7 @@ class ParallelExperiment:
 
 
 
-def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentation_funcs, threshold, image_width, image_height,video_annotation_dict):
+def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentation_funcs, threshold, image_width, image_height,video_annotation_dict, overlap_function, evaluation_function):
     """
 
     :param save_stats_dir: same as in ParallelExperiment
@@ -588,7 +590,7 @@ def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentati
     :param image_height: the image height size to reshapw to
     :return:
     """
-    exp = ParallelExperiment(save_stats_dir=save_stats_dir, statistic_funcs=statistic_funcs, files_dir=files_dir, segmentation_funcs=segmentation_funcs, image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict)
+    exp = ParallelExperiment(save_stats_dir=save_stats_dir, statistic_funcs=statistic_funcs, files_dir=files_dir, segmentation_funcs=segmentation_funcs, image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict, evaluation_function=evaluation_function, overlap_function=overlap_function)
     exp.combine_from_text(False)
     exp.get_segmentation_masks(float(threshold))
     return exp
