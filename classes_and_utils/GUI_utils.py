@@ -655,18 +655,22 @@ def match_main_ref_detections(exp, ref_exp):
         ref_main = {}
         
         for vid in exp.comp_data['video'].unique():
-            ref_vid = ref_exp.comp_data[ref_exp.comp_data['video'] == vid].reset_index().reset_index().set_index('frame_id')
-            main_vid = exp.comp_data[exp.comp_data['video'] == vid].reset_index().reset_index().set_index('frame_id')
-            main_vid_dict = main_vid.to_dict('records')
-            ref_vid_dict = ref_vid.to_dict('records')
-            frames = np.unique(np.concatenate([ref_vid.index.unique(),main_vid.index.unique()]))
+            #set frame_id as index, and keep the original index as another column
+            ref_cur_video_df = ref_exp.comp_data[ref_exp.comp_data['video'] == vid].reset_index().reset_index().set_index('frame_id')
+            main_cur_video_df = exp.comp_data[exp.comp_data['video'] == vid].reset_index().reset_index().set_index('frame_id')
+
+            main_cur_video_list = main_cur_video_df.to_dict('records')
+            ref_cur_video_list = ref_cur_video_df.to_dict('records')
+
+            frames = np.unique(np.concatenate([ref_cur_video_df.index.unique(),main_cur_video_df.index.unique()]))
             for frame in frames:
-                main_ind =  main_vid['level_0'][main_vid.index==frame]
-                ref_ind =  ref_vid['level_0'][ref_vid.index==frame]
-                predictions =[main_vid_dict[i] for i in main_ind]
-                ref_predictions =[ref_vid_dict[i] for i in ref_ind]
+                #level_0 is the index in the list
+                main_ind =  main_cur_video_df['level_0'][main_cur_video_df.index==frame]
+                ref_ind =  ref_cur_video_df['level_0'][ref_cur_video_df.index==frame]
+
+                predictions =[main_cur_video_list[i] for i in main_ind]
+                ref_predictions =[ref_cur_video_list[i] for i in ref_ind]
                 
-                   
                 if not len(ref_predictions) or not len(predictions):
                     mat=[]
                 else:
@@ -683,6 +687,7 @@ def match_main_ref_detections(exp, ref_exp):
             
                 exp.evaluation_function(predictions, mat)
 
+                #'index' is the location in the original dataframe of all the videos (exp.comp_data)
                 for ind, x in enumerate(predictions): 
                     if 'matching' in x:
                         main_ref[x['index']]=ref_predictions[x['matching']]['index']
@@ -690,7 +695,7 @@ def match_main_ref_detections(exp, ref_exp):
             
         return main_ref, ref_main
 
-def calc_unique_detections(names, exp, ref_exp, main_ref_dict, ref_main_dict):
+def calc_unique_detections(partitions, exp, ref_exp, main_ref_dict, ref_main_dict):
    
     if main_ref_dict is None or ref_main_dict is None:
         return
@@ -703,37 +708,37 @@ def calc_unique_detections(names, exp, ref_exp, main_ref_dict, ref_main_dict):
     unique_ref = unique_ref_out
 
     #iterate over all selected partitions
-    for name in names:
+    for cur_partition in partitions:
        
-        name_list = name
+        partitions_parts_list = cur_partition
 
         #if no partition is selected will take total stats
-        if type(name) is str:
-            if name not in exp.masks['total_stats']:
+        if type(cur_partition) is str:
+            if cur_partition not in exp.masks['total_stats']:
                 continue
 
-            name_list = [name]
-            mask = exp.masks['total_stats'][name]
-            mask_ref = ref_exp.masks['total_stats'][name]
+            partitions_parts_list = [cur_partition]
+            mask = exp.masks['total_stats'][cur_partition]
+            mask_ref = ref_exp.masks['total_stats'][cur_partition]
             if 'total' not in unique_out:
                 unique_out['total'] = {}
             unique = unique_out['total']
             if 'total' not in unique_ref_out:
                 unique_ref_out['total'] = {}
             unique_ref = unique_ref_out['total']
-            unique[name] = {}
+            unique[cur_partition] = {}
             #unique = unique[name]
-            unique_ref[name] = {}
+            unique_ref[cur_partition] = {}
             #unique_ref = unique_ref[name]
 
         else: 
-            if name[-1] not in exp.masks['total_stats']:
+            if partitions_parts_list[-1] not in exp.masks['total_stats']:
                 continue
 
             #calculated current partition masks        
             mask = pd.Series(True, range(exp.comp_data.shape[0]))
             mask_ref = pd.Series(True, range(ref_exp.comp_data.shape[0]))
-            for n in name_list[:-1]:
+            for n in partitions_parts_list[:-1]:
                 for seg in exp.masks.keys():
                     if 'possible partitions' in exp.masks[seg] and n in exp.masks[seg]['possible partitions']:
                         cur_mask = exp.masks[seg]['masks'][exp.masks[seg]['possible partitions'].index(n)]
@@ -742,13 +747,13 @@ def calc_unique_detections(names, exp, ref_exp, main_ref_dict, ref_main_dict):
                 mask = mask & cur_mask
                 mask_ref = mask_ref & cur_mask_ref
             
-            mask = mask & exp.masks['total_stats'][name_list[-1]]
-            mask_ref = mask_ref & ref_exp.masks['total_stats'][name_list[-1]]
+            mask = mask & exp.masks['total_stats'][partitions_parts_list[-1]]
+            mask_ref = mask_ref & ref_exp.masks['total_stats'][partitions_parts_list[-1]]
 
         cur_u = unique
         cur_u_ref = unique_ref
         
-        for seg in name_list[:-1]:
+        for seg in partitions_parts_list[:-1]:
             if seg not in cur_u:
                 cur_u[seg] = {}
             if seg not in cur_u_ref:
@@ -757,23 +762,23 @@ def calc_unique_detections(names, exp, ref_exp, main_ref_dict, ref_main_dict):
             cur_u=cur_u[seg]
             cur_u_ref=cur_u_ref[seg]
 
-        u=[]
-        u_ref=[]
+        unique_array=[]
+        unique_array_ref=[]
 
         for val in mask.index[mask==True]:
             if val not in main_ref_dict or mask_ref[main_ref_dict[val]] == False:
-                u.append(exp.ID_storage['prediction'][val])
+                unique_array.append(exp.ID_storage['prediction'][val])
 
         for val in mask_ref.index[mask_ref==True]:
             if val not in ref_main_dict or mask[ref_main_dict[val]] == False:
-                u_ref.append(ref_exp.ID_storage['prediction'][val])
+                unique_array_ref.append(ref_exp.ID_storage['prediction'][val])
 
         
-        cur_u[name_list[-1]] = np.array(u)
-        cur_u_ref[name_list[-1]] = np.array(u_ref)
+        cur_u[partitions_parts_list[-1]] = np.array(unique_array)
+        cur_u_ref[partitions_parts_list[-1]] = np.array(unique_array_ref)
 
-        unique_stats[name] = len(u)
-        unique_stats_ref[name] = len(u_ref)
+        unique_stats[cur_partition] = len(unique_array)
+        unique_stats_ref[cur_partition] = len(unique_array_ref)
 
 
     return unique_out, unique_ref_out,unique_stats, unique_stats_ref

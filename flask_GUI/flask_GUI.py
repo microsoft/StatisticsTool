@@ -102,10 +102,11 @@ def show_stats():
             exp.main_ref_dict, exp.ref_main_dict = match_main_ref_detections(exp, comp_exp[0])
         
         if exp.main_ref_dict != None and exp.ref_main_dict != None:
-            keys = [x for x in statistics_dict.keys()]
-            unique, unique_ref, unique_stats, unique_stats_ref =calc_unique_detections(keys, exp, cur_exp, exp.main_ref_dict, exp.ref_main_dict)
+            partitions = [x for x in statistics_dict.keys()]
+            unique, unique_ref, unique_stats, unique_stats_ref =calc_unique_detections(partitions, exp, cur_exp, exp.main_ref_dict, exp.ref_main_dict)
             exp.unique = unique
             cur_exp.unique = unique_ref
+
     return render_template('table.html', stats=statistics_dict, stats_ref=cur_stats, 
                     wanted_seg=wanted_seg, seg_num=seg_num, 
                     statistics_names=wanted_statistics_names, 
