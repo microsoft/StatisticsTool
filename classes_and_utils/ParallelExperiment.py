@@ -148,7 +148,7 @@ class ParallelExperiment:
         #first key from 'detection' key in input
         key = 'detection'
         FN_mask = ((comp_data[key+'_gt']==True) & ((comp_data['state']<threshold) | (comp_data[key]==False) ))
-        FP_mask = ((comp_data[key]==True) & ((comp_data['state']<threshold) | ( comp_data[key+'_gt']==False)))
+        FP_mask = ((comp_data[key]==True) & (comp_data['state']<threshold))
         TP_mask = ((comp_data[key]==True) &((comp_data['state']>=threshold) & (comp_data[key+'_gt']==True)))
         
         return TP_mask, FP_mask, FN_mask

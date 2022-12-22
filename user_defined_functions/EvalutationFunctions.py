@@ -1,4 +1,5 @@
 from scipy.optimize import linear_sum_assignment
+import numpy as np
 """
 Evaluation Function instructions:
 ------------------------------
@@ -38,7 +39,7 @@ def activity_evaluation(predictions_dict_list, overlap_mat):
                 
 def min_distance_evaluation(predictions_dict_list, overlap_mat):
     for i in range(len(predictions_dict_list)):
-        predictions_dict_list[i]['state'] = 0
+        predictions_dict_list[i]['state'] = np.max(overlap_mat[i])
 
     if len(overlap_mat) > 0:
         prd_ind, label_ind = linear_sum_assignment(overlap_mat, maximize=True)
