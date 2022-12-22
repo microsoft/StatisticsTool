@@ -99,7 +99,7 @@ def show_stats():
         cur_exp = comp_exp[0]
         cur_stats, _, _, _, _, _, _, _, _, _, _, calc_unique = manage_stats_request(request, cur_exp)
         if calc_unique and exp.main_ref_dict == None:
-            exp.main_ref_dict, exp.ref_main_dict = match_main_ref_detections(exp, comp_exp[0])
+            exp.main_ref_dict, exp.ref_main_dict = match_main_ref_predictions(exp, comp_exp[0])
         
         if exp.main_ref_dict != None and exp.ref_main_dict != None:
             partitions = [x for x in statistics_dict.keys()]
