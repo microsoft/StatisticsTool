@@ -39,8 +39,12 @@ def activity_evaluation(predictions_dict_list, overlap_mat):
                 
 def min_distance_evaluation(predictions_dict_list, overlap_mat):
     for i in range(len(predictions_dict_list)):
-        predictions_dict_list[i]['state'] = np.max(overlap_mat[i])
-
+        val = 0
+        if len(overlap_mat) > i and len(overlap_mat[i]) > 0:
+            val = np.max(overlap_mat[i])
+        
+        predictions_dict_list[i]['state'] = val
+    
     if len(overlap_mat) > 0:
         prd_ind, label_ind = linear_sum_assignment(overlap_mat, maximize=True)
 
@@ -49,4 +53,3 @@ def min_distance_evaluation(predictions_dict_list, overlap_mat):
             predictions_dict_list[i]['state'] = overlap_mat[i][j]
             if overlap_mat[i][j] > 0:
                 predictions_dict_list[i]['matching'] = j
-
