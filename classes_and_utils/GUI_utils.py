@@ -650,6 +650,13 @@ def manage_image_request(request, main_exp, comp_exp):
 
             
 def match_frame_predictions(predictions, ref_predictions, exp):
+    """
+    Match beween 2 set of preditcions in a frame using the user defined functions in the experiment object.
+    :param (in/out) predictions: predictions in the main reort. The predictions filled with thier matched one and overlap values
+    :param (in/out) ref_predictions: predictions in the ref reort. The predictions filled with thier matched one and overlap values
+    :param exp: experiment object 
+
+    """
     if not len(ref_predictions) or not len(predictions):
             mat=[]
     else:
@@ -677,6 +684,13 @@ def match_frame_predictions(predictions, ref_predictions, exp):
         
 #create dictionsary for main/ref report with matched bounding box in ref/main if there is any
 def match_main_ref_predictions(exp, ref_exp):
+    """
+    Match all the predictions in main reort and ref report. Detections with no matched detection in the ref report, will have no entry in the dictionary.
+    :param exp: main experiment object.
+    :param ref_exp: ref experiment object.
+    :return: main_ref,ref_main :dictionary between detection in main report to detections in the ref report.
+    """
+    
     print('start calculating main/ref matched bounding boxes')
     
     main_ref = {}
@@ -724,7 +738,16 @@ def match_main_ref_predictions(exp, ref_exp):
     return main_ref, ref_main
 
 def calc_unique_detections(partitions, exp, ref_exp, main_ref_dict, ref_main_dict):
-   
+    """
+    Calc unique detection between two reports
+
+    :partitions: different report partitions
+    :param exp: exp is an instance of ParallelExperiment
+    :param ref_exp: exp is an instance of ParallelExperiment
+    :param main_ref_dict: dictinary that maps each detetion in the report with his matched detections in the ref reort
+    :param ref_main_dict: dictinary that maps each detetion in the ref report with his matched detections in the reort
+    :return: an encoded image and the path where the image was saved (if it was saved)
+    """
     if main_ref_dict is None or ref_main_dict is None:
         return
 
