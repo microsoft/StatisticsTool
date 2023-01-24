@@ -208,9 +208,9 @@ class ParallelExperiment:
             # calculating the statistics
 
             if self.statistic_funcs.__name__=='sep_FN_seq_count':
-                statistics_dict = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*FN_mask))
+                statistics_dict = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*self.masks['total_stats']['FN']))
             elif self.statistic_funcs.__name__=='sep_FP_seq_count':
-                statistics_dict = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*FN_mask))
+                statistics_dict = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*self.masks['total_stats']['FP']))
             else:
                 statistics_dict = self.statistic_funcs(TP, FP, FN, len(self.comp_data['frame_id']))
             state_dict = {'TP': TP, 'FP': FP, 'FN': FN, 'TOTAL_PRED': len(self.comp_data['frame_id'])}
