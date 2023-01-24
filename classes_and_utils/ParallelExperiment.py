@@ -206,15 +206,11 @@ class ParallelExperiment:
             # the amount of TP/FP/FN is the sum of True booleans in the appropriate place in self.masks
             TP, FP, FN = sum(self.masks['total_stats']['TP']), sum(self.masks['total_stats']['FP']), sum(self.masks['total_stats']['FN'])
             # calculating the statistics
-            if self.statistic_funcs.__name__=='presence_leave_flicker_seq_count':
-                statistics_dict = {'Leave Flicker Count': len(self.comp_data['Presence leave flicker sequence num'])}
-            elif self.statistic_funcs.__name__=='presence_approach_flicker_seq_count':
-                statistics_dict = {'Approach Flicker Count': len(self.comp_data['Presence approach flicker sequence num'])}
-            elif self.statistic_funcs.__name__=='sep_seq_count':
-                if 'Separate FN sequence count' in self.comp_data.keys():
-                    statistics_dict = {'Separate FN Sequence Count': sum(self.comp_data['Separate FN sequence count'])}
-                else:
-                    statistics_dict = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count'])}
+
+            if self.statistic_funcs.__name__=='sep_FN_seq_count':
+                statistics_dict = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*FN_mask))
+            elif self.statistic_funcs.__name__=='sep_FP_seq_count':
+                statistics_dict = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*FN_mask))
             else:
                 statistics_dict = self.statistic_funcs(TP, FP, FN, len(self.comp_data['frame_id']))
             state_dict = {'TP': TP, 'FP': FP, 'FN': FN, 'TOTAL_PRED': len(self.comp_data['frame_id'])}
@@ -244,15 +240,10 @@ class ParallelExperiment:
                     num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
                     total_preds = sum(self.masks[primary_segmentation]['masks'][i])
                     # calculating the statistics
-                    if self.statistic_funcs.__name__=='presence_leave_flicker_seq_count':
-                        temp_stat_d = {'Leave Flicker Count': total_preds}
-                    elif self.statistic_funcs.__name__=='presence_approach_flicker_seq_count':
-                        temp_stat_d = {'Approach Flicker Count': total_preds}
-                    elif self.statistic_funcs.__name__=='sep_seq_count':
-                        if 'Separate FN sequence count' in self.comp_data.keys():
-                            temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FN sequence count']*FN_mask)}
-                        else:
-                            temp_stat_d = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count']*FP_mask)}
+                    if self.statistic_funcs.__name__=='sep_FN_seq_count':
+                        temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*FN_mask))
+                    elif self.statistic_funcs.__name__=='sep_FP_seq_count':
+                        temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*FN_mask))
                     else:
                         temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN, total_preds)
                     temp_stat_d.update({'TOTAL_PREDS':total_preds})
@@ -284,15 +275,10 @@ class ParallelExperiment:
                         num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
                         total_preds = sum(self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j])
                         # calculating the statistics
-                        if self.statistic_funcs.__name__=='presence_leave_flicker_seq_count':
-                            temp_stat_d = {'Leave Flicker Count': total_preds}
-                        elif self.statistic_funcs.__name__=='presence_approach_flicker_seq_count':
-                            temp_stat_d = {'Approach Flicker Count': total_preds}
-                        elif self.statistic_funcs.__name__=='sep_seq_count':
-                            if 'Separate FN sequence count' in self.comp_data.keys():
-                                temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FN sequence count']*FN_mask)}
-                            else:
-                                temp_stat_d = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count']*FP_mask)}
+                        if self.statistic_funcs.__name__=='sep_FN_seq_count':
+                            temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*FN_mask))
+                        elif self.statistic_funcs.__name__=='sep_FP_seq_count':
+                            temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*FN_mask))
                         else:
                             temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN, total_preds)
                         temp_stat_d.update({'TOTAL_PREDS':total_preds})
@@ -327,15 +313,10 @@ class ParallelExperiment:
                             num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
                             total_preds = sum(self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k])
                             # calculating the statistics
-                            if self.statistic_funcs.__name__=='presence_leave_flicker_seq_count':
-                                temp_stat_d = {'Leave Flicker Count': total_preds}
-                            elif self.statistic_funcs.__name__=='presence_approach_flicker_seq_count':
-                                temp_stat_d = {'Approach Flicker Count': total_preds}
-                            elif self.statistic_funcs.__name__=='sep_seq_count':
-                                if 'Separate FN sequence count' in self.comp_data.keys():
-                                    temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FN sequence count']*FN_mask)}
-                                else:
-                                    temp_stat_d = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count']*FP_mask)}
+                            if self.statistic_funcs.__name__=='sep_FN_seq_count':
+                               temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*FN_mask))
+                            elif self.statistic_funcs.__name__=='sep_FP_seq_count':
+                                temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*FN_mask))
                             else:
                                 temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN, total_preds)
                             temp_stat_d.update({'TOTAL_PREDS':total_preds})

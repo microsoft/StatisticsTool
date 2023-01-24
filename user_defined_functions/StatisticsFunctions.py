@@ -50,12 +50,14 @@ def precision_recall_f1(TP, FP, FN, total_preds):
         f1 = 2 * (precision * recall) / (precision + recall)
     return {'Recall': round(recall, 3), 'Precision': round(precision, 3), 'F1': round(f1, 3)}
 
-def sep_seq_count(TP, FP, FN, total_preds):
-    return {'Separate Sequence Count': total_preds}
+def sep_FP_seq_count(total_preds):
+    return {'Separate FP Sequence Count': total_preds}
 
+def sep_FN_seq_count(total_preds):
+    return {'Separate FN Sequence Count': total_preds}
 
-def presence_leave_flicker_seq_count():
-    return
+def presence_leave_flicker_seq_count(TP, FP, FN, total_preds):
+    return {'Leave Flicker Count': total_preds}
 
-def presence_approach_flicker_seq_count():
-    return
+def presence_approach_flicker_seq_count(TP, FP, FN, total_preds):
+    return {'Approach Flicker Count': total_preds}
