@@ -70,7 +70,7 @@ def separate_FN_sequence_transform(comp_data):
 
         if ind==(len(prediction)-1) and in_seq_fn==True:
             new_event['end_frame'] = frames[ind]
-            new_event['Separate FP sequence length'] = fn_seq_count
+            new_event['Separate FN sequence length'] = fn_seq_count
             fn_seq_count = 0
             events_temp.append(new_event)
 

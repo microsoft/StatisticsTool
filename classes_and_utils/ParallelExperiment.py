@@ -250,7 +250,7 @@ class ParallelExperiment:
                         temp_stat_d = {'Approach Flicker Count': total_preds}
                     elif self.statistic_funcs.__name__=='sep_seq_count':
                         if 'Separate FN sequence count' in self.comp_data.keys():
-                            temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FP sequence count']*FN_mask)}
+                            temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FN sequence count']*FN_mask)}
                         else:
                             temp_stat_d = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count']*FP_mask)}
                     else:
@@ -290,7 +290,7 @@ class ParallelExperiment:
                             temp_stat_d = {'Approach Flicker Count': total_preds}
                         elif self.statistic_funcs.__name__=='sep_seq_count':
                             if 'Separate FN sequence count' in self.comp_data.keys():
-                                temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FP sequence count']*FN_mask)}
+                                temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FN sequence count']*FN_mask)}
                             else:
                                 temp_stat_d = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count']*FP_mask)}
                         else:
@@ -333,7 +333,7 @@ class ParallelExperiment:
                                 temp_stat_d = {'Approach Flicker Count': total_preds}
                             elif self.statistic_funcs.__name__=='sep_seq_count':
                                 if 'Separate FN sequence count' in self.comp_data.keys():
-                                    temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FP sequence count']*FN_mask)}
+                                    temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FN sequence count']*FN_mask)}
                                 else:
                                     temp_stat_d = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count']*FP_mask)}
                             else:
