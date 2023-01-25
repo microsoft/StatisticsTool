@@ -2,12 +2,12 @@
     {
         "File Reading Function": "statistic_tool_reader_activity_calssification",
         "Overlap Function": "Classification_True_False_activity",
-        "Threshold": "0.1",
+        "Threshold": "0.5",
         "Evaluation Function": "activity_evaluation",
         "Image Width": "1280",
         "Image Height": "720",
-        "Statistics Functions": "precision_recall",
+        "Statistics Functions": "sep_seq_count",
         "Partitioning Functions": "activity_partition",
-        "Transformation Function": "None"
+        "Transformation Function": "separate_FN_sequence_transform"
     }
 ]

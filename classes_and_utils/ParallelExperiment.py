@@ -206,8 +206,18 @@ class ParallelExperiment:
             # the amount of TP/FP/FN is the sum of True booleans in the appropriate place in self.masks
             TP, FP, FN = sum(self.masks['total_stats']['TP']), sum(self.masks['total_stats']['FP']), sum(self.masks['total_stats']['FN'])
             # calculating the statistics
-            statistics_dict = self.statistic_funcs(TP, FP, FN)
-            state_dict = {'TP': TP, 'FP': FP, 'FN': FN, 'TOTAL_FRAMES': len(self.comp_data['frame_id'])}
+            if self.statistic_funcs.__name__=='presence_leave_flicker_seq_count':
+                statistics_dict = {'Leave Flicker Count': len(self.comp_data['Presence leave flicker sequence num'])}
+            elif self.statistic_funcs.__name__=='presence_approach_flicker_seq_count':
+                statistics_dict = {'Approach Flicker Count': len(self.comp_data['Presence approach flicker sequence num'])}
+            elif self.statistic_funcs.__name__=='sep_seq_count':
+                if 'Separate FN sequence count' in self.comp_data.keys():
+                    statistics_dict = {'Separate FN Sequence Count': sum(self.comp_data['Separate FN sequence count'])}
+                else:
+                    statistics_dict = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count'])}
+            else:
+                statistics_dict = self.statistic_funcs(TP, FP, FN, len(self.comp_data['frame_id']))
+            state_dict = {'TP': TP, 'FP': FP, 'FN': FN, 'TOTAL_PRED': len(self.comp_data['frame_id'])}
             # getting the ids of the TP/FP/FN examples
             self.segmented_ID['total'] = {'TP': self.ID_storage["prediction"][self.masks['total_stats']['TP']], 'FP': self.ID_storage['prediction'][self.masks['total_stats']['FP']], 'FN': self.ID_storage['label'][self.masks['total_stats']['FN']]}
             # turning the dictionaries into pandas dataframes
@@ -232,8 +242,20 @@ class ParallelExperiment:
                     FN_mask = self.masks['total_stats']['FN'] & self.masks[primary_segmentation]['masks'][i]
                     # the number of TP is the sum of the mask (same for FP/FN)
                     num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
+                    total_preds = sum(self.masks[primary_segmentation]['masks'][i])
                     # calculating the statistics
-                    temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN)
+                    if self.statistic_funcs.__name__=='presence_leave_flicker_seq_count':
+                        temp_stat_d = {'Leave Flicker Count': total_preds}
+                    elif self.statistic_funcs.__name__=='presence_approach_flicker_seq_count':
+                        temp_stat_d = {'Approach Flicker Count': total_preds}
+                    elif self.statistic_funcs.__name__=='sep_seq_count':
+                        if 'Separate FN sequence count' in self.comp_data.keys():
+                            temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FP sequence count']*FN_mask)}
+                        else:
+                            temp_stat_d = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count']*FP_mask)}
+                    else:
+                        temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN, total_preds)
+                    temp_stat_d.update({'TOTAL_PREDS':total_preds})
                     # updating the statistics and state dictionaries with tuple keys that allow multi-indexing in pandas
                     statistics_dict.update({(seg_name, stat_name): temp_stat_d[stat_name] for stat_name in temp_stat_d})
                     state_dict.update({(seg_name, name): stat for name, stat in zip(['TP', 'FP', 'FN'], [num_TP, num_FP, num_FN])})
@@ -260,8 +282,20 @@ class ParallelExperiment:
                         FN_mask = self.masks['total_stats']['FN'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j]
                         # the number of TP is the sum of the mask (same for FP/FN)
                         num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
+                        total_preds = sum(self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j])
                         # calculating the statistics
-                        temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN)
+                        if self.statistic_funcs.__name__=='presence_leave_flicker_seq_count':
+                            temp_stat_d = {'Leave Flicker Count': total_preds}
+                        elif self.statistic_funcs.__name__=='presence_approach_flicker_seq_count':
+                            temp_stat_d = {'Approach Flicker Count': total_preds}
+                        elif self.statistic_funcs.__name__=='sep_seq_count':
+                            if 'Separate FN sequence count' in self.comp_data.keys():
+                                temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FP sequence count']*FN_mask)}
+                            else:
+                                temp_stat_d = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count']*FP_mask)}
+                        else:
+                            temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN, total_preds)
+                        temp_stat_d.update({'TOTAL_PREDS':total_preds})
                         # updating the statistics and state dictionaries with tuple keys that allow multi-indexing in pandas
                         statistics_dict.update({(seg_name, seg_name2, stat_name): temp_stat_d[stat_name] for stat_name in temp_stat_d})
                         state_dict.update({(seg_name, seg_name2, name): stat for name, stat in zip(['TP', 'FP', 'FN'], [num_TP, num_FP, num_FN])})
@@ -291,8 +325,20 @@ class ParallelExperiment:
                             FN_mask = self.masks['total_stats']['FN'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k]
                             # the number of TP is the sum of the mask (same for FP/FN)
                             num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
+                            total_preds = sum(self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k])
                             # calculating the statistics
-                            temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN)
+                            if self.statistic_funcs.__name__=='presence_leave_flicker_seq_count':
+                                temp_stat_d = {'Leave Flicker Count': total_preds}
+                            elif self.statistic_funcs.__name__=='presence_approach_flicker_seq_count':
+                                temp_stat_d = {'Approach Flicker Count': total_preds}
+                            elif self.statistic_funcs.__name__=='sep_seq_count':
+                                if 'Separate FN sequence count' in self.comp_data.keys():
+                                    temp_stat_d = {'Separate FN Sequence Count': sum(self.comp_data['Separate FP sequence count']*FN_mask)}
+                                else:
+                                    temp_stat_d = {'Separate FP Sequence Count': sum(self.comp_data['Separate FP sequence count']*FP_mask)}
+                            else:
+                                temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN, total_preds)
+                            temp_stat_d.update({'TOTAL_PREDS':total_preds})
                             # updating the statistics and state dictionaries with tuple keys that allow multi-indexing in pandas
                             statistics_dict.update({(seg_name, seg_name2, seg_name3, stat_name): temp_stat_d[stat_name] for stat_name in temp_stat_d})
                             state_dict.update({(seg_name, seg_name2, seg_name3, name): stat for name, stat in zip(['TP', 'FP', 'FN'], [num_TP, num_FP, num_FN])})

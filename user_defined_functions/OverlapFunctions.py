@@ -20,6 +20,12 @@ def Classification_True_False(pred_row, labels_row):
     if pred_row.keys() == labels_row.keys():
         return 1.0
     return 0.0 
+
+def Classification_True_False_activity(pred_row, labels_row):
+    if pred_row['activity'] == labels_row['activity']:
+        return 1.0
+    return 0.0 
+
 def IOU(pred_row, labels_row):
     predictions = [pred_row['x'], pred_row['y'], pred_row['width'], pred_row['height']]
     labels = [labels_row['x'], labels_row['y'], labels_row['width'], labels_row['height']]

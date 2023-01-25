@@ -1,0 +1,12 @@
+[
+    {
+        "File Reading Function": "statistic_tool_reader_fusion_detection_logs",
+        "Overlap Function": "Dice",
+        "Threshold": "0.1",
+        "Evaluation Function": "min_distance_evaluation",
+        "Image Width": "1920",
+        "Image Height": "1080",
+        "Statistics Functions": "precision_recall_f1",
+        "Partitioning Functions": "size_horizontal_vertical_and_bb_area"
+    }
+]
