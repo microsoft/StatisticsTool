@@ -104,7 +104,6 @@ def statistic_tool_reader_activity_calssification(path):
             
             frame_id = line['keys']['frame_id']
             if int(line['message']['activity'])>0:
-                
                 data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'activity':1.0}}]}
             else:
                 data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'activity':0.0}}]}
@@ -200,7 +199,7 @@ def statistic_tool_reader_presence_calssification(path):
         
         for line in lines[1:]:
             line = json.loads(line)
-            if 'type' not in line['keys'] or line['keys']['type'] != 'presence':
+            if 'type' not in line['keys'] or (line['keys']['type'] != 'sequence' and line['keys']['type'] != 'presence'):
                 continue
             
             frame_id = line['keys']['frame_id']
@@ -210,7 +209,7 @@ def statistic_tool_reader_presence_calssification(path):
                 else:
                     data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
             else:
-                if int(line['message']['HumanPresence'])>0:
+                if line['message']['HumanPresence'] == 'True':
                     data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
                 else:
                     data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
@@ -225,6 +224,16 @@ def statistic_tool_reader_presence_calssification(path):
             data['predictions'][0]['Device_Posture']            = clip_device_posture
             data['predictions'][0]['External_Monitor']          = clip_external_monitor
             data['predictions'][0]['Clip_Duration [MIN]']       = clip_duration
+
+            if 'Background_People' in line['message']:
+                data['predictions'][0]['Background_People'] = line['message']['Background_People']
+            if 'Background_Dynamic_Objects' in line['message']:
+                data['predictions'][0]['Background_Dynamic_Objects'] = line['message']['Background_Dynamic_Objects']
+            if 'Background_People_Activity' in line['message']:
+                data['predictions'][0]['Background_People_Activity'] = line['message']['Background_People_Activity']
+            if 'User_Status' in line['message']:
+                data['predictions'][0]['User_Status'] = line['message']['User_Status']
+
 
             if 'static' in line['message']:
                 data['predictions'][0]['static'] = line['message']['static']

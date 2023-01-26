@@ -259,6 +259,96 @@ def presence_partition(dataframe, from_file=False):
         desired_masks.update({"Per frame: Presence": presence_dict})
 
 
+    if "User_Status_gt" in dataframe.columns:
+        # NoUser/Approach_PC/PassBy_PC/Sitting_Down/OnPC_Working/OnPC_Idle/OnPC_Other/Standing_Up/Leaving_PC/Unrelated_PC/Unknown
+        user_status = dataframe['User_Status_gt'].values.astype(object)
+        user_stat_mask_no_user     = np.full(np.shape(user_status), False)
+        user_stat_mask_app_pc      = np.full(np.shape(user_status), False)
+        user_stat_mask_passby_pc   = np.full(np.shape(user_status), False)
+        user_stat_mask_sit_down    = np.full(np.shape(user_status), False)
+        user_stat_mask_onPC_work   = np.full(np.shape(user_status), False)
+        user_stat_mask_onPC_idle   = np.full(np.shape(user_status), False)
+        user_stat_mask_onPC_other  = np.full(np.shape(user_status), False)
+        user_stat_mask_stand_up    = np.full(np.shape(user_status), False)
+        user_stat_mask_leave_pc    = np.full(np.shape(user_status), False)
+        user_stat_mask_unrelate_pc = np.full(np.shape(user_status), False)
+        user_stat_mask_other = np.full(np.shape(user_status), True)
+        user_stat_mask_no_user[user_status=='NoUser']           = True
+        user_stat_mask_app_pc[user_status=='Approach_PC']       = True
+        user_stat_mask_passby_pc[user_status=='PassBy_PC']      = True
+        user_stat_mask_sit_down[user_status=='Sitting_Down']    = True
+        user_stat_mask_onPC_work[user_status=='OnPC_Working']   = True
+        user_stat_mask_onPC_idle[user_status=='OnPC_Idle']      = True
+        user_stat_mask_onPC_other[user_status=='OnPC_Other']    = True
+        user_stat_mask_stand_up[user_status=='Standing_Up']     = True
+        user_stat_mask_leave_pc[user_status=='Leaving_PC']      = True 
+        user_stat_mask_unrelate_pc[user_status=='Unrelated_PC'] = True 
+
+        user_stat_mask_other[user_status=='NoUser']       = False
+        user_stat_mask_other[user_status=='Approach_PC']  = False
+        user_stat_mask_other[user_status=='PassBy_PC']    = False
+        user_stat_mask_other[user_status=='Sitting_Down'] = False
+        user_stat_mask_other[user_status=='OnPC_Working'] = False
+        user_stat_mask_other[user_status=='OnPC_Idle']    = False
+        user_stat_mask_other[user_status=='OnPC_Other']   = False
+        user_stat_mask_other[user_status=='Standing_Up']  = False
+        user_stat_mask_other[user_status=='Leaving_PC']   = False 
+        user_stat_mask_other[user_status=='Unrelated_PC'] = False 
+        user_stat_dict = {'possible partitions': ['No user','Unrelated PC','Pass By PC','Approach PC','Leaving PC','Sitting Down','Standing Up','On PC Working','On PC Idle','On PC Other','Other'], 'masks': [user_stat_mask_no_user,user_stat_mask_unrelate_pc,user_stat_mask_passby_pc,user_stat_mask_app_pc,user_stat_mask_leave_pc,user_stat_mask_sit_down,user_stat_mask_stand_up,user_stat_mask_onPC_work,user_stat_mask_onPC_idle,user_stat_mask_onPC_other,user_stat_mask_other]}
+        desired_masks.update({"Per frame: User status": user_stat_dict})
+
+    if "Background_People_gt" in dataframe.columns:
+        # Empty,One,Few (2-5), Several (5-10) ,Crowded (10+)
+        bg_people = dataframe['Background_People_gt'].values.astype(object)
+        bg_people_mask_empty   = np.full(np.shape(bg_people), False)
+        bg_people_mask_one     = np.full(np.shape(bg_people), False)
+        bg_people_mask_few     = np.full(np.shape(bg_people), False)
+        bg_people_mask_several = np.full(np.shape(bg_people), False)
+        bg_people_mask_crowded = np.full(np.shape(bg_people), False)
+        bg_people_mask_other   = np.full(np.shape(bg_people), True)
+        bg_people_mask_empty[bg_people=='Empty']     = True 
+        bg_people_mask_one[bg_people=='One']         = True 
+        bg_people_mask_few[bg_people=='Few']         = True 
+        bg_people_mask_several[bg_people=='Several'] = True 
+        bg_people_mask_crowded[bg_people=='Crowded'] = True 
+
+        bg_people_mask_other[bg_people=='Empty']   = False 
+        bg_people_mask_other[bg_people=='One']     = False 
+        bg_people_mask_other[bg_people=='Few']     = False 
+        bg_people_mask_other[bg_people=='Several'] = False 
+        bg_people_mask_other[bg_people=='Crowded'] = False 
+        bg_people_dict = {'possible partitions': ['Empty','One','Few','Several','Crowded','Other'], 'masks': [bg_people_mask_empty,bg_people_mask_one,bg_people_mask_few,bg_people_mask_several,bg_people_mask_crowded,bg_people_mask_other]}
+        desired_masks.update({"Per frame: Background People": bg_people_dict})
+
+    if "Background_Dynamic_Objects_gt" in dataframe.columns:
+        # False/True
+        bg_dyn_obj = dataframe['Background_Dynamic_Objects_gt'].values.astype(object)
+        bg_dyn_obj_true  = np.full(np.shape(bg_dyn_obj), False)
+        bg_dyn_obj_false = np.full(np.shape(bg_dyn_obj), False)
+        bg_dyn_obj_other = np.full(np.shape(bg_dyn_obj), True)
+        bg_dyn_obj_true[bg_dyn_obj=='True']   = True 
+        bg_dyn_obj_false[bg_dyn_obj=='False'] = True 
+
+        bg_dyn_obj_other[bg_dyn_obj=='True']  = False 
+        bg_dyn_obj_other[bg_dyn_obj=='False'] = False 
+        bg_dyn_obj_dict = {'possible partitions': ['Yes','No','Other'], 'masks': [bg_dyn_obj_true,bg_dyn_obj_false,bg_dyn_obj_other]}
+        desired_masks.update({"Per frame: Background Dynamic Object": bg_dyn_obj_dict})
+
+    if "Background_People_Activity_gt" in dataframe.columns:
+        # NA/Static/Dynamic
+        bg_people_activity = dataframe['Background_People_Activity_gt'].values.astype(object)
+        bg_people_activity_static  = np.full(np.shape(bg_people_activity), False)
+        bg_people_activity_dynamic = np.full(np.shape(bg_people_activity), False)
+        bg_people_activity_other = np.full(np.shape(bg_people_activity), True)
+        bg_people_activity_static[bg_people_activity=='Static']   = True 
+        bg_people_activity_dynamic[bg_people_activity=='Dynamic'] = True 
+
+        bg_people_activity_other[bg_people_activity=='Static']   = False 
+        bg_people_activity_other[bg_people_activity=='Dynamic'] = False
+        bg_people_activity_dict = {'possible partitions': ['Static','Dynamic','Other'], 'masks': [bg_people_activity_static,bg_people_activity_dynamic,bg_people_activity_other]}
+        desired_masks.update({"Per frame: Background People Activity": bg_people_activity_dict})
+
+
     if "User_Physical_Status_gt" in dataframe.columns:
         #Sitting/Standing/Laying/Moving/NA
         user_phy_status = dataframe['User_Physical_Status_gt'].values.astype(object)

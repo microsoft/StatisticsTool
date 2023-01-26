@@ -250,7 +250,7 @@ def leave_event_transform(comp_data):
 
 def approach_event_presence_transform(comp_data):
     minimal_presence_seq_len = 3
-    key = 'User_Movement_Type_gt'
+    key = 'User_Status_gt'
     user_move_type = comp_data[key]
     move_type_mask_approach = np.full(np.shape(user_move_type), False)
     move_type_mask_approach[user_move_type=='Approach_PC']   = True
@@ -307,7 +307,7 @@ def leave_event_presence_transform(comp_data):
     success_range_start = 4*30
     success_range_end   = 6*30
 
-    key = 'User_Movement_Type_gt'
+    key = 'User_Status_gt'
     user_move_type = comp_data[key]
     leave_event_locs = np.where(user_move_type=='Leaving_PC')[0]
     if len(leave_event_locs)==0: # No leave sequence exists
