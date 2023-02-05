@@ -44,7 +44,10 @@ A reading function should:
 
 
 Returns:
-pandas dataframe
+pandas dataframe | None
+
+The reading function will be called for all the files in specific library, in case the file is not relevant for the reading funciton it should return NULL
+The reading function should check for each file if this file is relevant for it. (For example: check log file name, header value)
 """
 
 def statistic_tool_reader_activity_calssification(path):
@@ -257,7 +260,10 @@ def statistic_tool_reader_presence_calssification(path):
 def statistic_tool_reader_presence_algo_logs(path):
     with open(path,'r') as file:
         lines = file.readlines()
-    
+
+    if len(lines) < 1:
+        return None
+
     line = json.loads(lines[1])
     records = []
     

@@ -7,7 +7,7 @@ import cv2
 import matplotlib.patches as mpatches
 from io import BytesIO
 from classes_and_utils.utils import loading_json
-
+from classes_and_utils.file_storage_handler import path_exists, get_local_video_path
 
 # Irit's totos:
 # todo return number of processed files on GUI
@@ -34,10 +34,7 @@ class ParallelExperiment:
             A function that wraps all the statistics (e.g precision - recall) needed. example in statisticsFunctions.py
         segmentation_funcs : function
             A function that partition the data (e.g day/night, bus/car/person). example in partitioningFunctions.py
-        save_stats_dir : str
-            path to 'saved by user' folder in the output folder - this is where the images, tables, and lists that are
-             saved in the GUI are stored
-
+      
         non inputs (internal):
         ----------
         masks : dictionary
@@ -93,12 +90,10 @@ class ParallelExperiment:
         Accepts a bb_id and display its frame by calling self.frame_visualization()
 
     """
-    def __init__(self, statistic_funcs, files_dir, save_stats_dir, image_width, image_height,segmentation_funcs,video_annotation_dict, overlap_function, evaluation_function):
-        self.files_dir = files_dir
+    def __init__(self, statistic_funcs, image_width, image_height,segmentation_funcs,video_annotation_dict, overlap_function, evaluation_function, save_stats_dir):
         self.statistic_funcs = statistic_funcs
         self.evaluation_function = evaluation_function
         self.overlap_function = overlap_function
-        self.save_stats_dir = save_stats_dir
         self.segmentation_funcs = segmentation_funcs
         self.masks = None
         self.ID_storage = {}
@@ -106,36 +101,30 @@ class ParallelExperiment:
         self.image_width = int(image_width)
         self.image_height = int(image_height)
         self.video_annotation_dict = video_annotation_dict
+        self.save_stats_dir = save_stats_dir
         
     
-        
 
-
-
-    def combine_from_text(self, save_dataframe=False):
+    def combine_from_text(self, compared_videos):
         """
         Agrregates the data from the intermediate results folder to two dataframes one for predictions and one for GT
 
         :param save_dataframe: Boolean, whether to save the aggregated Dataframes, default: false
 
         """
-        saved_files_paths = [file for file in os.listdir(self.files_dir)]
-        
+        self.comp_data = None
         datafrme_dict = []
-        for file_name in saved_files_paths:
-            df = pd.read_json (os.path.join(self.files_dir, file_name))
+        for file_name in compared_videos:
+            df = pd.read_json (file_name)
             datafrme_dict.append(df)
             continue
-          
-        # concatenate the dictionary of dataframes into a single dataframe
-        self.comp_data = pd.concat(datafrme_dict).reset_index(drop=True)
-              
-        if save_dataframe:
-            self.combined_prd_dataframe.to_csv(os.path.join(self.save_stats_dir, 'combined prediction dataframe.csv'))
-            self.combined_label_dataframe.to_csv(os.path.join(self.save_stats_dir, 'combined labels dataframe.csv'))
-
+        
+        if len(datafrme_dict) > 0:
+            # concatenate the dictionary of dataframes into a single dataframe
+            self.comp_data = pd.concat(datafrme_dict).reset_index(drop=True)
+       
     @staticmethod
-    def get_TP_FP_FN_masks(comp_data, threshold, from_file=False):
+    def get_TP_FP_FN_masks(comp_data, threshold):
         """
 
         :param prd_state: state column (which containts either overlap float or FP ) of the aggregated predictions, dataframe self.combined_prd_dataframe
@@ -154,7 +143,7 @@ class ParallelExperiment:
         return TP_mask, FP_mask, FN_mask
                
 
-    def get_segmentation_masks(self, threshold, from_file=False, label_file_dir=None, prd_file_dir=None):
+    def get_segmentation_masks(self, threshold):
         """
         Calculates the boolean segmentation masks (self.masks) and the ids of prediction/labels (self.ID_storage)
 
@@ -164,15 +153,11 @@ class ParallelExperiment:
         :param prd_file_dir: The path in which to load the saved prediction file , default: None
         """
         assert threshold >= 0, 'threshold should be a positive number'
-        if from_file:
-            assert label_file_dir and prd_file_dir, 'if loading from file is selected than the label and prediction paths are needed'
-            self.combined_prd_dataframe = pd.read_csv(os.path.join(self.save_stats_dir, prd_file_dir))
-            self.combined_label_dataframe = pd.read_csv(os.path.join(self.save_stats_dir, label_file_dir))
-
+       
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
-        TP_mask, FP_mask, FN_mask = self.get_TP_FP_FN_masks(self.comp_data, threshold, from_file)
+        TP_mask, FP_mask, FN_mask = self.get_TP_FP_FN_masks(self.comp_data, threshold)
         # calculate the boolean masks of the partitions (which row/bounding box in the dataframes belongs to which partition)
-        self.wanted_segmentations = self.segmentation_funcs(self.comp_data, from_file)
+        self.wanted_segmentations = self.segmentation_funcs(self.comp_data)
         # initialize self.masks with the total masks for TP/FP/FN
         self.masks = {'total_stats': {'TP': TP_mask, 'FP': FP_mask, 'FN': FN_mask}}
         # Add the segmentation masks to self.masks
@@ -542,13 +527,18 @@ class ParallelExperiment:
 
     def read_image(self, frame_id, images_folder):
         frame = None
-        if pathlib.Path(images_folder).suffix == ".mp4":
-            vid = cv2.VideoCapture(images_folder)
+        vid = None
+        local_video_path = get_local_video_path(images_folder)
+        if local_video_path is None:
+            return None
+          
+        if pathlib.Path(local_video_path).suffix == ".mp4":
+            vid= cv2.VideoCapture(local_video_path)
             vid.set(cv2.CAP_PROP_POS_FRAMES, int(frame_id))
             _, frame = vid.read()
         else:
             # filtering out images that don't have the frame number in them before a more exact filtering
-            optional_images_names = [name for name in os.listdir(images_folder) if str(frame_id) in name]
+            optional_images_names = [name for name in os.listdir(local_video_path) if str(frame_id) in name]
             
             # finding the exact frame image by using the correct images names form: blabla_framenumber.bla
             for opt in optional_images_names:
@@ -558,15 +548,16 @@ class ParallelExperiment:
                 last_line_idx = lines[-1]+1 if len(lines)>0 else 0
                 opt_frame_number = int(opt[last_line_idx: last_dot_idx])
                 if opt_frame_number == int(frame_id):
-                    frame = cv2.imread(os.path.join(images_folder, opt))
+                    frame = cv2.imread(os.path.join(local_video_path, opt))
                     break
         
         if frame is not None:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            vid.release()
 
         return frame
                 
-    def visualize(self, bb_id, from_file=False, label_file_dir=None, prd_file_dir=None):
+    def visualize(self, bb_id):
         """
         this function searches the right bounding box and its frame and calls self.frame_visualization() to visualize it
 
@@ -579,11 +570,8 @@ class ParallelExperiment:
         """
         # checks what is the relevant dataframe to search for the asked example (predictions or labels)
         self.is_label_or_prd()
-        # if the prediction and label dataframes are loaded from a file - for future development
-        if from_file:
-            assert label_file_dir and prd_file_dir, 'if loading from file is selected than the label and prediction paths are needed'
-            self.combined_prd_dataframe = pd.read_csv(os.path.join(self.save_stats_dir, prd_file_dir))
-            self.combined_label_dataframe = pd.read_csv(os.path.join(self.save_stats_dir, label_file_dir))
+       
+       
         # the video name (image folder name) and bounding box index are needed for identification of the correct bounding box (the frame id is not necessary)
         
         _, bb_index,frame_id,_ = bb_id
@@ -605,19 +593,21 @@ class ParallelExperiment:
 
 
 
-def combine_video_results(save_stats_dir, statistic_funcs, files_dir, segmentation_funcs, threshold, image_width, image_height,video_annotation_dict, overlap_function, evaluation_function):
+def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, image_width, image_height,video_annotation_dict, overlap_function, evaluation_function, save_stats_dir):
     """
 
-    :param save_stats_dir: same as in ParallelExperiment
-    :param statistic_funcs: same as in ParallelExperiment
-    :param files_dir: same as in ParallelExperiment
+    param statistic_funcs: same as in ParallelExperiment
+    :param compared_videos: same as in ParallelExperiment
     :param segmentation_funcs: same as in ParallelExperiment
     :param threshold: the threshold to use (above the threshold a prediction is TP)
     :param image_width: the image width size to reshape to
     :param image_height: the image height size to reshapw to
     :return:
     """
-    exp = ParallelExperiment(save_stats_dir=save_stats_dir, statistic_funcs=statistic_funcs, files_dir=files_dir, segmentation_funcs=segmentation_funcs, image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict, evaluation_function=evaluation_function, overlap_function=overlap_function)
-    exp.combine_from_text(False)
+    exp = ParallelExperiment(statistic_funcs=statistic_funcs, segmentation_funcs=segmentation_funcs, 
+                            image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict, 
+                            evaluation_function=evaluation_function, overlap_function=overlap_function, save_stats_dir=save_stats_dir)
+                            
+    exp.combine_from_text(compared_videos)
     exp.get_segmentation_masks(float(threshold))
     return exp

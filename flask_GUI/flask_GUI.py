@@ -29,7 +29,7 @@ def new_report_func():
 @app.route('/calculating_page', methods=['GET', 'POST'])
 def calculating():
     # extract the user specified directories and names
-    config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, save_stats_dir, images_dir, config_dict = unpack_calc_request(request, current_file_directory)
+    config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, save_stats_dir, config_dict = unpack_calc_request(request, current_file_directory)
     # making sure save_stats_dir is empty and opening the appropriate folders
     empty = folder_func(output_dir)
     if empty == 'FileNotFound':
@@ -39,7 +39,9 @@ def calculating():
         return render_template('Not_empty.html')
     global exp
     # calculate the intermediate results for all the videos then combine them
-    exp = manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_saving_dir, save_stats_dir, images_dir, config_dict)
+    exp = manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
+    if exp is None:
+        return "No logs to compare"
     if exp == 'TypeError':
         return render_template('Bad_format.html')
     return render_template('message.html')

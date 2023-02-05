@@ -4,13 +4,17 @@ import sys, os
 sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
 from user_defined_functions import ReadingFunctions, EvalutationFunctions, OverlapFunctions, PartitioningFunctions, \
     PartitioningFunctions, StatisticsFunctions, TransformFunctions
+from app_config.constants import constants
+from app_config.config import app_config
+from utils.AzureStorageHelper import *
 from classes_and_utils.ParallelExperiment import *
-from classes_and_utils.VideoEvaluation import run_multiple_Videos, VideoEvaluation
+from classes_and_utils.VideoEvaluation import compare_predictions_directory, VideoEvaluation
 from inspect import getmembers, isfunction
 from classes_and_utils.utils import loading_json, save_json
 import re, pickle
 import numpy as np
 import json
+
 
 
 def save_object(obj, filename):
@@ -179,13 +183,13 @@ def unpack_calc_request(request, current_file_directory):
     
     single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
     save_stats_dir = os.path.join(output_dir, "saved by user")
-    images_dir = request.form.get('Images Directory')
+    
     # finding the wanted configuration file location and loading it
     config_path = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI.py'),
                                                  os.path.join('configs', config_file_name))
     config_file = loading_json(config_path)
     config_dict = config_file[0]
-    return config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, save_stats_dir, images_dir, config_dict
+    return config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, save_stats_dir, config_dict
 
 
 def unpack_calc_config_dict(config_dict):
@@ -225,50 +229,8 @@ def unpack_calc_config_dict(config_dict):
     return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height
 
 
-def get_path_lists(prd_dir, GT_dir, images_dir):
-    """
-    Accepts a path to the predictions, labels and image and returns matching lists of predictions, labels and images
-    :param prd_dir: path to prediction files
-    :param GT_dir:  path to GT files
-    :param images_dir:  path to images files
-    :return: lists of matching ordered absolute paths of predictions, labels and images files
-    """
-    # setting 3 lists of matching predictions GT and images files and folders (for images) - the matching is made by
-    # the serial number at the end of the each file (prd_0001 will match GT_0001 and images_0001)
-    prd_list = os.listdir(prd_dir)
-    GT_list = os.listdir(GT_dir)
-    images_folders_list = os.listdir(images_dir)
-    # sort the lists by serial number
-    prd_list.sort()
-    GT_list.sort()
-    images_folders_list.sort()
-    images_folders_list_base = [os.path.basename(k).split('.')[0] for k in images_folders_list]
-    # get absolute path
-    prd_list_abs = []
-    for name in prd_list:
-        if name in GT_list:
-            prd_list_abs.append(os.path.join(prd_dir, name))
-    GT_list_abs=[]
-    for name in GT_list:
-        if name in prd_list:
-            GT_list_abs.append(os.path.join(GT_dir, name))
-    images_folders_list_abs = []
-    new_images_folder_list = []
-    for name in prd_list:
-        if name not in GT_list:
-            continue
-        if name in images_folders_list_base:
-            images_folders_list_abs.append(os.path.join(images_dir, images_folders_list[images_folders_list_base.index(name)]))
-            new_images_folder_list.append(name)
-        else:
-            images_folders_list_abs.append('no_video')
-            new_images_folder_list.append('no_video')
 
-    return GT_list_abs, prd_list_abs, new_images_folder_list, images_folders_list_abs
-
-
-def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_saving_dir, save_stats_dir, images_dir,
-                          config_dict):
+def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir = None):
     """
 
     :param config_file_name: the name of the selected configurations file
@@ -285,25 +247,20 @@ def manage_video_analysis(config_file_name, prd_dir, GT_dir, single_video_hash_s
     reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height = unpack_calc_config_dict(
         config_dict)
     # extract matching lists of absolute paths for the predictions, labels and images
-    GT_list_abs, prd_list_abs, images_folders_list, images_folders_list_abs = get_path_lists(prd_dir, GT_dir,
-                                                                                             images_dir)
-    video_annotation_dict = {}
-    for gt, pred, vid in zip(GT_list_abs, prd_list_abs, images_folders_list_abs):
-        video_annotation_dict[vid]={"pred":pred+".json","gt":gt+".json"}
-
-    try:
-        # extract all the intermediate results from the raw prediction-label files
-        run_multiple_Videos(GT_path_list=GT_list_abs, pred_path_list=prd_list_abs, images_folders_list=images_folders_list,
-                            image_folder_fullpath_list=images_folders_list_abs, overlap_function=overlap_func,
-                            readerFunction=reading_func, transform_func=transform_func, save_stats_dir=single_video_hash_saving_dir,
-                            evaluation_func=evaluation_func)
-    except TypeError:
-        return 'TypeError'
+  
+    # extract all the intermediate results from the raw prediction-label files
+    compared_videos, video_annotation_dict = compare_predictions_directory(pred_dir=prd_dir, output_dir = single_video_hash_saving_dir, overlap_function=overlap_func, 
+                                                                 readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir)
+   
+    if len(compared_videos) == 0:
+        return None
 
     # combine the intermediate results for further statistics and example extraction
-    exp = combine_video_results(save_stats_dir=save_stats_dir, statistic_funcs=statistics_funcs,
-                                files_dir=single_video_hash_saving_dir, segmentation_funcs=partitioning_func,
-                                threshold=threshold, image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict, evaluation_function = evaluation_func, overlap_function = overlap_func)
+    exp = experiment_from_video_evaluation_files(statistic_funcs=statistics_funcs,
+                                compared_videos=compared_videos, segmentation_funcs=partitioning_func,
+                                threshold=threshold, image_width=image_width, image_height=image_height,
+                                video_annotation_dict=video_annotation_dict, evaluation_function = evaluation_func, 
+                                overlap_function = overlap_func, save_stats_dir = save_stats_dir)
 
     save_object(exp, os.path.join(save_stats_dir, 'report_' + config_file_name.replace('.json', '') + '.pkl'))
     return exp
