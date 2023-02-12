@@ -249,7 +249,7 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
     # extract matching lists of absolute paths for the predictions, labels and images
   
     # extract all the intermediate results from the raw prediction-label files
-    compared_videos, video_annotation_dict = compare_predictions_directory(pred_dir=prd_dir, output_dir = single_video_hash_saving_dir, overlap_function=overlap_func, 
+    compared_videos, sheldon_header_data = compare_predictions_directory(pred_dir=prd_dir, output_dir = single_video_hash_saving_dir, overlap_function=overlap_func, 
                                                                  readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir)
    
     if len(compared_videos) == 0:
@@ -259,7 +259,7 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
     exp = experiment_from_video_evaluation_files(statistic_funcs=statistics_funcs,
                                 compared_videos=compared_videos, segmentation_funcs=partitioning_func,
                                 threshold=threshold, image_width=image_width, image_height=image_height,
-                                video_annotation_dict=video_annotation_dict, evaluation_function = evaluation_func, 
+                                sheldon_header_data=sheldon_header_data, evaluation_function = evaluation_func, 
                                 overlap_function = overlap_func, save_stats_dir = save_stats_dir)
 
     save_object(exp, os.path.join(save_stats_dir, 'report_' + config_file_name.replace('.json', '') + '.pkl'))
@@ -536,18 +536,18 @@ def manage_list_request(request, main_exp, comp_exp):
 
     saved_sheldon = None
     if export_sheldon:
-        saved_sheldon = export_list_to_sheldon(per_video_example_hash, exp.video_annotation_dict, exp.save_stats_dir, mytup)
+        saved_sheldon = export_list_to_sheldon(per_video_example_hash, exp.sheldon_header_data, exp.save_stats_dir, mytup, show_unique, comp_index)
     return comp_index, show_unique, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon
 
 
-def export_list_to_sheldon(images_list, video_annotation_dict,output_dir, states):
+def export_list_to_sheldon(images_list, sheldon_header_data,output_dir, states, is_unique,comp_index):
     sheldon_list = []
     header = {}
-    header['header']={}
-    list(video_annotation_dict.values())[0]['pred']
-    header['header']['primary_metadata'] = os.path.dirname(list(video_annotation_dict.values())[0]['pred'])
-    header['header']['secondary_metadata'] = os.path.dirname(list(video_annotation_dict.values())[0]['gt'])
+    header['header']=sheldon_header_data
     header['header']['segmentation']=list(states)
+    if is_unique:
+        header['header']['segmentation'].append('unique')
+
     sheldon_list.append(json.dumps(header))
     for file in images_list:
         for event in images_list[file]:
@@ -564,7 +564,17 @@ def export_list_to_sheldon(images_list, video_annotation_dict,output_dir, states
     
     name = ''
 
-    saved_file = output_dir+"/"+'-'.join(list(states)) +".json"
+    saved_file = output_dir+"/"
+
+    if comp_index > -1:
+        saved_file = saved_file+'REF-'
+
+    saved_file = saved_file +'-'.join(list(states)) 
+    if is_unique:
+        saved_file = saved_file+'-unique'
+    saved_file+='.json'
+
+   
     with open(saved_file, 'w') as f:
         for event in sheldon_list:
             f.write(event+'\n')

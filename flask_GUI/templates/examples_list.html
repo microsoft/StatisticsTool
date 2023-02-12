@@ -53,10 +53,10 @@ window.onload = function  () {
 
 <div style="position:relative;">
     <tr><td>
-    <form action="/update_list?mytup={{mytup}}&save_list=true" method="post">
+    <form action="/update_list?mytup={{mytup}}&save_list=true{%if unique%}&unique{%endif%}{%if comp_index > -1%}&ref{%endif%}" method="post">
         <button type="submit"> Save list </button>
     </form></td>
-    <tr><td><form action="/update_list?mytup={{mytup}}&sheldon=true" method="post">
+    <tr><td><form action="/update_list?mytup={{mytup}}&sheldon=true{%if unique%}&unique{%endif%}{%if comp_index > -1%}&ref{%endif%}" method="post">
         <button type="submit"> Export to Sheldon </button>    
     </form></td></tr>
 

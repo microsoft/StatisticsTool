@@ -9,6 +9,10 @@ from StatisticsTool.app_config.config import app_config
 from azure.identity import DefaultAzureCredential
 
 
+class StoreType():
+    Data = 1
+    Annotation = 2
+    Predictions = 3
 
 
 account_url = f"https://{app_config.azure_storage_id}.blob.core.windows.net"
@@ -35,6 +39,15 @@ def upload_file(source, dest, verbose=False):
     '''
     with open(source, 'rb') as data:
         container_client().upload_blob(name=dest, data=data, overwrite=True)
+
+def get_full_blob_path(blob, storeType:StoreType):
+    if storeType == StoreType.Annotation:
+        return os.path.join(app_config.annotation_store_blobs_prefix, blob)
+    if storeType == StoreType.Data:
+        return os.path.join(app_config.data_store_blobs_prefix, blob)
+    if storeType == StoreType.Predictions:
+        return os.path.join(app_config.predictions_blobs_prefix, blob)
+
 
 def get_video_path_from_name(video_name):
     video_path = os.path.join(app_config.data_store_blobs_prefix, video_name)

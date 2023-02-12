@@ -1,10 +1,11 @@
 import pathlib
 import numpy as np, os
 import pandas as pd
-from Tools.StatisticsTool.classes_and_utils.file_storage_handler import list_files_in_results_path
+from Tools.StatisticsTool.classes_and_utils.file_storage_handler import get_local_or_blob_full_path, list_files_in_results_path
 from Tools.StatisticsTool.utils.AlgoLogsParser import parse_video_name_from_pred_file
-from Tools.StatisticsTool.utils.AzureStorageHelper import read_gt_file_from_blob
+from Tools.StatisticsTool.utils.AzureStorageHelper import StoreType, read_gt_file_from_blob
 from Tools.StatisticsTool.classes_and_utils.file_storage_handler import get_local_or_blob_file
+from Tools.StatisticsTool.utils.sheldon_export_header import create_sheldon_list_header
 
 class VideoEvaluation:
     """
@@ -172,17 +173,22 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     :param evaluation_func: same as in VideoEvaluation
     :return: dictionary tahts maps each video file location to it's annotations (pred and GT) file location
     """
-    video_annotation_dict = {}
+    sheldon_header_data = {}
     
     pred_path_list = list_files_in_results_path(pred_dir)
     
     output_files = []
 
+    pred_file_name = ''
+    gt_file_name = ''
+    
     #for GT_path, pred_path, image_folder_fullpath, image_folder_name in zip(GT_path_list, pred_path_list, image_folder_fullpath_list, images_folders_list):
     for pred in pred_path_list:
-        gt_file = None
+        gt_local_path = None
+        
         if not pred.endswith('.json'):
             continue
+
         log_name = os.path.basename(pred)
         try:
             print(f"Try to find gt for file: {pred}")
@@ -199,21 +205,27 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             if gt_dir:
                 video_folder_name = pathlib.Path(video_name).stem
                 #set gt_file path to be as gt_logs file format
-                gt_file = os.path.join(gt_dir, video_folder_name+'.json')
+                gt_local_path = os.path.join(gt_dir, video_folder_name+'.json')
                 #if not exists set gt_file to be as algo_logs file format
-                if os.path.exists(gt_file) == False:
-                    gt_file = os.path.join(gt_dir, video_folder_name, log_name)
-            else:
-                gt_file = read_gt_file_from_blob(video_name)
+                if os.path.exists(gt_local_path) == False:
+                    gt_local_path = os.path.join(gt_dir, video_folder_name, log_name)
+                    #if gt file is not in gt_logs format so log file name is not as the video name
+                    gt_file_name = os.path.basename(gt_local_path)
+            else: #read gt from blob
+                gt_local_path = read_gt_file_from_blob(video_name)
                 
-            if gt_file is None:
-                print(f"Gt file not found for prediction: {pred}, Not Found!! continue..")
+                
+            if gt_local_path is None or not os.path.exists(gt_local_path):
+                print(f"Gt file: {gt_local_path} not found for prediction: {pred}, continue with next prediction log..")
                 continue
 
             V = VideoEvaluation(overlap_function=overlap_function, readerFunction=readerFunction, evaluation_func=evaluation_func, transform_func = transform_func)
-            V.compute_dataframe(pred_file, gt_file, video_name)
+            V.compute_dataframe(pred_file, gt_local_path, video_name)
+            
+            #if succeded - save prediction log file name to use in sheldon header
+            pred_file_name = os.path.basename(pred)
 
-            print(f"Start compare files for video {video_name}: {pred} and {gt_file}")
+            print(f"Start compare files for video {video_name}: {pred} and {gt_local_path}")
         except Exception as ex:
             print(f"Failed to compare log {pred}, continue with next log")
             print(ex)
@@ -223,10 +235,12 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
         V.save_data(output_file)
         output_files.append(output_file)
 
-        video_annotation_dict[video_name]={"pred":pred+".json","gt":gt_file}
-
+       
         print(f"finished compare predictions for video {video_name}")
-
-    return output_files, video_annotation_dict
+    
+    sheldon_pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
+    sheldon_gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
+    sheldon_header_data = create_sheldon_list_header(primary_path=sheldon_pred_dir, primary_name=pred_file_name, secondary_path=sheldon_gt_dir, secondary_name=gt_file_name)
+    return output_files, sheldon_header_data
 
 

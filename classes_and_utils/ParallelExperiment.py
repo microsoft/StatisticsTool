@@ -90,7 +90,7 @@ class ParallelExperiment:
         Accepts a bb_id and display its frame by calling self.frame_visualization()
 
     """
-    def __init__(self, statistic_funcs, image_width, image_height,segmentation_funcs,video_annotation_dict, overlap_function, evaluation_function, save_stats_dir):
+    def __init__(self, statistic_funcs, image_width, image_height,segmentation_funcs,sheldon_header_data, overlap_function, evaluation_function, save_stats_dir):
         self.statistic_funcs = statistic_funcs
         self.evaluation_function = evaluation_function
         self.overlap_function = overlap_function
@@ -100,7 +100,7 @@ class ParallelExperiment:
         self.segmented_ID = {}
         self.image_width = int(image_width)
         self.image_height = int(image_height)
-        self.video_annotation_dict = video_annotation_dict
+        self.sheldon_header_data = sheldon_header_data
         self.save_stats_dir = save_stats_dir
         
     
@@ -593,7 +593,7 @@ class ParallelExperiment:
 
 
 
-def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, image_width, image_height,video_annotation_dict, overlap_function, evaluation_function, save_stats_dir):
+def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, image_width, image_height,sheldon_header_data, overlap_function, evaluation_function, save_stats_dir):
     """
 
     param statistic_funcs: same as in ParallelExperiment
@@ -605,7 +605,7 @@ def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, seg
     :return:
     """
     exp = ParallelExperiment(statistic_funcs=statistic_funcs, segmentation_funcs=segmentation_funcs, 
-                            image_width=image_width, image_height=image_height,video_annotation_dict=video_annotation_dict, 
+                            image_width=image_width, image_height=image_height,sheldon_header_data=sheldon_header_data, 
                             evaluation_function=evaluation_function, overlap_function=overlap_function, save_stats_dir=save_stats_dir)
                             
     exp.combine_from_text(compared_videos)

@@ -1,14 +1,12 @@
 import os,sys
 
 
+
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 
-
-from StatisticsTool.app_config.config import AppConfig
 from StatisticsTool.app_config.constants import constants
-from StatisticsTool.utils.AzureStorageHelper import blob_exists, list_blobs_in_results_path, read_video_file_from_blob, get_blob_from_cache_or_download
+from StatisticsTool.utils.AzureStorageHelper import get_full_blob_path, blob_exists, list_blobs_in_results_path, read_video_file_from_blob, get_blob_from_cache_or_download
 from StatisticsTool.utils.LocalStrageHelper import list_local_dir
-
 
 def list_files_in_results_path(path, recursive=True):
     if os.path.exists(path):
@@ -29,6 +27,11 @@ def get_local_video_path(path):
         return path
     
     return read_video_file_from_blob(path)
+
+def get_local_or_blob_full_path(path, storeType):
+    if os.path.exists(path):
+        return path
+    return get_full_blob_path(path, storeType)
 
 def get_local_or_blob_file(path):
     if os.path.exists(path):
