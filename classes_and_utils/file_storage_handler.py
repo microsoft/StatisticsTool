@@ -1,5 +1,5 @@
 import os,sys
-
+import pathlib
 
 
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
@@ -32,6 +32,21 @@ def get_local_or_blob_full_path(path, storeType):
     if os.path.exists(path):
         return path
     return get_full_blob_path(path, storeType)
+
+def calc_log_file_full_path(log_name, video_name, logs_base_path):
+    video_base_name = pathlib.Path(video_name).stem
+    full_path = None
+    if os.path.exists(logs_base_path):
+        if log_name: #not null, algo_logs format
+            full_path = os.path.join(logs_base_path, video_base_name, log_name)
+        else:
+            full_path = os.path.join(logs_base_path, video_base_name+'.json')
+    else:
+        if log_name:
+            full_path = os.path.join(logs_base_path, os.path.splitext(video_name)[0],log_name)
+        else:
+            full_path = os.path.join(logs_base_path, os.path.splitext(video_name)[0]+'.json')
+    return full_path
 
 def get_local_or_blob_file(path):
     if os.path.exists(path):

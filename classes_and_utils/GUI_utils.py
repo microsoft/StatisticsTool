@@ -1,6 +1,7 @@
 from datetime import datetime
 import sys, os
 
+
 sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
 from user_defined_functions import ReadingFunctions, EvalutationFunctions, OverlapFunctions, PartitioningFunctions, \
     PartitioningFunctions, StatisticsFunctions, TransformFunctions
@@ -11,6 +12,8 @@ from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.VideoEvaluation import compare_predictions_directory, VideoEvaluation
 from inspect import getmembers, isfunction
 from classes_and_utils.utils import loading_json, save_json
+from utils.sheldon_export_header import *
+from classes_and_utils.file_storage_handler import calc_log_file_full_path
 import re, pickle
 import numpy as np
 import json
@@ -548,6 +551,7 @@ def export_list_to_sheldon(images_list, sheldon_header_data,output_dir, states, 
     if is_unique:
         header['header']['segmentation'].append('unique')
 
+
     sheldon_list.append(json.dumps(header))
     for file in images_list:
         for event in images_list[file]:
@@ -556,10 +560,15 @@ def export_list_to_sheldon(images_list, sheldon_header_data,output_dir, states, 
             sheldon_link['keys']['type']='debug'
             sheldon_link['message']={}
             sheldon_link['message']['IsChecked']='False'
+
             vid = images_list[file][event]['frames'][0][0]
             sheldon_link['message']['Video Location']=vid
             sheldon_link['message']['Frame Number']= images_list[file][event]['frames'][0][2]
             sheldon_link['message']['end_frame'] = images_list[file][event]['end_frame']
+
+            sheldon_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid, header['header'][PRIMARY_LOG][LOGS_PATH])
+            sheldon_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid, header['header'][SECONDARY_LOG][LOGS_PATH])
+
             sheldon_list.append(json.dumps(sheldon_link))
     
     name = ''
