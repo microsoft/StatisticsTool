@@ -27,7 +27,7 @@ class LocalStorageFileCache:
         
 
     def create_or_get_cached_file_full_path(self, blob_name, touch_file = True):
-        if not self.is_file_exists_in_cache(blob_name):
+        if not self.is_blob_exists_in_cache(blob_name):
             self.free_overused_storage()
         
         full_path = self.get_file_path_in_cache_from_blob_name(blob_name)
@@ -38,7 +38,7 @@ class LocalStorageFileCache:
         return full_path
     
 
-    def is_file_exists_in_cache(self, blob_name):
+    def is_blob_exists_in_cache(self, blob_name):
         full_path = self.get_file_path_in_cache_from_blob_name(blob_name)
         
         if os.path.exists(full_path):
