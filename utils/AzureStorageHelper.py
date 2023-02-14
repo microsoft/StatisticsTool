@@ -81,7 +81,7 @@ def invalidate_gt_version_if_needed():
     version_file = os.path.basename(version_files[0])
     version_blob = os.path.join(app_config.annotation_store_blobs_prefix, version_file)
 
-    if GetFileCache().is_blob_exists_in_cache(version_blob):
+    if GetFileCache().is_file_exists_in_cache(version_blob):
         return
     GetFileCache().delete_all_file_with_prefix(app_config.annotation_store_blobs_prefix)
 
@@ -103,7 +103,7 @@ def get_blob_from_cache_or_download(blob):
     if blob_exists(blob) == False:
         return None
 
-    if GetFileCache().is_blob_exists_in_cache(blob):
+    if GetFileCache().is_file_exists_in_cache(blob):
        return GetFileCache().create_or_get_cached_file_full_path(blob)
 
     local_path = save_blob_to_cache(blob)
