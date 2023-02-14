@@ -18,18 +18,19 @@ class LocalStorageFileCache:
         if os.path.exists(self.temp_dir) == False:
             os.makedirs(self.temp_dir)
         #self.temp_dir.cleanup()
+    
 
-    def get_file_path_in_cache(self, file_name):
-        name = file_name.replace('/','_').replace('\\','_')
+    def get_file_path_in_cache_from_blob_name(self, blob_name):
+        name = blob_name.replace('/','_').replace('\\','_')
         full_path = os.path.join(self.temp_dir, name) 
         return full_path
         
 
-    def create_or_get_cached_file_full_path(self, file_name, touch_file = True):
-        if not self.is_file_exists_in_cache(file_name):
+    def create_or_get_cached_file_full_path(self, blob_name, touch_file = True):
+        if not self.is_file_exists_in_cache(blob_name):
             self.free_overused_storage()
         
-        full_path = self.get_file_path_in_cache(file_name)
+        full_path = self.get_file_path_in_cache_from_blob_name(blob_name)
 
         if touch_file:
             Path(full_path).touch()
@@ -37,8 +38,8 @@ class LocalStorageFileCache:
         return full_path
     
 
-    def is_file_exists_in_cache(self, file_name):
-        full_path = self.get_file_path_in_cache(file_name)
+    def is_file_exists_in_cache(self, blob_name):
+        full_path = self.get_file_path_in_cache_from_blob_name(blob_name)
         
         if os.path.exists(full_path):
             return True
@@ -62,6 +63,13 @@ class LocalStorageFileCache:
     def get_temp_dir_size(self):
         temp_files = list_local_dir(self.temp_dir)     
         return sum(os.path.getsize(f) for f in temp_files)
+    
+    def delete_all_file_with_prefix(self, prefix):
+        cache_prefix = self.get_file_path_in_cache_from_blob_name(prefix)
+        temp_files = list_local_dir(self.temp_dir)
+        for file in temp_files:
+            if file.startswith(cache_prefix):
+                os.remove(file)
 
 def GetFileCache():
     global local_storage_cache

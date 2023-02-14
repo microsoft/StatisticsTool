@@ -7,6 +7,7 @@ from StatisticsTool.utils.LocalStorageFileCache import  GetFileCache
 from StatisticsTool.app_config.config import app_config
 
 from azure.identity import DefaultAzureCredential
+from timeit import default_timer as timer
 
 
 class StoreType():
@@ -19,7 +20,8 @@ account_url = f"https://{app_config.azure_storage_id}.blob.core.windows.net"
 default_credential = DefaultAzureCredential()
 container_client_obj = None
 blob_service_client_obj = None
-
+VERSION_PREFIX = 'version-'
+MAX_ELAPSED_TIME_TO_VALIDATE_GT = 60 * 60 #one hour in seconds
 def container_client():
     global blob_service_client_obj,  container_client_obj
     if blob_service_client_obj is None or container_client_obj is None:
@@ -60,11 +62,39 @@ def read_video_file_from_blob(blob_path):
 
     return file_path
 
+last_check_time = None
+def invalidate_gt_version_if_needed():
+    
+    global last_check_time
+    if last_check_time is not None and last_check_time - timer() < MAX_ELAPSED_TIME_TO_VALIDATE_GT:
+        last_check_time = timer()
+        return
+    last_check_time = timer()
+
+    version_blob_prefix = os.path.join(app_config.annotation_store_blobs_prefix, VERSION_PREFIX)
+
+    version_files = ls_files(version_blob_prefix, specific_name = True)
+    if len(version_files) == 0:
+        print ('No version file in storage skip invalidate')
+        return
+    
+    version_file = os.path.basename(version_files[0])
+    version_blob = os.path.join(app_config.annotation_store_blobs_prefix, version_file)
+
+    if GetFileCache().is_file_exists_in_cache(version_blob):
+        return
+    GetFileCache().delete_all_file_with_prefix(app_config.annotation_store_blobs_prefix)
+
+    save_blob_to_cache(version_blob)
+
+    
+
 
 def read_gt_file_from_blob(video_name):
+    invalidate_gt_version_if_needed()
     annotation_blob_path = os.path.join(app_config.annotation_store_blobs_prefix, video_name)
     annotation_blob_path = os.path.splitext(annotation_blob_path)[0]+".json"
-    
+
     annotation_local_path = get_blob_from_cache_or_download(annotation_blob_path)
     return annotation_local_path
 
@@ -96,11 +126,11 @@ def save_blob_to_cache(blob_path):
 def blob_exists(blob_path):
   return container_client().get_blob_client(blob_path).exists()
 
-def ls_files(path, recursive=False):
+def ls_files(path, recursive=False, specific_name = False):
     '''
     List files under a path, optionally recursively
     '''
-    if not path == '' and not path.endswith('/'):
+    if specific_name == False and not path == '' and not path.endswith('/'):
         path += '/'
 
     blob_iter = container_client().list_blobs(name_starts_with=path)
