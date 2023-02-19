@@ -1,12 +1,11 @@
 import os, sys
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+from azure.storage.blob import BlobServiceClient
 
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 
 from StatisticsTool.utils.LocalStorageFileCache import  GetFileCache
 from StatisticsTool.app_config.config import app_config
 
-from azure.identity import DefaultAzureCredential
 from timeit import default_timer as timer
 
 
@@ -17,7 +16,6 @@ class StoreType():
 
 
 account_url = f"https://{app_config.azure_storage_id}.blob.core.windows.net"
-default_credential = DefaultAzureCredential()
 container_client_obj = None
 blob_service_client_obj = None
 VERSION_PREFIX = 'version-'
