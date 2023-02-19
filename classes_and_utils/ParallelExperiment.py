@@ -139,6 +139,9 @@ class ParallelExperiment:
         FN_mask = ((comp_data[key+'_gt']==True) & ((comp_data['state']<threshold) | (comp_data[key]==False) ))
         FP_mask = ((comp_data[key]==True) & (comp_data['state']<threshold))
         TP_mask = ((comp_data[key]==True) &((comp_data['state']>=threshold) & (comp_data[key+'_gt']==True)))
+        TN_mask = (comp_data[key+'_gt']==False) & (comp_data[key]==False)
+        if len(comp_data)!=(sum(FN_mask)+sum(FP_mask)+sum(TP_mask)+sum(TN_mask)):
+            print('Masks sizes doesnt match dataset size !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         
         return TP_mask, FP_mask, FN_mask
                

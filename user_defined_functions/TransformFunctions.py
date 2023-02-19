@@ -278,10 +278,19 @@ def approach_event_presence_transform(comp_data):
     new_event['Presence approach flicker sequence mean length'] = avg_seq_len
     new_event['Presence approach flicker sequence median length'] = med_seq_len
     
-    if seq_embeded_count>0:
+    duration_from_app_end = np.where(np.array(presence_pred_at_approach)==1)[0][-1]-np.where(np.array(presence_pred_at_approach)==1)[0][0]-(minimal_presence_seq_len-1)
+
+    if seq_embeded_count>0 and ((duration_from_app_end/30 >= 1) and (duration_from_app_end/30 < 2)):
         new_event['detection'] = True
+        new_event['state'] = 1
     else:
         new_event['detection'] = False
+        new_event['state'] = 0
+    if (duration_from_app_end/30 >= 2):
+        new_event['detection_gt'] = False
+        new_event['detection'] = True
+        new_event['state'] = 0
+
 
     # Add statistics about the event
     # Length of the presence sequence out of the entire approach event
@@ -292,7 +301,7 @@ def approach_event_presence_transform(comp_data):
     else:
         new_event['Approach event presence detected length'] = len(np.where(np.array(presence_pred_at_approach)==1)[0]) - (minimal_presence_seq_len-1)*3
     # Length (in frames) from the first detected sequence to the end of the approach event
-    new_event['Presence seq duration prior to approach event end'] = np.where(np.array(presence_pred_at_approach)==1)[0][-1]-np.where(np.array(presence_pred_at_approach)==1)[0][0]-(minimal_presence_seq_len-1)
+    new_event['Presence seq duration prior to approach event end'] = duration_from_app_end
     new_event['Presence seq duration from approach event start'] = np.where(np.array(presence_pred_at_approach)==1)[0][0] + 1
 
 
@@ -347,8 +356,15 @@ def leave_event_presence_transform(comp_data):
 
     if (last_true_pred>success_range_start) and (last_true_pred<success_range_end):
         new_event['detection'] = True
+        new_event['state'] = 1
     else:
         new_event['detection'] = False
+        new_event['state'] = 0
+    if (last_true_pred<=success_range_start):
+        new_event['detection_gt'] = False
+        new_event['detection'] = True
+        new_event['state'] = 0
+
 
     new_event['Presence last True before False till end of leave event'] = last_true_pred - frame_num_to_remove_at_leave_seq_start
 

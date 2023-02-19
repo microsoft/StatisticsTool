@@ -7,6 +7,7 @@
         "Image Width": "1280",
         "Image Height": "720",
         "Statistics Functions": "TNR",
-        "Partitioning Functions": "no_partitioning"
+        "Partitioning Functions": "presence_partition",
+        "Transformation Function": "None"
     }
 ]
