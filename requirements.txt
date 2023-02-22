@@ -7,4 +7,4 @@ opencv_python
 matplotlib
 itsdangerous
 xlsxwriter
-azure-storage-blobe
+azure-storage-blob
