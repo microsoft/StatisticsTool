@@ -199,8 +199,55 @@ def statistic_tool_reader_presence_calssification(path):
         else:
             clip_duration = 'NA'
 
-        
-        for line in lines[1:]:
+        # Add new label tag from existing label keys
+        # Set presence GT = false from begining of approach event till last 3 seconds of any approach event
+        # To be replaced by distance
+        # + split approach to 3 area: ROI, Transition, out of ROI and change GT accordingly
+        enable_approach_split = True
+        presence_time_mask = np.full(np.shape(lines[1:]), True)
+        approach_index_from_end = np.zeros(np.shape(lines[1:]))
+        approach_roi_mask    = np.full(np.shape(lines[1:]), False)
+        approach_trans_mask  = np.full(np.shape(lines[1:]), False)
+        approach_oo_roi_mask = np.full(np.shape(lines[1:]), False)
+        sec_num_to_mask = 3*30
+        prev_user_status = 'NoUser'
+        during_approach_seq = False
+        post_app_frame_num = 200
+        approach_roi_in_frames   = 30*1
+        approach_trans_in_frames = 30*1.5
+        for ind,line in enumerate(lines[1:]):
+            line = json.loads(line)
+            if 'type' not in line['keys'] or (line['keys']['type'] != 'sequence' and line['keys']['type'] != 'presence'):
+                continue
+
+            if 'User_Status' in line['message']: # GT logs
+                curr_user_status = line['message']['User_Status']
+                if curr_user_status=='Approach_PC' and during_approach_seq == False:
+                    first_approach_ind = ind
+                    during_approach_seq = True
+
+                if prev_user_status=='Approach_PC' and curr_user_status!='Approach_PC':
+                    # Mark frames from approach start to last 3 second before last approach frame with presence_time_mask = False
+                    last_ind_to_mask = max(first_approach_ind,ind-sec_num_to_mask)
+                    presence_time_mask[first_approach_ind:last_ind_to_mask] = False
+                    approach_duration = ind - first_approach_ind
+                    print(-approach_duration+1)
+                    approach_index_from_end[first_approach_ind:ind] = np.arange(-approach_duration+1,1)
+                    approach_index_from_end[ind-1:ind+(min(post_app_frame_num,len(approach_index_from_end)-ind))-1] = np.arange(0,(min(post_app_frame_num,len(approach_index_from_end)-ind)))
+                    if first_approach_ind!=last_ind_to_mask:
+                        print('found')
+                    
+                    first_approach_roi_ind   = int(max(ind-approach_roi_in_frames,first_approach_ind))
+                    first_approach_trans_ind = int(max(ind-approach_trans_in_frames,first_approach_ind))
+                    approach_roi_mask[first_approach_roi_ind:ind]                        = True
+                    approach_trans_mask[first_approach_trans_ind:first_approach_roi_ind] = True
+                    approach_oo_roi_mask[first_approach_ind:first_approach_trans_ind]    = True
+                    during_approach_seq = False
+                prev_user_status = curr_user_status
+
+                
+
+        for ind,line in enumerate(lines[1:]):
             line = json.loads(line)
             if 'type' not in line['keys'] or (line['keys']['type'] != 'sequence' and line['keys']['type'] != 'presence'):
                 continue
@@ -212,10 +259,16 @@ def statistic_tool_reader_presence_calssification(path):
                 else:
                     data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
             else:
-                if line['message']['HumanPresence'] == 'True':
-                    data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
+                if enable_approach_split==False:
+                    if line['message']['HumanPresence'] == 'True' and presence_time_mask[ind]==True:
+                        data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
+                    else:
+                        data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
                 else:
-                    data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
+                    if line['message']['HumanPresence'] == 'True' and approach_oo_roi_mask[ind]==False:
+                        data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
+                    else:
+                        data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
 
             data['predictions'][0]['Location']                  = clip_loc
             data['predictions'][0]['General_Background_People'] = clip_bg_people
@@ -227,6 +280,12 @@ def statistic_tool_reader_presence_calssification(path):
             data['predictions'][0]['Device_Posture']            = clip_device_posture
             data['predictions'][0]['External_Monitor']          = clip_external_monitor
             data['predictions'][0]['Clip_Duration [MIN]']       = clip_duration
+
+            data['predictions'][0]['Approach_index_from_event_end'] = approach_index_from_end[ind]
+            data['predictions'][0]['Approach_split_roi']    = approach_roi_mask[ind]
+            data['predictions'][0]['Approach_split_trans']  = approach_trans_mask[ind]
+            data['predictions'][0]['Approach_split_oo_roi'] = approach_oo_roi_mask[ind]
+            data['predictions'][0]['enable_approach_split'] = enable_approach_split
 
             if 'Background_People' in line['message']:
                 data['predictions'][0]['Background_People'] = line['message']['Background_People']

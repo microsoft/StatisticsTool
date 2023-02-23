@@ -17,7 +17,8 @@ A numerical score
 """
 
 def Classification_True_False(pred_row, labels_row):
-    if pred_row.keys() == labels_row.keys():
+    if pred_row['classification'] == labels_row['classification']:
+    #if pred_row.keys() == labels_row.keys():
         return 1.0
     return 0.0 
 

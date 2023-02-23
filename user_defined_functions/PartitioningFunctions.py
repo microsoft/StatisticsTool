@@ -87,36 +87,46 @@ def presence_partition(dataframe, from_file=False):
         clip_environment_mask_indoor  = np.full(np.shape(clip_enviroment), False)
         clip_environment_mask_other   = np.full(np.shape(clip_enviroment), True)
         clip_environment_mask_outdoor[clip_enviroment=='Outdoor'] = True
+        clip_environment_mask_outdoor[clip_enviroment=='OutDoor'] = True
         clip_environment_mask_indoor[clip_enviroment=='Indoor']   = True
+        clip_environment_mask_indoor[clip_enviroment=='InDoor']   = True
 
         clip_environment_mask_other[clip_enviroment=='Outdoor'] = False
+        clip_environment_mask_other[clip_enviroment=='OutDoor'] = False
         clip_environment_mask_other[clip_enviroment=='Indoor']  = False
+        clip_environment_mask_other[clip_enviroment=='InDoor']  = False
         clip_user_environment_dict = {'possible partitions': ['Outdoor','Indoor','Other'], 'masks': [clip_environment_mask_outdoor,clip_environment_mask_indoor,clip_environment_mask_other]}
         desired_masks.update({"Per clip: User Environment (Indoor/Outdoor)": clip_user_environment_dict})
     if "Location_gt" in dataframe.columns:
         # Office, Open Space, Kitchen, Reception, Conference Room, Cafe etc.
         clip_location = dataframe['Location_gt'].values.astype(object)
-        clip_location_mask_office     = np.full(np.shape(clip_location), False)
-        clip_location_mask_open_space = np.full(np.shape(clip_location), False)
-        clip_location_mask_kitchen    = np.full(np.shape(clip_location), False)
-        clip_location_mask_reception  = np.full(np.shape(clip_location), False)
-        clip_location_mask_conf_room  = np.full(np.shape(clip_location), False)
-        clip_location_mask_cafe       = np.full(np.shape(clip_location), False)
-        clip_location_mask_other      = np.full(np.shape(clip_location), True)
-        clip_location_mask_office[clip_location=='Office']             = True
-        clip_location_mask_open_space[clip_location=='Open Space']     = True
-        clip_location_mask_kitchen[clip_location=='Kitchen']           = True
-        clip_location_mask_reception[clip_location=='Reception']       = True
-        clip_location_mask_conf_room[clip_location=='Conference Room'] = True
-        clip_location_mask_cafe[clip_location=='Cafe']                 = True
+        clip_location_mask_public_space      = np.full(np.shape(clip_location), False)
+        clip_location_mask_office            = np.full(np.shape(clip_location), False)
+        clip_location_mask_open_space_office = np.full(np.shape(clip_location), False)
+        clip_location_mask_outdoor           = np.full(np.shape(clip_location), False)
+        clip_location_mask_reception         = np.full(np.shape(clip_location), False)
+        clip_location_mask_cafe              = np.full(np.shape(clip_location), False)
+        clip_location_mask_home_office       = np.full(np.shape(clip_location), False)
+        clip_location_mask_small_office      = np.full(np.shape(clip_location), False)
+        clip_location_mask_other             = np.full(np.shape(clip_location), True)
+        clip_location_mask_public_space[clip_location=='PublicSpace']          = True
+        clip_location_mask_office[clip_location=='Office']                     = True
+        clip_location_mask_open_space_office[clip_location=='OpenSpaceOffice'] = True
+        clip_location_mask_outdoor[clip_location=='OutDoor']                   = True
+        clip_location_mask_reception[clip_location=='Reception']               = True
+        clip_location_mask_cafe[clip_location=='Cafe']                         = True
+        clip_location_mask_home_office[clip_location=='HomeOffice']            = True
+        clip_location_mask_small_office[clip_location=='SmallOffice']          = True
 
+        clip_location_mask_other[clip_location=='PublicSpace']     = False
         clip_location_mask_other[clip_location=='Office']          = False
-        clip_location_mask_other[clip_location=='Open Space']      = False
-        clip_location_mask_other[clip_location=='Kitchen']         = False
+        clip_location_mask_other[clip_location=='OpenSpaceOffice'] = False
+        clip_location_mask_other[clip_location=='OutDoor']         = False
         clip_location_mask_other[clip_location=='Reception']       = False
-        clip_location_mask_other[clip_location=='Conference Room'] = False
         clip_location_mask_other[clip_location=='Cafe']            = False
-        clip_user_location_dict = {'possible partitions': ['Office','Open Space','Kitchen','Reception','Conference Room','Cafe','Other'], 'masks': [clip_location_mask_office,clip_location_mask_open_space,clip_location_mask_kitchen,clip_location_mask_reception,clip_location_mask_conf_room,clip_location_mask_cafe,clip_location_mask_other]}
+        clip_location_mask_other[clip_location=='HomeOffice']      = False
+        clip_location_mask_other[clip_location=='SmallOffice']     = False
+        clip_user_location_dict = {'possible partitions': ['Public Space','Office','Open Space Office','Outdoor','Reception','Cafe','Home Office','Small Office','Other'], 'masks': [clip_location_mask_public_space,clip_location_mask_office,clip_location_mask_open_space_office,clip_location_mask_outdoor,clip_location_mask_reception,clip_location_mask_cafe,clip_location_mask_home_office,clip_location_mask_small_office,clip_location_mask_other]}
         desired_masks.update({"Per clip: User Location": clip_user_location_dict})
     if "General_Background_People_gt" in dataframe.columns:
         # Empty,One,Few (2-5), Several (5-10) ,Crowded (10+)
@@ -126,12 +136,19 @@ def presence_partition(dataframe, from_file=False):
         clip_genral_bg_people_mask_few     = np.full(np.shape(clip_general_bg_people), False)
         clip_genral_bg_people_mask_several = np.full(np.shape(clip_general_bg_people), False)
         clip_genral_bg_people_mask_crowded = np.full(np.shape(clip_general_bg_people), False)
+        clip_genral_bg_people_mask_other   = np.full(np.shape(clip_general_bg_people), True)
         clip_genral_bg_people_mask_empty[clip_general_bg_people=='Empty']     = True
         clip_genral_bg_people_mask_one[clip_general_bg_people=='One']         = True
         clip_genral_bg_people_mask_few[clip_general_bg_people=='Few']         = True
         clip_genral_bg_people_mask_several[clip_general_bg_people=='Several'] = True
         clip_genral_bg_people_mask_crowded[clip_general_bg_people=='Crowded'] = True
-        clip_general_bg_people_dict = {'possible partitions': ['Empty','One','Few','Several','Crowded'], 'masks': [clip_genral_bg_people_mask_empty,clip_genral_bg_people_mask_one,clip_genral_bg_people_mask_few,clip_genral_bg_people_mask_several,clip_genral_bg_people_mask_crowded]}
+
+        clip_genral_bg_people_mask_other[clip_general_bg_people=='Empty']   = False
+        clip_genral_bg_people_mask_other[clip_general_bg_people=='One']     = False
+        clip_genral_bg_people_mask_other[clip_general_bg_people=='Few']     = False
+        clip_genral_bg_people_mask_other[clip_general_bg_people=='Several'] = False
+        clip_genral_bg_people_mask_other[clip_general_bg_people=='Crowded'] = False
+        clip_general_bg_people_dict = {'possible partitions': ['Empty','One','Few','Several','Crowded','Other'], 'masks': [clip_genral_bg_people_mask_empty,clip_genral_bg_people_mask_one,clip_genral_bg_people_mask_few,clip_genral_bg_people_mask_several,clip_genral_bg_people_mask_crowded,clip_genral_bg_people_mask_other]}
         desired_masks.update({"Per clip: General Background People": clip_general_bg_people_dict})
     if "General_Natural_Light_gt" in dataframe.columns:
         # Dark/Dusk/Sunny/Cloudy/NA/Changing/Unknown
@@ -206,7 +223,7 @@ def presence_partition(dataframe, from_file=False):
         clip_external_monitor_mask_other[clip_external_monitor=='No']  = False
         clip_external_monitor_dict = {'possible partitions': ['Yes','No','Other'], 'masks': [clip_external_monitor_mask_yes,clip_external_monitor_mask_no,clip_external_monitor_mask_other]}
         desired_masks.update({"Per clip: External Monitor": clip_external_monitor_dict})
-    if "Clip_Duration [MIN]_gt" in dataframe.columns:
+    if 0:#"Clip_Duration [MIN]_gt" in dataframe.columns:
         clip_duration = dataframe['Clip_Duration [MIN]_gt'].values.astype(object)
         clip_duration_mask_other           = np.full(np.shape(clip_duration),False)
         clip_duration_mask_other[clip_duration=='NA'] = True
@@ -214,7 +231,7 @@ def presence_partition(dataframe, from_file=False):
         clip_duration_min = np.ones(np.shape(clip_duration))
         ftr = [60,1,1/60]
         for ind, curr_dur in enumerate(clip_duration):
-            if clip_duration[ind]=='NA':
+            if clip_duration[ind]=='NA' or clip_duration[ind]==None:
                 clip_duration_min[ind] = -1
             else:
                 clip_duration_min[ind] = sum([a*b for a,b in zip(ftr, map(int,curr_dur.split(':')))])
@@ -262,8 +279,17 @@ def presence_partition(dataframe, from_file=False):
     if "User_Status_gt" in dataframe.columns:
         # NoUser/Approach_PC/PassBy_PC/Sitting_Down/OnPC_Working/OnPC_Idle/OnPC_Other/Standing_Up/Leaving_PC/Unrelated_PC/Unknown
         user_status = dataframe['User_Status_gt'].values.astype(object)
+        enable_approach_split = dataframe['enable_approach_split'].values.astype(object)
         user_stat_mask_no_user     = np.full(np.shape(user_status), False)
-        user_stat_mask_app_pc      = np.full(np.shape(user_status), False)
+        if enable_approach_split[0] == False:
+            user_stat_mask_app_pc = np.full(np.shape(user_status), False)
+        else:
+            Approach_split_roi    = dataframe['Approach_split_roi_gt'].values.astype(object)
+            Approach_split_trans  = dataframe['Approach_split_trans_gt'].values.astype(object)
+            Approach_split_oo_roi = dataframe['Approach_split_oo_roi_gt'].values.astype(object)
+            user_stat_mask_app_pc_roi    = np.full(np.shape(user_status), False)
+            user_stat_mask_app_pc_trans  = np.full(np.shape(user_status), False)
+            user_stat_mask_app_pc_oo_roi = np.full(np.shape(user_status), False)
         user_stat_mask_passby_pc   = np.full(np.shape(user_status), False)
         user_stat_mask_sit_down    = np.full(np.shape(user_status), False)
         user_stat_mask_onPC_work   = np.full(np.shape(user_status), False)
@@ -274,7 +300,12 @@ def presence_partition(dataframe, from_file=False):
         user_stat_mask_unrelate_pc = np.full(np.shape(user_status), False)
         user_stat_mask_other = np.full(np.shape(user_status), True)
         user_stat_mask_no_user[user_status=='NoUser']           = True
-        user_stat_mask_app_pc[user_status=='Approach_PC']       = True
+        if enable_approach_split[0] == False:
+            user_stat_mask_app_pc[user_status=='Approach_PC']       = True
+        else:
+            user_stat_mask_app_pc_roi[Approach_split_roi==True]       = True
+            user_stat_mask_app_pc_trans[Approach_split_trans==True]   = True
+            user_stat_mask_app_pc_oo_roi[Approach_split_oo_roi==True] = True
         user_stat_mask_passby_pc[user_status=='PassBy_PC']      = True
         user_stat_mask_sit_down[user_status=='Sitting_Down']    = True
         user_stat_mask_onPC_work[user_status=='OnPC_Working']   = True
@@ -285,7 +316,12 @@ def presence_partition(dataframe, from_file=False):
         user_stat_mask_unrelate_pc[user_status=='Unrelated_PC'] = True 
 
         user_stat_mask_other[user_status=='NoUser']       = False
-        user_stat_mask_other[user_status=='Approach_PC']  = False
+        if enable_approach_split[0] == False:
+            user_stat_mask_other[user_status=='Approach_PC']  = False
+        else:
+            user_stat_mask_other[Approach_split_roi==True]    = False
+            user_stat_mask_other[Approach_split_trans==True]  = False
+            user_stat_mask_other[Approach_split_oo_roi==True] = False
         user_stat_mask_other[user_status=='PassBy_PC']    = False
         user_stat_mask_other[user_status=='Sitting_Down'] = False
         user_stat_mask_other[user_status=='OnPC_Working'] = False
@@ -294,7 +330,10 @@ def presence_partition(dataframe, from_file=False):
         user_stat_mask_other[user_status=='Standing_Up']  = False
         user_stat_mask_other[user_status=='Leaving_PC']   = False 
         user_stat_mask_other[user_status=='Unrelated_PC'] = False 
-        user_stat_dict = {'possible partitions': ['No user','Unrelated PC','Pass By PC','Approach PC','Leaving PC','Sitting Down','Standing Up','On PC Working','On PC Idle','On PC Other','Other'], 'masks': [user_stat_mask_no_user,user_stat_mask_unrelate_pc,user_stat_mask_passby_pc,user_stat_mask_app_pc,user_stat_mask_leave_pc,user_stat_mask_sit_down,user_stat_mask_stand_up,user_stat_mask_onPC_work,user_stat_mask_onPC_idle,user_stat_mask_onPC_other,user_stat_mask_other]}
+        if enable_approach_split[0] == False:
+            user_stat_dict = {'possible partitions': ['No user','Unrelated PC','Pass By PC','Approach PC','Leaving PC','Sitting Down','Standing Up','On PC Working','On PC Idle','On PC Other','Other'], 'masks': [user_stat_mask_no_user,user_stat_mask_unrelate_pc,user_stat_mask_passby_pc,user_stat_mask_app_pc,user_stat_mask_leave_pc,user_stat_mask_sit_down,user_stat_mask_stand_up,user_stat_mask_onPC_work,user_stat_mask_onPC_idle,user_stat_mask_onPC_other,user_stat_mask_other]}
+        else:
+            user_stat_dict = {'possible partitions': ['No user','Unrelated PC','Pass By PC','Approach PC ROI','Approach PC Transition','Approach PC out of ROI','Leaving PC','Sitting Down','Standing Up','On PC Working','On PC Idle','On PC Other','Other'], 'masks': [user_stat_mask_no_user,user_stat_mask_unrelate_pc,user_stat_mask_passby_pc,user_stat_mask_app_pc_roi,user_stat_mask_app_pc_trans,user_stat_mask_app_pc_oo_roi,user_stat_mask_leave_pc,user_stat_mask_sit_down,user_stat_mask_stand_up,user_stat_mask_onPC_work,user_stat_mask_onPC_idle,user_stat_mask_onPC_other,user_stat_mask_other]}
         desired_masks.update({"Per frame: User status": user_stat_dict})
 
     if "Background_People_gt" in dataframe.columns:
@@ -434,7 +473,7 @@ def presence_partition(dataframe, from_file=False):
             fig2.layout.xaxis.title.text = 'Percent [%]'
             fig2.layout.title.text='True/False presence prediction during leave event'
 
-            counts, bins = np.histogram(leave_event_flicker_seq_num, bins=10)
+            counts, bins = np.histogram(leave_event_flicker_seq_num, bins=30)
             bins = 0.5 * (bins[:-1] + bins[1:])
             fig3 = px.bar(x=bins, y=counts, labels={'x':'True/false flicker sequence number', 'y':'count'})
             fig3.layout.title.text='Presence leave true/false flicker sequence number'
@@ -533,25 +572,25 @@ def presence_partition(dataframe, from_file=False):
         fig2.layout.xaxis.title.text = 'Percent'
         fig2.layout.title.text='Presence detected sequence percentage out of approach event frame'
 
-        counts, bins = np.histogram(app_event_presence_duration_prior_to_end, bins=10)
+        counts, bins = np.histogram(app_event_presence_duration_prior_to_end/30, bins=20)
         bins = 0.5 * (bins[:-1] + bins[1:])
-        fig3 = px.bar(x=bins, y=counts, labels={'x':'Frames', 'y':'count'})
+        fig3 = px.bar(x=bins, y=counts, labels={'x':'Seconds', 'y':'count'})
         fig3.layout.title.text='Presence detected sequence duration from end of approach event'
             
         fig33 = px.histogram(app_event_presence_duration_prior_to_end)
         fig33.layout.xaxis.title.text = 'Frames'
         fig33.layout.title.text='Presence detected sequence duration from end of approach event'
 
-        counts, bins = np.histogram(app_event_presence_duration_from_app_start, bins=10)
+        counts, bins = np.histogram(app_event_presence_duration_from_app_start/30, bins=20)
         bins = 0.5 * (bins[:-1] + bins[1:])
-        fig4 = px.bar(x=bins, y=counts, labels={'x':'Frames', 'y':'count'})
+        fig4 = px.bar(x=bins, y=counts, labels={'x':'Seconds', 'y':'count'})
         fig4.layout.title.text='Presence detected sequence duration from start of approach event'
 
         fig44 = px.histogram(app_event_presence_duration_from_app_start)
         fig44.layout.xaxis.title.text = 'Frames'
         fig44.layout.title.text='Presence detected sequence duration from start of approach event'
 
-        counts, bins = np.histogram(app_event_flicker_seq_num, bins=10)
+        counts, bins = np.histogram(app_event_flicker_seq_num, bins=20)
         bins = 0.5 * (bins[:-1] + bins[1:])
         fig5 = px.bar(x=bins, y=counts, labels={'x':'True/false flicker sequence number', 'y':'count'})
         fig5.layout.title.text='Presence approach true/false flicker sequence number'
@@ -567,6 +606,54 @@ def presence_partition(dataframe, from_file=False):
         fig7 = px.histogram(app_event_flicker_seq_median_len)
         fig7.layout.xaxis.title.text = 'True/false flicker sequence median length'
         fig7.layout.title.text='Presence approach true/false flicker sequence median length'
+
+        # Split 'total mis' to pop up and no pop up
+        pop_up = dataframe['Approach pop up indication'].values.astype(object)
+        total_mis_loc = np.where(app_event_presence_duration_prior_to_end/30==-1)[0]
+        total_mis_pop_up_num = sum(pop_up[total_mis_loc])
+        total_mis_regular_num = len(total_mis_loc) - total_mis_pop_up_num
+        print('Total mis num = ' + str(len(total_mis_loc)) + 
+        ', Total mis - pop up num = ' + str(total_mis_pop_up_num) + 
+        ', Total mis - regular approaches num = ' + str(total_mis_regular_num))
+
+        # Split 'early wake' (FP) into complete false/early approach according to the presence value in approach_PC last frame
+        det_at_R0_R1_border = dataframe['Presence detection at R0 first frame'].values.astype(object)
+        early_wake_loc = np.where(app_event_presence_duration_prior_to_end/30>2)[0]
+        det_at_R0_R1_border_val_at_early_wake = det_at_R0_R1_border[early_wake_loc]
+        print('Total FP approach event num = ' + str(len(det_at_R0_R1_border_val_at_early_wake)) +
+        ', Total early wake with True at R0/R1 border frame = ' + str(sum(det_at_R0_R1_border_val_at_early_wake)) + 
+        ', Total early wake with False at R0/R1 border frame = ' + str(len(det_at_R0_R1_border_val_at_early_wake)-sum(det_at_R0_R1_border_val_at_early_wake)))
+        
+
+        fig3.show()
+        fig4.show()
+
+    if 0: # Figure of presence indication as a function of the frame num from end of approach event
+        import plotly.express as px
+        import plotly.graph_objects as go
+        app_ind_from_end = dataframe['Approach_index_from_event_end_gt'].values.astype(object)
+        det = dataframe['detection'].values.astype(object)
+        min_val,max_val = [min(app_ind_from_end),max(app_ind_from_end)]
+        app_mat = np.zeros((max_val - min_val,4))
+        for ind in np.arange(max_val - min_val):
+            app_mat[ind,0] = ind + min_val
+            temp_loc = np.where(app_ind_from_end == (ind + min_val))
+            temp_det = det[temp_loc]
+            if len(temp_det)>0:
+                app_mat[ind,1] = sum(temp_det)/len(temp_det)
+            else:
+                app_mat[ind,1] = 0
+            app_mat[ind,3] = len(temp_det)
+        app_mat[:,2] = 1 - app_mat[:,1]
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=app_mat[:,0], y=app_mat[:,1],mode='lines',name='Presence pred=1'))
+        fig.add_trace(go.Scatter(x=app_mat[:,0], y=app_mat[:,2],mode='lines',name='Presence pred=0'))
+        fig.update_layout(title="Presence prediction vs. frame num from end of approach event",xaxis_title="Frames from last approach frame")
+        fig.show()
+
+
+
 
     return desired_masks
 
