@@ -203,6 +203,7 @@ def statistic_tool_reader_presence_calssification(path):
         # Set presence GT = false from begining of approach event till last 3 seconds of any approach event
         # To be replaced by distance
         # + split approach to 3 area: ROI, Transition, out of ROI and change GT accordingly
+        enable_approach_split = True
         presence_time_mask = np.full(np.shape(lines[1:]), True)
         approach_index_from_end = np.zeros(np.shape(lines[1:]))
         approach_roi_mask    = np.full(np.shape(lines[1:]), False)
@@ -212,7 +213,6 @@ def statistic_tool_reader_presence_calssification(path):
         prev_user_status = 'NoUser'
         during_approach_seq = False
         post_app_frame_num = 200
-        enable_approach_split = True
         approach_roi_in_frames   = 30*1
         approach_trans_in_frames = 30*1.5
         for ind,line in enumerate(lines[1:]):

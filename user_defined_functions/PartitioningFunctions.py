@@ -607,6 +607,24 @@ def presence_partition(dataframe, from_file=False):
         fig7.layout.xaxis.title.text = 'True/false flicker sequence median length'
         fig7.layout.title.text='Presence approach true/false flicker sequence median length'
 
+        # Split 'total mis' to pop up and no pop up
+        pop_up = dataframe['Approach pop up indication'].values.astype(object)
+        total_mis_loc = np.where(app_event_presence_duration_prior_to_end/30==-1)[0]
+        total_mis_pop_up_num = sum(pop_up[total_mis_loc])
+        total_mis_regular_num = len(total_mis_loc) - total_mis_pop_up_num
+        print('Total mis num = ' + str(len(total_mis_loc)) + 
+        ', Total mis - pop up num = ' + str(total_mis_pop_up_num) + 
+        ', Total mis - regular approaches num = ' + str(total_mis_regular_num))
+
+        # Split 'early wake' (FP) into complete false/early approach according to the presence value in approach_PC last frame
+        det_at_R0_R1_border = dataframe['Presence detection at R0 first frame'].values.astype(object)
+        early_wake_loc = np.where(app_event_presence_duration_prior_to_end/30>2)[0]
+        det_at_R0_R1_border_val_at_early_wake = det_at_R0_R1_border[early_wake_loc]
+        print('Total FP approach event num = ' + str(len(det_at_R0_R1_border_val_at_early_wake)) +
+        ', Total early wake with True at R0/R1 border frame = ' + str(sum(det_at_R0_R1_border_val_at_early_wake)) + 
+        ', Total early wake with False at R0/R1 border frame = ' + str(len(det_at_R0_R1_border_val_at_early_wake)-sum(det_at_R0_R1_border_val_at_early_wake)))
+        
+
         fig3.show()
         fig4.show()
 
