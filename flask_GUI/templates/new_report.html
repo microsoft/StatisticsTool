@@ -1,15 +1,34 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
   function myFunction1() {
-  var form = document.getElementById('myform');
-  var x = document.getElementById("myDIV");
-  form.onsubmit = function() {
-  form.target = 'message_iframe';
-  form.action = 'calculating_page';
-    if (x.style.display === "none") {
-    x.style.display = "block";
-  }
+        var form = document.getElementById('myform');
+        var x = document.getElementById("myDIV");
+        form.onsubmit = function() {
+        form.target = 'message_iframe';
+        form.action = 'calculating_page';
+            if (x.style.display === "none") {
+            x.style.display = "block";
+        }
   };
-}
+ }
+
+
+  function showConfiguration(){
+    
+    var url = 'show?codice=${item.key.codice}&Configuration='+document.getElementById('Configuration').value;
+    $.get(url, function(responseText) {
+        $("#add_config_iframe").contents().find("body").html(''); 
+        $('#add_config_iframe').attr("srcdoc", responseText);
+    });
+  };
+
+  function onConfgurationChange(){
+    showConfiguration();
+  }
+
+  $( document ).ready(function() {
+    showConfiguration();
+});
 
 </script>
 <style>
@@ -36,7 +55,7 @@ input[type=submit]:hover {
 
 </style>
 <div class="row">
-        <div style="">
+        <div>
                         <form action="/" style="position:absolute; top: -5px; left: 0px;">
                         <input type="submit" value="Back"/>
                         </form>
@@ -68,14 +87,19 @@ input[type=submit]:hover {
                 <td>    <label style="font-family: Arial, Helvetica, sans-serif;"> Task Configuration: </label> </td>
 
                 <td>
-                    <select id="Configuration" name="Configuration" value="${item.value}" style ="background-color:#4CAF50; font-family: Arial, Helvetica, sans-serif; width:100%;max-width:100%;">
+                    <select id="Configuration" 
+                            name="Configuration" 
+                            value="${item.value}" 
+                            onchange="onConfgurationChange()"
+                            style ="background-color:#4CAF50; font-family: Arial, Helvetica, sans-serif; 
+                            width:100%;max-width:100%;">
                         {% for config in possible_configs: %}
                         <option value="{{config}}"> {{config}} </option>
                         {%endfor%}
                     </select>
                 </td>
-
-                 <td><a href="/show" action="/show" target="add_config_iframe" onclick="this.href='show?codice=${item.key.codice}&Configuration='+document.getElementById('Configuration').value"> Show </a></td>
+                <td><a style="cursor: pointer;text-decoration: underline;"
+                        onclick="showConfiguration();"> Show </a></td>
                 <td> / </td>
                 <td><a href="/add_config" action="/add_config" target="add_config_iframe"> Add </a></td>
 
@@ -106,7 +130,17 @@ input[type=submit]:hover {
     </div>
 
     <div id="second" name="second" class="col-4">
-     <iframe name="add_config_iframe" id="add_config_iframe" frameborder="0" style=" position:absolute; top: 100px; left: 700px;" height="500" width="410" > </iframe>
+        <iframe name="add_config_iframe" id="add_config_iframe" frameborder="0" 
+                style="position:absolute; 
+                    top: 200px; 
+                    left: 790px;
+                    border:1px solid #3e8e41;
+                    border-radius: 2px;
+                    background-color: lightgray;                    
+                    " 
+                    height="500" 
+                    width="450" >
+        </iframe>
     </div>
 
 </div>
