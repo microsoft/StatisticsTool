@@ -1,6 +1,7 @@
 from datetime import datetime
 import sys, os
-
+from glob import glob
+from Tools.StatisticsTool.app_config.config import AppConfig 
 
 sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
 from user_defined_functions import ReadingFunctions, EvalutationFunctions, OverlapFunctions, PartitioningFunctions, \
@@ -17,9 +18,15 @@ from classes_and_utils.file_storage_handler import calc_log_file_full_path
 import re, pickle
 import numpy as np
 import json
+from pathlib import Path
 
-
-
+READING_FUNCTIONS = 'reading_functions'
+EVALUATION_FUNCTIONS = 'evaluation_functions'
+OVERLAP_FUNCTIONS = 'overlap_functions'
+PARTITIONING_FUNCTIONS = 'partitioning_functions'
+STATISTICS_FUNCTIONS = 'statistics_functions'
+TRANSFORM_FUNCTIONS = 'transform_functions'
+ 
 def save_object(obj, filename):
     """
     Saves an object using pickle in a certain path
@@ -94,6 +101,25 @@ def folder_func(output_dir):
     except FileNotFoundError:
         return "FileNotFound"
 
+'''
+    directoryName -  one of the followings:
+    1. evaluation_functions
+    2. overlap_functions
+    3. partitioning_functions
+    4. reading_functions
+    5. statistics_functions
+    6. transform_functions
+'''
+def get_users_defined_functions(directoryName):
+    user_defined_functions = []
+    path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), 'user_defined_functions', directoryName,'*'))
+    files = glob(path)
+    for fullname in files:
+        filename = fullname.split(os.sep)[-1]
+        file_parts = filename.split('.')
+        if len(file_parts) == 2 and file_parts[1] == 'py':
+            user_defined_functions.append(file_parts[0])
+    return user_defined_functions
 
 def options_for_funcs():
     """
@@ -220,8 +246,9 @@ def unpack_calc_config_dict(config_dict):
     statistics_func_name = config_dict["Statistics Functions"]
     partitioning_func_name = config_dict["Partitioning Functions"]
 
-    # loading the wanted functions from their modules
-    reading_func = getattr(ReadingFunctions, reading_func_name)
+
+    reading_func = get_userdefined_function(READING_FUNCTIONS,reading_func_name)
+    #reading_func_old = getattr(ReadingFunctions, reading_func_name)
     overlap_func = getattr(OverlapFunctions, overlap_func_name)
     evaluation_func = getattr(EvalutationFunctions, evaluation_func_name)
     statistics_func = getattr(StatisticsFunctions, statistics_func_name)

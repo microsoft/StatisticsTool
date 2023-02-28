@@ -1,5 +1,6 @@
 from scipy.optimize import linear_sum_assignment
 import numpy as np
+
 """
 Evaluation Function instructions:
 ------------------------------
@@ -21,9 +22,6 @@ b. the overlap matrix columns corresponds to the index in the labels list (j'th 
 
 """
 
-
-
-
 def activity_evaluation(predictions_dict_list, overlap_mat):
     for i in range(len(predictions_dict_list)):
         predictions_dict_list[i]['state'] = 0
@@ -37,19 +35,3 @@ def activity_evaluation(predictions_dict_list, overlap_mat):
             if 1: #overlap_mat[i][j] > 0:
                 predictions_dict_list[i]['matching'] = j
                 
-def min_distance_evaluation(predictions_dict_list, overlap_mat):
-    for i in range(len(predictions_dict_list)):
-        val = 0
-        if len(overlap_mat) > i and len(overlap_mat[i]) > 0:
-            val = np.max(overlap_mat[i])
-        
-        predictions_dict_list[i]['state'] = val
-    
-    if len(overlap_mat) > 0:
-        prd_ind, label_ind = linear_sum_assignment(overlap_mat, maximize=True)
-
-        # labels and predictions that have a match will be evaluated according to their overlap (threshold dependent)
-        for i, j in zip(prd_ind, label_ind):
-            predictions_dict_list[i]['state'] = overlap_mat[i][j]
-            if overlap_mat[i][j] > 0:
-                predictions_dict_list[i]['matching'] = j

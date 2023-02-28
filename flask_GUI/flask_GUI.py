@@ -1,4 +1,6 @@
 import os, sys
+
+from requests import Session
 # the absolute path for this file
 current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
@@ -6,19 +8,24 @@ sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
 
 # from pyfladesk import init_gui
 from classes_and_utils.GUI_utils import *
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request,redirect, url_for,session
 
 ### init Flask server ###
 #########################
 app = Flask(__name__)
-
+app.secret_key = 'any random string'
 # getting the options for each type of necessary function
 file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
 
 #### Route for homepage ####
 @app.route('/', methods=['GET', 'POST'])
 def homepage():
-    return render_template('start_page.html')
+    message = request.args.get('message')
+    if message != None and message != '':
+        return render_template('start_page.html',message=message)
+    else:
+        return render_template('start_page.html')
+
 
 @app.route('/create_new_report', methods=['GET', 'POST'])
 def new_report_func():
@@ -50,28 +57,92 @@ def calculating():
 def new_task_func():
     return render_template('new_task_config.html', file_reading_funcs=file_reading_funcs, Evaluation_funcs=Evaluation_funcs, overlap_funcs=overlap_funcs, partition_funcs=partition_funcs, statistics_funcs=statistics_funcs,transformation_funcs=transformation_funcs)
 
-@app.route('/Reporter', methods=['GET', 'POST'])
-def Report():
-    # request to load a report
-    if request.files:
-        pckl_file = request.files['myFile']
-        path_to_save = current_file_directory.replace('flask_GUI.py', 'static')
-        path_to_save = os.path.join(path_to_save, 'reports')
-        path_to_save = os.path.join(path_to_save, pckl_file.filename)
+# helper function to get the experiment from the request
+def save_pkl_file(pckl_file,is_reference):
+        path_to_save = os.path.join(current_file_directory.replace('flask_GUI.py', 'static'),
+                                    'reports',
+                                    ("comp_" + pckl_file.filename) if is_reference else pckl_file.filename)
         # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
         if not os.path.exists(os.path.dirname(path_to_save)):
             os.makedirs(os.path.dirname(path_to_save))
         if os.path.exists(path_to_save):
             os.remove(path_to_save)
         pckl_file.save(path_to_save)
-        global exp
-        exp = load_object(path_to_save)
+        return path_to_save
+
+
+def load_experiment(request,is_reference):
+    key_file_path = 'reference_file_path' if is_reference else 'report_file_path'
+    key_choose_file = 'choose_reference_file' if is_reference else 'choose_report_file'
+
+    if key_file_path in request.values and request.values[key_file_path] != '':
+        #check if file exist
+        report_filename = request.values[key_file_path]
+        if os.path.exists(report_filename):
+            exp = load_object(report_filename)
+            exp.main_ref_dict=None
+            exp.ref_main_dict=None
+            return exp,True,''
+        else:
+            #to do - if file not exist
+            #return render_template("start_page.html")
+            return None,False,"FILE " + report_filename.split(os.sep)[-1] + " NOT FOUND"
+            
+
+    if request.files and request.files[key_choose_file].filename != '':
+        pckl_file = request.files[key_choose_file]
+        #global exp
+        report_filename = save_pkl_file(pckl_file,False)
+        exp = load_object(report_filename)
         exp.main_ref_dict=None
         exp.ref_main_dict=None
+        return exp,True,''
+    
+    return None
+
+@app.route('/Reporter', methods=['GET', 'POST'])
+def Report():
+    
+    session['error_message'] = ''
+    # request to load a report
+    global exp
+    exp,result,err_msg = load_experiment(request,False)
+
+    if exp == None and result == False and err_msg != '':
+        #return render_template("start_page.html",message=err_msg)
+        session['error_message'] = err_msg
+        return redirect(url_for("homepage"))
+        #return redirect("/",code=302,)
+
+        #if request.files:
+    '''
+    if request.files:
+    pckl_file = request.files['choose_report_file']
+    path_to_save = current_file_directory.replace('flask_GUI.py', 'static')
+    path_to_save = os.path.join(path_to_save, 'reports')
+    path_to_save = os.path.join(path_to_save, pckl_file.filename)
+    # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
+    if not os.path.exists(os.path.dirname(path_to_save)):
+        os.makedirs(os.path.dirname(path_to_save))
+    if os.path.exists(path_to_save):
+        os.remove(path_to_save)
+    pckl_file.save(path_to_save)
+    global exp
+    exp = load_object(path_to_save)
+    exp.main_ref_dict=None
+    exp.ref_main_dict=None
+    
+    exp = load_experiment(request)
+    '''
     global comp_exp
     comp_exp = []
-    if 'myFile2' in request.files and request.files['myFile2'].filename:
-        pckl_file = request.files['myFile2']
+    cexp = load_experiment(request,True)
+    if cexp != None:
+        comp_exp.append(cexp)
+
+    '''
+    if 'choose_reference_file' in request.files and request.files['choose_reference_file'].filename:
+        pckl_file = request.files['choose_reference_file']
         path_to_save = current_file_directory.replace('flask_GUI.py', 'static')
         path_to_save = os.path.join(path_to_save, 'reports')
         path_to_save = os.path.join(path_to_save, "comp_"+pckl_file.filename)
@@ -82,7 +153,7 @@ def Report():
             os.remove(path_to_save)
         pckl_file.save(path_to_save)
         comp_exp.append(load_object(path_to_save))
-        
+    '''    
     # make a list of optional partitions which their bolean masks are available
     list_of_seg_opt = ['N/A'] + [seg for seg in exp.masks.keys() if seg != 'total_stats']
     partitions_names = ['Primary', 'Secondary', 'Tertiary']
