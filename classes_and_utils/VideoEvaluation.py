@@ -1,11 +1,11 @@
 import pathlib
 import numpy as np, os
 import pandas as pd
-from Tools.StatisticsTool.classes_and_utils.file_storage_handler import get_local_or_blob_full_path, list_files_in_results_path
-from Tools.StatisticsTool.utils.AlgoLogsParser import parse_video_name_from_pred_file
-from Tools.StatisticsTool.utils.AzureStorageHelper import StoreType, read_gt_file_from_blob
-from Tools.StatisticsTool.classes_and_utils.file_storage_handler import get_local_or_blob_file
-from Tools.StatisticsTool.utils.sheldon_export_header import create_sheldon_list_header
+from classes_and_utils.file_storage_handler import get_local_or_blob_full_path, list_files_in_results_path
+from utils.AlgoLogsParser import parse_video_name_from_pred_file
+from utils.AzureStorageHelper import StoreType, read_gt_file_from_blob
+from classes_and_utils.file_storage_handler import get_local_or_blob_file
+from utils.sheldon_export_header import create_sheldon_list_header
 
 class VideoEvaluation:
     """

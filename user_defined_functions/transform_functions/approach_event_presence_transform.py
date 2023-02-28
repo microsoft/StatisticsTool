@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from Tools.StatisticsTool.user_defined_functions.transform_functions.calc_flicker_metrics import calc_flicker_metrics
+from user_defined_functions.transform_functions.calc_flicker_metrics import calc_flicker_metrics
 
 def approach_event_presence_transform(comp_data):
     minimal_presence_seq_len = 1

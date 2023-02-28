@@ -1,11 +1,8 @@
 from datetime import datetime
 import sys, os
 from glob import glob
-from Tools.StatisticsTool.app_config.config import AppConfig 
 
 sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
-from user_defined_functions import ReadingFunctions, EvalutationFunctions, OverlapFunctions, PartitioningFunctions, \
-    PartitioningFunctions, StatisticsFunctions, TransformFunctions
 from app_config.constants import constants
 from app_config.config import app_config
 from utils.AzureStorageHelper import *
@@ -126,19 +123,14 @@ def options_for_funcs():
     Create lists of all the optional functions in the modules that the user needs to choose from
     :return: lists of all the optional functions
     """
-    file_reading_funcs = [mem[0] for mem in getmembers(ReadingFunctions, isfunction) if
-                          mem[1].__module__ == ReadingFunctions.__name__]
-    Evaluation_funcs = [mem[0] for mem in getmembers(EvalutationFunctions, isfunction) if
-                        mem[1].__module__ == EvalutationFunctions.__name__]
-    overlap_funcs = [mem[0] for mem in getmembers(OverlapFunctions, isfunction) if
-                     mem[1].__module__ == OverlapFunctions.__name__]
-    partition_funcs = [mem[0] for mem in getmembers(PartitioningFunctions, isfunction) if
-                       mem[1].__module__ == PartitioningFunctions.__name__]
-    statistics_funcs = [mem[0] for mem in getmembers(StatisticsFunctions, isfunction) if
-                        mem[1].__module__ == StatisticsFunctions.__name__]
-    transformation_funcs = [mem[0] for mem in getmembers(TransformFunctions, isfunction) if
-                        mem[1].__module__ == TransformFunctions.__name__]
+    file_reading_funcs = get_users_defined_functions('reading_functions')
+    Evaluation_funcs = get_users_defined_functions('evaluation_functions')
+    overlap_funcs = get_users_defined_functions('overlap_functions')
+    partition_funcs = get_users_defined_functions('partitioning_functions')
+    statistics_funcs = get_users_defined_functions('statistics_functions')
+    transformation_funcs = get_users_defined_functions('transform_functions')
     transformation_funcs.append('None')
+    
     return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs
 
 
@@ -248,17 +240,20 @@ def unpack_calc_config_dict(config_dict):
 
 
     reading_func = get_userdefined_function(READING_FUNCTIONS,reading_func_name)
-    #reading_func_old = getattr(ReadingFunctions, reading_func_name)
-    overlap_func = getattr(OverlapFunctions, overlap_func_name)
-    evaluation_func = getattr(EvalutationFunctions, evaluation_func_name)
-    statistics_func = getattr(StatisticsFunctions, statistics_func_name)
-    partitioning_func = getattr(PartitioningFunctions, partitioning_func_name)
+    overlap_func = get_userdefined_function(OVERLAP_FUNCTIONS,overlap_func_name)
+    evaluation_func = get_userdefined_function(EVALUATION_FUNCTIONS,evaluation_func_name)
+    statistics_func = get_userdefined_function(STATISTICS_FUNCTIONS,statistics_func_name)
+    partitioning_func = get_userdefined_function(PARTITIONING_FUNCTIONS,partitioning_func_name)
     transform_func = None
     if transform_func_name != 'None':
-        transform_func = getattr(TransformFunctions, transform_func_name)
+        transform_func = get_userdefined_function(TRANSFORM_FUNCTIONS,transform_func_name)
     return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height
 
-
+def get_userdefined_function(func_type,func_name):
+    module_name = 'user_defined_functions' + "." + func_type + "." + func_name
+    module = __import__(module_name, fromlist='user_defined_functions')
+    reading_func = getattr(module,func_name)
+    return reading_func
 
 def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir = None):
     """

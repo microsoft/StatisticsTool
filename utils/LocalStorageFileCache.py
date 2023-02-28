@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 
-from StatisticsTool.utils.LocalStrageHelper import list_local_dir
+from utils.LocalStrageHelper import list_local_dir
 
 
 STATISTICS_TOOL_TEMP_FOLDER_NAME = "statistic-tool-tmp"

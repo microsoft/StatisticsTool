@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from Tools.StatisticsTool.user_defined_functions.transform_functions.calc_flicker_metrics import calc_flicker_metrics
+from user_defined_functions.transform_functions.calc_flicker_metrics import calc_flicker_metrics
 
 def leave_event_presence_transform(comp_data):
     frame_num_to_remove_at_leave_seq_start = 15 # should be omitted after introducing distance>1.3m

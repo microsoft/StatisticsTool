@@ -4,7 +4,7 @@ sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # thi
 
 
 import json
-from ..app_config.constants import constants
+from app_config.constants import constants
 
 def parse_video_name_from_pred_file(file_path):
     local_path = None

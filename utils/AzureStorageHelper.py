@@ -3,8 +3,8 @@ from azure.storage.blob import BlobServiceClient
 
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 
-from StatisticsTool.utils.LocalStorageFileCache import  GetFileCache
-from StatisticsTool.app_config.config import app_config
+from utils.LocalStorageFileCache import  GetFileCache
+from app_config.config import app_config
 
 from timeit import default_timer as timer
 

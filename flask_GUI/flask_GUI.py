@@ -72,17 +72,19 @@ def save_pkl_file(pckl_file,is_reference):
 
 
 def load_experiment(request,is_reference):
+    
     key_file_path = 'reference_file_path' if is_reference else 'report_file_path'
     key_choose_file = 'choose_reference_file' if is_reference else 'choose_report_file'
-
+    ret_exp = None
+    
     if key_file_path in request.values and request.values[key_file_path] != '':
         #check if file exist
         report_filename = request.values[key_file_path]
         if os.path.exists(report_filename):
-            exp = load_object(report_filename)
-            exp.main_ref_dict=None
-            exp.ref_main_dict=None
-            return exp,True,''
+            ret_exp = load_object(report_filename)
+            ret_exp.main_ref_dict=None
+            ret_exp.ref_main_dict=None
+            return ret_exp,True,''
         else:
             #to do - if file not exist
             #return render_template("start_page.html")
@@ -91,69 +93,42 @@ def load_experiment(request,is_reference):
 
     if request.files and request.files[key_choose_file].filename != '':
         pckl_file = request.files[key_choose_file]
-        #global exp
+        
         report_filename = save_pkl_file(pckl_file,False)
-        exp = load_object(report_filename)
-        exp.main_ref_dict=None
-        exp.ref_main_dict=None
-        return exp,True,''
+        ret_exp = load_object(report_filename)
+        ret_exp.main_ref_dict=None
+        ret_exp.ref_main_dict=None
+        return ret_exp,True,''
     
-    return None
+    return ret_exp, True, ''
 
 @app.route('/Reporter', methods=['GET', 'POST'])
 def Report():
+    use_cached_report = request.args.get('use_cached_report')
     
     session['error_message'] = ''
     # request to load a report
     global exp
-    exp,result,err_msg = load_experiment(request,False)
-
-    if exp == None and result == False and err_msg != '':
-        #return render_template("start_page.html",message=err_msg)
-        session['error_message'] = err_msg
-        return redirect(url_for("homepage"))
-        #return redirect("/",code=302,)
-
-        #if request.files:
-    '''
-    if request.files:
-    pckl_file = request.files['choose_report_file']
-    path_to_save = current_file_directory.replace('flask_GUI.py', 'static')
-    path_to_save = os.path.join(path_to_save, 'reports')
-    path_to_save = os.path.join(path_to_save, pckl_file.filename)
-    # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
-    if not os.path.exists(os.path.dirname(path_to_save)):
-        os.makedirs(os.path.dirname(path_to_save))
-    if os.path.exists(path_to_save):
-        os.remove(path_to_save)
-    pckl_file.save(path_to_save)
-    global exp
-    exp = load_object(path_to_save)
-    exp.main_ref_dict=None
-    exp.ref_main_dict=None
-    
-    exp = load_experiment(request)
-    '''
     global comp_exp
     comp_exp = []
-    cexp = load_experiment(request,True)
-    if cexp != None:
-        comp_exp.append(cexp)
+    if not use_cached_report:
 
-    '''
-    if 'choose_reference_file' in request.files and request.files['choose_reference_file'].filename:
-        pckl_file = request.files['choose_reference_file']
-        path_to_save = current_file_directory.replace('flask_GUI.py', 'static')
-        path_to_save = os.path.join(path_to_save, 'reports')
-        path_to_save = os.path.join(path_to_save, "comp_"+pckl_file.filename)
-        # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
-        if not os.path.exists(os.path.dirname(path_to_save)):
-            os.makedirs(os.path.dirname(path_to_save))
-        if os.path.exists(path_to_save):
-            os.remove(path_to_save)
-        pckl_file.save(path_to_save)
-        comp_exp.append(load_object(path_to_save))
-    '''    
+        exp,result,err_msg = load_experiment(request,False)
+
+        if exp == None and result == False and err_msg != '':
+            #return render_template("start_page.html",message=err_msg)
+            session['error_message'] = err_msg
+            return redirect(url_for("homepage"))
+            #return redirect("/",code=302,)
+
+            #if request.files:
+        
+        
+        
+        cexp,_,_ = load_experiment(request,True)
+        if cexp != None:
+            comp_exp.append(cexp)
+
     # make a list of optional partitions which their bolean masks are available
     list_of_seg_opt = ['N/A'] + [seg for seg in exp.masks.keys() if seg != 'total_stats']
     partitions_names = ['Primary', 'Secondary', 'Tertiary']
@@ -215,5 +190,7 @@ def show_help():
 
 if __name__=='__main__':
     # init_gui(app, width=1500, height=1000) ## Changed manually by Ben
+    global exp
+    exp = None
     app.run()
     
