@@ -1,71 +1,19 @@
 # Folders
 __pycache__*
 .vscode*
-**/Figures/*
-**/CSV/*
-**/*_files/*
-**/DataSet/*
-**/DataSetPytorch/*
 
 *.mp4
 *.pyc
 *.amltmp
-*.csv
-*.html
-*.png
+
 *.npz
 *.pt
 *.pkl
-**/logger_files/*
-**/recordings/*
-**/logs/*
-**/Utils/sigmund_core/*
+
 **/__pycache__/*
-Subsystem/DepthMask/SavedModelsForLater/
 **/.idea/*
 
-# Archives
-*.npz
-*.pt
-*.pkl
-*.tar.gz
-*.zip
-*.npy
-*.csv
 
-# Media Files
-*.avi
-*.mp4
-*.tif
-*.tiff
-*.webp
-*.jpg
-*.jpeg
-*.png
-
-# Documnets
-*.doc
-*.docx
-*.pdf
-*.ppt
-*.pptx
-*.txt
-*.xls
-*.xlsx
-*.xml
-*.log
-
-# MATLAB Compiler / Coder
-*App/
-*.fig
-#*.prj
-
-# MATLAB Files
-# https://www.mathworks.com/company/newsletters/articles/automatically-save-backup-m-files-with-the-matlab-editor.html
-*.asv
-*.m~
-*.mat
-*.mex*
 
 # Python
 *.pyc
