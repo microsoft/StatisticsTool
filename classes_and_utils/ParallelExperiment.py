@@ -1,6 +1,7 @@
 import math
 import pathlib
-import pandas as pd, os, numpy as np, base64, matplotlib, re
+import pandas as pd, os, base64, matplotlib, re
+import numpy as np
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import cv2
@@ -48,6 +49,7 @@ class ParallelExperiment:
             for one partition: id_dict = {'primary partition option 1':{'TP': array_of_TP_ids, 'FP': array_of_FP_ids ....}, 'primary partition option 2' : {'TP': array_of_TP_ids, 'FP': array_of_FP_ids ....}]
             for two partitions : id dict = {'primary partition option 1':{'secondary partition option 1':{'TP': array_of_TP_ids, 'FP': array_of_FP_ids ....} ....} ....}
             theres also an option for 3 partitions by the same logic
+        segmented_ID_new ***********
         combined_prd_dataframe : pandas dataframe
             Aggregation of all the videos prediction data in a single dataframe
         combined_label_dataframe : pandas dataframe
@@ -98,6 +100,7 @@ class ParallelExperiment:
         self.masks = None
         self.ID_storage = {}
         self.segmented_ID = {}
+        self.segmented_ID_new = {}
         self.image_width = int(image_width)
         self.image_height = int(image_height)
         self.sheldon_header_data = sheldon_header_data
@@ -177,6 +180,43 @@ class ParallelExperiment:
         self.ID_storage['prediction'] = np.concatenate((video_name, index, frame, end_frames), axis=1)
         
         self.ID_storage['label'] = self.ID_storage['prediction']
+
+    def get_cell_data(self, segmentations:list):
+        len_ = len(self.masks['total_stats']['TP'])
+        segmentation_mask = np.ones([len_], dtype=bool)
+
+        cell_name = ""
+        if len(segmentations) > 0: # This is the empty table case
+            #list(segmentations.keys())[0] != 'None':
+            for curr_segmentation in segmentations:
+                assert(len(curr_segmentation)==1)
+                seg_cat, seg_value = list(curr_segmentation.keys())[0], list(curr_segmentation.values())[0]
+                seg_idx = self.masks[seg_cat]['possible partitions'].index(seg_value)
+                segmentation_mask &= self.masks[seg_cat]['masks'][seg_idx]
+                cell_name = cell_name + "{}*".format(seg_value)
+        else:
+            # cell_name = cell_name + "{}*".format('None')
+            cell_name = "*"
+
+        TP_masks = self.masks['total_stats']['TP'] & segmentation_mask
+        FP_masks = self.masks['total_stats']['FP'] & segmentation_mask
+        FN_masks = self.masks['total_stats']['FN'] & segmentation_mask
+
+        TP, FP, FN = np.sum(TP_masks), np.sum(FP_masks), np.sum(FN_masks)
+
+        statistics_dict = self.statistic_funcs(TP, FP, FN, len(self.comp_data['frame_id']))
+        statistics_dict.update({'TP': TP, 'FP': FP, 'FN': FN, 'TOTAL_FRAMES': len(self.comp_data['frame_id'])})
+        statistics_dict['cell_name'] = cell_name
+
+        if not hasattr(self, 'segmented_ID_new'): # temp just for backward compatability
+            self.segmented_ID_new = {}
+
+        self.segmented_ID_new[cell_name] = {
+            'TP': self.ID_storage["prediction"][TP_masks],\
+            'FP': self.ID_storage['prediction'][FP_masks],\
+            'FN': self.ID_storage['label'][FN_masks]}
+
+        return statistics_dict
 
 
     def statistics_visualization(self, primary_segmentation=None, secondary_segmentation=None, tertiary_segmentation=None):
@@ -322,6 +362,11 @@ class ParallelExperiment:
                 state_df = pd.DataFrame(state_dict.values(), index=index2)
 
         return statistics_df, state_df, statistics_dict, state_dict
+
+
+    def get_ids_new(self, cell_key, state):
+        ids = self.segmented_ID_new[cell_key][state]
+        return ids
 
     def get_ids(self, show_unique, state, total=False, primary=None, secondary=None, tertiary=None):
         """
