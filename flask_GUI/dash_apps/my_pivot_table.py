@@ -8,7 +8,9 @@ import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
 
-
+sys.path.append('../classes_and_utils')
+from classes_and_utils.unique_helper import UniqueHelper
+from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections
 
 def default_get_cell(data, column_keys, row_keys):
     return html.Td("{}\n{}".format(column_keys, row_keys), style={'border':'solid'})
@@ -19,7 +21,7 @@ class PivotTable():
         self.segmentations = segmentations
         self.get_cell = cell_function
         self.data = data
-
+        self.unique_helper = UniqueHelper(self.data['main'],self.data['ref'][0])
 
     def get_row(self, rows_keys, columns_order, horizontal_span_size, all_rows_cats, idx_hist):
         '''
@@ -67,14 +69,14 @@ class PivotTable():
                 yield from self.get_cols_of_cat(segments_categories, i+1, prev_segments_hist = segments_history) 
 
 
-    def get_rows_of_cat(self, rows_segmentation_categories, columns_order, horizontal_span_size, prev_segments_history = [], row_cat_idx=0, idx_hist=[]):
+    def get_rows_of_cat(self, rows_segmentation_categories, columns_order,horizontal_span_size,prev_segments_history = [], row_cat_idx=0, idx_hist=[]):
         '''
         A recursive function that returns all rows of table
         '''
         if len(rows_segmentation_categories) == 0:
             segments_history = [{"None": "None"}]
             horizontal_span_size = [0]
-            return self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories, idx_hist = [0])
+            return self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories,idx_hist = [0])
         
         list_all_TRs = []
 
@@ -84,10 +86,10 @@ class PivotTable():
             segments_history = prev_segments_history + [{curr_segment_category: segment_name}]
             idx_hist_ = idx_hist + [idx]
             if len(rows_segmentation_categories) == row_cat_idx+1: ## Bringing a single row
-                TRs_curr_cat =  self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories, idx_hist = idx_hist_)
+                TRs_curr_cat =  self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories,idx_hist = idx_hist_)
             
             else: ## Continue recoursy - bring all rows in this category
-                TRs_curr_cat = self.get_rows_of_cat(rows_segmentation_categories, columns_order, horizontal_span_size, prev_segments_history= segments_history, row_cat_idx = row_cat_idx+1, idx_hist = idx_hist_)
+                TRs_curr_cat = self.get_rows_of_cat(rows_segmentation_categories, columns_order, horizontal_span_size,prev_segments_history= segments_history, row_cat_idx = row_cat_idx+1, idx_hist = idx_hist_)
 
             list_all_TRs.extend(TRs_curr_cat)
 
@@ -133,12 +135,42 @@ class PivotTable():
 
         return cols_titles
 
+    def get_keys_permutations(self,colums,rows):
+        list1 = ['large','medium','small']
+        list2 = ['right','left']
+        list3 = ['up','down']
+        list4 = ['Recall','Precision','FPR','TOTAL_PRED']
+        list5 = ['TP','FP','FN']
+        
+        res1 = [ (i, j, k,t) for i in list1
+                 for j in list2
+                 for k in list3
+                 for t in list4]
+        
+        res2 = [ (i, j, k,t) for i in list1
+                 for j in list2
+                 for k in list3
+                 for t in list5]
+        
+        return res1 + res2
 
+    def get_unique(self,colums,rows):
+        exp  = self.data['main']
+        comp = self.data['ref']
+        keys = self.get_keys_permutations(colums,rows)
+        exp.main_ref_dict, exp.ref_main_dict = match_main_ref_predictions(exp,comp[0])
+        unique, unique_ref, unique_stats, unique_stats_ref = calc_unique_detections(keys, exp, comp[0], exp.main_ref_dict, exp.ref_main_dict)
+        exp.unique = unique
+        comp[0].unique = unique_ref
+        return unique_stats, unique_stats_ref
 
     def get_table(self, all_columns, all_rows):
         '''
         The main function that builds the whole table
         '''
+        #hagai
+        #unique_stats, unique_stats_ref = self.get_unique(all_columns,all_rows)
+
         ## Table head ##
         titles_rows = self.get_cols_titles(all_columns, all_rows)
         table_head = html.Thead(titles_rows)
@@ -148,7 +180,7 @@ class PivotTable():
         print(columns_order)
         lens_vector = [len(self.segmentations[cat]) for cat in all_rows]
         horizontal_span_size = self.get_lens_bellow(lens_vector)
-        table_rows = self.get_rows_of_cat(all_rows, columns_order, horizontal_span_size)
+        table_rows = self.get_rows_of_cat(all_rows, columns_order,horizontal_span_size)
 
         table_body = html.Tbody(table_rows)    
 

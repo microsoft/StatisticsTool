@@ -93,13 +93,19 @@ class Results_table():
 
                 TDs.append(html.Td(curr_metric, style={'background-color':color}))
 
+                if k in ["TP", "FP", "FN"]:
+                    unique = self.table.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
+                    TDs.append(html.Td(unique, style={'background-color':color}))
+                else:
+                    TDs.append(html.Td('', style={'background-color':color}))
+
             all_metrics.append(html.Tr(TDs))
-        
+
         cell_content = html.Table(all_metrics)
         to_show = html.Td(cell_content)
 
         return to_show
-
+    
     def get_layout(self):
         Title_div = html.Div([dbc.Alert("Reporter Page", className="m-1"), html.H6("init_value", id='init')], style=css['title'])
 
