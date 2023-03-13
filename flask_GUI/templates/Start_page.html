@@ -128,24 +128,16 @@ input[type=button]:hover {
             </tr>
           </tbody>
         </table>
-  <!--
-        <div class="col-md-4">
-          <label for="myFile" id="file">Report File: </label>
-          <input type="file" name="myFile" id="myFile"  onchange="alertFilename()" accept=".pkl" > 
-        </div>
-        <br>
-        
-        <div class="col-md-4" >
-        <label for="myFile2" id="file2">Reference Report:</label>
-        <input type="file" name="myFile2" id="myFile2" accept=".pkl" > 
-          
-        </div>
-        -->
        
         <div class="col-md-12" style="margin-top: 40px;">
-          <input type = "submit" id="submit" value = "Load Report" disabled="true" cli>
+          <!--<input type = "submit" id="submit" value = "Load Report" disabled="true" cli>-->
+          <input type = "submit" id="submit_orig" value = "Load Original Report" 
+                  disabled="true" formaction="/Reporter_orig">
         </div>
-
+        <div class="col-md-12" >
+          <input type = "submit" id="submit_new" value = "Load New Report" 
+                disabled="true" formaction="/Reporter_new">
+        </div>
         <div id="alert" class="alert alert-danger" style="margin-top:20px;">
         </div>
       </form>
@@ -179,8 +171,6 @@ input[type=button]:hover {
             }
           }
           
-            
-
           $('#report_form').submit(function(event) {
               
               if ($('#report_file_type').find(":selected").val() == "2"){
@@ -201,15 +191,19 @@ input[type=button]:hover {
 
       $("#report_file_path").on('change keydown paste input', function(){
         var filename = $('#report_file_path').val();
-        if (isPKLFileName(filename))
-          $('#submit').prop('disabled', false); 
-        else 
-          $('#submit').prop('disabled', true); 
+        if (isPKLFileName(filename)){
+          $('#submit_orig').prop('disabled', false); 
+          $('#submit_new').prop('disabled', false); 
+        }
+        else {
+          $('#submit_orig').prop('disabled', true); 
+          $('#submit_new').prop('disabled', true); 
+        }
       });
 
-      function onReportFileSelected()
-      {
-        $('#submit').prop('disabled', false); 
+      function onReportFileSelected(){
+        $('#submit_orig').prop('disabled', false); 
+        $('#submit_new').prop('disabled', false); 
       }
 
       function isPKLFileName(filename){
@@ -222,17 +216,22 @@ input[type=button]:hover {
           if (id == 'report_file_type') 
           {
               if ($('#report_file_type').find(":selected").val() == "1"){
-                $('#submit').prop('disabled', true); 
+                $('#submit_orig').prop('disabled', true); 
+                $('#submit_new').prop('disabled', true); 
                 $('#choose_report_file').show();
                 $('#report_file_path').hide();
               } else {
                 $('#choose_report_file').hide();
                 $('#report_file_path').show();
                 var filename = $('#report_file_path').val();
-                if (isPKLFileName(filename))
-                  $('#submit').prop('disabled', false); 
-                else 
-                  $('#submit').prop('disabled', true); 
+                if (isPKLFileName(filename)){
+                  $('#submit_orig').prop('disabled', false); 
+                  $('#submit_new').prop('disabled', false); 
+                }
+                else{ 
+                  $('#submit_orig').prop('disabled', true); 
+                  $('#submit_new').prop('disabled', true); 
+                }
               }
               
           } else {
@@ -247,8 +246,4 @@ input[type=button]:hover {
         }
       
   </script>
-
-
-
-
 </div>

@@ -139,7 +139,7 @@ input[type=submit]:active {
 
 <div class="row">
 
-            <form action="/stats"  method="POST" target="my_iframe" style="position:relative; top: 0px; left: -200px;">
+            <form action="/stats_original"  method="POST" target="my_iframe" style="position:relative; top: 0px; left: -200px;">
                 <label style="font-size:20px"> Choose Partitions: </label><br>
                     {%for i in range(num_part): %}
                                   <label for="partition"{{i}}> # {{i+1}} </label>
@@ -157,22 +157,21 @@ input[type=submit]:active {
                   <label for="vehicle1"> Calculate Unique</label><br>  
                 {%endif%}                
               </form>
-
+                  
 
 </div>
 <div class="row" style="position:relative;">
 
         <div id="place_for_table" class="col-md-4" style="text-align: left">
         <iframe id="iframe" name="my_iframe" frameborder="0"  style="text-align: left; position:relative; top: 0px; left: -205px;" height="900" width="950"  ></iframe>
-        </div>
-
+      </div>
 
 
             <iframe  name="iframe2" frameborder="0" style="position:relative; top: -100px; left: 420px;" height="500" width="750"   ></iframe>
 
 
 
-            <iframe  name="iframe3" frameborder=0" style="position:relative; top: -400px; left: 800px;" height="620" width="750"   ></iframe>
+            <iframe  name="iframe3" frameborder="0" style="position:relative; top: -400px; left: 800px;" height="620" width="750"   ></iframe>
 
 
 
@@ -192,4 +191,8 @@ input[type=submit]:active {
 
 </body>
 </html>
-
+<!--      
+      <div id="place_for_new_table" class="col-md-4" style="text-align: left">
+        <iframe src="/stats_pivot" id="iframe" name="my_iframe_new" frameborder="0"  style="text-align: left; position:relative; top: 500px; left: -200px;" height="400" width="950"  ></iframe>
+      </div>
+-->

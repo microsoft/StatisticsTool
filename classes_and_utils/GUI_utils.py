@@ -140,7 +140,7 @@ def manage_new_report_page(request, current_file_directory):
     adds a new configuration file if request came from new_task_config.html
 
     :param request: request that was sent to '/create_new_report' route
-    :param current_file_directory: full path to flask_GUI.py
+    :param current_file_directory: full path to flask_GUI_main.py
     :return: list of available configuration files
     """
 
@@ -148,12 +148,12 @@ def manage_new_report_page(request, current_file_directory):
     if "add_config" in request.url:
         # unpack the fields in the request and concentrate it in a configuration dictionary
         new_config, new_config_name = unpack_new_config(request)
-        path_to_save = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI.py'),
+        path_to_save = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'),
                                                       os.path.join('configs', new_config_name))
         # save the dictionary in the config folder as a json file
         save_json(path_to_save + '.json', new_config)
     # check what are the available config files in the config folder
-    path_to_configs = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI.py'), 'configs')
+    path_to_configs = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'), 'configs')
     if not os.path.exists(path_to_configs):
         os.makedirs(path_to_configs)
     possible_configs = os.listdir(path_to_configs)
@@ -189,7 +189,7 @@ def unpack_calc_request(request, current_file_directory):
     Accepts request from new_report.html and unpack the parameters for a new report as variables
 
     :param request: request that was sent to '/calculating_page' route
-    :param current_file_directory: full path to flask_GUI.py
+    :param current_file_directory: full path to flask_GUI_main.py
     :return: parameters needed for a new report
     """
     # receiving the wanted configuration file name from the form
@@ -206,7 +206,7 @@ def unpack_calc_request(request, current_file_directory):
     save_stats_dir = os.path.join(output_dir, "saved by user")
     
     # finding the wanted configuration file location and loading it
-    config_path = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI.py'),
+    config_path = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'),
                                                  os.path.join('configs', config_file_name))
     config_file = loading_json(config_path)
     config_dict = config_file[0]
@@ -306,6 +306,17 @@ def unpack_stats_request(request):
         tertiary = request.form.get('partition2') if (
                 request.form.get('partition2') != 'N/A' and secondary is not None) else None
         save = False
+    # elif 'stats_pivot' in request.referrer: ##Temp to parse requests from new dash pivot table
+    #     request_inputs = request.json['inputs']
+    #     segmentaion_cat_2_axis = {segmentation_category:curr_input['id']  for curr_input in request_inputs\
+    #                              for segmentation_category in curr_input['value']}
+    #     if len(segmentaion_cat_2_axis)>3:
+    #         assert "Currently can't treatmore than 3 segmentations"
+    #     segmentations = list(segmentaion_cat_2_axis.keys())
+    #     primary   = segmentations[0] if len(segmentations) >=1 else None
+    #     secondary = segmentations[1] if len(segmentations) >=2 else None
+    #     tertiary  = segmentations[2] if len(segmentations) >=3 else None
+    #     save = True
     else:
         # request to save the statistics from table.html
         primary = request.args.get('primary') if request.args.get('primary') != 'None' else None
@@ -391,7 +402,8 @@ def manage_stats_request(request, exp):
                                                                                         secondary_segmentation=secondary,
                                                                                         tertiary_segmentation=tertiary)
     # if asked to save the stats save_tables will do that
-    save_path = save_tables(statistics_df, state_df, save, primary, secondary, tertiary, exp.save_stats_dir)
+    # save_path = save_tables(statistics_df, state_df, save, primary, secondary, tertiary, exp.save_stats_dir)
+    save_path = '' # TODO: need to re-use it with new pivot table
     # combined names and dictionaries of the statistics (e.g precision/recall) and states (e.g FP/FN/TP)
     wanted_statistics_names = list(set([index[-1] for index in statistics_dict])) + ['TP', 'FP', 'FN']
     statistics_dict.update(state_dict)
@@ -418,18 +430,22 @@ def unpack_list_request(request, main_exp, comp_exp):
     # mytup is a tuple that varies in size and include the names of the selected
     # row, sub row, column (partitions) if exists, and the name of the state chosen from the table.
     # mytup is a match to a key in the statistics/state dictionary
-    if "tup" in request.args:
+    if "tup" in request.args: # Related to old table. Need to get rid of it after starting use new pivot table
         mytup = request.args.get('tup')
+        mytup = eval(mytup)
+        # the statistics chosen for example list (such as TP/FP/FN)
+        state = mytup[-1]
+        cell_key = "*".join(mytup[:-1])+"*" ##TODO:get it directly from the cell!!
     # request came from examples_list.html to save the example list
     else:
-        mytup = request.args.get('mytup')
+        mytup = [] #request.args.get('mytup')
     
-    mytup = eval(mytup)
-    # the statistics chosen for example list (such as TP/FP/FN)
-    state = mytup[-1]
-
+    # This is the parsing from new pivot table
+    if "cell_name" in request.args:
+        cell_key = request.args.get('cell_name')
+    if "stat" in request.args:
+        state = request.args.get('stat')
     
-    state = mytup[-1]
     exp = main_exp
     comp_index=-1
     if 'ref' in request.args and len(comp_exp)>0:
@@ -472,7 +488,7 @@ def unpack_list_request(request, main_exp, comp_exp):
     export_sheldon = False
     if 'sheldon' in request.args:
         export_sheldon = True
-    return comp_index, show_unique, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon
+    return comp_index, show_unique, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon, cell_key
 
 
 def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stats_dir, state):
@@ -535,7 +551,7 @@ def parameters_4_collapsing_list(arr_of_examples, cl_and_choice, save, save_stat
     return per_video_example_hash, save_path
 
 
-def manage_list_request(request, main_exp, comp_exp):
+def manage_list_request(request, main_exp, comp_exp, report_type):
     """
     Accepts a the requests to /update_list route and returns all the parameter needed to show and save the list of examples asked by the user
     :param request: request from either table.html (link writen in macros.html) or in examples_list.html
@@ -546,7 +562,7 @@ def manage_list_request(request, main_exp, comp_exp):
     
     
     # get the names of requested states and partitions, a save boolean and a dictionary of {partition_class: selected_option} (example {"vehicles":"bus"})
-    comp_index,show_unique, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon = unpack_list_request(request, main_exp, comp_exp)
+    comp_index,show_unique, state, total, primary, secondary, tertiary, save, cl_and_choice, mytup, export_sheldon, cell_key = unpack_list_request(request, main_exp, comp_exp)
     
     if comp_index > -1:
         exp = comp_exp[comp_index]
@@ -554,7 +570,12 @@ def manage_list_request(request, main_exp, comp_exp):
         exp = main_exp
 
     # extracting the example list for requested partitions and state
-    list_of_examples = exp.get_ids(show_unique=show_unique, state=state, total=total, primary=primary, secondary=secondary, tertiary=tertiary)
+    if report_type == 'NEW':
+        list_of_examples = exp.get_ids_new(cell_key, state)
+    elif report_type == 'ORIG':
+        list_of_examples = exp.get_ids(show_unique=show_unique, state=state, total=total, primary=primary, secondary=secondary, tertiary=tertiary)
+
+    exp.state = state ## TODO: TEMP - move it to the right place
     # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see
     per_video_example_hash, save_path = parameters_4_collapsing_list(list_of_examples, cl_and_choice, save,
                                                                      exp.save_stats_dir, state)
@@ -595,6 +616,7 @@ def export_list_to_sheldon(images_list, sheldon_header_data,output_dir, states, 
     
     name = ''
 
+    # TODO: Need to check if output_dir  exists. If not, need to ask new directory from the user
     saved_file = output_dir+"/"
 
     if comp_index > -1:
