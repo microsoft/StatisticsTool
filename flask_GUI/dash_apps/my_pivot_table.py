@@ -21,7 +21,10 @@ class PivotTable():
         self.segmentations = segmentations
         self.get_cell = cell_function
         self.data = data
-        self.unique_helper = UniqueHelper(self.data['main'],self.data['ref'][0])
+        if len(self.data['ref']) > 0:
+            self.unique_helper = UniqueHelper(self.data['main'],self.data['ref'][0])
+        else:
+            self.unique_helper = None
 
     def get_row(self, rows_keys, columns_order, horizontal_span_size, all_rows_cats, idx_hist):
         '''

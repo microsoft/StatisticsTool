@@ -33,9 +33,7 @@ class UniqueHelper:
     def calc_unique_detections(self,column_keys,row_keys,segmentation):
 
         unique_out = {}
-        unique_stats = {}
         unique_ref_out = {}
-        unique_stats_ref = {}
         unique = unique_out
         unique_ref = unique_ref_out
 
