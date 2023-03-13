@@ -1,0 +1,60 @@
+{% macro stat_print(stats, row_name, column_name, sub_row_name, name, unique, ref) %}
+
+
+{% if row_name: %}
+
+    {% if column_name: %}
+
+        {% if sub_row_name: %}
+            {% set mytup = (row_name, column_name, sub_row_name, name) %}
+
+        {% else: %}
+        {% set mytup = (row_name, column_name, name) %}
+        {% endif %}
+
+    {% else: %}
+    {% set mytup = (row_name, name) %}
+    {% endif %}
+
+{% else: %}
+{% set mytup = (name,) %}
+{% endif %}
+
+{% set ref_str_param = ""%}
+{% set ref_str = ""%}
+
+{% if ref: %}
+{% set ref_str_param = "&ref"%}
+{% set ref_str = " Ref"%}
+{%endif%}
+
+{% if name in ['TP', 'FP', 'FN']: %}
+
+{% if mytup|length> 1 and mytup in stats: %}
+<a target="iframe2" href='/update_list?tup={{mytup}}{{ref_str_param}}'> {{name}}{{ref_str}} = {{stats[mytup]}}</a>
+{%if unique%}
+<a target="iframe2" href='/update_list?tup={{mytup}}&unique{{ref_str_param}}'> (unique: {{unique[mytup]}})</a>
+{%endif%} 
+<br>
+{% else: %}
+    {%if name in stats:%}
+        <a target="iframe2" href='/update_list?tup={{mytup}}{{ref_str_param}}'> {{name}}{{ref_str}} = {{stats[name]}}  </a> 
+        {%if unique%}
+            <a target="iframe2" href='/update_list?tup={{mytup}}&unique{{ref_str_param  }}'> (unique: {{unique[name]}})</a>
+        {%endif%}
+    {%endif%}
+<br>
+{% endif %}
+
+
+{% else: %}
+
+{% if mytup|length > 1: %}
+{{name}}{{ref_str}} = {{stats[mytup]}} <br>
+{% else:%}
+{{name}}{{ref_str}} = {{stats[name]}} <br>
+{% endif %}
+
+{% endif %}
+
+{% endmacro %}

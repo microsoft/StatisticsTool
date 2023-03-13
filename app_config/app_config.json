@@ -1,0 +1,7 @@
+{
+    "azure_storage_id":"presencecv0851576016",
+    "data_container_name": "dev-data",
+    "annotation_store_blobs_prefix": "annotations/GT_logs/Latest/",
+    "data_store_blobs_prefix": "raw_data/",
+    "predictions_blobs_prefix": "results/"
+}

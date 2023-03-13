@@ -1,0 +1,10 @@
+Flask
+numpy
+PyFladesk
+scipy
+pandas
+opencv_python
+matplotlib
+itsdangerous
+xlsxwriter
+azure-storage-blob

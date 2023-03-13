@@ -1,0 +1,28 @@
+# Folders
+__pycache__*
+.vscode*
+
+*.mp4
+*.pyc
+*.amltmp
+
+*.npz
+*.pt
+*.pkl
+
+**/__pycache__/*
+**/.idea/*
+
+
+
+# Python
+*.pyc
+
+# Misc
+Report*.html
+
+#C-operators
+*.so
+
+
+
