@@ -1,16 +1,19 @@
+from sre_parse import State
 import sys, os
+
 # current_file_directory = os.path.realpath(__file__)
 # # adding the statistics_tool folder to path
 # sys.path.append(os.path.join(current_file_directory, '..'))
 
-from dash import Dash, html, dcc, Input, Output
+from dash import Dash, html, dcc, Input, Output,State
 import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
 
+
 sys.path.append('../classes_and_utils')
 from classes_and_utils.unique_helper import UniqueHelper
-from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections
+#from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections
 
 def default_get_cell(data, column_keys, row_keys):
     return html.Td("{}\n{}".format(column_keys, row_keys), style={'border':'solid'})
@@ -137,7 +140,7 @@ class PivotTable():
             cols_titles.append(html.Tr(horizontal_headers + values_th))
 
         return cols_titles
-
+    '''
     def get_keys_permutations(self,colums,rows):
         list1 = ['large','medium','small']
         list2 = ['right','left']
@@ -166,13 +169,11 @@ class PivotTable():
         exp.unique = unique
         comp[0].unique = unique_ref
         return unique_stats, unique_stats_ref
-
+    '''
     def get_table(self, all_columns, all_rows):
         '''
         The main function that builds the whole table
         '''
-        #hagai
-        #unique_stats, unique_stats_ref = self.get_unique(all_columns,all_rows)
 
         ## Table head ##
         titles_rows = self.get_cols_titles(all_columns, all_rows)
@@ -220,7 +221,10 @@ def table_page_example(segmentations):
 
     return html.Div([Title_div, cols_segmentation_dropdown, rows_segmentation_dropdown, table_div], style={'border':'solid'})
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
+external_scripts = []
+external_stylesheets = [dbc.themes.COSMO]
+
+app = Dash(__name__,external_scripts = external_scripts, external_stylesheets=[dbc.themes.COSMO])
 @app.callback(
     Output('table-div', 'children'),
     Input('cols_seg', 'value'),
@@ -230,6 +234,15 @@ def update_output(cols_input ,rows_input):
     table_div = table.get_table(cols_input, rows_input)
     return table_div
 
+@app.callback(
+    Output("offcanvas", "is_open"),
+    Input("open-offcanvas", "n_clicks"),
+    [State("offcanvas", "is_open")],
+)
+def toggle_offcanvas(n1, is_open):
+    if n1:
+        return not is_open
+    return is_open
 
 if __name__ == '__main__':
 

@@ -171,6 +171,7 @@ def update_results_table(cols_input ,rows_input):
 
     return table_div
 
+
 @server.route('/stats_pivot', methods=['GET', 'POST'])
 def statistics_reporter_dash():
     return results_table.get_webpage()

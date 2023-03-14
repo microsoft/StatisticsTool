@@ -102,6 +102,9 @@ class Results_table():
                 else:
                     TDs.append(html.Td('', style={'background-color':color}))
 
+                TDs.append(dbc.Button("Open Offcanvas", id="open-offcanvas", n_clicks=0))                    
+
+
             all_metrics.append(html.Tr(TDs))
 
         cell_content = html.Table(all_metrics)
@@ -136,12 +139,28 @@ class Results_table():
                                 name='iframe3', 
                                 id='image-div', 
                                 style=css['image-div'])
-
+        
 
         footer = html.Div([dbc.Alert("Reporter Page222",className="m-4")], style=css['footer'])
 
+        offcanvas = html.Div(
+            [
+                dbc.Button("Open Offcanvas", id="open-offcanvas", n_clicks=0),
+                dbc.Offcanvas(
+                    html.P(
+                        "This is the content of the Offcanvas. "
+                        "Close it by clicking on the close button, or "
+                        "the backdrop."
+                    ),
+                    id="offcanvas",
+                    title="Title",
+                    is_open=False,
+                ),
+            ]
+        )
+
         
-        whole_page = html.Div([footer, Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
+        whole_page = html.Div([offcanvas,footer, Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
         return  whole_page
 
 

@@ -11,5 +11,12 @@
             "module": "flask_GUI.flask_GUI_main",
             "justMyCode": true
         },
+        {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "module": "tests.test_unique_helper",
+            "justMyCode": true
+        },
     ]
 }
