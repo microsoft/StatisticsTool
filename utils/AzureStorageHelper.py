@@ -144,10 +144,20 @@ def list_blobs_in_results_path(path, recursive=False):
     '''
     List directories under a path, optionally recursively
     '''
+    container_client_obj = container_client()
     if not path == '' and not path.endswith('/'):
         path += '/'
-    cur_path =  f"{app_config.predictions_blobs_prefix}{path}"
-    blob_iter = container_client().list_blobs(name_starts_with=cur_path)
+
+    if path.startswith('https'): #Handle full address of files
+        if path.startswith(container_client_obj.primary_endpoint+'/'): # Verify that the address in under the right blob
+            cur_path = path.replace(container_client_obj.primary_endpoint+'/', '')
+        else:
+            print(f"Cannot handle blob adress that are not under: {container_client_obj.primary_endpoint}") #TODO: plot this message to UI
+            return []
+    else:
+        cur_path =  f"{app_config.predictions_blobs_prefix}{path}" 
+    #TODO: Verify that cur_path exists
+    blob_iter = container_client_obj.list_blobs(name_starts_with=cur_path)
     dirs = []
     for blob in blob_iter:
         dirs.append(blob.name)
