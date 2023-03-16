@@ -38,7 +38,7 @@ def get_color_by_two_values_diff(ref, main, gradient):
 
 class Results_table():
     def __init__(self, server):
-
+        
         self.dash_app = Dash(
             __name__,
             server=server,
@@ -46,8 +46,12 @@ class Results_table():
             external_stylesheets=[dbc.themes.COSMO])
 
         self.table = None
+        
+
         self.dash_app.layout = self.get_layout()
+
         # self.set_callbacks()
+        
 
     # def set_callbacks(self):
         self.dash_app.callback(
@@ -55,6 +59,10 @@ class Results_table():
             Output('rows_seg', 'options'),
             Input('init', 'value')) \
             (lambda x: (self.segmentation_categories, self.segmentation_categories))
+        #hagai
+        '''def update_results_table(cols_input ,rows_input):
+            table_div = results_table.table.get_table(cols_input, rows_input)
+        return table_div'''
 
     def set_data(self, exp, segmentations):
         self.table = pt.PivotTable(segmentations, data = exp, cell_function=self.get_cell_exp)
@@ -97,12 +105,12 @@ class Results_table():
                     if self.table.unique_helper != None:
                         unique = self.table.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
                         TDs.append(html.Td(unique, style={'background-color':color}))
+                        #v = "href=" + "/update_list?tup=('TP',)&unique&ref"
+                        #TDs.append(dbc.Button("Open Offcanvas", id="open-offcanvas", n_clicks=self.n_clicks,value=v))
                     else:
                         TDs.append(html.Td('', style={'background-color':color}))
                 else:
                     TDs.append(html.Td('', style={'background-color':color}))
-
-                TDs.append(dbc.Button("Open Offcanvas", id="open-offcanvas", n_clicks=0))                    
 
 
             all_metrics.append(html.Tr(TDs))
@@ -140,27 +148,7 @@ class Results_table():
                                 id='image-div', 
                                 style=css['image-div'])
         
-
-        footer = html.Div([dbc.Alert("Reporter Page222",className="m-4")], style=css['footer'])
-
-        offcanvas = html.Div(
-            [
-                dbc.Button("Open Offcanvas", id="open-offcanvas", n_clicks=0),
-                dbc.Offcanvas(
-                    html.P(
-                        "This is the content of the Offcanvas. "
-                        "Close it by clicking on the close button, or "
-                        "the backdrop."
-                    ),
-                    id="offcanvas",
-                    title="Title",
-                    is_open=False,
-                ),
-            ]
-        )
-
-        
-        whole_page = html.Div([offcanvas,footer, Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
+        whole_page = html.Div([image_div, table_buttons_div,example_list_div], style=css['whole-reporter'])
         return  whole_page
 
 

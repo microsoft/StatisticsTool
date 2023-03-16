@@ -135,14 +135,14 @@ input[type=button]:hover {
                   disabled="true" formaction="/Reporter_orig">
         </div>
         <div class="col-md-12" >
+          <!--<input type = "submit" id="submit_new" value = "Load New Report" 
+                disabled="true" formaction="/Save_Report_Request">-->
           <input type = "submit" id="submit_new" value = "Load New Report" 
                 disabled="true" formaction="/Reporter_new">
         </div>
         <div id="alert" class="alert alert-danger" style="margin-top:20px;">
         </div>
       </form>
-
-       
     </div>
 
     <script>
@@ -150,6 +150,7 @@ input[type=button]:hover {
         $('#report_file_path').hide();
         $('#reference_file_path').hide();
       } 
+
       
       $(document).ready(function(e){
           $("#alert").hide();
@@ -186,6 +187,16 @@ input[type=button]:hover {
               }
 
               return true;
+/*
+              $.ajax({
+                url: '/Reporter_new',
+                type: 'POST',
+                data : $('#report_form').serialize(),
+                success: function(){
+                  console.log('form submitted.');
+                }
+              });
+              return false;*/
           });
       });
 

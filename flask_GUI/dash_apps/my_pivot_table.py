@@ -140,36 +140,7 @@ class PivotTable():
             cols_titles.append(html.Tr(horizontal_headers + values_th))
 
         return cols_titles
-    '''
-    def get_keys_permutations(self,colums,rows):
-        list1 = ['large','medium','small']
-        list2 = ['right','left']
-        list3 = ['up','down']
-        list4 = ['Recall','Precision','FPR','TOTAL_PRED']
-        list5 = ['TP','FP','FN']
-        
-        res1 = [ (i, j, k,t) for i in list1
-                 for j in list2
-                 for k in list3
-                 for t in list4]
-        
-        res2 = [ (i, j, k,t) for i in list1
-                 for j in list2
-                 for k in list3
-                 for t in list5]
-        
-        return res1 + res2
-
-    def get_unique(self,colums,rows):
-        exp  = self.data['main']
-        comp = self.data['ref']
-        keys = self.get_keys_permutations(colums,rows)
-        exp.main_ref_dict, exp.ref_main_dict = match_main_ref_predictions(exp,comp[0])
-        unique, unique_ref, unique_stats, unique_stats_ref = calc_unique_detections(keys, exp, comp[0], exp.main_ref_dict, exp.ref_main_dict)
-        exp.unique = unique
-        comp[0].unique = unique_ref
-        return unique_stats, unique_stats_ref
-    '''
+    
     def get_table(self, all_columns, all_rows):
         '''
         The main function that builds the whole table
@@ -225,6 +196,8 @@ external_scripts = []
 external_stylesheets = [dbc.themes.COSMO]
 
 app = Dash(__name__,external_scripts = external_scripts, external_stylesheets=[dbc.themes.COSMO])
+#HAGAI
+
 @app.callback(
     Output('table-div', 'children'),
     Input('cols_seg', 'value'),
@@ -233,16 +206,6 @@ app = Dash(__name__,external_scripts = external_scripts, external_stylesheets=[d
 def update_output(cols_input ,rows_input):
     table_div = table.get_table(cols_input, rows_input)
     return table_div
-
-@app.callback(
-    Output("offcanvas", "is_open"),
-    Input("open-offcanvas", "n_clicks"),
-    [State("offcanvas", "is_open")],
-)
-def toggle_offcanvas(n1, is_open):
-    if n1:
-        return not is_open
-    return is_open
 
 if __name__ == '__main__':
 
