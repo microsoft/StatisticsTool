@@ -5,7 +5,7 @@ current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
 sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
 from dash.dependencies import Input, Output, State
-from dash import Dash, html,dcc
+from dash import Dash, html
 
 # from pyfladesk import init_gui
 from classes_and_utils.GUI_utils import *
@@ -84,17 +84,6 @@ def Save_Report_Request():
     session['error_message'] = ''
     return render_template('index.html')
 
-@server.route('/Reporter_new', methods=['GET', 'POST'])
-def Reporter_new():
-    #return Create_Report()
-    
-    use_cached_report = request.args.get('use_cached_report')
-    session['error_message'] = ''
-    global report_type
-    report_type = 'NEW'
-    return Report(use_cached_report)
-    
-
 def extract_data_request(request,use_cached_report):
     global exp
     global comp_exp
@@ -110,29 +99,6 @@ def extract_data_request(request,use_cached_report):
         cexp,_,_ = load_experiment(request,True)
         if cexp != None:
             comp_exp.append(cexp)
-
-def Create_Report_depc():
-    dashApp = Dash(__name__,server=server,url_base_pathname='/dash1/')# serve_locally = False)
-
-    dashApp.layout = html.Div([
-    html.H6("Change the value in the text box to see callbacks in action!"),
-    html.Div([
-        "Input: ",
-        dcc.Input(id='my-input', value='initial value', type='text')
-    ]),
-    html.Br(),
-    html.Div(id='my-output'),
-    ])
-
-    @dashApp.callback(
-        Output(component_id='my-output', component_property='children'),
-        Input(component_id='my-input', component_property='value')
-    )
-    def update_output_div(input_value):
-        return f'Output: {input_value}'
-
-    return dashApp.index()
-
 
 def Create_Report():
     global exp
@@ -156,11 +122,29 @@ def Create_Report():
 
     return dashApp.index()'''
 
+@server.route('/Reporter_new', methods=['GET', 'POST'])
+def Create_Report():
+    global exp
+    global comp_exp
+
+    segmentations = {seg_category:v['possible partitions'] 
+    for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+
+    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
+    return results_table.get_webpage()
+
+@server.route('/Reporter_new_old', methods=['GET', 'POST'])
+def Report_new():
+    use_cached_report = request.args.get('use_cached_report')
+    session['error_message'] = ''
+    global report_type
+    report_type = 'NEW'
+    return Report(use_cached_report)
+
 def Report(use_cached_report):
     # request to load a report
     global exp
     global comp_exp
-    global reporterData
     comp_exp = []
     if not use_cached_report:
         exp,result,err_msg = load_experiment(request,False)
@@ -236,7 +220,7 @@ def load_experiment(request,is_reference):
     
     return ret_exp, True, ''
 #########################################################
-#HAGAI
+#hagai-callback
 
 @results_table.dash_app.callback(
     Output('table-div', 'children'),
@@ -244,7 +228,9 @@ def load_experiment(request,is_reference):
     Input('rows_seg', 'value'))
 def update_results_table(cols_input ,rows_input):
     table_div = results_table.table.get_table(cols_input, rows_input)
+
     return table_div
+
 
 @server.route('/stats_pivot', methods=['GET', 'POST'])
 def statistics_reporter_dash():

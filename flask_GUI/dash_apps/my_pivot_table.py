@@ -1,19 +1,16 @@
-from sre_parse import State
 import sys, os
-
 # current_file_directory = os.path.realpath(__file__)
 # # adding the statistics_tool folder to path
 # sys.path.append(os.path.join(current_file_directory, '..'))
 
-from dash import Dash, html, dcc, Input, Output,State
+from dash import Dash, html, dcc, Input, Output
 import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
 
-
 sys.path.append('../classes_and_utils')
 from classes_and_utils.unique_helper import UniqueHelper
-#from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections
+from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections
 
 def default_get_cell(data, column_keys, row_keys):
     return html.Td("{}\n{}".format(column_keys, row_keys), style={'border':'solid'})
@@ -140,11 +137,42 @@ class PivotTable():
             cols_titles.append(html.Tr(horizontal_headers + values_th))
 
         return cols_titles
-    
+
+    def get_keys_permutations(self,colums,rows):
+        list1 = ['large','medium','small']
+        list2 = ['right','left']
+        list3 = ['up','down']
+        list4 = ['Recall','Precision','FPR','TOTAL_PRED']
+        list5 = ['TP','FP','FN']
+        
+        res1 = [ (i, j, k,t) for i in list1
+                 for j in list2
+                 for k in list3
+                 for t in list4]
+        
+        res2 = [ (i, j, k,t) for i in list1
+                 for j in list2
+                 for k in list3
+                 for t in list5]
+        
+        return res1 + res2
+
+    def get_unique(self,colums,rows):
+        exp  = self.data['main']
+        comp = self.data['ref']
+        keys = self.get_keys_permutations(colums,rows)
+        exp.main_ref_dict, exp.ref_main_dict = match_main_ref_predictions(exp,comp[0])
+        unique, unique_ref, unique_stats, unique_stats_ref = calc_unique_detections(keys, exp, comp[0], exp.main_ref_dict, exp.ref_main_dict)
+        exp.unique = unique
+        comp[0].unique = unique_ref
+        return unique_stats, unique_stats_ref
+
     def get_table(self, all_columns, all_rows):
         '''
         The main function that builds the whole table
         '''
+        #hagai
+        #unique_stats, unique_stats_ref = self.get_unique(all_columns,all_rows)
 
         ## Table head ##
         titles_rows = self.get_cols_titles(all_columns, all_rows)
@@ -192,12 +220,9 @@ def table_page_example(segmentations):
 
     return html.Div([Title_div, cols_segmentation_dropdown, rows_segmentation_dropdown, table_div], style={'border':'solid'})
 
-external_scripts = []
-external_stylesheets = [dbc.themes.COSMO]
-
-app = Dash(__name__,external_scripts = external_scripts, external_stylesheets=[dbc.themes.COSMO])
-#HAGAI
-
+app = Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
+#HAGAI-callback
+'''
 @app.callback(
     Output('table-div', 'children'),
     Input('cols_seg', 'value'),
@@ -206,6 +231,7 @@ app = Dash(__name__,external_scripts = external_scripts, external_stylesheets=[d
 def update_output(cols_input ,rows_input):
     table_div = table.get_table(cols_input, rows_input)
     return table_div
+'''
 
 if __name__ == '__main__':
 

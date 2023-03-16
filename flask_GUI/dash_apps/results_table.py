@@ -38,31 +38,35 @@ def get_color_by_two_values_diff(ref, main, gradient):
 
 class Results_table():
     def __init__(self, server):
-        
+
         self.dash_app = Dash(
             __name__,
             server=server,
             url_base_pathname='/dash/',
-            external_stylesheets=[dbc.themes.COSMO])
+            external_stylesheets=[dbc.themes.COSMO],suppress_callback_exceptions=True)
 
         self.table = None
-        
-
         self.dash_app.layout = self.get_layout()
-
         # self.set_callbacks()
-        
 
     # def set_callbacks(self):
+        #HAGAI-callback
+        
         self.dash_app.callback(
             Output('cols_seg', 'options'),
             Output('rows_seg', 'options'),
             Input('init', 'value')) \
             (lambda x: (self.segmentation_categories, self.segmentation_categories))
-        #hagai
-        '''def update_results_table(cols_input ,rows_input):
-            table_div = results_table.table.get_table(cols_input, rows_input)
-        return table_div'''
+        
+
+        '''
+        self.dash_app.callback(
+            Output('table-div', 'children'),
+            Input('cols_seg', 'value'),
+            Input('rows_seg', 'value'))
+        def update_output(cols_input ,rows_input):
+            return self.table.get_table(cols_input, rows_input)
+        '''
 
     def set_data(self, exp, segmentations):
         self.table = pt.PivotTable(segmentations, data = exp, cell_function=self.get_cell_exp)
@@ -105,13 +109,10 @@ class Results_table():
                     if self.table.unique_helper != None:
                         unique = self.table.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
                         TDs.append(html.Td(unique, style={'background-color':color}))
-                        #v = "href=" + "/update_list?tup=('TP',)&unique&ref"
-                        #TDs.append(dbc.Button("Open Offcanvas", id="open-offcanvas", n_clicks=self.n_clicks,value=v))
                     else:
                         TDs.append(html.Td('', style={'background-color':color}))
                 else:
                     TDs.append(html.Td('', style={'background-color':color}))
-
 
             all_metrics.append(html.Tr(TDs))
 
@@ -147,8 +148,12 @@ class Results_table():
                                 name='iframe3', 
                                 id='image-div', 
                                 style=css['image-div'])
+
+
+        footer = html.Div([dbc.Alert("Reporter Page222",className="m-4")], style=css['footer'])
+
         
-        whole_page = html.Div([image_div, table_buttons_div,example_list_div], style=css['whole-reporter'])
+        whole_page = html.Div([footer, Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
         return  whole_page
 
 
