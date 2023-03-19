@@ -9,7 +9,7 @@ from dash import Dash, html
 
 # from pyfladesk import init_gui
 from classes_and_utils.GUI_utils import *
-from flask import Flask, render_template, request,redirect, url_for,session
+from flask import Flask, jsonify, render_template, request,redirect, url_for,session
 from flask_GUI.rendering_functions import show_stats_render
 from flask_GUI.dash_apps.results_table import Results_table
 
@@ -104,8 +104,7 @@ def Create_Report():
     global exp
     global comp_exp
 
-    segmentations = {seg_category:v['possible partitions'] 
-    for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
 
     results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
     return results_table.get_webpage()
@@ -121,6 +120,15 @@ def Create_Report():
         return table_div
 
     return dashApp.index()'''
+@server.route('/get_segmentations', methods=['POST'])    
+def get_segmentations():
+    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+    return jsonify(segmentations)
+
+@server.route('/Reporter_new_wrapper', methods=['POST'])
+def Reporter_new_wrapper():
+    wp = Create_Report()
+    return jsonify(wp), 201
 
 @server.route('/Reporter_new', methods=['GET', 'POST'])
 def Create_Report():
@@ -131,7 +139,8 @@ def Create_Report():
     for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
 
     results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
-    return results_table.get_webpage()
+    wp = results_table.get_webpage()
+    return wp
 
 @server.route('/Reporter_new_old', methods=['GET', 'POST'])
 def Report_new():

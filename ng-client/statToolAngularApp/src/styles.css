@@ -1,1 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
+.multiselect-dropdown .dropdown-btn{
+    width: 95% !important;
+    margin:2px !important;
+}

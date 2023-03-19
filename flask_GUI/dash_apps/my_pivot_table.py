@@ -15,7 +15,7 @@ from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_d
 def default_get_cell(data, column_keys, row_keys):
     return html.Td("{}\n{}".format(column_keys, row_keys), style={'border':'solid'})
 
-class PivotTable():
+class   PivotTable():
 
     def __init__(self, segmentations, data, cell_function = default_get_cell):
         self.segmentations = segmentations
