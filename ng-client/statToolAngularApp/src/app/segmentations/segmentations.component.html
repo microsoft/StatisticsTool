@@ -1,0 +1,11 @@
+<div *ngIf="dropdownList.length > 0">
+    <ng-multiselect-dropdown
+        [placeholder]="name"
+        [settings]="dropdownSettings"
+        [data]="dropdownList"
+        [(ngModel)]="selected"
+        (onSelect)="onItemSelect($event)"
+        (onSelectAll)="onSelectAll($event)"
+    >
+    </ng-multiselect-dropdown>
+</div>
