@@ -1,25 +1,21 @@
+
 # Introduction 
-This tool helps Data Science team to debug their algorithm outputs and compare them with the GT.
-This tool was created by Ben Fishman and Yoav Lotem
-Code modifications were made by Ben Azran
+TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
 
 # Getting Started
-1. pip install -r requirements.txt
-2. Change directory to flask_GUI.py path
-3. Run python flask_GUI.py
-4. Type localhost:5000 at the browser and start using the tool
+TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
+1.	Installation process
+2.	Software dependencies
+3.	Latest releases
+4.	API references
 
-# Required Folders
-1. Prediction Folder - contains all the predictions file
-2. Ground Truth Folder - contains all the GT files
-3. Images Folder - contains sub-folders of videos (each such folder contains the video's frames)
-4. Output Folder - an empty folder in which the data is saved to
+# Build and Test
+TODO: Describe and show how to build your code and run the tests. 
 
-# Formats
-All the files in the folders should have a FILENAME_XXXX.FILETYPE format for matching predictions, labels, and images:
-1. FILENAME - could be any name without dots (.) - doesn't have to be the same for matching predictions/labels/images.
-2. _XXXX - a serial number to match labels, predictions, and frames folder (For example: GT_0001.csv, PRD_0001.csv, CATS_0001 corresponds to each other).
-3. .FILETYPE - could be of any type such as .json or .csv (The image folder shouldn't have any .filetype ending since it's a folder).
+# Contribute
+TODO: Explain how other users and developers can contribute to make your code better. 
 
-# Further Details
-For more information, please read the wiki.png in this directory.
+If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
+- [ASP.NET Core](https://github.com/aspnet/Home)
+- [Visual Studio Code](https://github.com/Microsoft/vscode)
+- [Chakra Core](https://github.com/Microsoft/ChakraCore)
