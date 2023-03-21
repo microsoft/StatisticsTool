@@ -46,20 +46,22 @@ class VideoEvaluation:
         pred_data = self.readerFunction(pred_file)
        
         if pred_data is None: #The user defined reader function doesn't recognize this file
-            raise Exception(f"reader function could't parse {pred_file} log")
+            print (f"reader function could't parse {pred_file} log")
+            return None
             
         gt_data = self.readerFunction(gt_file)
         
         if gt_data is None:
-            raise Exception(f"failed to parse or no data for gt file: {gt_file}")
+            print (f"failed to parse or no data for gt file: {gt_file}")
+            return None
         
         if  len(gt_data) == 0:
-            raise Exception(f"gt file parser returns with no lines for file: {gt_file}")
+            print(f"gt file parser returns with no lines for file: {gt_file}")
+            return None
         
         gt_data.rename(columns={'predictions': 'gt'}, inplace=True)
         
         loaded_dataframe = pred_data.merge(gt_data, left_on='frame_id', right_on='frame_id',how='inner')
-        
         
         return loaded_dataframe
 
@@ -85,7 +87,7 @@ class VideoEvaluation:
     def create_dataframe_from_dict(self, frames_dictionary, video_name):
         self.comp_data = pd.DataFrame.from_dict(frames_dictionary)
         self.comp_data.drop('gt',axis=1,inplace=True)
-
+        self.comp_data['detection_gt'] = None
         self.comp_data = self.comp_data.explode('predictions')
 
         self.comp_data = self.comp_data.reset_index(drop=True)
@@ -149,13 +151,17 @@ class VideoEvaluation:
         """
         # load the per frame bounding box hash table (dictionary) for labels and predictions
         loaded_data = self.load_data(pred_file, gt_file)
+        if loaded_data is None:
+            return False
         
         frames_dict = self.create_frames_dictionary(loaded_data)
         
         self.create_dataframe_from_dict(frames_dict, video_name)
 
         if self.transform_func:
-            self.comp_data=self.transform_func(self.comp_data)      
+            self.comp_data=self.transform_func(self.comp_data)    
+
+        return True  
         
  
 
@@ -182,12 +188,20 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     pred_file_name = ''
     gt_file_name = ''
     
+    succeded = []
+    failed = []
+    skipped = []
+    print (f"total files num: {len(pred_path_list)}")
     #for GT_path, pred_path, image_folder_fullpath, image_folder_name in zip(GT_path_list, pred_path_list, image_folder_fullpath_list, images_folders_list):
     for pred in pred_path_list:
+        print (f"succeded-{len(succeded)} skipped-{len(skipped)}, failed-{len(failed)}, total files num-{len(pred_path_list)}\n\n")
         gt_local_path = None
         
         if not pred.endswith('.json'):
+            print (f"not .json file skipping: {pred}")
+            skipped.append(pred)
             continue
+
 
         log_name = os.path.basename(pred)
         try:
@@ -196,16 +210,25 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             pred_file = get_local_or_blob_file(pred)
 
             if pred_file is None:
+                failed.append(pred)
                 print (f"Can't fine file {pred_file}, continue..")
                 continue
-
-            video_name, _ = parse_video_name_from_pred_file(pred_file)
+            try:        
+                video_name, _ = parse_video_name_from_pred_file(pred_file)
+            except Exception as ex:
+                print ("failed to parse header from prediction file file: "+pred_file)
+                failed.append(pred)
+                continue
         
             #if user set local gt folder
             if gt_dir:
                 video_folder_name = pathlib.Path(video_name).stem
-                #set gt_file path to be as gt_logs file format
+                #set gt_file path to be as gt_logs file format but all files in same directory(not full video name including directories in data store)
                 gt_local_path = os.path.join(gt_dir, video_folder_name+'.json')
+                #set gt_file path to be as full path in data store
+                if os.path.exists(gt_local_path) == False:
+                    folder = os.path.split(video_name)[0]
+                    gt_local_path = os.path.join(gt_dir, folder, video_folder_name+'.json')
                 #if not exists set gt_file to be as algo_logs file format
                 if os.path.exists(gt_local_path) == False:
                     gt_local_path = os.path.join(gt_dir, video_folder_name, log_name)
@@ -214,19 +237,25 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             else: #read gt from blob
                 gt_local_path = read_gt_file_from_blob(video_name)
                 
-                
+            gt_local_path = os.path.normpath(gt_local_path)    
             if gt_local_path is None or not os.path.exists(gt_local_path):
+                failed.append(pred)
                 print(f"Gt file: {gt_local_path} not found for prediction: {pred}, continue with next prediction log..")
                 continue
 
             V = VideoEvaluation(overlap_function=overlap_function, readerFunction=readerFunction, evaluation_func=evaluation_func, transform_func = transform_func)
-            V.compute_dataframe(pred_file, gt_local_path, video_name)
+            res = V.compute_dataframe(pred_file, gt_local_path, video_name)
+            if not res:
+                print (f"reading function didn't read file: {pred} and gt:{gt_local_path}")
+                skipped.append(pred)
+                continue
             
             #if succeded - save prediction log file name to use in sheldon header
             pred_file_name = os.path.basename(pred)
 
             print(f"Start compare files for video {video_name}: {pred} and {gt_local_path}")
         except Exception as ex:
+            failed.append(pred)
             print(f"Failed to compare log {pred}, continue with next log")
             print(ex)
             continue
@@ -234,9 +263,16 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
         output_file =  os.path.join(output_dir, video_name + '.json')
         V.save_data(output_file)
         output_files.append(output_file)
+        succeded.append(pred)
 
-       
         print(f"finished compare predictions for video {video_name}")
+
+    print("finished all preds:\n")
+    print ("failed predictions: ")
+    for x in failed: print(x)
+    print ("\nskipped predictions: ")
+    for x in skipped: print(x)
+   
     
     sheldon_pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
     sheldon_gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
