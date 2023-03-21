@@ -47,6 +47,7 @@ class Results_table():
 
         self.table = None
         self.dash_app.layout = self.get_layout()
+        
         # self.set_callbacks()
 
     # def set_callbacks(self):
@@ -135,8 +136,7 @@ class Results_table():
 
         table_buttons_div = html.Div([cols_segmentation_dropdown,\
                                       rows_segmentation_dropdown,\
-                                      html.H5('Loading Table', id='table-div',
-                                                style=css['table-div'])], \
+                                      html.H5('Loading Table',id='table-div',style=css['table-div'])], \
                                       style=css['table-buttons-div'], 
                                       id='table-buttons-div')
 
@@ -155,6 +155,24 @@ class Results_table():
         
         whole_page = html.Div([footer, Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
         return  whole_page
+    
+    def get_layout_new(self,columns,rows):
+
+        t = self.table.get_table(columns,rows)
+        table_buttons_div = html.Div(id='table-div',children=t,style=css['table-div'])
+
+        example_list_div = html.Iframe([dbc.Alert('Example_list', color="secondary")],\
+                                        name='example-list-div', 
+                                        style=css['example-list-div'])
+
+        image_div = html.Iframe([html.H1('Image div')], 
+                                name='iframe3', 
+                                id='image-div', 
+                                style=css['image-div'])
+
+
+        whole_page = html.Div([image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
+        return  whole_page    
 
 
 ### Data For Test #######

@@ -1,0 +1,11 @@
+::ng-deep .template-selection .mat-grid-tile-content {
+    justify-content: left !important;
+}
+
+select:focus { 
+    outline: none !important;
+}
+
+input:focus { 
+    outline: none !important;
+}

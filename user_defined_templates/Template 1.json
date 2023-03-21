@@ -1,0 +1,29 @@
+{
+    "segmentations":[
+        {
+            "name":"Total",
+            "columns":"",
+            "rows":""
+        },
+        {
+            "name":"Size [rows]",
+            "columns":"size",
+            "rows":"x position,y position"
+        },
+        {
+            "name":"Size [columns]",
+            "columns":"size",
+            "rows":""
+        },
+        {
+            "name":"Size & X Position",
+            "columns":"size",
+            "rows":"x position"
+        },
+        {
+            "name":"Size & Y Position",
+            "columns":"size",
+            "rows":"y position"
+        }
+    ]
+}

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl,ReactiveFormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
@@ -10,16 +10,42 @@ import { StatisticsToolService } from '../services/statistics-tool.service';
   styleUrls: ['./segmentations.component.css']
 })
 export class SegmentationsComponent implements OnInit{
+
+  @Input() set selectItems(items:string){
+    if (items == "," || items == "" || items == ' ')
+      return;
+    let arr = items.split(',')
+    this.selected = []
+    arr.forEach(a => {
+      this.selected.push({'item_id':a,'item_text':a})
+    })
+    console.log('foo','items:',JSON.stringify(arr),'selected:',JSON.stringify(this.selected));
+  }
   
+  @Input() name = '';
   dropdownList : {'item_id':string,'item_text':string}[] = [];
-  selected : {'item_id':string,'item_text':string}[] = [];
+  selected     : {'item_id':string,'item_text':string}[] = [];
   
   dropdownSettings = {};
-
   subscribeSegmentationsFetched = new Subscription;
+  /*isRow = false;
+  template = '';
+  segIndex = 0;
 
   @Input() optionalSegmentations:string[] = [];
   @Input() name = '';
+
+  @Input() set setInfo(info:{ 'isRow':boolean,'template':string,'segmentIndex':number}){
+    this.isRow = info.isRow;
+    this.template = info.template;
+    this.segIndex = info.segmentIndex;
+    let segments = this.statToolService.getTemplateSegments(this.template,this.segIndex,this.isRow);
+    segments.forEach(s => {
+      this.selected.push({'item_id':s,'item_text':s})  
+    })
+  }*/
+  
+  @Output() segmentsChanged = new EventEmitter();
 
   constructor(private statToolService:StatisticsToolService,
               private httpClient:HttpClient) {
@@ -27,16 +53,8 @@ export class SegmentationsComponent implements OnInit{
 
   ngOnInit(): void {
 
-    this.subscribeSegmentationsFetched = this.statToolService.segmentationsFetched.subscribe(x => {
-      if (this.optionalSegmentations.length == 0){
-        let segmentations = this.statToolService.getSegmentations();
-        segmentations.forEach(txt => {
-          this.dropdownList.push({'item_id':txt,'item_text':txt})  
-        })
-      } else {
-        this.optionalSegmentations.forEach(txt => {
-          this.dropdownList.push({'item_id':txt,'item_text':txt})  
-        })
+      for (let [key, value] of this.statToolService.optionalSegmentations) {
+        this.dropdownList.push({'item_id':key,'item_text':key})
       }
 
       this.dropdownSettings = {
@@ -48,14 +66,19 @@ export class SegmentationsComponent implements OnInit{
         itemsShowLimit: 100,
         allowSearchFilter: true
       };
-    });
   }
 
   onItemSelect(item: any) {
-    console.log(item);
+    this.segmentsChanged.emit(this.selected)
+    //console.log('segments, select',item,this.selected);
   }
   onSelectAll(items: any) {
-    console.log(items);
+    this.segmentsChanged.emit(this.selected)
+    //console.log('segments, select all',items,this.selected);
+  }
+  onItemUnSelect(item: any) {
+    this.segmentsChanged.emit(this.selected)
+    //console.log('segments,un select',item,this.selected);
   }
 
 ngOnDestroy(){

@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
          {
             "name": "Python: Statistic Tool",
             "type": "python",
@@ -12,10 +13,17 @@
             "justMyCode": true
         },
         {
-            "name": "Test",
+            "name": "Test Unique Helper",
             "type": "python",
             "request": "launch",
             "module": "tests.test_unique_helper",
+            "justMyCode": true
+        },
+        {
+            "name": "Test Templates Files Helper",
+            "type": "python",
+            "request": "launch",
+            "module": "tests.test_templates_files_helper",
             "justMyCode": true
         },
     ]

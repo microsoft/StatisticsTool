@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 
 @Pipe({
   name: 'safe'
@@ -28,7 +29,7 @@ export class AppComponent implements OnInit,AfterContentInit {
 
   url = '/Reporter_new';
 
-  constructor(private httpClient:HttpClient) {
+  constructor(private httpClient:HttpClient,private router : Router) {
     this.url = '/Reporter_new';
     /*
     console.log('ctor')
@@ -52,7 +53,9 @@ export class AppComponent implements OnInit,AfterContentInit {
 
   ngOnInit(){
     //console.log('ngOnInit')
-
+    this.router.events.subscribe(val => {
+      console.log('router:',val)
+    })
   }
 
   ngAfterContentInit(){

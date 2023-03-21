@@ -1,0 +1,9 @@
+{
+    "segmentations":[
+        {
+            "name":"ALL",
+            "columns":"size",
+            "rows":"x position,y position"
+        }
+    ]
+}
