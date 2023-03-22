@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 
@@ -8,7 +8,8 @@ import { StatisticsToolService } from '../services/statistics-tool.service';
   templateUrl: './pkl-view.component.html',
   styleUrls: ['./pkl-view.component.css']
 })
-export class PklViewComponent implements OnInit {
+export class PklViewComponent implements OnInit  {
+    
   url = '/Reporter_new';
   //subscribeGetSegment = new Subscription;
   selectedRows = '';
@@ -21,10 +22,13 @@ export class PklViewComponent implements OnInit {
   }
   @Input() name = '';
 
+  loadCounter = 0;
+
   constructor(private httpClient:HttpClient,
               private statToolService:StatisticsToolService) {
     this.url = '/Reporter_new';
-    
+                    
+
     /*this.subscribeGetSegment = this.httpClient.post('/get_segmentations',{})
                         .subscribe(res => {
                             let arr = Object.entries(res);
@@ -37,10 +41,12 @@ export class PklViewComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.fixSelectedString();
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows;
+    this.loadCounter = 1;
   }
 
-  ngOnDestroy(){
+   ngOnDestroy(){
     //if (this.subscribeGetSegment != null)
     //  this.subscribeGetSegment.unsubscribe();
   }
@@ -55,8 +61,10 @@ export class PklViewComponent implements OnInit {
       this.selectedColumns += x.item_id + ","
     })
 
+    this.fixSelectedString();
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows;
-    console.log('onColumnsChanged',items);
+    
+    console.log('url',this.url);
   }
 
   onRowsChanged(items:{'item_id':string,'item_text':string}[]){
@@ -64,7 +72,23 @@ export class PklViewComponent implements OnInit {
     items.forEach(x => {
       this.selectedRows += x.item_id + ","
     })
+    
+    this.fixSelectedString();
+    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows;
-    console.log('onRowsChanged',items);
+    console.log('url',this.url);
+  }
+
+  fixSelectedString(){
+    if (this.selectedColumns.slice(-1) == ",")  
+      this.selectedColumns = this.selectedColumns.slice(0,-1);
+    if (this.selectedRows.slice(-1) == ",")  
+      this.selectedRows = this.selectedRows.slice(0,-1);
+
+  }
+
+  onlaod(){
+    console.log('loaded...')
+    this.loadCounter = this.loadCounter - 1;
   }
 }
