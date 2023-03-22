@@ -274,7 +274,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     print("finished all preds:\n")
     print ("failed predictions: ")
     for x in failed: print(x)
-    print ("\nskipped by reading: ")
+    print ("\nskipped by reading func: ")
     for x in skipped_reading_fnc: print(x)
    
     
