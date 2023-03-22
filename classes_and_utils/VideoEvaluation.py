@@ -87,7 +87,7 @@ class VideoEvaluation:
     def create_dataframe_from_dict(self, frames_dictionary, video_name):
         self.comp_data = pd.DataFrame.from_dict(frames_dictionary)
         self.comp_data.drop('gt',axis=1,inplace=True)
-        self.comp_data['detection_gt'] = None
+        
         self.comp_data = self.comp_data.explode('predictions')
 
         self.comp_data = self.comp_data.reset_index(drop=True)
@@ -102,6 +102,8 @@ class VideoEvaluation:
                 
             new_data.append(new_obj)
         self.comp_data = pd.DataFrame(new_data)
+        if 'detection_gt' not in self.comp_data.keys():
+            self.comp_data['detection_gt'] = None
         self.comp_data.loc[self.comp_data['detection_gt'].isnull(), 'detection_gt']=False
         self.comp_data['video']=video_name
         
@@ -190,16 +192,18 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     
     succeded = []
     failed = []
-    skipped = []
+    skipped_not_json = []
+    skipped_reading_fnc = []
+    
     print (f"total files num: {len(pred_path_list)}")
     #for GT_path, pred_path, image_folder_fullpath, image_folder_name in zip(GT_path_list, pred_path_list, image_folder_fullpath_list, images_folders_list):
     for pred in pred_path_list:
-        print (f"succeded-{len(succeded)} skipped-{len(skipped)}, failed-{len(failed)}, total files num-{len(pred_path_list)}\n\n")
+        print (f"succeded-{len(succeded)} skippied_reading-{len(skipped_reading_fnc)} skipped_json-{len(skipped_not_json)}, failed-{len(failed)}, total files num-{len(pred_path_list)}\n\n")
         gt_local_path = None
         
         if not pred.endswith('.json'):
             print (f"not .json file skipping: {pred}")
-            skipped.append(pred)
+            skipped_not_json.append(pred)
             continue
 
 
@@ -247,7 +251,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             res = V.compute_dataframe(pred_file, gt_local_path, video_name)
             if not res:
                 print (f"reading function didn't read file: {pred} and gt:{gt_local_path}")
-                skipped.append(pred)
+                skipped_reading_fnc.append(pred)
                 continue
             
             #if succeded - save prediction log file name to use in sheldon header
@@ -270,8 +274,8 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     print("finished all preds:\n")
     print ("failed predictions: ")
     for x in failed: print(x)
-    print ("\nskipped predictions: ")
-    for x in skipped: print(x)
+    print ("\nskipped by reading func: ")
+    for x in skipped_reading_fnc: print(x)
    
     
     sheldon_pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
