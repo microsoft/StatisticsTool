@@ -87,7 +87,7 @@ class VideoEvaluation:
     def create_dataframe_from_dict(self, frames_dictionary, video_name):
         self.comp_data = pd.DataFrame.from_dict(frames_dictionary)
         self.comp_data.drop('gt',axis=1,inplace=True)
-        self.comp_data['detection_gt'] = None
+        
         self.comp_data = self.comp_data.explode('predictions')
 
         self.comp_data = self.comp_data.reset_index(drop=True)
@@ -102,6 +102,8 @@ class VideoEvaluation:
                 
             new_data.append(new_obj)
         self.comp_data = pd.DataFrame(new_data)
+        if 'detection_gt' not in self.comp_data.keys():
+            self.comp_data['detection_gt'] = None
         self.comp_data.loc[self.comp_data['detection_gt'].isnull(), 'detection_gt']=False
         self.comp_data['video']=video_name
         
@@ -272,7 +274,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     print("finished all preds:\n")
     print ("failed predictions: ")
     for x in failed: print(x)
-    print ("\nskipped by reading func: ")
+    print ("\nskipped by reading: ")
     for x in skipped_reading_fnc: print(x)
    
     
