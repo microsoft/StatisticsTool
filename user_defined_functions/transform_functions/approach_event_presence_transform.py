@@ -4,100 +4,157 @@ import numpy as np
 from user_defined_functions.transform_functions.calc_flicker_metrics import calc_flicker_metrics
 
 def approach_event_presence_transform(comp_data):
-    minimal_presence_seq_len = 1
-    roi_in_sec = 1
-    oo_roi_in_sec = 2
-    key = 'User_Status_gt'
-    user_move_type = comp_data[key]
-    move_type_mask_approach = np.full(np.shape(user_move_type), False)
-    move_type_mask_approach[user_move_type=='Approach_PC']   = True
+    # Inits
+    early_wake_flag  = False
+    early_wake_flag2 = False
 
+    # Program
+    approach_success_mask, multi_seq, pop_up_indication, pop_up_indication2, pop_up_reason_ind, pop_up_reason_ind2 = determine_approach_success_mask(comp_data)
+
+    user_move_type = comp_data['User_Status_gt']
     presence_pred = comp_data['detection']
-    presence_pred_at_approach = presence_pred[move_type_mask_approach==True] #assuming that approach labeling is in a single sequence of consecutive frames
-    approach_length = len(presence_pred_at_approach)
-    R0_first_frame = min(approach_length, roi_in_sec*30)
-    if approach_length<roi_in_sec*30:
-        pop_up_indication = True
+    presence_pred_at_approach = presence_pred[user_move_type=='Approach_PC']
+    approach_ind = np.where(user_move_type=='Approach_PC')[0]
+    mask_true_ind = np.where(approach_success_mask==True)[0]
+    presence_pred_at_range = presence_pred[mask_true_ind]
+
+    if len(approach_ind)==0: # No approach sequence exists
+        print(np.unique(user_move_type))
+        return pd.DataFrame()
+
+    if multi_seq == True:
+        seperator_app = np.where((np.diff(approach_ind)==1)==False)
+        approach_ind2 = approach_ind[(seperator_app[0][0]+1):]
+        approach_ind  = approach_ind[0:(seperator_app[0][0]+1)]
+        presence_pred_at_approach2 = presence_pred_at_approach[(seperator_app[0][0]+1):]
+        presence_pred_at_approach  = presence_pred_at_approach[0:(seperator_app[0][0]+1)]
+
+        seperator_mask = np.where((np.diff(mask_true_ind)==1)==False)
+        mask_true_ind2 = mask_true_ind[(seperator_mask[0][0]+1):]
+        mask_true_ind  = mask_true_ind[0:(seperator_mask[0][0]+1)]
+        presence_pred_at_range2 = presence_pred_at_range[(seperator_mask[0][0]+1):]
+        presence_pred_at_range  = presence_pred_at_range[0:(seperator_mask[0][0]+1)]
+
+    # Check valid range
+    if sum(presence_pred_at_range)==0:
+        temp_success_flag = False
+        presence_true_prct_at_range = 0
     else:
-        pop_up_indication = False
-    R1_first_frame = min(approach_length, oo_roi_in_sec*30)
-    presence_pred_at_approach_R0 = presence_pred_at_approach[approach_length-R0_first_frame:-1]
-    presence_pred_at_approach_R1 = presence_pred_at_approach[approach_length-R1_first_frame:approach_length-R0_first_frame]
-    presence_pred_at_approach_R2 = presence_pred_at_approach[0:approach_length-R1_first_frame]
+        temp_success_flag = True
+        presence_true_prct_at_range = sum(presence_pred_at_range)/len(presence_pred_at_range)
+
+    if multi_seq == True:
+        if sum(presence_pred_at_range2)==0:
+            temp_success_flag2 = False
+            presence_true_prct_at_range2 = 0
+        else:
+            temp_success_flag2 = True
+            presence_true_prct_at_range2 = sum(presence_pred_at_range2)/len(presence_pred_at_range2)    
+
+
+    # Detect first true duration from last approach frame
+    first_presence_in_app = np.where(presence_pred_at_approach==True)[0]
+    if len(first_presence_in_app) > 0:
+        first_presence_in_app = first_presence_in_app[0]
+        duration_from_app_end = len(presence_pred_at_approach) - first_presence_in_app
+    else:
+        first_presence_in_app = np.nan
+        duration_from_app_end = -60
+    
+    if multi_seq == True:
+        first_presence_in_app2 = np.where(presence_pred_at_approach2==True)[0]
+        if len(first_presence_in_app2) > 0:
+            first_presence_in_app2 = first_presence_in_app2[0]
+            duration_from_app_end2 = len(presence_pred_at_approach2) - first_presence_in_app2
+        else:
+            first_presence_in_app2 = np.nan
+            duration_from_app_end2 = -60        
+
+    # Check for early Wakes (FP)
+    first_range_frame_within_app = np.where(approach_ind==mask_true_ind[0])
+    if first_presence_in_app < first_range_frame_within_app[0][0]:
+        early_wake_flag = True
+    
+    if multi_seq == True:
+        first_range_frame_within_app2 = np.where(approach_ind2==mask_true_ind2[0])
+        if first_presence_in_app2 < first_range_frame_within_app2[0][0]:
+            early_wake_flag2 = True
+
+    # Calc flicker metrics
     if len(presence_pred_at_approach)>0:
         seq_num, avg_seq_len, med_seq_len = calc_flicker_metrics(np.array(presence_pred_at_approach))
     else:
         seq_num = avg_seq_len = med_seq_len = 0
 
-    seq_str_for_search = "True  "*minimal_presence_seq_len
-    seq_embeded_count = str(np.array(presence_pred_at_approach)).count(seq_str_for_search[:-1])
+    if multi_seq == True:
+        if len(presence_pred_at_approach2)>0:
+            seq_num2, avg_seq_len2, med_seq_len2 = calc_flicker_metrics(np.array(presence_pred_at_approach2))
+        else:
+            seq_num2 = avg_seq_len2 = med_seq_len2 = 0        
+
 
     # Arrange new_event output format
-    approach_indices = np.where(move_type_mask_approach==True)
-    if len(approach_indices[0])==0: # No approach sequence exists
-        return pd.DataFrame()
-    
-    new_event = comp_data.iloc[approach_indices[0][0]].to_dict()
+    new_event = comp_data.iloc[approach_ind[0]].to_dict()
     new_event['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
-    new_event['end_frame'] = approach_indices[0][-1]
-    new_event['frame_id']  = approach_indices[0][0] #start_frame
+    new_event['end_frame'] = approach_ind[-1]
+    new_event['frame_id']  = approach_ind[0] #start_frame
     new_event['Presence approach flicker sequence num'] = seq_num
     new_event['Presence approach flicker sequence mean length'] = avg_seq_len
     new_event['Presence approach flicker sequence median length'] = med_seq_len
-    
-    if sum(presence_pred_at_approach)==0:  # no presence indication at all
-        duration_from_app_end = -30
-    else:
-        duration_from_app_end = np.where(np.array(presence_pred_at_approach)==1)[0][-1]-np.where(np.array(presence_pred_at_approach)==1)[0][0]-(minimal_presence_seq_len-1)
 
-    if seq_embeded_count>0 and ((duration_from_app_end/30 >= roi_in_sec) and (duration_from_app_end/30 < oo_roi_in_sec)):
+    if multi_seq == True:
+        new_event2 = comp_data.iloc[approach_ind2[0]].to_dict()
+        new_event2['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
+        new_event2['end_frame'] = approach_ind2[-1]
+        new_event2['frame_id']  = approach_ind2[0] #start_frame
+        new_event2['Presence approach flicker sequence num'] = seq_num2
+        new_event2['Presence approach flicker sequence mean length'] = avg_seq_len2
+        new_event2['Presence approach flicker sequence median length'] = med_seq_len2       
+    
+
+    # Determine output state (FP, TP, FN)
+    if temp_success_flag == True:
         new_event['detection'] = True
         new_event['state'] = 1
-    else:
+    else: # Late wake (FN)
         new_event['detection'] = False
         new_event['state'] = 0
-    if (duration_from_app_end/30 >= oo_roi_in_sec):
+    if early_wake_flag == True: # Early wake (FP)
         new_event['detection_gt'] = False
         new_event['detection'] = True
         new_event['state'] = 0
 
+    if multi_seq == True:
+        if temp_success_flag2 == True:
+            new_event2['detection'] = True
+            new_event2['state'] = 1
+        else: # Late wake (FN)
+            new_event2['detection'] = False
+            new_event2['state'] = 0
+        if early_wake_flag2 == True: # Early wake (FP)
+            new_event2['detection_gt'] = False
+            new_event2['detection'] = True
+            new_event2['state'] = 0        
+
 
     # Add statistics about the event
     new_event['Approach pop up indication'] = pop_up_indication
-    new_event['Presence detection at R0 first frame'] = presence_pred_at_approach_R0.values[0]
-    if len(presence_pred_at_approach_R0)==0:
-        new_event['Approach event presence detected percent at R0'] = 0
-    else:
-        new_event['Approach event presence detected percent at R0'] = sum(presence_pred_at_approach_R0)/len(presence_pred_at_approach_R0)    
-    if len(presence_pred_at_approach_R1)==0:
-        new_event['Approach event presence detected percent at R1'] = 0
-    else:
-        new_event['Approach event presence detected percent at R1'] = sum(presence_pred_at_approach_R1)/len(presence_pred_at_approach_R1)    
-    if len(presence_pred_at_approach_R2)==0:
-        new_event['Approach event presence detected percent at R2'] = 0
-    else:
-        new_event['Approach event presence detected percent at R2'] = sum(presence_pred_at_approach_R2)/len(presence_pred_at_approach_R2)    
-    # Length of the presence sequence out of the entire approach event
-    if sum(presence_pred_at_approach)==0:
-        new_event['Approach event presence detected percent'] = 0
-        new_event['Approach event presence detected length'] = 0
-    else:
-        new_event['Approach event presence detected percent'] = len(np.where(np.array(presence_pred_at_approach)==1)[0])/len(np.array(presence_pred_at_approach))
-        # Length of the sequence of presence=1 within the approach event
-        if np.all(np.diff(np.where(np.array(presence_pred_at_approach)==1)[0])):
-            new_event['Approach event presence detected length'] = len(np.where(np.array(presence_pred_at_approach)==1)[0]) - (minimal_presence_seq_len-1)
-        else:
-            new_event['Approach event presence detected length'] = len(np.where(np.array(presence_pred_at_approach)==1)[0]) - (minimal_presence_seq_len-1)*3        
-
-    # Length (in frames) from the first detected sequence to the end of the approach event
     new_event['Presence seq duration prior to approach event end'] = duration_from_app_end
-    if sum(presence_pred_at_approach)==0:
-        new_event['Presence seq duration from approach event start'] = 100
-    else:
-        new_event['Presence seq duration from approach event start'] = np.where(np.array(presence_pred_at_approach)==1)[0][0] + 1
+    new_event['Approach event presence detected percent'] = presence_true_prct_at_range
+    new_event['Approach event number in clip'] = 1
+    new_event['Approach event pop up reason index'] = pop_up_reason_ind
+
+    if multi_seq == True:
+        new_event2['Approach pop up indication'] = pop_up_indication2
+        new_event2['Presence seq duration prior to approach event end'] = duration_from_app_end2
+        new_event2['Approach event presence detected percent'] = presence_true_prct_at_range2   
+        new_event2['Approach event number in clip'] = 2
+        new_event2['Approach event pop up reason index'] = pop_up_reason_ind2
 
 
     events = []
     events.append(new_event)
+    if multi_seq == True:
+        events.append(new_event2)
     transform_data = pd.DataFrame.from_records(events)
     return transform_data

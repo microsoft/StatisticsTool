@@ -60,7 +60,7 @@ def statistic_tool_reader_presence_calssification(path):
         # Set presence GT = false from begining of approach event till last 3 seconds of any approach event
         # To be replaced by distance
         # + split approach to 3 area: ROI, Transition, out of ROI and change GT accordingly
-        enable_approach_split = True
+        enable_approach_split = False
         presence_time_mask = np.full(np.shape(lines[1:]), True)
         approach_index_from_end = np.zeros(np.shape(lines[1:]))
         approach_roi_mask    = np.full(np.shape(lines[1:]), False)
@@ -88,11 +88,11 @@ def statistic_tool_reader_presence_calssification(path):
                     last_ind_to_mask = max(first_approach_ind,ind-sec_num_to_mask)
                     presence_time_mask[first_approach_ind:last_ind_to_mask] = False
                     approach_duration = ind - first_approach_ind
-                    print(-approach_duration+1)
+                    #print(-approach_duration+1)
                     approach_index_from_end[first_approach_ind:ind] = np.arange(-approach_duration+1,1)
                     approach_index_from_end[ind-1:ind+(min(post_app_frame_num,len(approach_index_from_end)-ind))-1] = np.arange(0,(min(post_app_frame_num,len(approach_index_from_end)-ind)))
-                    if first_approach_ind!=last_ind_to_mask:
-                        print('found')
+                    #if first_approach_ind!=last_ind_to_mask:
+                    #    print('found')
                     
                     first_approach_roi_ind   = int(max(ind-approach_roi_in_frames,first_approach_ind))
                     first_approach_trans_ind = int(max(ind-approach_trans_in_frames,first_approach_ind))
