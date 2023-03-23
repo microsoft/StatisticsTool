@@ -272,7 +272,8 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
         print(f"finished compare predictions for video {video_name}")
 
     print("finished all preds:\n")
-    print ("failed predictions: ")
+    print (f"succeded-{len(succeded)} skippied_reading-{len(skipped_reading_fnc)} skipped_json-{len(skipped_not_json)}, failed-{len(failed)}, total files num-{len(pred_path_list)}\n\n")
+    print ("\nfailed predictions: ")
     for x in failed: print(x)
     print ("\nskipped by reading func: ")
     for x in skipped_reading_fnc: print(x)
