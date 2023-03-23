@@ -1,3 +1,5 @@
+import numpy as np
+
 def determine_approach_success_mask(comp_data):
     # Parameters
     time_or_distance_based = "time"
