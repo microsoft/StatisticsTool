@@ -45,7 +45,18 @@
             </mat-grid-list>
         </div>
 
-        <button style="left:20px;top:10px;background-color: lightgray;font-weight: bold;" mat-raised-button color="primary">Save Template</button>
+        <div style="margin-left:0px;margin-top:10px;width: 350px;">
+            <mat-grid-list cols="2" rowHeight="40px">
+                <mat-grid-tile [colspan]="1" [rowspan]="1">
+                    <button style="background-color: lightgray;font-weight: bold;" 
+                    mat-raised-button color="primary"
+                    (click)="saveTemplate()">Save Template</button>
+                </mat-grid-tile>
+                <mat-grid-tile [colspan]="1" [rowspan]="1">
+                    <mat-slide-toggle [(ngModel)]="statService.calculateUnique">Calculate Unique</mat-slide-toggle>
+                </mat-grid-tile>
+            </mat-grid-list>
+        </div>
     </div>
 
     <!-- SEGMENTATIONS -->
@@ -53,8 +64,15 @@
         <pkl-view 
             [selectedRowsSet] = "x.rows"
             [selectedColumnsSet] = "x.columns"
-            [name] = "statService.currentTemplate.name"
+            [name] = "x.name"
+            [id] = i
         >
         </pkl-view>            
     </ng-container>
+
+</div>
+<div>
+    <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;;" 
+            mat-raised-button 
+            (click)="addView()">Add View</button>
 </div>

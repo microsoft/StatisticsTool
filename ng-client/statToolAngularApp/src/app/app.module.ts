@@ -16,6 +16,8 @@ import { StatisticsToolService } from './services/statistics-tool.service';
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import { TemplateSegmentationsComponent } from './template-segmentations/template-segmentations.component';
 import { TemplateSegmentsHeaderComponent } from './template-segments-header/template-segments-header.component';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatIconModule} from '@angular/material/icon';
 
 @NgModule({
   declarations: [
@@ -32,12 +34,14 @@ import { TemplateSegmentsHeaderComponent } from './template-segments-header/temp
     MatGridListModule,
     MatRadioModule,
     MatButtonModule,
+    MatSlideToggleModule,
     MatProgressSpinnerModule,
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatIconModule
   ],
   providers: [StatisticsToolService],
   bootstrap: [AppComponent]

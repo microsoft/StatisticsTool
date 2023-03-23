@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@fontsource/roboto": "^4.5.8",
     "ng-multiselect-dropdown": "^0.3.9"
   }
 }

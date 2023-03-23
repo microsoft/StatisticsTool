@@ -139,6 +139,8 @@ def Create_Report():
     global exp
     global comp_exp
 
+    calc_unique = True if request.args.get('calc_unique') == 'true' else False
+
     columns = [] 
     rows = [] 
     argCols = request.args.get('cols')
@@ -154,7 +156,7 @@ def Create_Report():
         rows = list(argRows.split(','))
     segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
 
-    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
+    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations,calc_unique)
     results_table.dash_app.layout = results_table.get_layout_new(columns,rows)
     wp = results_table.get_webpage()
 
@@ -173,9 +175,20 @@ def get_template_content():
     content = helper.get_template_content(file_name)
     return jsonify(content)
 
+@server.route('/save_template',methods=['POST'])
+def save_template():
+    data = request.json
+    name = data['name']
+    content = data['content']
+    helper = TemplatesFilesHelper()
+    result = helper.save_template(name,content)
+    return jsonify(result)
+    
+
 @server.route('/Reporter_new_old', methods=['GET', 'POST'])
 def Report_new():
     use_cached_report = request.args.get('use_cached_report')
+    
     session['error_message'] = ''
     global report_type
     report_type = 'NEW'
@@ -186,6 +199,7 @@ def Report(use_cached_report):
     global exp
     global comp_exp
     comp_exp = []
+
     if not use_cached_report:
         exp,result,err_msg = load_experiment(request,False)
 
@@ -205,7 +219,7 @@ def Report(use_cached_report):
         segmentations = {seg_category:v['possible partitions'] 
         for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
 
-        results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
+        results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations,calc_unique)
         return results_table.get_webpage()
     elif report_type == 'ORIG':
         # This is the deprecated reporter (before moving to Dash)

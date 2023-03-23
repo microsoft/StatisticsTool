@@ -21,38 +21,22 @@ export class PklViewComponent implements OnInit  {
     this.selectedColumns = cols.join(',');
   }
   @Input() name = '';
-
+  @Input() id = 0;
   loadCounter = 0;
 
   constructor(private httpClient:HttpClient,
-              private statToolService:StatisticsToolService) {
-    this.url = '/Reporter_new';
-                    
-
-    /*this.subscribeGetSegment = this.httpClient.post('/get_segmentations',{})
-                        .subscribe(res => {
-                            let arr = Object.entries(res);
-                            let map = new Map<string,string[]>();
-                            arr.forEach(x => { map.set(x[0],x[1]) });
-                            this.statToolService.optionalSegmentations = map;
-                            this.statToolService.segmentationsFetched.next(true);
-                          }
-                        )*/
-  }
+              public statToolService:StatisticsToolService) {
+    this.url = '/Reporter_new?calc_unique=' + statToolService.calculateUnique;
+ }
 
   ngOnInit(): void {
     this.fixSelectedString();
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows;
+    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
     this.loadCounter = 1;
   }
 
    ngOnDestroy(){
-    //if (this.subscribeGetSegment != null)
-    //  this.subscribeGetSegment.unsubscribe();
-  }
-
-  onclick(){
-    this.url = this.url + '?name=hagai';
+  
   }
 
   onColumnsChanged(items:{'item_id':string,'item_text':string}[]){
@@ -62,9 +46,10 @@ export class PklViewComponent implements OnInit  {
     })
 
     this.fixSelectedString();
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows;
-    
-    console.log('url',this.url);
+    this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+   
+    //console.log('url',this.url);
   }
 
   onRowsChanged(items:{'item_id':string,'item_text':string}[]){
@@ -74,9 +59,10 @@ export class PklViewComponent implements OnInit  {
     })
     
     this.fixSelectedString();
+    this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.loadCounter = 1;
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows;
-    console.log('url',this.url);
+    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    //console.log('url',this.url);
   }
 
   fixSelectedString(){
@@ -88,7 +74,15 @@ export class PklViewComponent implements OnInit  {
   }
 
   onlaod(){
-    console.log('loaded...')
+    //console.log('loaded...')
     this.loadCounter = this.loadCounter - 1;
+  }
+
+  onViewNameChanged(event:any){
+    this.statToolService.updateSegmentationName(this.name,this.id,event.target.value);
+  }
+
+  removeView(){
+    this.statToolService.removeView(this.id);
   }
 }

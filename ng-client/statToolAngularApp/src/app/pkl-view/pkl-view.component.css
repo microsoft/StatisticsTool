@@ -14,3 +14,13 @@
   right: 0;
   margin:auto;
 }
+
+::ng-deep .pkl-view-header .mat-grid-tile-content {
+  justify-content: left !important;
+}
+
+.caption {
+  padding-left: 3px;
+  font-weight: bold;
+}
+

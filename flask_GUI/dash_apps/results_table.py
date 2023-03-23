@@ -69,11 +69,14 @@ class Results_table():
             return self.table.get_table(cols_input, rows_input)
         '''
 
-    def set_data(self, exp, segmentations):
+    def set_data(self, exp, segmentations,calc_unique = False):
+        self.calc_unique = calc_unique
         self.table = pt.PivotTable(segmentations, data = exp, cell_function=self.get_cell_exp)
         self.segmentation_categories = list(segmentations.keys())
 
     def get_webpage(self):
+        
+        
         return self.dash_app.index()
 
     def get_cell_exp(self, all_exps, column_keys, row_keys):  
@@ -81,6 +84,7 @@ class Results_table():
         The function that return a single cell
         '''     
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
+
 
         exp_data = {}
         exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations)
@@ -106,7 +110,7 @@ class Results_table():
 
                 TDs.append(html.Td(curr_metric, style={'background-color':color}))
 
-                if k in ["TP", "FP", "FN"]:
+                if self.calc_unique == True and k in ["TP", "FP", "FN"]:
                     if self.table.unique_helper != None:
                         unique = self.table.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
                         TDs.append(html.Td(unique, style={'background-color':color}))

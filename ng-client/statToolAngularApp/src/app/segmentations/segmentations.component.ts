@@ -28,22 +28,6 @@ export class SegmentationsComponent implements OnInit{
   
   dropdownSettings = {};
   subscribeSegmentationsFetched = new Subscription;
-  /*isRow = false;
-  template = '';
-  segIndex = 0;
-
-  @Input() optionalSegmentations:string[] = [];
-  @Input() name = '';
-
-  @Input() set setInfo(info:{ 'isRow':boolean,'template':string,'segmentIndex':number}){
-    this.isRow = info.isRow;
-    this.template = info.template;
-    this.segIndex = info.segmentIndex;
-    let segments = this.statToolService.getTemplateSegments(this.template,this.segIndex,this.isRow);
-    segments.forEach(s => {
-      this.selected.push({'item_id':s,'item_text':s})  
-    })
-  }*/
   
   @Output() segmentsChanged = new EventEmitter();
 
@@ -52,7 +36,7 @@ export class SegmentationsComponent implements OnInit{
   }
 
   ngOnInit(): void {
-
+      
       for (let [key, value] of this.statToolService.optionalSegmentations) {
         this.dropdownList.push({'item_id':key,'item_text':key})
       }

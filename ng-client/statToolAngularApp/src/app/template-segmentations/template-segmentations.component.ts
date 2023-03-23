@@ -10,7 +10,7 @@ import { StatisticsToolService } from '../services/statistics-tool.service';
 })
 export class TemplateSegmentationsComponent implements OnInit {
   
-  radioChecked = 'load';
+  radioChecked = 'create';
   templateNameCreated = '';
 
   constructor(private httpClient:HttpClient,
@@ -18,6 +18,10 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    let sub = this.statService.segmentationsFetched.subscribe(res => {
+      this.statService.addNewTemplate();
+      sub.unsubscribe();
+    })
   }
 
   ngOnDestroy(){
@@ -30,10 +34,14 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   onChangeRadio(e:any) {
+    console.log('onChangeRadio',e.target.value)
     if (e.target.value == 'Load Template')
       this.radioChecked = 'load';
-    else
+    else {
       this.radioChecked = 'create';
+      this.statService.templates = [];
+      this.statService.addNewTemplate();
+    }
   }
 
   onTemplateSelected(event:any){
@@ -66,5 +74,15 @@ export class TemplateSegmentationsComponent implements OnInit {
     return '';
   }
 
-  
+  addView(){
+    this.statService.addSegmentations();
+  }
+
+  saveTemplate(){
+    if (this.radioChecked == 'create')
+      this.statService.saveTemplate(true,this.templateNameCreated);
+    else
+      this.statService.saveTemplate(false);
+
+  }
 }

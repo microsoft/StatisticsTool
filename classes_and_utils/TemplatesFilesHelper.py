@@ -31,7 +31,7 @@ class TemplatesFilesHelper:
                 templates.append(file_parts[0])
         return templates
     
-    def save_template(self,filename,content):
+    def save_template(self,filename,content,returnAllTemplates = True):
         _, file_extension = os.path.splitext(filename)
         if file_extension == '' or file_extension == None:
             filename += ".json"
@@ -40,6 +40,9 @@ class TemplatesFilesHelper:
         
         with open(path,'w') as f:
             f.write(content)
+
+        if returnAllTemplates:
+            return self.get_all_templates_content();            
 
     def get_template_content(self,filename):
         _, file_extension = os.path.splitext(filename)
