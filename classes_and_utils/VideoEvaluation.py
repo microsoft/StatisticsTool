@@ -181,7 +181,8 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
 
     pred_file_name = ''
     gt_file_name = ''
-    
+    succeeded = 0
+    failed = 0
     #for GT_path, pred_path, image_folder_fullpath, image_folder_name in zip(GT_path_list, pred_path_list, image_folder_fullpath_list, images_folders_list):
     for pred in pred_path_list:
         gt_local_path = None
@@ -226,9 +227,11 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             pred_file_name = os.path.basename(pred)
 
             print(f"Start compare files for video {video_name}: {pred} and {gt_local_path}")
+            succeeded +=1
         except Exception as ex:
             print(f"Failed to compare log {pred}, continue with next log")
             print(ex)
+            failed+=1
             continue
 
         output_file =  os.path.join(output_dir, video_name + '.json')
@@ -238,6 +241,9 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
        
         print(f"finished compare predictions for video {video_name}")
     
+    print('*************************************************************')
+    print(f'Failed clips: {failed}. Succedded clips: {succeeded}')
+    print('*************************************************************')
     sheldon_pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
     sheldon_gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
     sheldon_header_data = create_sheldon_list_header(primary_path=sheldon_pred_dir, primary_name=pred_file_name, secondary_path=sheldon_gt_dir, secondary_name=gt_file_name)
