@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from user_defined_functions.transform_functions.calc_flicker_metrics import calc_flicker_metrics
-from user_defined_functions.transform_functions import  determine_approach_success_mask
+from user_defined_functions.transform_functions.determine_approach_success_mask import  determine_approach_success_mask
 
 def approach_event_presence_transform(comp_data):
     # Inits
