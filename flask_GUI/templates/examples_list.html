@@ -82,7 +82,9 @@ window.onload = function  () {
                         <span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;"> Frame # {{frame_key}}-{{per_video_example_hash[vid_key][frame_key]["end_frame"]}}</span>
                         <ul>
                             {% for example_name in per_video_example_hash[vid_key][frame_key]["frames"]: %}
-                           <li><a style="font-family: Arial, Helvetica, sans-serif;" target="iframe3" href="/show_im?example_name={{example_name}}&comp_index={{comp_index}}"> Frame - {{example_name[2]}}, Index # {{example_name[1]}}</a> </li>
+                           <li><a style="font-family: Arial, Helvetica, sans-serif;" 
+                                   target="" 
+                                   href='javascript:window.parent.postMessage({"action":"show_image","value":"/show_im?example_name={{example_name}}&comp_index={{comp_index}}"})'> Frame - {{example_name[2]}}, Index # {{example_name[1]}}</a> </li>
                             {%endfor%}
                         </ul>
                     </li>

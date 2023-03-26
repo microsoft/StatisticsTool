@@ -18,6 +18,10 @@ import { TemplateSegmentationsComponent } from './template-segmentations/templat
 import { TemplateSegmentsHeaderComponent } from './template-segments-header/template-segments-header.component';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {MatIconModule} from '@angular/material/icon';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatToolbarModule} from '@angular/material/toolbar';
+import { DrawerComponent } from './drawer/drawer.component';
+import { DrawerContentComponent } from './drawer-content/drawer-content.component';
 
 @NgModule({
   declarations: [
@@ -27,6 +31,8 @@ import {MatIconModule} from '@angular/material/icon';
     PklViewComponent,
     TemplateSegmentationsComponent,
     TemplateSegmentsHeaderComponent,
+    DrawerComponent,
+    DrawerContentComponent,
   ],
   imports: [
     NgMultiSelectDropDownModule.forRoot(),
@@ -36,12 +42,14 @@ import {MatIconModule} from '@angular/material/icon';
     MatButtonModule,
     MatSlideToggleModule,
     MatProgressSpinnerModule,
+    MatSidenavModule,
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    MatIconModule
+    MatIconModule,MatToolbarModule
+
   ],
   providers: [StatisticsToolService],
   bootstrap: [AppComponent]

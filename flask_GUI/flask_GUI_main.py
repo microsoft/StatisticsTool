@@ -299,9 +299,13 @@ def show_stats():
 #########################################################
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    #return render_template('index.html')
     comp_index, unique, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon = manage_list_request(request, exp, comp_exp, report_type)
     return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index, unique = unique)
+
+@server.route('/update_list_2', methods=['GET', 'POST'])
+def show_list2():
+    return render_template('index.html')
+
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():

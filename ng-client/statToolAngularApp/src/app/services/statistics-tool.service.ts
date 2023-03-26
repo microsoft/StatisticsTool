@@ -43,6 +43,8 @@ export class StatisticsToolService implements OnInit {
   optionalSegmentations = new Map<string,string[]>();
   templatesFetched = new Subject();
   segmentationsFetched = new Subject();
+  openDrawer = new Subject<string>();
+    
   templates:TemplateInfo[] = [];
   currentTemplate:TemplateInfo = new TemplateInfo();
   calculateUnique = false;
@@ -50,6 +52,11 @@ export class StatisticsToolService implements OnInit {
   //templates = [{'key':0,'value':'--- select ---'},{'key':1,'value':'Template 1'},{'key':2,'value':'Template 2'},{'key':3,'value':'Template 3'}]
   templateNameOptions:{'key':number,'value':string}[] = [];
   selectedTamplate = 0;
+
+  showDrawer = false;
+
+  drawerUpdateListUrl = '';
+  drawerShowImageUrl = '';
 
   constructor(private httpClient:HttpClient) { 
     this.httpClient.post<{'content':IContent,'name':string}[]>('/get_all_templates',{})
@@ -88,11 +95,8 @@ export class StatisticsToolService implements OnInit {
   
         this.templatesFetched.next(true);
       })
+      
   }
-
- 
-
-  
 
   ngOnInit(): void {
         
@@ -202,5 +206,13 @@ export class StatisticsToolService implements OnInit {
     }
 
     this.currentTemplate.Segmentations = segments;
+  }
+
+  getDrawerUpdateListUrl(){
+    return this.drawerUpdateListUrl;
+  }
+
+  getDrawerShowImageUrl(){
+    return this.drawerShowImageUrl;
   }
 }

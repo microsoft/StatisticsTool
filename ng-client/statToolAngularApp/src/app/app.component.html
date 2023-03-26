@@ -1,13 +1,40 @@
+<drawer></drawer>
 <template-segmentations></template-segmentations>
-<!--<segmentations></segmentations>
-<iframe style="display:block; width:100%; height:400px;" [src]="url | safe">
-</iframe>
+<!--<div fxLayout="column" style="max-width: 1366px;margin: 0 auto;">  
+    <mat-sidenav-container fullscreen>
+      <mat-sidenav style="direction:ltr;"
+                   #drawer 
+                   class="MyDrawer" 
+                   mode="over" 
+                   style="height:300px;width: 300px;background-color: chartreuse;color:black"
+                   [(opened)]="bopen">
+        <drawer-content #drawerContent></drawer-content>
+      </mat-sidenav>
+  
+      
+      
+      
+      
+    </mat-sidenav-container>
+  </div>-->
 
-<button (click)="onclick()">click</button>
-<br>-->
-<!---
-        <iframe style="display:block; width:100%; height:400px;" src="/Reporter_new">
-</iframe>
+  <!---
+
+  <mat-sidenav-container fullscreen>
+    <mat-sidenav
+      #sidenav
+      mode="push"
+      class="example-sidenav"
+      opened="true"
+     
+    >
+      <div class="logomain" style="width:400px;z-index:1000">Logo Part</div>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <h1>Hagai</h1>
+      <button (click)="sidenav.toggle()">Open</button>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+
 -->
-
-<!--<div [innerHtml]="data" style="display:block; width:100%; height:400px;"></div>-->

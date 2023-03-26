@@ -103,6 +103,11 @@ class Results_table():
                     link = "/update_list?cell_name={}&stat={}".format(exp_data[exp_name]['cell_name'],k)
                     curr_metric = html.A(txt ,href=link, target="example-list-div")
                     color = 'white'
+
+                    js = json.dumps({'action':'update_list','value': link})
+                    msg = "javascript:window.parent.postMessage({});".format(js)
+                    curr_metric = html.A(txt ,href=msg, target="")
+                    color = 'white'
                 else:
                     curr_metric = txt
                     color = 'white' if num_of_exps == 1 else\
