@@ -4,10 +4,12 @@ import numpy as np
 from user_defined_functions.transform_functions.calc_flicker_metrics import calc_flicker_metrics
 
 def leave_event_presence_transform(comp_data):
-    frame_num_to_remove_at_leave_seq_start = 15 # should be omitted after introducing distance>1.3m
+    frame_num_to_remove_at_leave_seq_start = 30 / 2 # should be omitted after introducing distance>1.3m
     ten_sec_in_frames = 10*30 + frame_num_to_remove_at_leave_seq_start
     success_range_start = 4*30
     success_range_end   = 6*30
+    #TODO: Change 30 to original_fps
+    #TODO: Modify code to work with frame ids instead of indices - do this for all event transformations.
 
     key = 'User_Status_gt'
     user_move_type = comp_data[key]
