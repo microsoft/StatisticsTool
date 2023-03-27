@@ -13,6 +13,7 @@ export class SegmentationItem {
 export class TemplateInfo {
   //wasChanged = false;
   Segmentations:SegmentationItem[] = [];
+  SegmentationsClicked:boolean[] = [];
   name = '';
 }
 
@@ -44,6 +45,7 @@ export class StatisticsToolService implements OnInit {
   templatesFetched = new Subject();
   segmentationsFetched = new Subject();
   openDrawer = new Subject<string>();
+  uniqueValueChanged = new Subject<boolean>();
     
   templates:TemplateInfo[] = [];
   currentTemplate:TemplateInfo = new TemplateInfo();
@@ -61,19 +63,7 @@ export class StatisticsToolService implements OnInit {
   constructor(private httpClient:HttpClient) { 
     this.httpClient.post<{'content':IContent,'name':string}[]>('/get_all_templates',{})
       .subscribe(res => {
-        res.forEach(x => {
-          let c:IContent = JSON.parse(JSON.stringify(x.content));
-          let t = new TemplateInfo();
-          t.name = x.name;
-          c.segmentations.forEach(s => {
-            let seg = new SegmentationItem();
-            seg.columns = s.columns.split(',');
-            seg.rows = s.rows.split(',');
-            seg.name = s.name;
-            t.Segmentations.push(seg);
-          })  
-          this.templates.push(t) ;
-        })
+        this.processTemplates(res);
 
         //get all optional segments
         this.optionalSegmentations = new Map<string,string[]>();
@@ -86,16 +76,37 @@ export class StatisticsToolService implements OnInit {
           }
         )
         
-        this.templateNameOptions = [];
-        this.templateNameOptions.push({'key':0,'value':'--- select ---'});
-        for(let i = 0;i< this.templates.length;i++){
-          if (this.templates[i].name != '')
-            this.templateNameOptions.push({'key':(i+1),'value':this.templates[i].name});
-        }
+        this.updateTemplateNames();       
   
         this.templatesFetched.next(true);
       })
       
+  }
+
+  processTemplates(items:{'content':IContent,'name':string}[]){
+    items.forEach(x => {
+      let c:IContent = JSON.parse(JSON.stringify(x.content));
+      let t = new TemplateInfo();
+      t.name = x.name;
+      c.segmentations.forEach(s => {
+        let seg = new SegmentationItem();
+        seg.columns = s.columns.split(',');
+        seg.rows = s.rows.split(',');
+        seg.name = s.name;
+        t.Segmentations.push(seg);
+        t.SegmentationsClicked.push(false)
+      })  
+      this.templates.push(t) ;
+    })
+  }
+
+  updateTemplateNames(){
+    this.templateNameOptions = [];
+    this.templateNameOptions.push({'key':0,'value':'--- New Template ---'});
+    for(let i = 0;i< this.templates.length;i++){
+      if (this.templates[i].name != '')
+        this.templateNameOptions.push({'key':(i+1),'value':this.templates[i].name});
+    }
   }
 
   ngOnInit(): void {
@@ -148,6 +159,7 @@ export class StatisticsToolService implements OnInit {
     s.columns = [];
     s.rows = [];
     t.Segmentations.push(s);
+    t.SegmentationsClicked.push(false);
     this.templates.push(t);
     this.currentTemplate = t;
     console.log('addNewTemplate',JSON.stringify(this.templates),'current:',JSON.stringify(this.currentTemplate));
@@ -156,6 +168,7 @@ export class StatisticsToolService implements OnInit {
   addSegmentations(){
     //this.currentTemplate.wasChanged = true;
     this.currentTemplate.Segmentations.push(new SegmentationItem());
+    this.currentTemplate.SegmentationsClicked.push(false);
   }
 
   saveTemplate(isNewTemplate:boolean,newTemplateName:string = ''){
@@ -179,19 +192,8 @@ export class StatisticsToolService implements OnInit {
     }).subscribe(res => {
 
       this.templates = [];
-      res.forEach((x: { content: IContent; name: string; }) => {
-        let c:IContent = JSON.parse(JSON.stringify(x.content));
-        let t = new TemplateInfo();
-        t.name = x.name;
-        c.segmentations.forEach(s => {
-          let seg = new SegmentationItem();
-          seg.columns = s.columns.split(',');
-          seg.rows = s.rows.split(',');
-          seg.name = s.name;
-          t.Segmentations.push(seg);
-        })  
-        this.templates.push(t) ;
-      })
+      this.processTemplates(res);
+      this.updateTemplateNames();       
       this.onTemplateSelected(template_name);
     })
   }

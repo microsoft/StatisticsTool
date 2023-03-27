@@ -22,6 +22,7 @@ import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import { DrawerComponent } from './drawer/drawer.component';
 import { DrawerContentComponent } from './drawer-content/drawer-content.component';
+import {MatExpansionModule} from '@angular/material/expansion';
 
 @NgModule({
   declarations: [
@@ -48,8 +49,9 @@ import { DrawerContentComponent } from './drawer-content/drawer-content.componen
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    MatIconModule,MatToolbarModule
-
+    MatIconModule,
+    MatToolbarModule,
+    MatExpansionModule,
   ],
   providers: [StatisticsToolService],
   bootstrap: [AppComponent]

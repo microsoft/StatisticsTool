@@ -24,3 +24,7 @@
   font-weight: bold;
 }
 
+.view-name:focus {
+  outline: none;
+}
+

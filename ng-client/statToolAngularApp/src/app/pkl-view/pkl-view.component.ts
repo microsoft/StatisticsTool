@@ -24,6 +24,8 @@ export class PklViewComponent implements OnInit  {
   @Input() id = 0;
   loadCounter = 0;
 
+  subscribeUniqueChange = new Subscription;
+
   constructor(private httpClient:HttpClient,
               public statToolService:StatisticsToolService) {
     this.url = '/Reporter_new?calc_unique=' + statToolService.calculateUnique;
@@ -33,10 +35,16 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
     this.loadCounter = 1;
+
+    this.subscribeUniqueChange = this.statToolService.uniqueValueChanged.subscribe(res => {
+      this.loadCounter = 1;
+      this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    })
   }
 
    ngOnDestroy(){
-  
+    if (this.subscribeUniqueChange != null)
+      this.subscribeUniqueChange.unsubscribe();
   }
 
   onColumnsChanged(items:{'item_id':string,'item_text':string}[]){

@@ -13,6 +13,7 @@ from flask_GUI.dash_apps.results_table_css import css
 from flask import Flask, render_template
 from flask_GUI.constants import COLOR_GRADIENT_RED_WHITE_BLUE
 import math
+from classes_and_utils.unique_helper import UniqueHelper
 
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
@@ -70,6 +71,12 @@ class Results_table():
         '''
 
     def set_data(self, exp, segmentations,calc_unique = False):
+
+        if len(exp['ref']) > 0 and calc_unique:
+            self.unique_helper = UniqueHelper(exp['main'],exp['ref'][0])
+        else:
+            self.unique_helper = None
+
         self.calc_unique = calc_unique
         self.table = pt.PivotTable(segmentations, data = exp, cell_function=self.get_cell_exp)
         self.segmentation_categories = list(segmentations.keys())
@@ -84,8 +91,7 @@ class Results_table():
         The function that return a single cell
         '''     
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
-
-
+        
         exp_data = {}
         exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations)
         if all_exps[REF_EXP] !=[]:
@@ -124,8 +130,8 @@ class Results_table():
                 TDs.append(html.Td(curr_metric, style={'background-color':color}))
 
                 if self.calc_unique == True and k in ["TP", "FP", "FN"]:
-                    if self.table.unique_helper != None:
-                        unique = self.table.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
+                    if self.unique_helper != None:
+                        unique = self.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
                         TDs.append(html.Td(unique, style={'background-color':color}))
                     else:
                         TDs.append(html.Td('', style={'background-color':color}))
@@ -178,17 +184,7 @@ class Results_table():
         t = self.table.get_table(columns,rows)
         table_buttons_div = html.Div(id='table-div',children=t,style=css['table-div'])
 
-        example_list_div = html.Iframe([dbc.Alert('Example_list', color="secondary")],\
-                                        name='example-list-div', 
-                                        style=css['example-list-div'])
-
-        image_div = html.Iframe([html.H1('Image div')], 
-                                name='iframe3', 
-                                id='image-div', 
-                                style=css['image-div'])
-
-
-        whole_page = html.Div([image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
+        whole_page = html.Div([table_buttons_div], style=css['whole-reporter'])
         return  whole_page    
 
 

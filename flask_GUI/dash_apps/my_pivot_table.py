@@ -9,7 +9,6 @@ import numpy as np
 import dash_bootstrap_components as dbc
 
 sys.path.append('../classes_and_utils')
-from classes_and_utils.unique_helper import UniqueHelper
 from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections
 
 def default_get_cell(data, column_keys, row_keys):
@@ -21,10 +20,6 @@ class   PivotTable():
         self.segmentations = segmentations
         self.get_cell = cell_function
         self.data = data
-        if len(self.data['ref']) > 0:
-            self.unique_helper = UniqueHelper(self.data['main'],self.data['ref'][0])
-        else:
-            self.unique_helper = None
 
     def get_row(self, rows_keys, columns_order, horizontal_span_size, all_rows_cats, idx_hist):
         '''

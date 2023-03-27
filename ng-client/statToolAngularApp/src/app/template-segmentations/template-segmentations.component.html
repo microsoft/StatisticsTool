@@ -2,26 +2,18 @@
     <!-- HEADER (TODO: REMOVE IT TO A SEPARATE COMPONENT) -->
     
     <div style="width:100%;
-                height:195px;
+                height:50px;
                 border:1px solid lightgray;
                 border-radius: 4px;
                 color:#182a69;
                 background-color: #fafafa;">
 
-        <h3 style="margin-left: 5px;">TEMPLATE {{ getTemplateNameForTitle() }}</h3>
-
-        <div class="template-selection" style="width:600px">
-            <mat-grid-list cols="4" rowHeight="40px">
-                <mat-grid-tile  [colspan]="1" [rowspan]="1">
-                    <div>
-                        <input type="radio" name="template" value="Load Template" (change)="onChangeRadio($event)" [checked]="isChecked('load')">
-                        <label for="load_template">Load Template</label>
-                    </div>
-                </mat-grid-tile>
-                <mat-grid-tile [colspan]="3" [rowspan]="1">
-                    <select [disabled]="!isChecked('load')"
+        <div class="template-selection" style="width:600px;margin-left: 10px;padding-top: 5px;">
+            <mat-grid-list cols="3" rowHeight="40px">
+                <mat-grid-tile [colspan]="1" [rowspan]="1">
+                    <select 
                         [(ngModel)]="statService.selectedTamplate"
-                        style="height: 23px; width:98%;border-color:lightgray;border-radius: 3px;"
+                        style="height: 29px; width:95%;border-color:lightgray;border-radius: 3px;"
                         (change)="onTemplateSelected($event)"
                         >
                         <option *ngFor="let t of statService.templateNameOptions"
@@ -30,46 +22,44 @@
                     </select>
                 </mat-grid-tile>
                 
-                <mat-grid-tile [colspan]="1" [rowspan]="1">
-                    <div>
-                        <input type="radio" name="template" value="Create Template" (change)="onChangeRadio($event)" [checked]="isChecked('create')">
-                        <label for="create_template">Create Template</label>
+                <ng-container *ngIf="isNewTemplateMode">
+                    <mat-grid-tile  [colspan]="1" [rowspan]="1">
+                        <input type="text" 
+                            placeholder="Template Name"
+                            [(ngModel)]="templateNameCreated"
+                            style="height:25px;width:95%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;"
+                            >
+                    </mat-grid-tile>
+                </ng-container>
+                <mat-grid-tile  [colspan]="1" [rowspan]="1">
+                    <div class="save-icon">
+                        <img src="assets/save-icon.svg" style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" title="Save Template"
+                        (click)="saveTemplate()">
                     </div>
-                </mat-grid-tile>
-                <mat-grid-tile  [colspan]="3" [rowspan]="1">
-                    <input type="text" 
-                        [(ngModel)]="templateNameCreated"
-                        style="height:20px;width:97%;border:1px solid lightgray;border-radius: 3px;"
-                        [disabled]="!isChecked('create')">
-                </mat-grid-tile>
-            </mat-grid-list>
-        </div>
-
-        <div style="margin-left:0px;margin-top:10px;width: 350px;">
-            <mat-grid-list cols="2" rowHeight="40px">
-                <mat-grid-tile [colspan]="1" [rowspan]="1">
-                    <button style="background-color: lightgray;font-weight: bold;" 
-                    mat-raised-button color="primary"
-                    (click)="saveTemplate()">Save Template</button>
-                </mat-grid-tile>
-                <mat-grid-tile [colspan]="1" [rowspan]="1">
-                    <mat-slide-toggle [(ngModel)]="statService.calculateUnique">Calculate Unique</mat-slide-toggle>
+                    <div>
+                        <mat-slide-toggle [(ngModel)]="statService.calculateUnique" (change)="slideUniqueChange($event)">Calculate Unique</mat-slide-toggle>
+                    </div>
                 </mat-grid-tile>
             </mat-grid-list>
         </div>
     </div>
 
     <!-- SEGMENTATIONS -->
-    <ng-container *ngFor="let x of statService.currentTemplate.Segmentations;let i = index">
-        <pkl-view 
-            [selectedRowsSet] = "x.rows"
-            [selectedColumnsSet] = "x.columns"
-            [name] = "x.name"
-            [id] = i
-        >
-        </pkl-view>            
-    </ng-container>
-
+    <div style="margin-top:3px">
+        
+            <ng-container *ngFor="let x of statService.currentTemplate.Segmentations;let i = index">
+                <button class="collapsible" (click)="clickPanel(i)" [ngClass]="getActiveCls(i)">View {{ getTitle(i) }}</button>
+                    <div class="content" [ngStyle]="{'max-height':getHeight(i)}">
+                        <pkl-view 
+                            [selectedRowsSet] = "x.rows"
+                            [selectedColumnsSet] = "x.columns"
+                            [name] = "x.name"
+                            [id] = i
+                        >
+                        </pkl-view>          
+                    </div>  
+            </ng-container>
+    </div>
 </div>
 <div>
     <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;;" 
