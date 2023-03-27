@@ -92,6 +92,14 @@ class Results_table():
             exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations) 
 
         all_metrics = []
+        if len(all_exps) > 0:
+            TDs = []
+            TDs.append(html.Td(''))
+            TDs.append(html.Td('MAIN', style={'color':'black','font-weight':'bold'}))
+            TDs.append(html.Td(''))
+            TDs.append(html.Td('REF', style={'color':'black','font-weight':'bold'}))
+            all_metrics.append(html.Tr(TDs))
+
         for k in exp_data[MAIN_EXP].keys():
             
             TDs = [html.Td(k)]

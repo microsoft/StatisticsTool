@@ -3,7 +3,7 @@ from glob import glob
 from pathlib import Path
 
 
-USER_DEFINED_TEMPLATES_FOLDER_NAME = "user_defined_templates"
+REPORTS_TEMPLATES_FOLDER_NAME = "reports_templates"
 
 
 class TemplateItem:
@@ -22,7 +22,7 @@ class TemplatesFilesHelper:
 
     def get_all_templates_names(self):
         templates = []
-        path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), USER_DEFINED_TEMPLATES_FOLDER_NAME,'*'))
+        path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,'*'))
         files = glob(path)
         for fullname in files:
             filename = fullname.split(os.sep)[-1]
@@ -36,7 +36,7 @@ class TemplatesFilesHelper:
         if file_extension == '' or file_extension == None:
             filename += ".json"
 
-        path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), USER_DEFINED_TEMPLATES_FOLDER_NAME,filename)
+        path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,filename)
         
         with open(path,'w') as f:
             f.write(content)
@@ -49,7 +49,7 @@ class TemplatesFilesHelper:
         if file_extension == '' or file_extension == None:
             filename += ".json"
 
-        path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), USER_DEFINED_TEMPLATES_FOLDER_NAME,filename)
+        path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,filename)
         if os.path.exists(path) == False:
             return ''
         
@@ -59,7 +59,7 @@ class TemplatesFilesHelper:
         
     def get_all_templates_content(self):
         templates = []
-        path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), USER_DEFINED_TEMPLATES_FOLDER_NAME,'*'))
+        path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,'*'))
         files = glob(path)
         for fullname in files:
             filename = fullname.split(os.sep)[-1]
