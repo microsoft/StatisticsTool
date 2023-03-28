@@ -6,6 +6,7 @@ from turtle import left
 #from classes_and_utils.utils import empty_when_negative_x
 import pandas as pd
 
+#TODO: Add Correction to BB from emulation
 def statistic_tool_reader_fusion_detection_logs(path, threshold_score=0.5):
     with open(path,'r') as file:
         lines = file.readlines()

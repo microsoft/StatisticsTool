@@ -5,13 +5,17 @@ from turtle import left
 #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #from classes_and_utils.utils import empty_when_negative_x
 import pandas as pd
+from utils.LogsParser import get_fps
 
 def statistic_tool_reader_presence_calssification(path):
     with open(path,'r') as file:
         lines = file.readlines()
         
+        header = json.loads(lines[0])
         line = json.loads(lines[1])
         records = []
+        
+        fps = get_fps(header)
 
         # Add header information to all frames
         header_line = json.loads(lines[0])
@@ -66,12 +70,12 @@ def statistic_tool_reader_presence_calssification(path):
         approach_roi_mask    = np.full(np.shape(lines[1:]), False)
         approach_trans_mask  = np.full(np.shape(lines[1:]), False)
         approach_oo_roi_mask = np.full(np.shape(lines[1:]), False)
-        sec_num_to_mask = 3*30
+        sec_num_to_mask = 3 * fps
         prev_user_status = 'NoUser'
         during_approach_seq = False
         post_app_frame_num = 200
-        approach_roi_in_frames   = 30*1
-        approach_trans_in_frames = 30*1.5
+        approach_roi_in_frames   = 1 * fps
+        approach_trans_in_frames = 1.5 * fps
         for ind,line in enumerate(lines[1:]):
             line = json.loads(line)
             if 'type' not in line['keys'] or (line['keys']['type'] != 'sequence' and line['keys']['type'] != 'presence'):

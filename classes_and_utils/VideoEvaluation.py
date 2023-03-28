@@ -162,7 +162,7 @@ class VideoEvaluation:
 
    
 
-def compare_predictions_directory(pred_dir, output_dir, overlap_function, readerFunction, transform_func, evaluation_func, gt_dir = None):
+def compare_predictions_directory(pred_dir, output_dir, overlap_function, readerFunction, transform_func, evaluation_func, gt_dir = None, log_names_to_evaluate = None):
     """
 
     :param GT_path_list:  a list of paths to GT files (matching to the preditions and images lists)
@@ -191,6 +191,10 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             continue
 
         log_name = os.path.basename(pred)
+        if log_names_to_evaluate != None:
+            if log_name not in log_names_to_evaluate:
+                continue
+
         try:
             print(f"Try to find gt for file: {pred}")
             
