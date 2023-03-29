@@ -1,4 +1,7 @@
 
+import numpy as np
+
+
 """
 Overlap Function instructions:
 ------------------------------
@@ -19,6 +22,12 @@ A numerical score
 def IOU(pred_row, labels_row):
     predictions = [pred_row['x'], pred_row['y'], pred_row['width'], pred_row['height']]
     labels = [labels_row['x'], labels_row['y'], labels_row['width'], labels_row['height']]
+
+    if (np.isnan(np.array(predictions)).any()):
+        return np.nan
+    
+    if ~(np.isnan(np.array(predictions)).any()) and np.isnan(np.array(labels)).any():
+        return 0
 
     # calculate (xmin, ymin, xmax, ymax) from the data available
     label_xmin = labels[0]
