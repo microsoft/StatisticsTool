@@ -488,7 +488,7 @@ def presence_partition(dataframe, from_file=False):
             fig1.show()
             fig3.show()
 
-    if "Approach event presence detected length" in dataframe.columns:
+    if "Presence approach flicker sequence num" in dataframe.columns:
         app_event_flicker_seq_num = dataframe['Presence approach flicker sequence num'].values.astype(object)
         app_event_flicker_seq_mean_len = dataframe['Presence approach flicker sequence mean length'].values.astype(object)
         app_event_flicker_seq_median_len = dataframe['Presence approach flicker sequence median length'].values.astype(object)
@@ -505,7 +505,7 @@ def presence_partition(dataframe, from_file=False):
         app_event_flicker_seq_num_dict = {'possible partitions': ['Smaller/equal to 2','3/4','5/6','7/8/9/10','Larger than 10'], 'masks': [app_event_flicker_seq_num_mask_below_2,app_event_flicker_seq_num_mask_3_4,app_event_flicker_seq_num_mask_5_6,app_event_flicker_seq_num_mask_7_10,app_event_flicker_seq_num_mask_above_10]}
         desired_masks.update({"Per event: Approach event true/false flicker sequence num": app_event_flicker_seq_num_dict})
 
-
+    if "Approach event presence detected length" in dataframe.columns:
         app_event_presence_det_len = dataframe['Approach event presence detected length'].values.astype(object)
         app_event_mask_0_15_frames   = np.full(np.shape(app_event_presence_det_len), False)
         app_event_mask_16_45_frames  = np.full(np.shape(app_event_presence_det_len), False)
@@ -516,6 +516,10 @@ def presence_partition(dataframe, from_file=False):
         app_event_mask_46_105_frames[np.logical_and(app_event_presence_det_len>45, app_event_presence_det_len<=105)] = True
         app_event_mask_106_up_frames[app_event_presence_det_len>105] = True
 
+        app_event_presence_det_len_dict     = {'possible partitions': ['Fewer than 16 frames','Between 16-45 frames','Between 46-105 frames','More than 105 frames'], 'masks': [app_event_mask_0_15_frames,app_event_mask_16_45_frames,app_event_mask_46_105_frames,app_event_mask_106_up_frames]}
+        desired_masks.update({"Per event: Presence event activity detection length": app_event_presence_det_len_dict})
+
+    if "Approach event presence detected percent" in dataframe.columns:
         app_event_presence_det_prct = dataframe['Approach event presence detected percent'].values.astype(object)
         app_event_det_prct_mask_0_60   = np.full(np.shape(app_event_presence_det_prct), False)
         app_event_det_prct_mask_60_70  = np.full(np.shape(app_event_presence_det_prct), False)
@@ -528,6 +532,10 @@ def presence_partition(dataframe, from_file=False):
         app_event_det_prct_mask_80_90[np.logical_and(app_event_presence_det_prct>0.8, app_event_presence_det_prct<=0.9)] = True
         app_event_det_prct_mask_90_100[app_event_presence_det_prct>0.9] = True    
 
+        app_event_presence_det_prct_dict    = {'possible partitions': ['Fewer than 60%','Between 60-70 %','Between 70-80 %','Between 80-90 %','Between 90-100 %'], 'masks': [app_event_det_prct_mask_0_60,app_event_det_prct_mask_60_70,app_event_det_prct_mask_70_80,app_event_det_prct_mask_80_90,app_event_det_prct_mask_90_100]}
+        desired_masks.update({"Per event: Presence event activity detection percent":app_event_presence_det_prct_dict})
+
+    if "Presence seq duration prior to approach event end" in dataframe.columns:
         app_event_presence_duration_prior_to_end = dataframe['Presence seq duration prior to approach event end'].values.astype(object)
         app_event_presence_dur_prior_to_end_mask_0_30  = np.full(np.shape(app_event_presence_duration_prior_to_end), False)
         app_event_presence_dur_prior_to_end_mask_31_60 = np.full(np.shape(app_event_presence_duration_prior_to_end), False)
@@ -538,6 +546,10 @@ def presence_partition(dataframe, from_file=False):
         app_event_presence_dur_prior_to_end_mask_61_90[np.logical_and(app_event_presence_duration_prior_to_end>60, app_event_presence_duration_prior_to_end<=90)] = True
         app_event_presence_dur_prior_to_end_mask_90_up[app_event_presence_duration_prior_to_end>90] = True
 
+        app_event_presence_dur_prior_to_end_dict = {'possible partitions': ['Fewer than 30 frames','Between 31-60 frames','Between 61-90 frames','More than 90 frames'], 'masks': [app_event_presence_dur_prior_to_end_mask_0_30,app_event_presence_dur_prior_to_end_mask_31_60,app_event_presence_dur_prior_to_end_mask_61_90,app_event_presence_dur_prior_to_end_mask_90_up]}
+        desired_masks.update({"Per event: Presence event activity first det duration from event end":app_event_presence_dur_prior_to_end_dict})
+
+    if "Presence seq duration prior to approach event start" in dataframe.columns:
         app_event_presence_duration_from_app_start = dataframe['Presence seq duration from approach event start'].values.astype(object)
         app_event_presence_dur_from_start_mask_0_10  = np.full(np.shape(app_event_presence_duration_from_app_start), False)
         app_event_presence_dur_from_start_mask_11_20 = np.full(np.shape(app_event_presence_duration_from_app_start), False)
@@ -548,24 +560,29 @@ def presence_partition(dataframe, from_file=False):
         app_event_presence_dur_from_start_mask_21_30[np.logical_and(app_event_presence_duration_from_app_start>20, app_event_presence_duration_from_app_start<=30)] = True
         app_event_presence_dur_from_start_mask_31_up[app_event_presence_duration_from_app_start>30] = True
 
-        app_event_presence_det_len_dict     = {'possible partitions': ['Fewer than 16 frames','Between 16-45 frames','Between 46-105 frames','More than 105 frames'], 'masks': [app_event_mask_0_15_frames,app_event_mask_16_45_frames,app_event_mask_46_105_frames,app_event_mask_106_up_frames]}
-        app_event_presence_det_prct_dict    = {'possible partitions': ['Fewer than 60%','Between 60-70 %','Between 70-80 %','Between 80-90 %','Between 90-100 %'], 'masks': [app_event_det_prct_mask_0_60,app_event_det_prct_mask_60_70,app_event_det_prct_mask_70_80,app_event_det_prct_mask_80_90,app_event_det_prct_mask_90_100]}
-        app_event_presence_dur_prior_to_end_dict = {'possible partitions': ['Fewer than 30 frames','Between 31-60 frames','Between 61-90 frames','More than 90 frames'], 'masks': [app_event_presence_dur_prior_to_end_mask_0_30,app_event_presence_dur_prior_to_end_mask_31_60,app_event_presence_dur_prior_to_end_mask_61_90,app_event_presence_dur_prior_to_end_mask_90_up]}
         app_event_presence_dur_from_start_dict   = {'possible partitions': ['Fewer than 16 frames','Between 16-45 frames','Between 46-105 frames','More than 105 frames'], 'masks': [app_event_presence_dur_from_start_mask_0_10,app_event_presence_dur_from_start_mask_11_20,app_event_presence_dur_from_start_mask_21_30,app_event_presence_dur_from_start_mask_31_up]}
-        desired_masks.update({"Per event: Presence event activity detection length": app_event_presence_det_len_dict})
-        desired_masks.update({"Per event: Presence event activity detection percent":app_event_presence_det_prct_dict})
-        desired_masks.update({"Per event: Presence event activity first det duration from event end":app_event_presence_dur_prior_to_end_dict})
         desired_masks.update({"Per event: Presence event activity first det duration from event start":app_event_presence_dur_from_start_dict})
+
+    if "Approach pop up indication" in dataframe.columns:
+        approach_pop_up_indication = dataframe['Approach pop up indication'].values.astype(object)
+        app_event_pop_up_true  = np.full(np.shape(approach_pop_up_indication), False)
+        app_event_pop_up_false = np.full(np.shape(approach_pop_up_indication), False)
+        app_event_pop_up_true[approach_pop_up_indication==True]  = True
+        app_event_pop_up_false[approach_pop_up_indication==False] = True
+
+        app_event_pop_up_dict = {'possible partitions': ['Pop up approach','Regular approach'], 'masks': [app_event_pop_up_true,app_event_pop_up_false]}
+        desired_masks.update({"Per event: Approach event pop up indication": app_event_pop_up_dict})
+
 
     if 0: # Histogram visualization for approach events
         import plotly.express as px
-        fig1 = px.histogram(app_event_presence_det_len)
-        fig1.layout.xaxis.title.text = 'Frames'
-        fig1.layout.title.text='Presence detected sequence length during approach event'
+        #fig1 = px.histogram(app_event_presence_det_len)
+        #fig1.layout.xaxis.title.text = 'Frames'
+        #fig1.layout.title.text='Presence detected sequence length during approach event'
 
-        fig2 = px.histogram(app_event_presence_det_prct)
-        fig2.layout.xaxis.title.text = 'Percent'
-        fig2.layout.title.text='Presence detected sequence percentage out of approach event frame'
+        #fig2 = px.histogram(app_event_presence_det_prct)
+        #fig2.layout.xaxis.title.text = 'Percent'
+        #fig2.layout.title.text='Presence detected sequence percentage out of approach event frame'
 
         counts, bins = np.histogram(app_event_presence_duration_prior_to_end/30, bins=20)
         bins = 0.5 * (bins[:-1] + bins[1:])
@@ -576,14 +593,14 @@ def presence_partition(dataframe, from_file=False):
         fig33.layout.xaxis.title.text = 'Frames'
         fig33.layout.title.text='Presence detected sequence duration from end of approach event'
 
-        counts, bins = np.histogram(app_event_presence_duration_from_app_start/30, bins=20)
-        bins = 0.5 * (bins[:-1] + bins[1:])
-        fig4 = px.bar(x=bins, y=counts, labels={'x':'Seconds', 'y':'count'})
-        fig4.layout.title.text='Presence detected sequence duration from start of approach event'
+        #counts, bins = np.histogram(app_event_presence_duration_from_app_start/30, bins=20)
+        #bins = 0.5 * (bins[:-1] + bins[1:])
+        #fig4 = px.bar(x=bins, y=counts, labels={'x':'Seconds', 'y':'count'})
+        #fig4.layout.title.text='Presence detected sequence duration from start of approach event'
 
-        fig44 = px.histogram(app_event_presence_duration_from_app_start)
-        fig44.layout.xaxis.title.text = 'Frames'
-        fig44.layout.title.text='Presence detected sequence duration from start of approach event'
+        #fig44 = px.histogram(app_event_presence_duration_from_app_start)
+        #fig44.layout.xaxis.title.text = 'Frames'
+        #fig44.layout.title.text='Presence detected sequence duration from start of approach event'
 
         counts, bins = np.histogram(app_event_flicker_seq_num, bins=20)
         bins = 0.5 * (bins[:-1] + bins[1:])
@@ -604,21 +621,19 @@ def presence_partition(dataframe, from_file=False):
 
         # Split 'total mis' to pop up and no pop up
         pop_up = dataframe['Approach pop up indication'].values.astype(object)
-        total_mis_loc = np.where(app_event_presence_duration_prior_to_end/30==-1)[0]
+        total_mis_loc = np.where(app_event_presence_duration_prior_to_end/30==-2)[0]
         total_mis_pop_up_num = sum(pop_up[total_mis_loc])
         total_mis_regular_num = len(total_mis_loc) - total_mis_pop_up_num
         print('Total mis num = ' + str(len(total_mis_loc)) + 
         ', Total mis - pop up num = ' + str(total_mis_pop_up_num) + 
         ', Total mis - regular approaches num = ' + str(total_mis_regular_num))
 
-        # Split 'early wake' (FP) into complete false/early approach according to the presence value in approach_PC last frame
-        det_at_R0_R1_border = dataframe['Presence detection at R0 first frame'].values.astype(object)
-        early_wake_loc = np.where(app_event_presence_duration_prior_to_end/30>2)[0]
-        det_at_R0_R1_border_val_at_early_wake = det_at_R0_R1_border[early_wake_loc]
-        print('Total FP approach event num = ' + str(len(det_at_R0_R1_border_val_at_early_wake)) +
-        ', Total early wake with True at R0/R1 border frame = ' + str(sum(det_at_R0_R1_border_val_at_early_wake)) + 
-        ', Total early wake with False at R0/R1 border frame = ' + str(len(det_at_R0_R1_border_val_at_early_wake)-sum(det_at_R0_R1_border_val_at_early_wake)))
-        
+        pop_up_reason = dataframe['Approach event pop up reason index'].values.astype(object)
+        print('Total regular approaches = ' + str(len(np.where(pop_up==0)[0])) + 
+        ', Total pop up approches = ' + str(len(pop_up_reason)-len(np.where(pop_up==0)[0])) + 
+        ', Pop up reason 2 event num = ' + str(len(np.where(pop_up==2)[0])) + 
+        ', Pop up reason 3 event num = ' + str(len(np.where(pop_up==3)[0])))
+
 
         fig3.show()
         fig4.show()
