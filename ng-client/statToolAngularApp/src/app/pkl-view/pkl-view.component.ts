@@ -14,11 +14,29 @@ export class PklViewComponent implements OnInit  {
   //subscribeGetSegment = new Subscription;
   selectedRows = '';
   @Input() set selectedRowsSet(rows:string[]){
-    this.selectedRows = rows.join(',');
+    //filter only the existing rows
+    let tmp:string[] = [];
+    let keys = Array.from( this.statToolService.optionalSegmentations.keys() );
+    rows.forEach(r => {
+      let isExist = keys.find(x => x == r)
+      if (isExist)
+      tmp.push(r)
+    })
+
+    this.selectedRows = tmp.join(',');
   }
   @Input() selectedColumns = '';
   @Input() set selectedColumnsSet(cols:string[]){
-    this.selectedColumns = cols.join(',');
+        //filter only the existing columns
+        let tmp:string[] = [];
+        let keys = Array.from( this.statToolService.optionalSegmentations.keys() );
+        cols.forEach(c => {
+          let isExist = keys.find(x => x == c)
+          if (isExist)
+          tmp.push(c)
+        })
+    
+        this.selectedColumns = tmp.join(',');
   }
   @Input() name = '';
   @Input() id = 0;

@@ -48,7 +48,11 @@
     <div style="margin-top:3px">
         
             <ng-container *ngFor="let x of statService.currentTemplate.Segmentations;let i = index">
-                <button class="collapsible" (click)="clickPanel(i)" [ngClass]="getActiveCls(i)">View {{ getTitle(i) }}</button>
+                <button 
+                    class="collapsible" 
+                    (click)="clickPanel(i)" 
+                    style="font-weight: bold;"    
+                    [ngClass]="getActiveCls(i)">View - {{ getTitle(i) }}</button>
                     <div class="content" [ngStyle]="{'max-height':getHeight(i)}">
                         <pkl-view 
                             [selectedRowsSet] = "x.rows"
