@@ -30,7 +30,7 @@ input:focus {
     color: white;
     cursor: pointer;
     padding: 18px;
-    width: 100%;
+    width: 98%;
     border: none;
     text-align: left;
     outline: none;
@@ -54,9 +54,18 @@ input:focus {
   }
   
   .content {
-    padding: 0 18px;
+    padding: 0 0px;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.2s ease-out;
     background-color: #f1f1f1;
   }
+
+.disabledImg {
+  opacity:0.5;
+  pointer-events: none !important;
+}
+
+.back:hover {
+  fill: #182a69;
+}

@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
+import {Location} from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'template-segmentations',
@@ -12,9 +14,12 @@ export class TemplateSegmentationsComponent implements OnInit {
   
   isNewTemplateMode = true;
   templateNameCreated = '';
+  saveImgSrc = 'assets/back-icon-gray.svg';
 
   constructor(private httpClient:HttpClient,
-              public statService:StatisticsToolService) {
+              public statService:StatisticsToolService,
+              private location:Location,
+              private router:Router) {
   }
 
   ngOnInit(): void {
@@ -31,8 +36,9 @@ export class TemplateSegmentationsComponent implements OnInit {
     let tempalteId = event.target.value;
     if (tempalteId == 0){ //new temmplate
       this.isNewTemplateMode = true;
-      this.statService.templates = [];
-      this.statService.addNewTemplate();
+      //this.statService.templates = [];
+      if (this.statService.templates.length == 0)
+        this.statService.addNewTemplate();
       return;
     }
     this.isNewTemplateMode = false;
@@ -74,7 +80,6 @@ export class TemplateSegmentationsComponent implements OnInit {
       this.statService.saveTemplate(true,this.templateNameCreated);
     else
       this.statService.saveTemplate(false);
-
   }
 
   slideUniqueChange(event:any){
@@ -86,17 +91,15 @@ export class TemplateSegmentationsComponent implements OnInit {
     for(let x=0;x < this.statService.currentTemplate.SegmentationsClicked.length;x++){
       if (x == i){
         this.statService.currentTemplate.SegmentationsClicked[x] = !this.statService.currentTemplate.SegmentationsClicked[x];
-        console.log('clicked',i,this.statService.currentTemplate.SegmentationsClicked[x]);
       }
-      else
-        this.statService.currentTemplate.SegmentationsClicked[x] = false;
-        console.log('clicked - false',i,this.statService.currentTemplate.SegmentationsClicked[x]);
+      //else
+        //this.statService.currentTemplate.SegmentationsClicked[x] = false;
+        //console.log('clicked - false',i,this.statService.currentTemplate.SegmentationsClicked[x]);
       }
     }
 
     getActiveCls(i:number) {
       if (this.statService.currentTemplate.SegmentationsClicked[i] == true){
-        console.log('active',i)
         return 'active';
       }
       else
@@ -105,7 +108,7 @@ export class TemplateSegmentationsComponent implements OnInit {
 
     getHeight(i:number){
       if (this.statService.currentTemplate.SegmentationsClicked[i] == true)
-        return '800px';
+        return '100vh';
       else
         return '0px';
     }
@@ -113,4 +116,23 @@ export class TemplateSegmentationsComponent implements OnInit {
     getTitle(i:number){
       return this.statService.currentTemplate.Segmentations[i].name;
     }
-}
+
+    back(){
+      let path = this.location.path();
+      console.log('path',path)
+      if (path.indexOf('/static/') > 0){
+        path = path.replace('/static/','/');
+        console.log('path-remove-static',path)
+      }
+      window.location.href = 'http://127.0.0.1:5000/';
+    }
+
+    getDisabledClass(){
+      if (this.isNewTemplateMode){
+        if (this.templateNameCreated.length == 0)
+          return 'disabledImg';
+      }
+
+      return '';
+    }
+ }

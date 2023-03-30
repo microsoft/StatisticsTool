@@ -94,7 +94,7 @@ export class StatisticsToolService implements OnInit {
         seg.rows = s.rows.split(',');
         seg.name = s.name;
         t.Segmentations.push(seg);
-        t.SegmentationsClicked.push(false)
+        t.SegmentationsClicked.push(true)
       })  
       this.templates.push(t) ;
     })
@@ -159,7 +159,7 @@ export class StatisticsToolService implements OnInit {
     s.columns = [];
     s.rows = [];
     t.Segmentations.push(s);
-    t.SegmentationsClicked.push(false);
+    t.SegmentationsClicked.push(true);
     this.templates.push(t);
     this.currentTemplate = t;
     console.log('addNewTemplate',JSON.stringify(this.templates),'current:',JSON.stringify(this.currentTemplate));
@@ -168,7 +168,7 @@ export class StatisticsToolService implements OnInit {
   addSegmentations(){
     //this.currentTemplate.wasChanged = true;
     this.currentTemplate.Segmentations.push(new SegmentationItem());
-    this.currentTemplate.SegmentationsClicked.push(false);
+    this.currentTemplate.SegmentationsClicked.push(true);
   }
 
   saveTemplate(isNewTemplate:boolean,newTemplateName:string = ''){

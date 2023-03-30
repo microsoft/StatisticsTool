@@ -65,7 +65,19 @@ export class PklViewComponent implements OnInit  {
       this.subscribeUniqueChange.unsubscribe();
   }
 
-  onColumnsChanged(items:{'item_id':string,'item_text':string}[]){
+  onColumnAdded(item:{'item_id':string,'item_text':string}){
+    if (this.selectedColumns.length == 0 )
+      this.selectedColumns = item.item_id;
+    else
+      this.selectedColumns += "," + item.item_id;
+    
+    this.fixSelectedString();
+
+    this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+  }
+
+  onAllColumnsAdded(items:{'item_id':string,'item_text':string}[]){
     this.selectedColumns = '';
     items.forEach(x => {
       this.selectedColumns += x.item_id + ","
@@ -74,22 +86,79 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
-   
-    //console.log('url',this.url);
+  }
+  
+  onColumnRemoved(item:{'item_id':string,'item_text':string}){
+    let columns = this.selectedColumns.split(",");
+    this.selectedColumns = '';
+    columns.forEach(c => {
+      if (c != item.item_text){
+        this.selectedColumns += c + ","
+      }
+    })
+
+    this.fixSelectedString();
+
+    this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
   }
 
-  onRowsChanged(items:{'item_id':string,'item_text':string}[]){
+  onAllColumnsRemoved(event:any){
+    this.selectedColumns = '';
+    this.fixSelectedString();
+
+    this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+  }
+
+  onRowAdded(item:{'item_id':string,'item_text':string}){
+    if (this.selectedRows.length == 0 )
+      this.selectedRows = item.item_id;
+    else
+      this.selectedRows += "," + item.item_id;
+    
+    this.fixSelectedString();
+
+    this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+  }
+
+  onAllRowsAdded(items:{'item_id':string,'item_text':string}[]){
     this.selectedRows = '';
     items.forEach(x => {
       this.selectedRows += x.item_id + ","
     })
-    
+
     this.fixSelectedString();
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
-    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
-    //console.log('url',this.url);
   }
+  
+  onRowRemoved(item:{'item_id':string,'item_text':string}){
+    let columns = this.selectedRows.split(",");
+    this.selectedRows = '';
+    columns.forEach(c => {
+      if (c != item.item_text){
+        this.selectedRows += c + ","
+      }
+    })
+
+    this.fixSelectedString();
+
+    this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+  }
+
+  onAllRowsRemoved(event:any){
+    this.selectedRows = '';
+    this.fixSelectedString();
+
+    this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+  }
+
+  
+ 
 
   fixSelectedString(){
     if (this.selectedColumns.slice(-1) == ",")  

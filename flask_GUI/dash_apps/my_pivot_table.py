@@ -9,7 +9,6 @@ import numpy as np
 import dash_bootstrap_components as dbc
 
 sys.path.append('../classes_and_utils')
-from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections
 
 def default_get_cell(data, column_keys, row_keys):
     return html.Td("{}\n{}".format(column_keys, row_keys), style={'border':'solid'})
@@ -151,16 +150,6 @@ class   PivotTable():
                  for t in list5]
         
         return res1 + res2
-
-    def get_unique(self,colums,rows):
-        exp  = self.data['main']
-        comp = self.data['ref']
-        keys = self.get_keys_permutations(colums,rows)
-        exp.main_ref_dict, exp.ref_main_dict = match_main_ref_predictions(exp,comp[0])
-        unique, unique_ref, unique_stats, unique_stats_ref = calc_unique_detections(keys, exp, comp[0], exp.main_ref_dict, exp.ref_main_dict)
-        exp.unique = unique
-        comp[0].unique = unique_ref
-        return unique_stats, unique_stats_ref
 
     def get_table(self, all_columns, all_rows):
         '''

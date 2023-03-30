@@ -26,6 +26,7 @@ export class DrawerComponent implements OnInit {
 
   changeState(): void {
     (this.state == "closed") ? this.state = "open" : this.state = "closed";
+    console.log('Drawer state - ' + this.state);
   }
 
   constructor(public statToolSvc:StatisticsToolService) {

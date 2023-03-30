@@ -1,6 +1,23 @@
-.multiselect-dropdown .dropdown-btn{
-    width: 95% !important;
+.multiselect-dropdown {
+    width: 97% !important;
+    margin:2px !important;
+    background-color: #fafafa !important;
+    border-color: lightgray;
+}
+
+.multiselect-dropdown .dropdown-btn {
+    width: 97% !important;
     margin:2px !important;
     background-color: white !important;
     border-color: lightgray;
+}
+
+span.dropdown-btn {
+    height: 28px !important;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: content-box !important;
 }

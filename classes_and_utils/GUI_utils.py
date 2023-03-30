@@ -571,7 +571,7 @@ def manage_list_request(request, main_exp, comp_exp, report_type):
 
     # extracting the example list for requested partitions and state
     if report_type == 'NEW':
-        list_of_examples = exp.get_ids_new(cell_key, state)
+        list_of_examples = exp.get_ids_new(cell_key, state, show_unique=show_unique)
     elif report_type == 'ORIG':
         list_of_examples = exp.get_ids(show_unique=show_unique, state=state, total=total, primary=primary, secondary=secondary, tertiary=tertiary)
 
@@ -668,94 +668,6 @@ def manage_image_request(request, main_exp, comp_exp):
         fig.savefig(save_path)
     return data, save_path
 
-            
-def match_frame_predictions(predictions, ref_predictions, exp):
-    """
-    Match beween 2 set of preditcions in a frame using the user defined functions in the experiment object.
-    :param (in/out) predictions: predictions in the main reort. The predictions filled with thier matched one and overlap values
-    :param (in/out) ref_predictions: predictions in the ref reort. The predictions filled with thier matched one and overlap values
-    :param exp: experiment object 
-
-    """
-    if not len(ref_predictions) or not len(predictions):
-            mat=[]
-    else:
-        mat = np.zeros((len(predictions), len(ref_predictions)))
-    
-    for i, pred in enumerate(predictions):
-        for j, ref in enumerate(ref_predictions):
-            #check if all gt attributes are equal in main and ref predictions
-            if pred['detection_gt'] and ref['detection_gt']:
-                match = True
-                for key in pred: 
-                    if '_gt' in key:
-                        if pred[key] != ref[key]:
-                            match = False
-                            break
-                if match:
-                    pred['matching'] = j
-                    ref['matching'] = i
-            elif not (pred['detection_gt'] or ref['detection_gt']) and pred['detection'] and ref['detection']:
-                overlap = exp.overlap_function(pred, ref)
-                mat[i, j] = round(overlap, 2)
-
-    #the evaluation function should add the matched prediction to the right record in predictions list
-    exp.evaluation_function(predictions, mat)
-        
-#create dictionsary for main/ref report with matched bounding box in ref/main if there is any
-def match_main_ref_predictions(exp, ref_exp):
-    """
-    Match all the predictions in main reort and ref report. Detections with no matched detection in the ref report, will have no entry in the dictionary.
-    :param exp: main experiment object.
-    :param ref_exp: ref experiment object.
-    :return: main_ref,ref_main :dictionary between detection in main report to detections in the ref report.
-    """
-    
-    print('start calculating main/ref matched bounding boxes')
-    
-    main_ref = {}
-    ref_main = {}
-    
-    for vid in exp.comp_data['video'].unique():
-        print('calculating matching bounding boxes for vid: ' + vid)
-        #set frame_id as index, and keep the original index as another column
-        ref_cur_video_df = ref_exp.comp_data[ref_exp.comp_data['video'] == vid].reset_index().set_index('frame_id').reset_index()
-        main_cur_video_df = exp.comp_data[exp.comp_data['video'] == vid].reset_index().set_index('frame_id').reset_index()
-        unique_frames = np.unique(np.concatenate([ref_cur_video_df['frame_id'],main_cur_video_df['frame_id']]))
-        
-        #use dictionary for performance improvements
-        main_cur_video_list = main_cur_video_df.to_dict('records')
-        ref_cur_video_list = ref_cur_video_df.to_dict('records')
-                    
-        current_main_index = 0
-        current_ref_index = 0
-        
-        for frame in unique_frames:
-            while current_ref_index < len(ref_cur_video_list) and ref_cur_video_list[current_ref_index]['frame_id'] < frame:
-                current_ref_index+=1
-                
-            while current_main_index < len(main_cur_video_list) and main_cur_video_list[current_main_index]['frame_id'] < frame:
-                current_main_index+=1
-            
-            predictions = []
-            ref_predictions = []
-            
-            while current_ref_index < len(ref_cur_video_list) and ref_cur_video_list[current_ref_index]['frame_id'] == frame:
-                ref_predictions.append(ref_cur_video_list[current_ref_index])
-                current_ref_index+=1
-
-            while current_main_index < len(main_cur_video_list) and main_cur_video_list[current_main_index]['frame_id'] == frame:
-                predictions.append(main_cur_video_list[current_main_index])
-                current_main_index+=1
-            
-            match_frame_predictions(predictions, ref_predictions, exp)
-            for _, x in enumerate(predictions): 
-                if 'matching' in x:
-                    main_ref[x['index']]=ref_predictions[x['matching']]['index']
-                    ref_main[ref_predictions[x['matching']]['index']] = x['index']
-                    
-    print ('Finished calculate matched bounding boxes')      
-    return main_ref, ref_main
 
 def calc_unique_detections(partitions, exp, ref_exp, main_ref_dict, ref_main_dict):
     """

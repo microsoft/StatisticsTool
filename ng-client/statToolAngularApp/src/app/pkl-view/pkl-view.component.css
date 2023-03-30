@@ -1,10 +1,11 @@
-.multiselect-dropdown .dropdown-btn{
-    width: 95% !important;
-    margin:2px !important;
+.multiselect-dropdown {
+  width: 96% !important;
+  margin:2px !important;
+  background-color: white !important;
+  border-color: lightgray;
 }
-
 .parent{
-  position: relative;
+  /*position: relative;*/
 }
 .parent img{
   position: absolute;

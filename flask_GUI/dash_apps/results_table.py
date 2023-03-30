@@ -48,7 +48,7 @@ class Results_table():
 
         self.table = None
         self.dash_app.layout = self.get_layout()
-        
+        self.unique_helper = None
         # self.set_callbacks()
 
     # def set_callbacks(self):
@@ -72,10 +72,9 @@ class Results_table():
 
     def set_data(self, exp, segmentations,calc_unique = False):
 
-        if len(exp['ref']) > 0 and calc_unique:
+        if len(exp['ref']) > 0 and calc_unique and self.unique_helper is None:
             self.unique_helper = UniqueHelper(exp['main'],exp['ref'][0])
-        else:
-            self.unique_helper = None
+       
 
         self.calc_unique = calc_unique
         self.table = pt.PivotTable(segmentations, data = exp, cell_function=self.get_cell_exp)
@@ -93,9 +92,9 @@ class Results_table():
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
         
         exp_data = {}
-        exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations)
+        exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations, self.unique_helper)
         if all_exps[REF_EXP] !=[]:
-            exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations) 
+            exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations, self.unique_helper) 
 
         all_metrics = []
         if len(all_exps) > 0:
@@ -131,8 +130,12 @@ class Results_table():
 
                 if self.calc_unique == True and k in ["TP", "FP", "FN"]:
                     if self.unique_helper != None:
-                        unique = self.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
-                        TDs.append(html.Td(unique, style={'background-color':color}))
+                        txt_unique,link_unique = self.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
+                        js = json.dumps({'action':'update_list','value': link_unique})
+                        msg = "javascript:window.parent.postMessage({});".format(js)
+                        a_unique = html.A(txt_unique ,href=msg, target="")
+
+                        TDs.append(html.Td(a_unique, style={'background-color':color}))
                     else:
                         TDs.append(html.Td('', style={'background-color':color}))
                 else:

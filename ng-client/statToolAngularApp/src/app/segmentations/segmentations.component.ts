@@ -29,7 +29,10 @@ export class SegmentationsComponent implements OnInit{
   dropdownSettings = {};
   subscribeSegmentationsFetched = new Subscription;
   
-  @Output() segmentsChanged = new EventEmitter();
+  @Output() segmentAdded        = new EventEmitter();
+  @Output() segmentRemoved      = new EventEmitter();
+  @Output() allSegmentsAdded    = new EventEmitter();
+  @Output() allSegmentsRemoved  = new EventEmitter();
 
   constructor(private statToolService:StatisticsToolService,
               private httpClient:HttpClient) {
@@ -53,16 +56,21 @@ export class SegmentationsComponent implements OnInit{
   }
 
   onItemSelect(item: any) {
-    this.segmentsChanged.emit(this.selected)
-    //console.log('segments, select',item,this.selected);
+    console.log('onItemSelect',item);
+    this.segmentAdded.emit(item);
   }
   onSelectAll(items: any) {
-    this.segmentsChanged.emit(this.selected)
-    //console.log('segments, select all',items,this.selected);
+    console.log('onSelectAll',items);
+    this.allSegmentsAdded.emit(items);
   }
-  onItemUnSelect(item: any) {
-    this.segmentsChanged.emit(this.selected)
-    //console.log('segments,un select',item,this.selected);
+  onUnSelect(item: any) {
+    console.log('onUnSelect',item);
+    this.segmentRemoved.emit(item)
+  }
+
+  onUnSelectAll(item: any) {
+    console.log('onUnSelectAll',item);
+    this.allSegmentsRemoved.emit([])
   }
 
 ngOnDestroy(){

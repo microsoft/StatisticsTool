@@ -23,6 +23,9 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import { DrawerComponent } from './drawer/drawer.component';
 import { DrawerContentComponent } from './drawer-content/drawer-content.component';
 import {MatExpansionModule} from '@angular/material/expansion';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
+import '@angular/localize/init'
 
 @NgModule({
   declarations: [
@@ -52,6 +55,8 @@ import {MatExpansionModule} from '@angular/material/expansion';
     MatIconModule,
     MatToolbarModule,
     MatExpansionModule,
+    NgbModule,
+    NgbAlertModule
   ],
   providers: [StatisticsToolService],
   bootstrap: [AppComponent]
