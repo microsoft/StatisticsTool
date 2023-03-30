@@ -187,7 +187,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     for pred in pred_path_list:
         gt_local_path = None
         
-        if not pred.endswith('.json'):
+        if not pred.endswith('presence_log.json'): # TODO: consult Nachem on how to adjust this
             continue
 
         log_name = os.path.basename(pred)

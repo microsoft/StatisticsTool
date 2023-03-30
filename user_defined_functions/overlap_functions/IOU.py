@@ -20,8 +20,13 @@ A numerical score
 """
 
 def IOU(pred_row, labels_row):
-    predictions = [pred_row['x'], pred_row['y'], pred_row['width'], pred_row['height']]
-    labels = [labels_row['x'], labels_row['y'], labels_row['width'], labels_row['height']]
+    # adjust foramt
+    if type(pred_row) == list:
+        predictions = pred_row
+        labels = labels_row
+    else:
+        predictions = [pred_row['x'], pred_row['y'], pred_row['width'], pred_row['height']]
+        labels = [labels_row['x'], labels_row['y'], labels_row['width'], labels_row['height']]
 
     if (np.isnan(np.array(predictions)).any()):
         return np.nan
