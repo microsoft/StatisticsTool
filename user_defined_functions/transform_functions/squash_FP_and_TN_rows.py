@@ -88,7 +88,17 @@ def pick_representative_TN_row_of_empty_video(TN_indices, comp_data):
     return comp_data_TN
 
 
+def filter_dirty_labels(comp_data):
+    # override auto-gt detection --> if manual annotation 'General_Human_Presence[header]' == 'No' for an index
+    comp_data.loc[comp_data['General_Human_Presence[header]'] == 'No', ['detection_gt', 'object_id_gt', 'x_gt', 'y_gt', 'width_gt', 'height_gt']] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+
+    return comp_data
+
+
 def squash_FP_and_TN_rows(comp_data):
+    # [0] filter dirty labels
+    comp_data = filter_dirty_labels(comp_data)
+
     # [1] calculate IOU for each index
     if ('x' in comp_data.keys()) and ('x_gt' in comp_data.keys()):
         boxes = comp_data.loc[:, ['x', 'y', 'width',
@@ -209,3 +219,6 @@ def squash_FP_and_TN_rows(comp_data):
     # 			- TN, FN, FP = 0
 
     return comp_data
+
+
+  

@@ -79,10 +79,6 @@ def refine_annotations(dataframe):
 
 
 def object_size_with_annot_store(dataframe, from_file=False):
-    # annot_headers = ['Experiment_Name ', 'Enviroment', 'Location', 'Human_Presence', 'General_Background_People', 'General_User_Description',
-    #                  'General_Background_Description', 'General_Device_Use', 'General_Natural_Light', 'General_Artificial_Light', 'Reflection', 'Device_Posture', 'Sensor', 'File_type']
-    # annot_headers = ['Enviroment', 'Location']
-    # annot_headers = ['Enviroment', 'Location']
     annot_headers = ['Enviroment', 'Location', 'User_Movement_Type',
                      'User_Physical_Status', 'Light', 'location', 'background people', 'background']
 
@@ -117,35 +113,36 @@ def object_size_with_annot_store(dataframe, from_file=False):
 
     desired_masks = {'size': size}
 
-    # annotation store
-    # ----------------
-    dataframe = refine_annotations(dataframe)
+    if 0: # old code
+        # annotation store
+        # ----------------
+        dataframe = refine_annotations(dataframe)
 
-    dummy_counter = 0
-    desired_masks_annot_store = {}
-    for annot_header in annot_headers:
-        print(annot_header)
-        annot = dataframe[annot_header]
-        annot_header = annot_header.replace('[header]', '')
-        current_annotation_categories = list(annot.unique())
-        # this is a patch to correct mixed numeric/string annotation
-        if annot_header in ['User_Movement_Type', 'User_Physical_Status', 'Light', 'location', 'background people', 'background']:
-            current_annotation_categories = list(
-                set([str(i) for i in current_annotation_categories]))
-            annot = annot.astype(str)
-        # next steps of tool fails in case of single category --> add fake empty annotation, for example: "NOT_Indoor"
-        if len(current_annotation_categories) == 1:
-            current_annotation_categories.append(
-                'NOT_' + current_annotation_categories[0])
-        masks = []
-        for cat in current_annotation_categories:
-            dummy_counter += 1
-            masks.append(np.array(annot == cat))
-        curr_desired_mask = {'possible partitions': [str(
-            val) + '_[' + str(annot_header) + ']' for val in current_annotation_categories], 'masks': masks}
-        desired_masks_annot_store[annot_header] = curr_desired_mask
+        dummy_counter = 0
+        desired_masks_annot_store = {}
+        for annot_header in annot_headers:
+            print(annot_header)
+            annot = dataframe[annot_header]
+            annot_header = annot_header.replace('[header]', '')
+            current_annotation_categories = list(annot.unique())
+            # this is a patch to correct mixed numeric/string annotation
+            if annot_header in ['User_Movement_Type', 'User_Physical_Status', 'Light', 'location', 'background people', 'background']:
+                current_annotation_categories = list(
+                    set([str(i) for i in current_annotation_categories]))
+                annot = annot.astype(str)
+            # next steps of tool fails in case of single category --> add fake empty annotation, for example: "NOT_Indoor"
+            if len(current_annotation_categories) == 1:
+                current_annotation_categories.append(
+                    'NOT_' + current_annotation_categories[0])
+            masks = []
+            for cat in current_annotation_categories:
+                dummy_counter += 1
+                masks.append(np.array(annot == cat))
+            curr_desired_mask = {'possible partitions': [str(
+                val) + '_[' + str(annot_header) + ']' for val in current_annotation_categories], 'masks': masks}
+            desired_masks_annot_store[annot_header] = curr_desired_mask
 
-    desired_masks.update(desired_masks_annot_store)
+        desired_masks.update(desired_masks_annot_store)
 
     # person on edges
     # ---------------
@@ -189,33 +186,34 @@ def object_size_with_annot_store(dataframe, from_file=False):
 
     desired_masks.update(desired_masks_boundary)
 
-    # clip duration binning
-    # ---------------------
-    bins = [0, 5/60, 10/60, 0.5, 1, 10, 20, 999999999]
-    labels = ['0-5sec', '5-10sec', '10-30sec',
-              '0.5-1min', '1-10min', '10-20min', '>20min']
+    if 0:
+        # clip duration binning
+        # ---------------------
+        bins = [0, 5/60, 10/60, 0.5, 1, 10, 20, 999999999]
+        labels = ['0-5sec', '5-10sec', '10-30sec',
+                '0.5-1min', '1-10min', '10-20min', '>20min']
 
-    time_vals = pd.DatetimeIndex(dataframe['Clip_Duration [MIN]2[header]'])
-    dataframe['Clip_Duration_Minutes[header]'] = time_vals.hour * \
-        60 + time_vals.minute + time_vals.second / 60
+        time_vals = pd.DatetimeIndex(dataframe['Clip_Duration [MIN]2[header]'])
+        dataframe['Clip_Duration_Minutes[header]'] = time_vals.hour * \
+            60 + time_vals.minute + time_vals.second / 60
 
-    dataframe['Clip_Duration_Minutes_Binned[header]'] = pd.cut(
-        dataframe['Clip_Duration_Minutes[header]'], bins=bins, labels=labels)
-    dataframe['Clip_Duration_Minutes_Binned[header]'] = dataframe['Clip_Duration_Minutes_Binned[header]'].values.add_categories(
-        'missing duration')
-    dataframe['Clip_Duration_Minutes_Binned[header]'].fillna(
-        'missing duration', inplace=True)
-    labels = labels + ['missing duration']
-    masks = []
-    for label in labels:
-        curr_mask = (
-            dataframe['Clip_Duration_Minutes_Binned[header]'] == label)
-        masks.append(curr_mask)
+        dataframe['Clip_Duration_Minutes_Binned[header]'] = pd.cut(
+            dataframe['Clip_Duration_Minutes[header]'], bins=bins, labels=labels)
+        dataframe['Clip_Duration_Minutes_Binned[header]'] = dataframe['Clip_Duration_Minutes_Binned[header]'].values.add_categories(
+            'missing duration')
+        dataframe['Clip_Duration_Minutes_Binned[header]'].fillna(
+            'missing duration', inplace=True)
+        labels = labels + ['missing duration']
+        masks = []
+        for label in labels:
+            curr_mask = (
+                dataframe['Clip_Duration_Minutes_Binned[header]'] == label)
+            masks.append(curr_mask)
 
-    clip_duration = {'possible partitions': labels, 'masks': masks}
-    desired_masks_clip_duration = {'clip_duration': clip_duration}
+        clip_duration = {'possible partitions': labels, 'masks': masks}
+        desired_masks_clip_duration = {'clip_duration': clip_duration}
 
-    desired_masks.update(desired_masks_clip_duration)
+        desired_masks.update(desired_masks_clip_duration)
 
     # iou
     # ---
@@ -252,6 +250,18 @@ def object_size_with_annot_store(dataframe, from_file=False):
     desired_masks_empty_clips = {'empty_clips': empty_clips}
 
     desired_masks.update(desired_masks_empty_clips)
+
+    # Presence_ROI
+    # ------------
+    dataframe['Presence_ROI'] = dataframe['Presence_ROI'].map({"True": True, "False": False}).fillna('NA')
+    Presence_ROI_TRUE = (dataframe['Presence_ROI'] == True)
+    Presence_ROI_FALSE = (dataframe['Presence_ROI'] == False)
+    Presence_ROI_NA = np.logical_not(Presence_ROI_TRUE | Presence_ROI_FALSE)
+
+    Presence_ROI_masks = {'possible partitions': ['Presence_ROI_TRUE', 'Presence_ROI_FALSE', 'Presence_ROI_NA'], 'masks': [Presence_ROI_TRUE, Presence_ROI_FALSE, Presence_ROI_NA]}
+    desired_masks_Presence_ROI = {'Presence_ROI': Presence_ROI_masks}
+
+    desired_masks.update(desired_masks_Presence_ROI)
 
     # making sure there is no same 'possible partitions' for different partitions
     all_the_options = []

@@ -8,6 +8,6 @@
         "Image Height": "1080",
         "Statistics Functions": "precision_recall",
         "Transformation Function": "squash_FP_and_TN_rows",
-        "Partitioning Functions": "size_horizontal_vertical"
+        "Partitioning Functions": "object_size_with_annot_store"
     }
 ]
