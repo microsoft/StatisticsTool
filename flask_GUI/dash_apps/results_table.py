@@ -14,8 +14,6 @@ from flask import Flask, render_template
 from flask_GUI.constants import COLOR_GRADIENT_RED_WHITE_BLUE
 import math
 
-MAIN_EXP = 'main'
-REF_EXP = 'ref'
 
 def get_color_from_gradient(x, gradient):
     if x<0 or x>1:
@@ -83,7 +81,9 @@ class Results_table():
             for exp_name in exp_data.keys():
                 txt = "{}".format(exp_data[exp_name][k])
                 if k in ["TP", "FP", "FN"]:
-                    link = "/update_list?cell_name={}&stat={}".format(exp_data[exp_name]['cell_name'],k)
+                    link = get_link_for_update_list(cell_name=exp_data[exp_name]['cell_name'], 
+                                                    stat=k, 
+                                                    is_ref = exp_name==REF_EXP)
                     curr_metric = html.A(txt ,href=link, target="example-list-div")
                     color = 'white'
                 else:
@@ -95,7 +95,7 @@ class Results_table():
 
                 if k in ["TP", "FP", "FN"]:
                     if self.table.unique_helper != None:
-                        unique = self.table.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
+                        unique = self.table.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name, exp_data[exp_name]['cell_name'])
                         TDs.append(html.Td(unique, style={'background-color':color}))
                     else:
                         TDs.append(html.Td('', style={'background-color':color}))

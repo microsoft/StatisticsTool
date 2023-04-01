@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from dash import html
 
-from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections
+from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections, get_link_for_update_list, MAIN_EXP, REF_EXP
 
 class UniqueHelper:
 
@@ -14,11 +14,17 @@ class UniqueHelper:
         self.ref_main_dict = self.exp.ref_main_dict
 
 
-    def generate_unique_html_dash_element(self,column_keys,row_keys,segmentation,exp_name):
-        unique_array,unique_array_ref,tup = self.calc_unique_detections(column_keys,row_keys,segmentation)
-        link_unique = "/update_list?tup=" + str(tup) + "&unique&ref"
+    def generate_unique_html_dash_element(self,column_keys,row_keys,stat,exp_name, cell_name):
+        '''
+            stat: TP,TN,FN
+        '''        
+        unique_array,unique_array_ref,tup = self.calc_unique_detections(column_keys,row_keys,stat)
+        link_unique = get_link_for_update_list(cell_name=cell_name, 
+                                                stat=stat, 
+                                                is_ref = exp_name==REF_EXP,
+                                                is_unique = True)
         num = 0
-        if exp_name == "main":
+        if exp_name == MAIN_EXP:
             num = len(unique_array)
         else:
             num = len(unique_array_ref)
@@ -27,9 +33,7 @@ class UniqueHelper:
         unique = html.A(txt_unique ,href=link_unique, target="example-list-div")
         return unique
 
-    '''
-        segmentation: TP,TN,FN
-    '''
+
     def calc_unique_detections(self,column_keys,row_keys,segmentation):
 
         unique_out = {}

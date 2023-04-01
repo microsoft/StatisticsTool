@@ -8,3 +8,5 @@ matplotlib
 itsdangerous
 xlsxwriter
 azure-storage-blob
+webbrowser
+threading

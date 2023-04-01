@@ -364,7 +364,7 @@ class ParallelExperiment:
         return statistics_df, state_df, statistics_dict, state_dict
 
 
-    def get_ids_new(self, cell_key, state):
+    def get_ids_new(self, cell_key, state, show_unique):
         ids = self.segmented_ID_new[cell_key][state]
         return ids
 
@@ -567,11 +567,11 @@ class ParallelExperiment:
         data = base64.b64encode(output.getbuffer()).decode("ascii")
         return data, fig
 
-    def is_label_or_prd(self):
-        if self.state in ['TP', 'FP']:
-            self.label_or_prd = 'prediction'
-        else:
-            self.label_or_prd = 'label'
+    # def is_label_or_prd(self):
+    #     if self.state in ['TP', 'FP']:
+    #         self.label_or_prd = 'prediction'
+    #     else:
+    #         self.label_or_prd = 'label'
 
     def read_image(self, frame_id, images_folder):
         frame = None
@@ -617,7 +617,7 @@ class ParallelExperiment:
          of the relevant frame with an overlay of its bounding boxes
         """
         # checks what is the relevant dataframe to search for the asked example (predictions or labels)
-        self.is_label_or_prd()
+        # self.is_label_or_prd()
        
        
         # the video name (image folder name) and bounding box index are needed for identification of the correct bounding box (the frame id is not necessary)
