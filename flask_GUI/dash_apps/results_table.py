@@ -154,7 +154,7 @@ class Results_table():
             
             idx = idx + 1
 
-        cell_content = html.Table(all_metrics)
+        cell_content = html.Table(all_metrics,style={'width':'100%'})
         to_show = html.Td(cell_content,style={'padding':'0px'})
 
         return to_show
