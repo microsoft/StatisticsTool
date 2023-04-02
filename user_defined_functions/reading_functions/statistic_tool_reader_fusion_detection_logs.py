@@ -5,13 +5,15 @@ from turtle import left
 #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #from classes_and_utils.utils import empty_when_negative_x
 import pandas as pd
+from utils.LogsParser import is_golden_log, transform_bb_to_original_frame_size, get_fps
 
-#TODO: Add Correction to BB from emulation
 def statistic_tool_reader_fusion_detection_logs(path, threshold_score=0.5):
     with open(path,'r') as file:
         lines = file.readlines()
     
     line = json.loads(lines[1])
+    header= json.loads(lines[0])
+    log_is_algo = is_golden_log(header)
     records = []
     
     for line in lines[1:]:
@@ -24,7 +26,8 @@ def statistic_tool_reader_fusion_detection_logs(path, threshold_score=0.5):
         # frame_id = line['keys']['frame_id']  # just to note that in previous version frame called frame_id
         if 'bb' not in line['keys']['type'] and 'detection' not in line['keys']['type']:
             continue  # skip landmarks. this is only for bb for now
-       
+        #TODO update conditions to match appropriate fields in the latest GT logs
+        
         for single_bb_id in line['message']['objects']:
             bb = line['message']['objects'][single_bb_id]
             x = bb['Left']
@@ -38,6 +41,9 @@ def statistic_tool_reader_fusion_detection_logs(path, threshold_score=0.5):
             
             if score >= threshold_score:
                 detections.append({'detection':True, 'prediction':{'confidence': score, 'x': x,'y': y,'width': width,'height': height}})
+                #TODO: Add Correction to BB from emulation
+
+            #TODO: Add FPS to detections
 
         if len(detections) == 0:
             detections=[{'detection':False}]

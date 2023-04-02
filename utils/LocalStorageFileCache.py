@@ -10,7 +10,7 @@ from utils.LocalStrageHelper import list_local_dir
 
 STATISTICS_TOOL_TEMP_FOLDER_NAME = "statistic-tool-tmp"
 
-TEMP_DIR_MAX_SIZE = 2 * 1024 * 1024 * 1024 # 2 GB Default size
+TEMP_DIR_MAX_SIZE = 5 * 1024 * 1024 * 1024 # 2 GB Default size
 local_storage_cache = None
 class LocalStorageFileCache:
     def __init__(self):
@@ -52,7 +52,7 @@ class LocalStorageFileCache:
             temp_files = list_local_dir(self.temp_dir)
         
             sorted_files = sorted( temp_files,
-                                    key =  lambda x: os.stat(x).st_mtime, reverse=True)
+                                    key =  lambda x: os.stat(x).st_mtime, reverse=False)
             for file in sorted_files:
                 size = os.stat(file).st_size
                 os.remove(file)

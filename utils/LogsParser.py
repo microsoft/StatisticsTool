@@ -27,7 +27,7 @@ def is_golden_log(header):
     return check_log_type(header) == LogTypes.ALGO_LOG
 
 def transform_bb_to_original_frame_size(bb, header):
-    if ['emulated_resolution'] in header['header'].keys():
+    if 'emulated_resolution' in header['header'].keys():
         if header['header']['emulated_resolution']:
             emulation_matrix=string2array(header['header']['emulation_matrix'])
             width_scale=emulation_matrix[0,0]
@@ -51,7 +51,7 @@ def get_fps(header):
     if 'fps_original_video' in header['header'].keys():
         return header['header']['fps_original_video']
     else:
-        return 30
+        return 30 #TODO: change to acceptable option, need to add fps to gtlog
     
 def parse_video_name_from_pred_file(file_path):
     local_path = None
