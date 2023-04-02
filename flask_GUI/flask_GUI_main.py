@@ -11,7 +11,8 @@ from dash import Dash, html
 
 # from pyfladesk import init_gui
 from classes_and_utils.GUI_utils import *
-from flask import Flask, render_template, request,redirect, url_for,session
+from classes_and_utils.TemplatesFilesHelper import *
+from flask import Flask, jsonify, render_template, request,redirect, url_for,session
 from flask_GUI.rendering_functions import show_stats_render
 from flask_GUI.dash_apps.results_table import Results_table
 
@@ -77,9 +78,119 @@ def Report_orig():
     report_type = 'ORIG'
     return Report(use_cached_report)
 
+@server.route('/Save_Report_Request', methods=['GET', 'POST'])
+def Save_Report_Request():
+    global report_type
+    report_type = 'NEW'
+    use_cached_report = request.args.get('use_cached_report')
+    extract_data_request(request,use_cached_report)
+    session['error_message'] = ''
+    return render_template('index.html')
+
+def extract_data_request(request,use_cached_report):
+    global exp
+    global comp_exp
+
+    comp_exp = []
+    if not use_cached_report:
+        exp,result,err_msg = load_experiment(request,False)
+
+        if exp == None and result == False and err_msg != '':
+            #return render_template("start_page.html",message=err_msg)
+            session['error_message'] = err_msg
+            return redirect(url_for("homepage"))
+        cexp,_,_ = load_experiment(request,True)
+        if cexp != None:
+            comp_exp.append(cexp)
+
+def Create_Report():
+    global exp
+    global comp_exp
+
+    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+
+    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
+    return results_table.get_webpage()
+    '''dashApp = Dash(__name__,server=server,url_base_pathname='/dash2/')# serve_locally = False)
+    dashApp.layout = results_table.get_layout()
+    @dashApp.callback(
+        Output('table-div', 'children'),
+        Input('cols_seg', 'value'),
+        Input('rows_seg', 'value')
+    )
+    def update_output(cols_input ,rows_input):
+        table_div = results_table.table.get_table(cols_input, rows_input)
+        return table_div
+
+    return dashApp.index()'''
+@server.route('/get_segmentations', methods=['POST'])    
+def get_segmentations():
+    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+    result = []
+    for k, v in segmentations.items():
+        result.append({'name':k,'values':v})
+    return jsonify(result)
+
+@server.route('/Reporter_new_wrapper', methods=['POST'])
+def Reporter_new_wrapper():
+    wp = Create_Report()
+    return jsonify(wp), 201
+
 @server.route('/Reporter_new', methods=['GET', 'POST'])
+def Create_Report():
+    global exp
+    global comp_exp
+
+    calc_unique = True if request.args.get('calc_unique') == 'true' else False
+
+    columns = [] 
+    rows = [] 
+    argCols = request.args.get('cols')
+    argRows = request.args.get('rows')
+    if argCols != None and len(argCols) > 0:
+        if argCols[-1] == ',':
+            argCols = argCols[:-1]
+        columns  = list(argCols.split(',') )
+       
+    if argRows != None and len(argRows) > 0:
+        if argRows[-1] == ',':
+            argRows = argRows[:-1]
+        rows = list(argRows.split(','))
+    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+
+    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations,calc_unique)
+    results_table.dash_app.layout = results_table.get_layout_new(columns,rows)
+    wp = results_table.get_webpage()
+
+    return wp
+
+@server.route('/get_all_templates', methods=['POST'])
+def get_all_templates():
+    helper = TemplatesFilesHelper()
+    content = helper.get_all_templates_content()
+    return jsonify(content)
+
+@server.route('/get_template_content', methods=['POST'])
+def get_template_content():
+    file_name = request.args.get('file_name')
+    helper = TemplatesFilesHelper()
+    content = helper.get_template_content(file_name)
+    return jsonify(content)
+
+@server.route('/save_template',methods=['POST'])
+def save_template():
+    data = request.json
+    name = data['name']
+    content = data['content']
+    helper = TemplatesFilesHelper()
+    result = helper.save_template(name,content)
+    return jsonify(result)
+    
+
+@server.route('/Reporter_new_old', methods=['GET', 'POST'])
 def Report_new():
     use_cached_report = request.args.get('use_cached_report')
+    
     session['error_message'] = ''
     global report_type
     report_type = 'NEW'
@@ -90,6 +201,7 @@ def Report(use_cached_report):
     global exp
     global comp_exp
     comp_exp = []
+
     if not use_cached_report:
         exp,result,err_msg = load_experiment(request,False)
 
@@ -109,7 +221,7 @@ def Report(use_cached_report):
         segmentations = {seg_category:v['possible partitions'] 
         for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
 
-        results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
+        results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations,calc_unique)
         return results_table.get_webpage()
     elif report_type == 'ORIG':
         # This is the deprecated reporter (before moving to Dash)
@@ -163,7 +275,11 @@ def load_experiment(request,is_reference):
         return ret_exp,True,''
     
     return ret_exp, True, ''
+
+
 #########################################################
+#hagai-callback
+
 @results_table.dash_app.callback(
     Output('table-div', 'children'),
     Input('cols_seg', 'value'),
@@ -172,6 +288,7 @@ def update_results_table(cols_input ,rows_input):
     table_div = results_table.table.get_table(cols_input, rows_input)
 
     return table_div
+
 
 @server.route('/stats_pivot', methods=['GET', 'POST'])
 def statistics_reporter_dash():
@@ -208,6 +325,11 @@ def show_list():
                             unique = listManager.show_unique)
 
     # return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index, unique = unique)
+
+@server.route('/update_list_2', methods=['GET', 'POST'])
+def show_list2():
+    return render_template('index.html')
+
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():

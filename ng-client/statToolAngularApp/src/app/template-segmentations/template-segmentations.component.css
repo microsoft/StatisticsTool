@@ -1,0 +1,71 @@
+::ng-deep .template-selection .mat-grid-tile-content {
+    justify-content: center !important;
+}
+
+::ng-deep .save-template .mat-grid-tile-content {
+    justify-content: left !important;
+}
+
+::ng-deep .save-icon .mat-grid-tile-content {
+    justify-content: left !important;
+}
+
+select:focus { 
+    outline: none !important;
+}
+
+input:focus { 
+    outline: none !important;
+}
+
+::ng-deep .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-bar {
+    background-color: #182a69;
+}
+::ng-deep .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-thumb {
+    background-color: #182a69;
+}
+
+.collapsible {
+    background-color: #777;
+    color: white;
+    cursor: pointer;
+    padding: 18px;
+    width: 98%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+  }
+  
+  .active, .collapsible:hover {
+    background-color: #555;
+  }
+  
+  .collapsible:after {
+    content: '\002B';
+    color: white;
+    font-weight: bold;
+    float: right;
+    margin-left: 5px;
+  }
+  
+  .active:after {
+    content: "\2212";
+  }
+  
+  .content {
+    padding: 0 0px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    background-color: #f1f1f1;
+  }
+
+.disabledImg {
+  opacity:0.5;
+  pointer-events: none !important;
+}
+
+.back:hover {
+  fill: #182a69;
+}

@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@angular/animations": "^15.2.4",
+    "@angular/cdk": "^15.2.4",
+    "@angular/material": "^15.2.4",
+    "@fontsource/roboto": "^4.5.8",
+    "@ng-bootstrap/ng-bootstrap": "^14.0.1",
+    "angular-material-expansion-panel": "^0.7.2",
+    "ng-multiselect-dropdown": "^0.3.9",
+    "ngx-collapse": "^0.0.4"
+  }
+}
