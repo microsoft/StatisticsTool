@@ -97,36 +97,42 @@ class Results_table():
             exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations, self.unique_helper) 
 
         all_metrics = []
-        if len(all_exps) > 0:
+        if all_exps[REF_EXP] !=[]:
             TDs = []
             TDs.append(html.Td(''))
             TDs.append(html.Td('MAIN', style={'color':'black','font-weight':'bold'}))
             TDs.append(html.Td(''))
             TDs.append(html.Td('REF', style={'color':'black','font-weight':'bold'}))
             all_metrics.append(html.Tr(TDs))
-
+        
+        idx = 0
         for k in exp_data[MAIN_EXP].keys():
+            
+            if k == 'cell_name':
+                continue
             
             TDs = [html.Td(k)]
             num_of_exps = len(exp_data.keys())
 
+            
             for exp_name in exp_data.keys():
                 txt = "{}".format(exp_data[exp_name][k])
                 if k in ["TP", "FP", "FN"]:
                     link = "/update_list?cell_name={}&stat={}".format(exp_data[exp_name]['cell_name'],k)
-                    curr_metric = html.A(txt ,href=link, target="example-list-div")
-                    color = 'white'
+                    #curr_metric = html.A(txt ,href=link, target="example-list-div")
+                    #color = 'white'
 
                     js = json.dumps({'action':'update_list','value': link})
                     msg = "javascript:window.parent.postMessage({});".format(js)
                     curr_metric = html.A(txt ,href=msg, target="")
-                    color = 'white'
+                    #color = 'white'
                 else:
                     curr_metric = txt
-                    color = 'white' if num_of_exps == 1 else\
-                    get_color_by_two_values_diff(exp_data[REF_EXP][k], exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_WHITE_BLUE)
 
-                TDs.append(html.Td(curr_metric, style={'background-color':color}))
+                color = 'white' if num_of_exps == 1 else\
+                get_color_by_two_values_diff(exp_data[REF_EXP][k], exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_WHITE_BLUE)
+
+                TDs.append(html.Td(curr_metric))
 
                 if self.calc_unique == True and k in ["TP", "FP", "FN"]:
                     if self.unique_helper != None:
@@ -135,16 +141,21 @@ class Results_table():
                         msg = "javascript:window.parent.postMessage({});".format(js)
                         a_unique = html.A(txt_unique ,href=msg, target="")
 
-                        TDs.append(html.Td(a_unique, style={'background-color':color}))
+                        TDs.append(html.Td(a_unique))
                     else:
-                        TDs.append(html.Td('', style={'background-color':color}))
+                        TDs.append(html.Td(''))
                 else:
-                    TDs.append(html.Td('', style={'background-color':color}))
-
-            all_metrics.append(html.Tr(TDs))
+                    TDs.append(html.Td(''))
+            
+            if idx % 2 == 0:
+                all_metrics.append(html.Tr(TDs,style={'background-color':'#e4f0f5'}))
+            else:
+                all_metrics.append(html.Tr(TDs,style={'background-color':'white'}))
+            
+            idx = idx + 1
 
         cell_content = html.Table(all_metrics)
-        to_show = html.Td(cell_content)
+        to_show = html.Td(cell_content,style={'padding':'0px'})
 
         return to_show
     

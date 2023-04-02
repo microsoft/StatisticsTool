@@ -7,6 +7,7 @@ from dash import Dash, html, dcc, Input, Output
 import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
+from flask_GUI.dash_apps.results_table_css import css
 
 sys.path.append('../classes_and_utils')
 
@@ -108,7 +109,16 @@ class   PivotTable():
     def get_cols_titles(self, pivot_category_vertical, pivot_category_horizon):
         if len(pivot_category_horizon) == 0:
             pivot_category_horizon = [" "]
-        horizontal_headers = [html.Th("{}||".format(hor_cat), scope='col') for hor_cat in pivot_category_horizon]
+        #horizontal_headers = [html.Th("{}".format(hor_cat), scope='col') for hor_cat in pivot_category_horizon]
+        horizontal_headers = []
+        num_cat = len(pivot_category_horizon)
+        for idx, hor_cat in enumerate(pivot_category_horizon):
+            if idx < num_cat:
+                horizontal_headers.append(html.Th("{}".format(hor_cat), scope='col',style=css['smallCell']))
+            else:
+                horizontal_headers.append(html.Th("{}".format(hor_cat), scope='col'))
+
+
 
         if len(pivot_category_vertical) == 0:
             values_th = [html.Th("general", scope='col')]
@@ -174,6 +184,7 @@ class   PivotTable():
         ## Create the table ##
         table = dbc.Table(
                             id="table1",# style={'border':'solid'},\
+                            style={'max-width':'fit-content'},
                             children = [table_head, table_body],
                             bordered=True,
                             dark=False,
