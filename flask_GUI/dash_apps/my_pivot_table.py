@@ -11,7 +11,7 @@ from flask_GUI.dash_apps.results_table_css import css
 
 sys.path.append('../classes_and_utils')
 
-def default_get_cell(data, column_keys, row_keys):
+def default_get_cell(data, column_keys, row_keys,row_index):
     return html.Td("{}\n{}".format(column_keys, row_keys), style={'border':'solid'})
 
 class   PivotTable():
@@ -21,7 +21,7 @@ class   PivotTable():
         self.get_cell = cell_function
         self.data = data
 
-    def get_row(self, rows_keys, columns_order, horizontal_span_size, all_rows_cats, idx_hist):
+    def get_row(self, rows_keys, columns_order, horizontal_span_size, all_rows_cats,idx, idx_hist):
         '''
         A function that returns single Dash-Html table row
         '''
@@ -41,7 +41,7 @@ class   PivotTable():
         ## The core of the table
         ## This for-loop goes over all columns of the row, and collect the cells
         for column_keys in columns_order:
-            single_row.append(self.get_cell(self.data, column_keys, rows_keys))
+            single_row.append(self.get_cell(self.data, column_keys, rows_keys,idx))
 
         single_row = [html.Tr(single_row)]
         return single_row
@@ -74,7 +74,7 @@ class   PivotTable():
         if len(rows_segmentation_categories) == 0:
             segments_history = [{"None": "None"}]
             horizontal_span_size = [0]
-            return self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories,idx_hist = [0])
+            return self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories,0,idx_hist = [0])
         
         list_all_TRs = []
 
@@ -84,7 +84,7 @@ class   PivotTable():
             segments_history = prev_segments_history + [{curr_segment_category: segment_name}]
             idx_hist_ = idx_hist + [idx]
             if len(rows_segmentation_categories) == row_cat_idx+1: ## Bringing a single row
-                TRs_curr_cat =  self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories,idx_hist = idx_hist_)
+                TRs_curr_cat =  self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories,idx,idx_hist = idx_hist_)
             
             else: ## Continue recoursy - bring all rows in this category
                 TRs_curr_cat = self.get_rows_of_cat(rows_segmentation_categories, columns_order, horizontal_span_size,prev_segments_history= segments_history, row_cat_idx = row_cat_idx+1, idx_hist = idx_hist_)

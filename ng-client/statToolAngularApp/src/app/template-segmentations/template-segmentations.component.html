@@ -14,10 +14,10 @@
         <div class="template-selection" style="width:650px;margin-left: 10px;padding-top: 5px;">
             <mat-grid-list cols="16" rowHeight="40px">
                 <mat-grid-tile  [colspan]="1" [rowspan]="1">
-                    <div class="save-icon" style="margin-top:-2px">
-                        <img [src]="saveImgSrc"
-                            (mouseover)="saveImgSrc = 'assets/back-icon-blue.svg'"
-                            (mouseout)="saveImgSrc = 'assets/back-icon-gray.svg'"
+                    <div class="back-icon" style="margin-top:-2px">
+                        <img [src]="backImgSrc"
+                            (mouseover)="backImgSrc = 'assets/back-icon-orange.svg'"
+                            (mouseout)="backImgSrc = 'assets/back-icon-blue.svg'"
                             style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
                             title="Back"
                             class="back"
@@ -47,14 +47,24 @@
                 </ng-container>
                 <mat-grid-tile  [colspan]="5" [rowspan]="1">
                     <div class="save-icon" [ngClass]="getDisabledClass()">
-                        <img src="assets/save-icon.svg" 
-                            
+                        <img [src]="saveImgSrc"
+                            (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
+                            (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
                             style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
                             title="Save Template"
                             (click)="saveTemplate()">
                     </div>
-                    <div style="font-weight: bold;">
+                    <!--<div style="font-weight: bold;margin-left: 3px;">
                         <mat-slide-toggle [(ngModel)]="statService.calculateUnique" (change)="slideUniqueChange($event)">Calculate Unique</mat-slide-toggle>
+                    </div>-->
+                    <div style="margin-bottom:-10px;margin-left:3px">
+                        <label class="switch" >
+                            <input type="checkbox" [(ngModel)]="statService.calculateUnique" (change)="slideUniqueChange($event)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div style="margin-left:5px;margin-top:20px">
+                        <p style="font-weight: bold;color:#182a69;">Calculate Unique</p>
                     </div>
                 </mat-grid-tile>
             </mat-grid-list>

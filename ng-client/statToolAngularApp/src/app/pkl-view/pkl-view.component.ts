@@ -74,6 +74,7 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
   }
 
@@ -85,6 +86,7 @@ export class PklViewComponent implements OnInit  {
 
     this.fixSelectedString();
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
   }
   
@@ -100,6 +102,7 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
   }
 
@@ -108,6 +111,7 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
   }
 
@@ -120,6 +124,7 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
   }
 
@@ -131,6 +136,7 @@ export class PklViewComponent implements OnInit  {
 
     this.fixSelectedString();
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
   }
   
@@ -146,6 +152,7 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
   }
 
@@ -154,11 +161,9 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
+    this.loadCounter = 1;
     this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
   }
-
-  
- 
 
   fixSelectedString(){
     if (this.selectedColumns.slice(-1) == ",")  

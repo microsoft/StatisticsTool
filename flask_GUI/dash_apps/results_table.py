@@ -85,7 +85,7 @@ class Results_table():
         
         return self.dash_app.index()
 
-    def get_cell_exp(self, all_exps, column_keys, row_keys):  
+    def get_cell_exp(self, all_exps, column_keys, row_keys,row_index):  
         '''
         The function that return a single cell
         '''     
@@ -101,7 +101,8 @@ class Results_table():
             TDs = []
             TDs.append(html.Td(''))
             TDs.append(html.Td('MAIN', style={'color':'black','font-weight':'bold'}))
-            TDs.append(html.Td(''))
+            if self.unique_helper != None:
+                TDs.append(html.Td(''))
             TDs.append(html.Td('REF', style={'color':'black','font-weight':'bold'}))
             all_metrics.append(html.Tr(TDs))
         
@@ -143,12 +144,17 @@ class Results_table():
 
                         TDs.append(html.Td(a_unique))
                     else:
-                        TDs.append(html.Td(''))
+                        if self.unique_helper != None:
+                            TDs.append(html.Td(''))
                 else:
-                    TDs.append(html.Td(''))
+                    if self.unique_helper != None:
+                        TDs.append(html.Td(''))
             
             if idx % 2 == 0:
-                all_metrics.append(html.Tr(TDs,style={'background-color':'#e4f0f5'}))
+                if row_index % 2 == 0:
+                    all_metrics.append(html.Tr(TDs,style={'background-color':'#e4f0f5'}))
+                else:
+                    all_metrics.append(html.Tr(TDs,style={'background-color':'#d3f0e0'}))
             else:
                 all_metrics.append(html.Tr(TDs,style={'background-color':'white'}))
             

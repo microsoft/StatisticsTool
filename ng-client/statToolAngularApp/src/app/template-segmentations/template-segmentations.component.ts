@@ -14,7 +14,8 @@ export class TemplateSegmentationsComponent implements OnInit {
   
   isNewTemplateMode = true;
   templateNameCreated = '';
-  saveImgSrc = 'assets/back-icon-gray.svg';
+  backImgSrc = 'assets/back-icon-blue.svg';
+  saveImgSrc = 'assets/save-icon-blue.svg';
 
   constructor(private httpClient:HttpClient,
               public statService:StatisticsToolService,
@@ -83,8 +84,10 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   slideUniqueChange(event:any){
-    this.statService.calculateUnique = event.checked;
-    this.statService.uniqueValueChanged.next(event.checked);
+    //console.log('slideUniqueChange',event.checked)
+    //this.statService.calculateUnique = event.checked;
+    //this.statService.uniqueValueChanged.next(event.checked);
+    this.statService.uniqueValueChanged.next(this.statService.calculateUnique);
   }
 
   clickPanel(i:number){

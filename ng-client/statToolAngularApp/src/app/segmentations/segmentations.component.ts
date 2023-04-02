@@ -51,7 +51,7 @@ export class SegmentationsComponent implements OnInit{
         selectAllText: 'Select All',
         unSelectAllText: 'UnSelect All',
         itemsShowLimit: 100,
-        allowSearchFilter: true
+        allowSearchFilter: true,
       };
   }
 
