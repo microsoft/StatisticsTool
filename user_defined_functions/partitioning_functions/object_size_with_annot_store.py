@@ -253,9 +253,9 @@ def object_size_with_annot_store(dataframe, from_file=False):
 
     # Presence_ROI
     # ------------
-    dataframe['Presence_ROI'] = dataframe['Presence_ROI'].map({"True": True, "False": False}).fillna('NA')
-    Presence_ROI_TRUE = (dataframe['Presence_ROI'] == True)
-    Presence_ROI_FALSE = (dataframe['Presence_ROI'] == False)
+    dataframe['Presence_ROI[sequence]'] = dataframe['Presence_ROI[sequence]'].map({"True": True, "False": False}).fillna('NA')
+    Presence_ROI_TRUE = (dataframe['Presence_ROI[sequence]'] == True)
+    Presence_ROI_FALSE = (dataframe['Presence_ROI[sequence]'] == False)
     Presence_ROI_NA = np.logical_not(Presence_ROI_TRUE | Presence_ROI_FALSE)
 
     Presence_ROI_masks = {'possible partitions': ['Presence_ROI_TRUE', 'Presence_ROI_FALSE', 'Presence_ROI_NA'], 'masks': [Presence_ROI_TRUE, Presence_ROI_FALSE, Presence_ROI_NA]}
