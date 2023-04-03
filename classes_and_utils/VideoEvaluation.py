@@ -201,7 +201,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
         print (f"succeded-{len(succeded)} skippied_reading-{len(skipped_reading_fnc)} skipped_json-{len(skipped_not_json)}, failed-{len(failed)}, total files num-{len(pred_path_list)}\n\n")
         gt_local_path = None
         
-        if not pred.endswith('presence_log.json'): # TODO: consult Nachem on how to adjust this
+        if not pred.endswith('.json'):
             print (f"not .json file skipping: {pred}")
             skipped_not_json.append(pred)
             continue
