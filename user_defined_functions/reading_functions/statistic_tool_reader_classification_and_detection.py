@@ -7,7 +7,7 @@ from turtle import left
 import pandas as pd
 
 
-def statistic_tool_reader_presence_algo_logs(path):
+def statistic_tool_reader_classification_and_detection(path):
     with open(path,'r') as file:
         lines = file.readlines()
 
