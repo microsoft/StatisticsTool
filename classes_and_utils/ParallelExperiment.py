@@ -101,6 +101,7 @@ class ParallelExperiment:
         self.ID_storage = {}
         self.segmented_ID = {}
         self.segmented_ID_new = {}
+        self.unique_data = {}
         self.image_width = int(image_width)
         self.image_height = int(image_height)
         self.sheldon_header_data = sheldon_header_data
@@ -181,7 +182,7 @@ class ParallelExperiment:
         
         self.ID_storage['label'] = self.ID_storage['prediction']
 
-    def get_cell_data(self, segmentations:list):
+    def get_cell_data(self, segmentations:list, unique):
         len_ = len(self.masks['total_stats']['TP'])
         segmentation_mask = np.ones([len_], dtype=bool)
 
@@ -211,11 +212,34 @@ class ParallelExperiment:
         if not hasattr(self, 'segmented_ID_new'): # temp just for backward compatability
             self.segmented_ID_new = {}
 
+        if not hasattr(self, 'unique_data'):
+            self.unique_data = {}    
+
         self.segmented_ID_new[cell_name] = {
             'TP': self.ID_storage["prediction"][TP_masks],\
             'FP': self.ID_storage['prediction'][FP_masks],\
             'FN': self.ID_storage['label'][FN_masks]}
 
+        #todo - hagai
+        if unique is not None:
+            dict = {'None':'None'}
+            lst = []
+            lst.append(dict)
+            cols = []
+            rows = lst
+            if segmentations == []:
+                cols = lst
+            else:
+                cols = segmentations
+            uniqueTP = unique.calc_unique_detections(cols,rows,'TP')
+            uniqueFP = unique.calc_unique_detections(cols,rows,'FP')
+            uniqueFN = unique.calc_unique_detections(cols,rows,'FN')
+
+            self.unique_data[cell_name] = {
+                'TP':uniqueTP[0],
+                'FP':uniqueFP[0],
+                'FN':uniqueFN[0]
+            }
         return statistics_dict
 
 
@@ -364,8 +388,15 @@ class ParallelExperiment:
         return statistics_df, state_df, statistics_dict, state_dict
 
 
-    def get_ids_new(self, cell_key, state):
-        ids = self.segmented_ID_new[cell_key][state]
+    def get_ids_new(self, cell_key, state, show_unique):
+        if show_unique:
+            ids = []
+            for x in self.unique_data[cell_key][state]:
+                ids.append(x)
+            ids = np.array(ids)
+            
+        else:
+            ids = self.segmented_ID_new[cell_key][state]
         return ids
 
     def get_ids(self, show_unique, state, total=False, primary=None, secondary=None, tertiary=None):
@@ -567,11 +598,11 @@ class ParallelExperiment:
         data = base64.b64encode(output.getbuffer()).decode("ascii")
         return data, fig
 
-    def is_label_or_prd(self):
-        if self.state in ['TP', 'FP']:
-            self.label_or_prd = 'prediction'
-        else:
-            self.label_or_prd = 'label'
+    # def is_label_or_prd(self):
+    #     if self.state in ['TP', 'FP']:
+    #         self.label_or_prd = 'prediction'
+    #     else:
+    #         self.label_or_prd = 'label'
 
     def read_image(self, frame_id, images_folder):
         frame = None
@@ -617,7 +648,7 @@ class ParallelExperiment:
          of the relevant frame with an overlay of its bounding boxes
         """
         # checks what is the relevant dataframe to search for the asked example (predictions or labels)
-        self.is_label_or_prd()
+        # self.is_label_or_prd()
        
        
         # the video name (image folder name) and bounding box index are needed for identification of the correct bounding box (the frame id is not necessary)

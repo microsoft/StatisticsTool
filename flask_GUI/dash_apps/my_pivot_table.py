@@ -9,22 +9,16 @@ import numpy as np
 import dash_bootstrap_components as dbc
 
 sys.path.append('../classes_and_utils')
-from classes_and_utils.unique_helper import UniqueHelper
-from classes_and_utils.GUI_utils import match_main_ref_predictions,calc_unique_detections
 
 def default_get_cell(data, column_keys, row_keys):
     return html.Td("{}\n{}".format(column_keys, row_keys), style={'border':'solid'})
 
-class PivotTable():
+class   PivotTable():
 
     def __init__(self, segmentations, data, cell_function = default_get_cell):
         self.segmentations = segmentations
         self.get_cell = cell_function
         self.data = data
-        if len(self.data['ref']) > 0:
-            self.unique_helper = UniqueHelper(self.data['main'],self.data['ref'][0])
-        else:
-            self.unique_helper = None
 
     def get_row(self, rows_keys, columns_order, horizontal_span_size, all_rows_cats, idx_hist):
         '''
@@ -157,16 +151,6 @@ class PivotTable():
         
         return res1 + res2
 
-    def get_unique(self,colums,rows):
-        exp  = self.data['main']
-        comp = self.data['ref']
-        keys = self.get_keys_permutations(colums,rows)
-        exp.main_ref_dict, exp.ref_main_dict = match_main_ref_predictions(exp,comp[0])
-        unique, unique_ref, unique_stats, unique_stats_ref = calc_unique_detections(keys, exp, comp[0], exp.main_ref_dict, exp.ref_main_dict)
-        exp.unique = unique
-        comp[0].unique = unique_ref
-        return unique_stats, unique_stats_ref
-
     def get_table(self, all_columns, all_rows):
         '''
         The main function that builds the whole table
@@ -221,6 +205,8 @@ def table_page_example(segmentations):
     return html.Div([Title_div, cols_segmentation_dropdown, rows_segmentation_dropdown, table_div], style={'border':'solid'})
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
+#HAGAI-callback
+'''
 @app.callback(
     Output('table-div', 'children'),
     Input('cols_seg', 'value'),
@@ -229,7 +215,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
 def update_output(cols_input ,rows_input):
     table_div = table.get_table(cols_input, rows_input)
     return table_div
-
+'''
 
 if __name__ == '__main__':
 

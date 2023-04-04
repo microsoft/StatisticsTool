@@ -1,0 +1,95 @@
+<div>
+    <!-- HEADER (TODO: REMOVE IT TO A SEPARATE COMPONENT) -->
+    
+    <div style="width:100%;
+                height:50px;
+                border:1px solid lightgray;
+                border-radius: 4px;
+                color:#182a69;
+                background-color: #fafafa;
+                position: sticky;
+                z-index: 99999;
+                top:0px">
+
+        <div class="template-selection" style="width:650px;margin-left: 10px;padding-top: 5px;">
+            <mat-grid-list cols="16" rowHeight="40px">
+                <mat-grid-tile  [colspan]="1" [rowspan]="1">
+                    <div class="save-icon" style="margin-top:-2px">
+                        <img [src]="saveImgSrc"
+                            (mouseover)="saveImgSrc = 'assets/back-icon-blue.svg'"
+                            (mouseout)="saveImgSrc = 'assets/back-icon-gray.svg'"
+                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                            title="Back"
+                            class="back"
+                            (click)="back()">
+                    </div>
+                </mat-grid-tile>
+                <mat-grid-tile [colspan]="5" [rowspan]="1">
+                    <select 
+                        [(ngModel)]="statService.selectedTamplate"
+                        style="height: 29px; width:95%;border-color:lightgray;border-radius: 3px;"
+                        (change)="onTemplateSelected($event)"
+                        >
+                        <option *ngFor="let t of statService.templateNameOptions"
+                                        value="{{t.key}}"
+                                >{{t.value}}</option>
+                    </select>
+                </mat-grid-tile>
+                
+                <ng-container *ngIf="isNewTemplateMode">
+                    <mat-grid-tile  [colspan]="5" [rowspan]="1">
+                        <input type="text" 
+                            placeholder="Template Name"
+                            [(ngModel)]="templateNameCreated"
+                            style="height:25px;width:95%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;"
+                            >
+                    </mat-grid-tile>
+                </ng-container>
+                <mat-grid-tile  [colspan]="5" [rowspan]="1">
+                    <div class="save-icon" [ngClass]="getDisabledClass()">
+                        <img src="assets/save-icon.svg" 
+                            
+                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                            title="Save Template"
+                            (click)="saveTemplate()">
+                    </div>
+                    <div style="font-weight: bold;">
+                        <mat-slide-toggle [(ngModel)]="statService.calculateUnique" (change)="slideUniqueChange($event)">Calculate Unique</mat-slide-toggle>
+                    </div>
+                </mat-grid-tile>
+            </mat-grid-list>
+        </div>
+    </div>
+
+    <!-- SEGMENTATIONS -->
+    <div style="margin-top:3px">
+        
+            <ng-container *ngFor="let x of statService.currentTemplate.Segmentations;let i = index">
+                <button 
+                    class="collapsible" 
+                    (click)="clickPanel(i)" 
+                    style="font-weight: bold;"    
+                    [ngClass]="getActiveCls(i)">View - {{ getTitle(i) }}
+                </button>
+                    <div class="content" [ngStyle]="{'max-height':getHeight(i)}">
+                        <!--<p>
+                            <ngb-alert [dismissible]="false">
+                                <strong>Warning!</strong> Better check yourself, you're not looking too good.
+                            </ngb-alert>
+                        </p>-->
+                        <pkl-view 
+                            [selectedRowsSet] = "x.rows"
+                            [selectedColumnsSet] = "x.columns"
+                            [name] = "x.name"
+                            [id] = i
+                        >
+                        </pkl-view>          
+                    </div>  
+            </ng-container>
+    </div>
+</div>
+<div>
+    <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;;" 
+            mat-raised-button 
+            (click)="addView()">Add View</button>
+</div>
