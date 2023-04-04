@@ -25,10 +25,10 @@ def statistic_tool_reader_presence_algo_logs(path):
         line = json.loads(line)
         if 'type' not in line['keys'] or line['keys']['type'] not in  valid_types or 'objects' not in line['message']:
             continue
-
+          
         detections = []
         frame_id = line['keys']['frame_id']
-       
+
         for obj in line['message']['objects']:
             if obj["Source"] not in valid_sources:
                 continue
