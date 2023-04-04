@@ -144,6 +144,37 @@ def object_size_with_annot_store(dataframe, from_file=False):
 
         desired_masks.update(desired_masks_annot_store)
 
+    # sequence annotations
+    # --------------------
+    dummy_counter = 0
+    desired_masks_annot_store = {}
+    annot_headers = [annot for annot in dataframe.keys() if '[sequence]' in annot]
+    for annot_header in annot_headers:
+        print(annot_header)
+        annot = dataframe[annot_header]
+        annot_header = annot_header.replace('[sequence]', '')
+        annot = annot.fillna('NA')
+        annot = annot.astype(str)
+        current_annotation_categories = list(annot.unique())
+        # this is a patch to correct mixed numeric/string annotation
+        if annot_header in ['User_Movement_Type', 'User_Physical_Status', 'Light', 'location', 'background people', 'background']:
+            current_annotation_categories = list(
+                set([str(i) for i in current_annotation_categories]))
+            annot = annot.astype(str)
+        # next steps of tool fails in case of single category --> add fake empty annotation, for example: "NOT_Indoor"
+        if len(current_annotation_categories) == 1:
+            current_annotation_categories.append(
+                'NOT_' + current_annotation_categories[0])
+        masks = []
+        for cat in current_annotation_categories:
+            dummy_counter += 1
+            masks.append(np.array(annot == cat))
+        curr_desired_mask = {'possible partitions': [str(
+            val) + '_[' + str(annot_header) + ']' for val in current_annotation_categories], 'masks': masks}
+        desired_masks_annot_store[annot_header] = curr_desired_mask
+
+    desired_masks.update(desired_masks_annot_store)
+
     # person on edges
     # ---------------
     elongation_ratio_medium = 2
@@ -215,26 +246,27 @@ def object_size_with_annot_store(dataframe, from_file=False):
 
         desired_masks.update(desired_masks_clip_duration)
 
-    # iou
-    # ---
-    bins = [-1, 0, 0.25, 0.5, 0.75, 1.1]
-    labels = ['0', '0-0.25', '0.25-0.5', '0.5-0.75', '0.75-1']
+    if 0:
+        # iou
+        # ---
+        bins = [-1, 0, 0.25, 0.5, 0.75, 1.1]
+        labels = ['0', '0-0.25', '0.25-0.5', '0.5-0.75', '0.75-1']
 
-    dataframe['iou_binned'] = pd.cut(
-        dataframe['iou'], bins=bins, labels=labels)
-    dataframe['iou_binned'] = dataframe['iou_binned'].values.add_categories(
-        'missing iou')
-    dataframe['iou_binned'].fillna('missing iou', inplace=True)
-    labels = labels + ['missing iou']
-    masks = []
-    for label in labels:
-        curr_mask = (dataframe['iou_binned'] == label)
-        masks.append(curr_mask)
+        dataframe['iou_binned'] = pd.cut(
+            dataframe['iou'], bins=bins, labels=labels)
+        dataframe['iou_binned'] = dataframe['iou_binned'].values.add_categories(
+            'missing iou')
+        dataframe['iou_binned'].fillna('missing iou', inplace=True)
+        labels = labels + ['missing iou']
+        masks = []
+        for label in labels:
+            curr_mask = (dataframe['iou_binned'] == label)
+            masks.append(curr_mask)
 
-    iou = {'possible partitions': labels, 'masks': masks}
-    desired_masks_iou = {'iou': iou}
+        iou = {'possible partitions': labels, 'masks': masks}
+        desired_masks_iou = {'iou': iou}
 
-    desired_masks.update(desired_masks_iou)
+        desired_masks.update(desired_masks_iou)
 
     # empty/non-empty
     # ---------------
