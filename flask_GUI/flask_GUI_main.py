@@ -1,4 +1,6 @@
 import os, sys
+import webbrowser
+from threading import Timer
 from requests import Session
 # the absolute path for this file
 current_file_directory = os.path.realpath(__file__)
@@ -40,9 +42,9 @@ def new_report_func():
 @server.route('/calculating_page', methods=['GET', 'POST'])
 def calculating():
     # extract the user specified directories and names
-    config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, save_stats_dir, config_dict = unpack_calc_request(request, current_file_directory)
+    config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, config_dict = unpack_calc_request(request, current_file_directory)
     # making sure save_stats_dir is empty and opening the appropriate folders
-    empty = folder_func(output_dir)
+    empty, save_stats_dir = folder_func(output_dir)
     if empty == 'FileNotFound':
         return render_template('Not_found.html')
     # if the output folder is not empty a message is sent
@@ -243,6 +245,8 @@ def save_pkl_file(pckl_file,is_reference):
         pckl_file.save(path_to_save)
         return path_to_save
 
+
+
 def load_experiment(request,is_reference):
     
     key_file_path = 'reference_file_path' if is_reference else 'report_file_path'
@@ -254,8 +258,7 @@ def load_experiment(request,is_reference):
         report_filename = request.values[key_file_path]
         if os.path.exists(report_filename):
             ret_exp = load_object(report_filename)
-            ret_exp.main_ref_dict=None
-            ret_exp.ref_main_dict=None
+
             return ret_exp,True,''
         else:
             #to do - if file not exist
@@ -268,8 +271,7 @@ def load_experiment(request,is_reference):
         
         report_filename = save_pkl_file(pckl_file,False)
         ret_exp = load_object(report_filename)
-        ret_exp.main_ref_dict=None
-        ret_exp.ref_main_dict=None
+
         return ret_exp,True,''
     
     return ret_exp, True, ''
@@ -297,10 +299,32 @@ def show_stats():
     return show_stats_render(request, exp, comp_exp)			
 
 #########################################################
+
+global LM
+LM = None
+def get_list_manager():
+    global LM
+    if LM == None:
+        LM = UpdateListManager()
+    return LM
+
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    comp_index, unique, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon = manage_list_request(request, exp, comp_exp, report_type)
-    return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index, unique = unique)
+    listManager = get_list_manager()
+
+    # global comp_index, unique, state, cell_name, save_path, per_video_example_hash
+    listManager.manage_list_request(request, exp, comp_exp, report_type)
+
+    return render_template('examples_list.html', 
+                            state=listManager.state, 
+                            cell_name=listManager.cell_name,
+                            save_path=listManager.saved_list,
+                            per_video_example_hash=listManager.per_video_example_hash,
+                            saved_sheldon=listManager.saved_sheldon,
+                            comp_index=listManager.comp_index,
+                            unique = listManager.show_unique)
+
+    # return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index, unique = unique)
 
 @server.route('/update_list_2', methods=['GET', 'POST'])
 def show_list2():
@@ -320,8 +344,12 @@ def show_config():
     config_dict = config_file[0]
     return render_template('show_config.html', config_dict=config_dict, config_name=config_name)
 
+def open_browser():
+      webbrowser.open_new("http://127.0.0.1:5000")
 
 if __name__=='__main__':
     server.debug = False
+
+    # Timer(1, open_browser).start()
     server.run()
-    
+    open_browser()
