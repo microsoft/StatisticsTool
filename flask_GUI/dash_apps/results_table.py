@@ -90,9 +90,9 @@ class Results_table():
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
         
         exp_data = {}
-        exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations, self.unique_helper)
+        exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations, self.unique_helper, False)
         if all_exps[REF_EXP] !=[]:
-            exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations, self.unique_helper) 
+            exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations, self.unique_helper, True) 
 
         all_metrics = []
         if all_exps[REF_EXP] !=[]:
