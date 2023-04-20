@@ -10,3 +10,4 @@ xlsxwriter
 azure-storage-blob
 webbrowser
 threading
+colorama

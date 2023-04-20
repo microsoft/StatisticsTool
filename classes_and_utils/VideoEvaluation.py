@@ -238,9 +238,14 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
        
         print(f"finished compare predictions for video {video_name}")
     
+    #TODO: Indeed need to save this information, but not as a jump file header.
+    #Jump file header should be created only when exporting it (on UI)
     sheldon_pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
     sheldon_gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
-    sheldon_header_data = create_sheldon_list_header(primary_path=sheldon_pred_dir, primary_name=pred_file_name, secondary_path=sheldon_gt_dir, secondary_name=gt_file_name)
+    # sheldon_video_dir = get_local_or_blob_full_path(path, StoreType.Data)
+    sheldon_video_dir = '' #TODO:ADD Blob link
+
+    sheldon_header_data = create_sheldon_list_header(primary_path=sheldon_pred_dir, primary_name=pred_file_name, secondary_path=sheldon_gt_dir, secondary_name=gt_file_name, video_path=sheldon_video_dir)
     return output_files, sheldon_header_data
 
 

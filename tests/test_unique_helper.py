@@ -2,7 +2,7 @@ import os,sys
 
 #sys.path.append(os.path.join(os.getcwd(),'classes_and_utils'))
 
-from classes_and_utils.GUI_utils import load_object,match_main_ref_predictions
+from classes_and_utils.GUI_utils import load_object
 from classes_and_utils.unique_helper import UniqueHelper
 
 class TestUniqueHelper:

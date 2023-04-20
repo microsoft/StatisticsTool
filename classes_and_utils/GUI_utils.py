@@ -606,11 +606,22 @@ class UpdateListManager():
         self.per_video_example_hash = self.create_collapsing_list(self.list_of_examples)
 
 
-    def export_list_to_sheldon(self, images_list, sheldon_header_data,output_dir, cell_name, states, is_unique, comp_index):
+    def export_list_to_sheldon(self, images_list, sheldon_header_data, output_dir, cell_name, states, is_unique, comp_index):
         segmentation_list = cell_name.split("*") if cell_name !="*" else ['All']
         sheldon_list = []
         header = {}
-        header['header']=sheldon_header_data
+
+        #TODO: Move sheldon header to here
+        #Jump file header should be created only when exporting it (on UI)
+        new_sheldon_header = create_sheldon_list_header(\
+            sheldon_header_data[PRIMARY_LOG][LOGS_PATH],
+            sheldon_header_data[PRIMARY_LOG][LOG_FILE_NAME],
+            sheldon_header_data[SECONDARY_LOG][LOGS_PATH],
+            sheldon_header_data[SECONDARY_LOG][LOG_FILE_NAME],
+             '') 
+
+
+        header['header']=new_sheldon_header
         header['header']['segmentation']= segmentation_list
         if is_unique:
             header['header']['segmentation'].append('unique')
@@ -618,20 +629,20 @@ class UpdateListManager():
 
         sheldon_list.append(json.dumps(header))
         for file in list(images_list.keys()):
-            for event in images_list[file]:
+            for event_key, actual_event in images_list[file].items():
                 sheldon_link={}
                 sheldon_link['keys']={}
                 sheldon_link['keys']['type']='debug'
                 sheldon_link['message']={}
                 sheldon_link['message']['IsChecked']='False'
 
-                vid = images_list[file][event]['frames'][0][0]
-                sheldon_link['message']['Video Location']=vid
-                sheldon_link['message']['Frame Number']= images_list[file][event]['frames'][0][2]
-                sheldon_link['message']['end_frame'] = images_list[file][event]['end_frame']
+                vid_name = actual_event['frames'][0][0].replace(".mp4","")
+                sheldon_link['message']['Video Location']=vid_name
+                sheldon_link['message']['Frame Number']= actual_event['frames'][0][2]
+                sheldon_link['message']['end_frame'] = actual_event['end_frame']
 
-                sheldon_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid, header['header'][PRIMARY_LOG][LOGS_PATH])
-                sheldon_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid, header['header'][SECONDARY_LOG][LOGS_PATH])
+                # sheldon_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid_name, header['header'][PRIMARY_LOG][LOGS_PATH])
+                # sheldon_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid_name, header['header'][SECONDARY_LOG][LOGS_PATH])
 
                 sheldon_list.append(json.dumps(sheldon_link))
         
