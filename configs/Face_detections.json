@@ -7,6 +7,6 @@
         "Image Width": "1280",
         "Image Height": "720",
         "Statistics Functions": "precision_recall",
-        "Partitioning Functions": "presence_partition"
+        "Partitioning Functions": "face_partition"
     }
 ]

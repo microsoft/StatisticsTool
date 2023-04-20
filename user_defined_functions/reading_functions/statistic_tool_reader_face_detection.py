@@ -32,7 +32,10 @@ def statistic_tool_reader_face_detection(path):
             if obj["Source"] != "FACE_DETECTION":
                 continue
             bb = obj['BoundingBox']
-            detections.append({'detection':True, 'prediction':{'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']}})
+            prediction = {'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']}
+            if 'Score' in obj:
+                prediction['Score'] = obj['Score']
+            detections.append({'detection':True, 'prediction': prediction})
 
         if len(detections) == 0:
             detections=[{'detection':False}]
