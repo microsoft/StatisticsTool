@@ -193,11 +193,13 @@ def unpack_new_config(request):
     evaluation_func_name = request.form.get("evaluation_func")
     statistics_func_name = request.form.get('statistics_func')
     partitioning_func_name = request.form.get('partitioning_func')
+    log_names_to_evaluate = request.form.get('log_names_to_evaluate')
+
     new_config = [
         {"File Reading Function": reading_func_name, "Overlap Function": overlap_func_name, "Threshold": threshold,
          "Evaluation Function": evaluation_func_name, "Image Width": image_width, "Image Height": image_height,
          "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name,
-         "Transformation Function":transform_func_name}]
+         "Transformation Function":transform_func_name, "Log Names to Evaluate":log_names_to_evaluate }]
     return new_config, new_config_name
 
 
@@ -243,6 +245,16 @@ def unpack_calc_config_dict(config_dict):
     overlap_func_name = config_dict["Overlap Function"]
     evaluation_func_name = config_dict["Evaluation Function"]
     threshold = config_dict["Threshold"]
+    log_names_to_evaluate = None
+    
+    if "Log Names to Evaluate" in config_dict.keys():
+        log_names_to_evaluate = config_dict["Log Names to Evaluate"]
+        if type(log_names_to_evaluate) == str:
+            if log_names_to_evaluate.isspace() or log_names_to_evaluate == '':
+                log_names_to_evaluate = None
+            else:
+                log_names_to_evaluate = log_names_to_evaluate.split(',')
+
     if "Image Width" in config_dict.keys():
         image_width = config_dict["Image Width"]
         image_height = config_dict["Image Height"]
@@ -263,7 +275,7 @@ def unpack_calc_config_dict(config_dict):
     transform_func = None
     if transform_func_name != 'None':
         transform_func = get_userdefined_function(TRANSFORM_FUNCTIONS,transform_func_name)
-    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height
+    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate
 
 def get_userdefined_function(func_type,func_name):
     module_name = 'user_defined_functions' + "." + func_type + "." + func_name
@@ -285,13 +297,13 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height = unpack_calc_config_dict(
+    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = unpack_calc_config_dict(
         config_dict)
     # extract matching lists of absolute paths for the predictions, labels and images
   
     # extract all the intermediate results from the raw prediction-label files
     compared_videos, sheldon_header_data = compare_predictions_directory(pred_dir=prd_dir, output_dir = single_video_hash_saving_dir, overlap_function=overlap_func, 
-                                                                 readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir)
+                                                                 readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
         return None
