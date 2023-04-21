@@ -21,3 +21,8 @@ span.dropdown-btn {
 *::after {
   box-sizing: content-box !important;
 }
+
+::-webkit-scrollbar {
+    display: none;
+}
+
