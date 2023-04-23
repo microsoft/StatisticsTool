@@ -81,10 +81,26 @@ class Results_table():
         self.segmentation_categories = list(segmentations.keys())
 
     def get_webpage(self):
-        
-        
         return self.dash_app.index()
+    
+  
+    def make_title(self,column_keys, row_keys):
+        columns = ''
+        for c in column_keys:
+            for key in dict(c):
+                if len(columns) > 0:
+                    columns += ","
+                columns += dict(c)[key]
 
+        rows = ''
+        for c in row_keys:
+            for key in dict(c):
+                if len(rows) > 0:
+                    rows += ","
+                rows += dict(c)[key]
+
+        return rows + "/" + columns
+    
     def get_cell_exp(self, all_exps, column_keys, row_keys,row_index):  
         '''
         The function that return a single cell
@@ -160,7 +176,9 @@ class Results_table():
             
             idx = idx + 1
 
-        cell_content = html.Table(all_metrics,style={'width':'100%'})
+        title = self.make_title(column_keys, row_keys)
+
+        cell_content = html.Table(all_metrics,style={'width':'100%'},title=title)
         to_show = html.Td(cell_content,style={'padding':'0px'})
 
         return to_show

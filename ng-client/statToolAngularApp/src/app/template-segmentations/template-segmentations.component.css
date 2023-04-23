@@ -33,8 +33,8 @@ input:focus {
     background-color: #777;
     color: white;
     cursor: pointer;
-    padding: 18px;
-    width: 98%;
+    padding: 4px;
+    width: 100%;
     border: none;
     text-align: left;
     outline: none;
@@ -50,7 +50,8 @@ input:focus {
     color: white;
     font-weight: bold;
     float: right;
-    margin-left: 5px;
+    right:10px;
+    position: absolute;
   }
   
   .active:after {

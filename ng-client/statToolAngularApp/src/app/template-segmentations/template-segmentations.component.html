@@ -6,7 +6,7 @@
                 border:1px solid lightgray;
                 border-radius: 4px;
                 color:#182a69;
-                background-color: #fafafa;
+                background-color: #E4F0F5;
                 position: sticky;
                 z-index: 99999;
                 top:0px">
@@ -72,7 +72,7 @@
     </div>
 
     <!-- SEGMENTATIONS -->
-    <div style="margin-top:3px">
+    <div style="margin-top:0px">
         
             <ng-container *ngFor="let x of statService.currentTemplate.Segmentations;let i = index">
                 <button 
@@ -97,9 +97,11 @@
                     </div>  
             </ng-container>
     </div>
+
+    <div style="position:sticky;bottom:0px;height: 50px;z-index: 99999;background: #fafafa;">
+        <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;" 
+                mat-raised-button 
+                (click)="addView()">Add View</button>
+    </div>
 </div>
-<div>
-    <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;;" 
-            mat-raised-button 
-            (click)="addView()">Add View</button>
-</div>
+

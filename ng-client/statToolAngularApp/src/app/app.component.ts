@@ -29,6 +29,13 @@ export class AppComponent implements OnInit {
   @ViewChild(MatSidenav) public drawer: any;
   showFiller = false;
 
+  @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
+    console.log('keydown',event.key)
+    if (event.key === "Escape") {
+        this.statToolSvc.showDrawer = false;
+    }
+  }
+
   @HostListener("window:message",["$event"])
   SampleFunction($event:MessageEvent) {
     //if (event!.origin !== "protocol://my-expected-domain.tdl:port")

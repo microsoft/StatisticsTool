@@ -1,5 +1,5 @@
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 
@@ -23,6 +23,13 @@ export class DrawerComponent implements OnInit {
 
   state = "closed";
   subscribeOpenDrawer = new Subscription;
+
+  @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
+    console.log('keydown',event.key)
+    if (event.key === "Escape") {
+        this.statToolSvc.showDrawer = false;
+    }
+  }
 
   changeState(): void {
     (this.state == "closed") ? this.state = "open" : this.state = "closed";
