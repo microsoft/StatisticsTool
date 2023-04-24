@@ -42,6 +42,7 @@ export class DrawerComponent implements OnInit {
   ngOnInit(): void {
     this.subscribeOpenDrawer = this.statToolSvc.openDrawer.subscribe(msg => {
       this.statToolSvc.showDrawer = true;
+      this.statToolSvc.drawerShowImageUrl = '';
       this.changeState();
     })
   }
@@ -54,7 +55,7 @@ export class DrawerComponent implements OnInit {
   show = false;
 
   clickDrawer(){
-    this.statToolSvc.showDrawer = !this.statToolSvc.showDrawer;
+    this.statToolSvc.showDrawer = false;//!this.statToolSvc.showDrawer;
     this.changeState();
   }
 }

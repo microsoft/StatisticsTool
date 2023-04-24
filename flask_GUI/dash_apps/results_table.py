@@ -88,6 +88,8 @@ class Results_table():
         columns = ''
         for c in column_keys:
             for key in dict(c):
+                if dict(c)[key] == 'None':
+                    continue
                 if len(columns) > 0:
                     columns += ","
                 columns += dict(c)[key]
@@ -95,10 +97,15 @@ class Results_table():
         rows = ''
         for c in row_keys:
             for key in dict(c):
+                if dict(c)[key] == 'None':
+                    continue
                 if len(rows) > 0:
                     rows += ","
                 rows += dict(c)[key]
-
+        if rows == '':
+            return columns
+        if columns == '':
+            return rows
         return rows + "/" + columns
     
     def get_cell_exp(self, all_exps, column_keys, row_keys,row_index):  
