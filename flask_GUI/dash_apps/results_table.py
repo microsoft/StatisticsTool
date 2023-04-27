@@ -15,8 +15,6 @@ from flask_GUI.constants import COLOR_GRADIENT_RED_WHITE_BLUE
 import math
 from classes_and_utils.unique_helper import UniqueHelper
 
-MAIN_EXP = 'main'
-REF_EXP = 'ref'
 
 def get_color_from_gradient(x, gradient):
     if x<0 or x>1:
@@ -115,9 +113,9 @@ class Results_table():
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
         
         exp_data = {}
-        exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations, self.unique_helper)
+        exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations, self.unique_helper, False)
         if all_exps[REF_EXP] !=[]:
-            exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations, self.unique_helper) 
+            exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations, self.unique_helper, True) 
 
         all_metrics = []
         if all_exps[REF_EXP] !=[]:
@@ -142,10 +140,10 @@ class Results_table():
             for exp_name in exp_data.keys():
                 txt = "{}".format(exp_data[exp_name][k])
                 if k in ["TP", "FP", "FN"]:
-                    link = "/update_list?cell_name={}&stat={}".format(exp_data[exp_name]['cell_name'],k)
-                    #curr_metric = html.A(txt ,href=link, target="example-list-div")
-                    #color = 'white'
-
+                    link = get_link_for_update_list(cell_name=exp_data[exp_name]['cell_name'], 
+                                                    stat=k, 
+                                                    is_ref = exp_name==REF_EXP)
+                    
                     js = json.dumps({'action':'update_list','value': link})
                     msg = "javascript:window.parent.postMessage({});".format(js)
                     curr_metric = html.A(txt ,href=msg, target="")
@@ -160,7 +158,7 @@ class Results_table():
 
                 if self.calc_unique == True and k in ["TP", "FP", "FN"]:
                     if self.unique_helper != None:
-                        txt_unique,link_unique = self.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
+                        txt_unique, link_unique = self.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name, exp_data[exp_name]['cell_name'])
                         js = json.dumps({'action':'update_list','value': link_unique})
                         msg = "javascript:window.parent.postMessage({});".format(js)
                         a_unique = html.A(txt_unique ,href=msg, target="")

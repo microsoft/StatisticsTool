@@ -1,6 +1,6 @@
 import os, sys
 from azure.storage.blob import BlobServiceClient
-
+from colorama import Fore, Back, Style
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 
 from utils.LocalStorageFileCache import  GetFileCache
@@ -110,13 +110,13 @@ def get_blob_from_cache_or_download(blob):
 def save_blob_to_cache(blob_path):
     file_path = GetFileCache().create_or_get_cached_file_full_path(blob_path)
     
-    print (f'Start download blob {blob_path} to local path {file_path}')
+    print (f'{Fore.YELLOW}Start download blob{Fore.RESET} {blob_path} to local path {file_path}')
     
     blob_data = container_client().get_blob_client(blob_path).download_blob().readall()
     with open(file_path, "wb") as file:
         file.write(blob_data)
     
-    print (f'Finished download blob {blob_path} to local path {file_path}')
+    print (f'{Fore.YELLOW}Finished download{Fore.RESET}')
     
     return file_path
 
@@ -144,10 +144,20 @@ def list_blobs_in_results_path(path, recursive=False):
     '''
     List directories under a path, optionally recursively
     '''
+    container_client_obj = container_client()
     if not path == '' and not path.endswith('/'):
         path += '/'
-    cur_path =  f"{app_config.predictions_blobs_prefix}{path}"
-    blob_iter = container_client().list_blobs(name_starts_with=cur_path)
+
+    if path.startswith('https'): #Handle full address of files
+        if path.startswith(container_client_obj.primary_endpoint+'/'): # Verify that the address in under the right blob
+            cur_path = path.replace(container_client_obj.primary_endpoint+'/', '')
+        else:
+            print(f"Cannot handle blob adress that are not under: {container_client_obj.primary_endpoint}") #TODO: plot this message to UI
+            return []
+    else:
+        cur_path =  f"{app_config.predictions_blobs_prefix}{path}" 
+    #TODO: Verify that cur_path exists
+    blob_iter = container_client_obj.list_blobs(name_starts_with=cur_path)
     dirs = []
     for blob in blob_iter:
         dirs.append(blob.name)
