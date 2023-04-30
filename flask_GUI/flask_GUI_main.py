@@ -330,6 +330,17 @@ def show_list():
 def show_list2():
     return render_template('index.html')
 
+@server.route('/is_file_exists',methods=['GET', 'POST'])
+def is_file_exists():
+    file_path = request.json['file_path']
+    if os.path.exists(file_path):
+        return {
+            'exists': True
+        }
+    else:
+        return {
+            'exists': False
+        }
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():

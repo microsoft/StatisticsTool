@@ -90,6 +90,10 @@ export class TemplateSegmentationsComponent implements OnInit {
     this.statService.uniqueValueChanged.next(this.statService.calculateUnique);
   }
 
+  slideLocalDataStore(event:any){
+    this.statService.saveLocalDataStoreInfoInStorage();      
+  }
+
   clickPanel(i:number){
     for(let x=0;x < this.statService.currentTemplate.SegmentationsClicked.length;x++){
       if (x == i){
@@ -137,5 +141,17 @@ export class TemplateSegmentationsComponent implements OnInit {
       }
 
       return '';
+    }
+
+    localDataStoreChange(event:any){
+      this.statService.saveLocalDataStoreInfoInStorage();
+    }
+
+    getLocalDataStoreCls(){
+      if (this.statService.activeLocalDataStore){
+        return '';
+      } else {
+        return 'disableLocalDataStore';
+      }
     }
  }
