@@ -8,5 +8,6 @@ matplotlib
 itsdangerous
 xlsxwriter
 azure-storage-blob
-webbrowser
-threading
+requests
+dash_bootstrap_components
+dash
