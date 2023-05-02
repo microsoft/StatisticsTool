@@ -11,3 +11,5 @@ azure-storage-blob
 requests
 dash_bootstrap_components
 dash
+colorama
+threading
