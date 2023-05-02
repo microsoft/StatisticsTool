@@ -12,7 +12,8 @@ import { MatDrawer, MatSidenav } from '@angular/material/sidenav';
 })
 export class SafePipe implements PipeTransform {
 
-  constructor(private sanitizer: DomSanitizer) { }
+  constructor(private sanitizer: DomSanitizer,
+              private httpClient:HttpClient) { }
   transform(url:string) {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
@@ -29,37 +30,65 @@ export class AppComponent implements OnInit {
   @ViewChild(MatSidenav) public drawer: any;
   showFiller = false;
 
-  @HostListener("window:message",["$event"])
-  SampleFunction($event:MessageEvent) {
-    //if (event!.origin !== "protocol://my-expected-domain.tdl:port")
-     // return;
-    //console.log('hagai',$event.data)// {foo:"foo"}
-    
-    this.statToolSvc.openDrawer.next($event.data);
-    let o = $event.data as {'action':string, 'value':string};
-    //let obj:{'update_list':string} = JSON.parse($event.data)
-    console.log($event.data)
-    if (o.action == 'update_list'){
-      console.log('in update_list')
-      this.statToolSvc.drawerUpdateListUrl = o.value;
+  @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
+    console.log('keydown',event.key)
+    if (event.key === "Escape") {
+        this.statToolSvc.showDrawer = false;
     }
-    if (o.action == 'show_image'){
-      console.log('in show_image',o.value)
-      this.statToolSvc.drawerShowImageUrl = o.value;
-    }
-    //console.log('hagai','going to open')// {foo:"foo"}
-    
-    //console.log('hagai','opened')// {foo:"foo"}
   }
 
+    @HostListener("window:message",["$event"])
+    SampleFunction($event:MessageEvent) {
+      
+      this.statToolSvc.openDrawer.next($event.data);
+      let o = $event.data as {'action':string, 'value':string};
+      
+      console.log($event.data)
+      if (o.action == 'update_list'){
+        console.log('in update_list')
+        this.statToolSvc.drawerUpdateListUrl = o.value;
+      }
+      if (o.action == 'show_image'){
+        console.log('in show_image',o.value)
+        
+        //check if path exists
+        if (this.statToolSvc.activeLocalDataStore && this.statToolSvc.localDataStorePath.length > 0){
+          let filepath = this.getFilePath(o.value) 
+          this.httpClient.post<{'exists':boolean}>('/is_file_exists',{
+            'file_path':filepath
+          }).subscribe(res => {
+            console.log('getFilePath','result',res)
+            if (res.exists){
+              let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath
+              this.statToolSvc.drawerShowImageUrl = url;
+            } else {
+              this.statToolSvc.showDrawer = false;
+              this.statToolSvc.fileNotFoundError = 'File ' + filepath + " not found!"
+            }
+          })
+        } else {
+          this.statToolSvc.drawerShowImageUrl = o.value;
+        }
+      }
+    }
 
-  
-  //title = 'statToolAngularApp';
     constructor(private httpClient:HttpClient,
-                private router : Router,
-                public statToolSvc:StatisticsToolService) {
-  }
+                  private router : Router,
+                  public statToolSvc:StatisticsToolService) {
+    }
 
     ngOnInit(){
+    }
+
+    getFilePath(str:string){
+      let startIdx = str.indexOf('[');
+      let endIdx = str.indexOf('.mp4');
+      let path = str.slice(startIdx+2,endIdx);
+      path = path += ".mp4"
+      if (this.statToolSvc.activeLocalDataStore && this.statToolSvc.localDataStorePath.length > 0){
+        path = this.statToolSvc.localDataStorePath + "\\" + path;
+      }
+
+      return path;
     }
   }

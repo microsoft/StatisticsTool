@@ -53,4 +53,8 @@
             style="display:block; width:100%; height:92vh;margin-top: 3px;border:none"
             [src]="url | safe">
     </iframe>
+    <div *ngIf="statToolService.showFileNotFoundError()" 
+        style="position: sticky;bottom: 200px;z-index: 99999999;">
+        <ngb-alert type="danger" (closed)="statToolService.fileNotFoundError = ''">{{ statToolService.fileNotFoundError }}</ngb-alert>
+    </div>
 </div>

@@ -1,12 +1,13 @@
 <div [@widthGrow]="state"
     *ngIf="statToolSvc.showDrawer"
     style="z-index: 1000;position: absolute; height: 100vh;width: 100%;display: flex;margin-top: 50px;">
-        <!-- main -->
-        <div style="width:90%;height: 100vh;background-color: white;">
-            <drawer-content></drawer-content>
-        </div>
         <!-- margin -->
-        <div style="width:10%;height: 100vh;background-color: transparent;opacity: 0.5;flex-grow: 1;"
+        <div style="width:8%;height: 100vh;background-color: transparent;opacity: 0.5;flex-grow: 1;"
             (click)="clickDrawer()">
         </div>
+        <!-- main -->
+        <div style="width:92%;height: 100vh;background-color: white;position: fixed;box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;right: 0px;">
+            <drawer-content></drawer-content>
+        </div>
+        
 </div>

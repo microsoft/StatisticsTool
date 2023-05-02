@@ -1,5 +1,4 @@
 import os, sys
-import webbrowser
 from threading import Timer
 from requests import Session
 # the absolute path for this file
@@ -330,6 +329,17 @@ def show_list():
 def show_list2():
     return render_template('index.html')
 
+@server.route('/is_file_exists',methods=['GET', 'POST'])
+def is_file_exists():
+    file_path = request.json['file_path']
+    if os.path.exists(file_path):
+        return {
+            'exists': True
+        }
+    else:
+        return {
+            'exists': False
+        }
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():
@@ -345,7 +355,8 @@ def show_config():
     return render_template('show_config.html', config_dict=config_dict, config_name=config_name)
 
 def open_browser():
-      webbrowser.open_new("http://127.0.0.1:5000")
+      #webbrowser.open_new("http://127.0.0.1:5000")
+      pass
 
 if __name__=='__main__':
     server.debug = False

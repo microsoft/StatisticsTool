@@ -1,136 +1,87 @@
 ::ng-deep .template-selection .mat-grid-tile-content {
-    justify-content: center !important;
+  justify-content: center !important;
 }
 
 ::ng-deep .save-template .mat-grid-tile-content {
-    justify-content: left !important;
-}
-
-::ng-deep .save-icon .mat-grid-tile-content {
-    justify-content: left !important;
-}
-
-::ng-deep .back-icon .mat-grid-tile-content {
   justify-content: left !important;
 }
 
+::ng-deep .save-icon .mat-grid-tile-content {
+  justify-content: left !important;
+}
+
+::ng-deep .back-icon .mat-grid-tile-content {
+justify-content: left !important;
+}
+
 select:focus { 
-    outline: none !important;
+  outline: none !important;
 }
 
 input:focus { 
-    outline: none !important;
+  outline: none !important;
 }
 
 ::ng-deep .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-bar {
-    background-color: #182a69 !important;
+  background-color: #182a69 !important;
 }
 ::ng-deep .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-thumb {
-    background-color: #182a69 !important;
+  background-color: #182a69 !important;
 }
 
 .collapsible {
-    background-color: #777;
-    color: white;
-    cursor: pointer;
-    padding: 18px;
-    width: 98%;
-    border: none;
-    text-align: left;
-    outline: none;
-    font-size: 15px;
-  }
-  
-  .active, .collapsible:hover {
-    background-color: #555;
-  }
-  
-  .collapsible:after {
-    content: '\002B';
-    color: white;
-    font-weight: bold;
-    float: right;
-    margin-left: 5px;
-  }
-  
-  .active:after {
-    content: "\2212";
-  }
-  
-  .content {
-    padding: 0 0px;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.2s ease-out;
-    background-color: #f1f1f1;
-  }
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.collapsible:after {
+  content: '\002B';
+  color: white;
+  font-weight: bold;
+  float: right;
+  right:10px;
+  position: absolute;
+}
+
+.active:after {
+  content: "\2212";
+}
+
+.content {
+  padding: 0 0px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+  background-color: #f1f1f1;
+}
 
 .disabledImg {
-  opacity:0.1;
-  pointer-events: none !important;
+opacity:0.1;
+pointer-events: none !important;
 }
 
 .back:hover {
-  fill: #182a69;
+fill: #182a69;
+}
+.pipe {
+width: 1px;
+border-left: 2px solid lightgray;
+height: 40px;
+margin-top: -2px;
 }
 
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 45px;
-  height: 15px;
-}
-
-.switch input { 
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 0px;
-  bottom: 0px;
-  background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-input:checked + .slider {
-  background-color: #182a69;
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 0px #182a69;
-}
-
-input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
-}
-
-/* Rounded sliders */
-.slider.round {
-  border-radius: 30px;
-  margin-bottom: -2px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
+.disableLocalDataStore{
+background-color:lightgray;
+color:gray;
 }

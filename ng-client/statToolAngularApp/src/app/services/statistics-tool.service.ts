@@ -50,7 +50,8 @@ export class StatisticsToolService implements OnInit {
   templates:TemplateInfo[] = [];
   currentTemplate:TemplateInfo = new TemplateInfo();
   calculateUnique = false;
-  
+  fileNotFoundError = '';
+
   //templates = [{'key':0,'value':'--- select ---'},{'key':1,'value':'Template 1'},{'key':2,'value':'Template 2'},{'key':3,'value':'Template 3'}]
   templateNameOptions:{'key':number,'value':string}[] = [];
   selectedTamplate = 0;
@@ -59,6 +60,9 @@ export class StatisticsToolService implements OnInit {
 
   drawerUpdateListUrl = '';
   drawerShowImageUrl = '';
+
+  activeLocalDataStore = false;
+  localDataStorePath = '';
 
   constructor(private httpClient:HttpClient) { 
     this.httpClient.post<{'content':IContent,'name':string}[]>('/get_all_templates',{})
@@ -80,7 +84,8 @@ export class StatisticsToolService implements OnInit {
   
         this.templatesFetched.next(true);
       })
-      
+
+      this.readLocalDataStoreInfoFromStorage();
   }
 
   processTemplates(items:{'content':IContent,'name':string}[]){
@@ -216,5 +221,19 @@ export class StatisticsToolService implements OnInit {
 
   getDrawerShowImageUrl(){
     return this.drawerShowImageUrl;
+  }
+
+  readLocalDataStoreInfoFromStorage(){
+    this.localDataStorePath = localStorage.getItem('LOCAL_DATA_STORE')!;
+    this.activeLocalDataStore = localStorage.getItem('ACTIVATE_LOCAL_DATA_STORE')! == "true" ? true : false;
+  }
+
+  saveLocalDataStoreInfoInStorage(){
+    localStorage.setItem('LOCAL_DATA_STORE',this.localDataStorePath);
+    localStorage.setItem('ACTIVATE_LOCAL_DATA_STORE',this.activeLocalDataStore ? 'true' : 'false');
+  }
+
+  showFileNotFoundError(){
+    return this.fileNotFoundError.length > 0;
   }
 }

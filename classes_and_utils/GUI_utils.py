@@ -701,6 +701,8 @@ def manage_image_request(request, main_exp, comp_exp):
     if request.args.get('example_name'):
         example_id = request.args.get('example_name')
         example_id = eval(example_id.replace(" ", ","))
+        if request.args.get('local_path'):
+            example_id[0] = os.path.join(request.args.get('local_path'),example_id[0])   
         example_id[0] += ".json"
         global last_example_id
         last_example_id = example_id
