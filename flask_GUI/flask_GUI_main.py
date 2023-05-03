@@ -109,7 +109,9 @@ def send_file(file_name):
     if len(sp)>1 and sp[1]=='.js':
         mime = 'text/javascript'
     return send_from_directory('static', file_name,mimetype=mime)
-
+@server.route('/favicon.ico')
+def favicon():
+    return send_from_directory('static','favicon.ico',mimetype='image/x-icon')
 def Create_Report():
     global exp
     global comp_exp
