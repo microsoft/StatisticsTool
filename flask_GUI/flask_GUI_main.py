@@ -1,3 +1,4 @@
+import mimetypes
 import os, sys
 from threading import Timer
 from requests import Session
@@ -11,7 +12,7 @@ from dash import Dash, html
 # from pyfladesk import init_gui
 from classes_and_utils.GUI_utils import *
 from classes_and_utils.TemplatesFilesHelper import *
-from flask import Flask, jsonify, render_template, request,redirect, url_for,session
+from flask import Flask, jsonify, render_template, request,redirect, url_for,session, send_from_directory
 from flask_GUI.rendering_functions import show_stats_render
 from flask_GUI.dash_apps.results_table import Results_table
 
@@ -101,7 +102,16 @@ def extract_data_request(request,use_cached_report):
         cexp,_,_ = load_experiment(request,True)
         if cexp != None:
             comp_exp.append(cexp)
-
+@server.route('/static/<file_name>')
+def send_file(file_name):
+    mime = mimetypes.guess_type(file_name, strict=False)[0]
+    sp= os.path.splitext(file_name)
+    if len(sp)>1 and sp[1]=='.js':
+        mime = 'text/javascript'
+    return send_from_directory('static', file_name,mimetype=mime)
+@server.route('/favicon.ico')
+def favicon():
+    return send_from_directory('static','favicon.ico',mimetype='image/x-icon')
 def Create_Report():
     global exp
     global comp_exp
