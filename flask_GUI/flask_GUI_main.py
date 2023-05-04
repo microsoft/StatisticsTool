@@ -1,6 +1,5 @@
 import mimetypes
 import os, sys
-from threading import Timer
 from requests import Session
 # the absolute path for this file
 current_file_directory = os.path.realpath(__file__)
