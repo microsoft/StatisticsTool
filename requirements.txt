@@ -12,3 +12,4 @@ requests
 dash_bootstrap_components
 dash
 colorama
+requests
