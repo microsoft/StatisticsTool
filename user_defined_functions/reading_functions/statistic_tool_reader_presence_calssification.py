@@ -5,13 +5,17 @@ from turtle import left
 #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #from classes_and_utils.utils import empty_when_negative_x
 import pandas as pd
+from utils.LogsParser import get_fps
 
 def statistic_tool_reader_presence_calssification(path):
     with open(path,'r') as file:
         lines = file.readlines()
         
+        header = json.loads(lines[0])
         line = json.loads(lines[1])
         records = []
+        
+        fps = get_fps(header)
 
         # Add header information to all frames
         header_line = json.loads(lines[0])
@@ -60,18 +64,19 @@ def statistic_tool_reader_presence_calssification(path):
         # Set presence GT = false from begining of approach event till last 3 seconds of any approach event
         # To be replaced by distance
         # + split approach to 3 area: ROI, Transition, out of ROI and change GT accordingly
-        enable_approach_split = True
+        enable_approach_split = False # False = use sec_num_to_mask, True = use approach_trans_in_frames (split aprroach to 3 areas)
         presence_time_mask = np.full(np.shape(lines[1:]), True)
         approach_index_from_end = np.zeros(np.shape(lines[1:]))
         approach_roi_mask    = np.full(np.shape(lines[1:]), False)
         approach_trans_mask  = np.full(np.shape(lines[1:]), False)
         approach_oo_roi_mask = np.full(np.shape(lines[1:]), False)
-        sec_num_to_mask = 3*30
+        sec_num_to_mask = 3 * fps
         prev_user_status = 'NoUser'
         during_approach_seq = False
-        post_app_frame_num = 200
-        approach_roi_in_frames   = 30*1
-        approach_trans_in_frames = 30*1.5
+        post_app_frame_num = 7 * fps #TODO: Change to time * fps?
+        approach_roi_in_frames   = 1 * fps
+        approach_trans_in_frames = 1.5 * fps
+        
         for ind,line in enumerate(lines[1:]):
             line = json.loads(line)
             if 'type' not in line['keys'] or (line['keys']['type'] != 'sequence' and line['keys']['type'] != 'presence'):
@@ -88,11 +93,11 @@ def statistic_tool_reader_presence_calssification(path):
                     last_ind_to_mask = max(first_approach_ind,ind-sec_num_to_mask)
                     presence_time_mask[first_approach_ind:last_ind_to_mask] = False
                     approach_duration = ind - first_approach_ind
-                    print(-approach_duration+1)
+                    #print(-approach_duration+1)
                     approach_index_from_end[first_approach_ind:ind] = np.arange(-approach_duration+1,1)
                     approach_index_from_end[ind-1:ind+(min(post_app_frame_num,len(approach_index_from_end)-ind))-1] = np.arange(0,(min(post_app_frame_num,len(approach_index_from_end)-ind)))
-                    if first_approach_ind!=last_ind_to_mask:
-                        print('found')
+                    #if first_approach_ind!=last_ind_to_mask:
+                    #    print('found')
                     
                     first_approach_roi_ind   = int(max(ind-approach_roi_in_frames,first_approach_ind))
                     first_approach_trans_ind = int(max(ind-approach_trans_in_frames,first_approach_ind))
@@ -110,18 +115,22 @@ def statistic_tool_reader_presence_calssification(path):
                 continue
             
             frame_id = line['keys']['frame_id']
-            if 'System State' in line['message']:
+            if 'System State' in line['message']: # Prediction logs
                 if line['message']['System State']=="SCREEN_ON":
                     data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
                 else:
                     data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
-            else:
+            else: #GT logs
                 if enable_approach_split==False:
+                    #If HumanPresence Annotation is true, but the frames are within the first "sec_num_to_mask" (3 seconds) frames of the approach event, 
+                    # then HumanPresence Annotation is switched to false
                     if line['message']['HumanPresence'] == 'True' and presence_time_mask[ind]==True:
                         data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
                     else:
                         data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
                 else:
+                    #If HumanPresence Annotation is true, but the frames are within the first "approach_trans_in_frames" (1.5 seconds) frames of the approach event, 
+                    # then HumanPresence Annotation is switched to false
                     if line['message']['HumanPresence'] == 'True' and approach_oo_roi_mask[ind]==False:
                         data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
                     else:

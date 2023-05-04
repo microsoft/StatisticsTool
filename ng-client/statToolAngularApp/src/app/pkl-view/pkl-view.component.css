@@ -1,0 +1,31 @@
+.multiselect-dropdown {
+  width: 96% !important;
+  margin:2px !important;
+  background-color: white !important;
+  border-color: lightgray;
+}
+.parent{
+  /*position: relative;*/
+}
+.parent img{
+  position: absolute;
+  top: 0;       
+  bottom: 0;    
+  left: 0;
+  right: 0;
+  margin:auto;
+}
+
+::ng-deep .pkl-view-header .mat-grid-tile-content {
+  justify-content: left !important;
+}
+
+.caption {
+  padding-left: 3px;
+  font-weight: bold;
+}
+
+.view-name:focus {
+  outline: none;
+}
+

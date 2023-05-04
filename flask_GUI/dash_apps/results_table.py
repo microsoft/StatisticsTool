@@ -13,9 +13,8 @@ from flask_GUI.dash_apps.results_table_css import css
 from flask import Flask, render_template
 from flask_GUI.constants import COLOR_GRADIENT_RED_WHITE_BLUE
 import math
+from classes_and_utils.unique_helper import UniqueHelper
 
-MAIN_EXP = 'main'
-REF_EXP = 'ref'
 
 def get_color_from_gradient(x, gradient):
     if x<0 or x>1:
@@ -43,69 +42,149 @@ class Results_table():
             __name__,
             server=server,
             url_base_pathname='/dash/',
-            external_stylesheets=[dbc.themes.COSMO])
+            external_stylesheets=[dbc.themes.COSMO],suppress_callback_exceptions=True)
 
         self.table = None
         self.dash_app.layout = self.get_layout()
+        self.unique_helper = None
         # self.set_callbacks()
 
     # def set_callbacks(self):
+        #HAGAI-callback
+        
         self.dash_app.callback(
             Output('cols_seg', 'options'),
             Output('rows_seg', 'options'),
             Input('init', 'value')) \
             (lambda x: (self.segmentation_categories, self.segmentation_categories))
+        
 
-    def set_data(self, exp, segmentations):
+        '''
+        self.dash_app.callback(
+            Output('table-div', 'children'),
+            Input('cols_seg', 'value'),
+            Input('rows_seg', 'value'))
+        def update_output(cols_input ,rows_input):
+            return self.table.get_table(cols_input, rows_input)
+        '''
+
+    def set_data(self, exp, segmentations,calc_unique = False):
+
+        if len(exp['ref']) > 0 and calc_unique and self.unique_helper is None:
+            self.unique_helper = UniqueHelper(exp['main'],exp['ref'][0])
+       
+
+        self.calc_unique = calc_unique
         self.table = pt.PivotTable(segmentations, data = exp, cell_function=self.get_cell_exp)
         self.segmentation_categories = list(segmentations.keys())
 
     def get_webpage(self):
         return self.dash_app.index()
+    
+  
+    def make_title(self,column_keys, row_keys):
+        columns = ''
+        for c in column_keys:
+            for key in dict(c):
+                if dict(c)[key] == 'None':
+                    continue
+                if len(columns) > 0:
+                    columns += ","
+                columns += dict(c)[key]
 
-    def get_cell_exp(self, all_exps, column_keys, row_keys):  
+        rows = ''
+        for c in row_keys:
+            for key in dict(c):
+                if dict(c)[key] == 'None':
+                    continue
+                if len(rows) > 0:
+                    rows += ","
+                rows += dict(c)[key]
+        if rows == '':
+            return columns
+        if columns == '':
+            return rows
+        return rows + "/" + columns
+    
+    def get_cell_exp(self, all_exps, column_keys, row_keys,row_index):  
         '''
         The function that return a single cell
         '''     
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
-
+        
         exp_data = {}
-        exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations)
+        exp_data[MAIN_EXP] = all_exps[MAIN_EXP].get_cell_data(segmentations, self.unique_helper, False)
         if all_exps[REF_EXP] !=[]:
-            exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations) 
+            exp_data[REF_EXP] = all_exps[REF_EXP][0].get_cell_data(segmentations, self.unique_helper, True) 
 
         all_metrics = []
+        if all_exps[REF_EXP] !=[]:
+            TDs = []
+            TDs.append(html.Td(''))
+            TDs.append(html.Td('MAIN', style={'color':'black','font-weight':'bold'}))
+            if self.unique_helper != None:
+                TDs.append(html.Td(''))
+            TDs.append(html.Td('REF', style={'color':'black','font-weight':'bold'}))
+            all_metrics.append(html.Tr(TDs))
+        
+        idx = 0
         for k in exp_data[MAIN_EXP].keys():
+            
+            if k == 'cell_name':
+                continue
             
             TDs = [html.Td(k)]
             num_of_exps = len(exp_data.keys())
 
+            
             for exp_name in exp_data.keys():
                 txt = "{}".format(exp_data[exp_name][k])
                 if k in ["TP", "FP", "FN"]:
-                    link = "/update_list?cell_name={}&stat={}".format(exp_data[exp_name]['cell_name'],k)
-                    curr_metric = html.A(txt ,href=link, target="example-list-div")
-                    color = 'white'
+                    link = get_link_for_update_list(cell_name=exp_data[exp_name]['cell_name'], 
+                                                    stat=k, 
+                                                    is_ref = exp_name==REF_EXP)
+                    
+                    js = json.dumps({'action':'update_list','value': link})
+                    msg = "javascript:window.parent.postMessage({});".format(js)
+                    curr_metric = html.A(txt ,href=msg, target="")
+                    #color = 'white'
                 else:
                     curr_metric = txt
-                    color = 'white' if num_of_exps == 1 else\
-                    get_color_by_two_values_diff(exp_data[REF_EXP][k], exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_WHITE_BLUE)
 
-                TDs.append(html.Td(curr_metric, style={'background-color':color}))
+                color = 'white' if num_of_exps == 1 else\
+                get_color_by_two_values_diff(exp_data[REF_EXP][k], exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_WHITE_BLUE)
 
-                if k in ["TP", "FP", "FN"]:
-                    if self.table.unique_helper != None:
-                        unique = self.table.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name)
-                        TDs.append(html.Td(unique, style={'background-color':color}))
+                TDs.append(html.Td(curr_metric))
+
+                if self.calc_unique == True and k in ["TP", "FP", "FN"]:
+                    if self.unique_helper != None:
+                        txt_unique, link_unique = self.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name, exp_data[exp_name]['cell_name'])
+                        js = json.dumps({'action':'update_list','value': link_unique})
+                        msg = "javascript:window.parent.postMessage({});".format(js)
+                        a_unique = html.A(txt_unique ,href=msg, target="")
+
+                        TDs.append(html.Td(a_unique))
                     else:
-                        TDs.append(html.Td('', style={'background-color':color}))
+                        if self.unique_helper != None:
+                            TDs.append(html.Td(''))
                 else:
-                    TDs.append(html.Td('', style={'background-color':color}))
+                    if self.unique_helper != None:
+                        TDs.append(html.Td(''))
+            
+            if idx % 2 == 0:
+                if row_index % 2 == 0:
+                    all_metrics.append(html.Tr(TDs,style={'background-color':'#e4f0f5'}))
+                else:
+                    all_metrics.append(html.Tr(TDs,style={'background-color':'#d3f0e0'}))
+            else:
+                all_metrics.append(html.Tr(TDs,style={'background-color':'white'}))
+            
+            idx = idx + 1
 
-            all_metrics.append(html.Tr(TDs))
+        title = self.make_title(column_keys, row_keys)
 
-        cell_content = html.Table(all_metrics)
-        to_show = html.Td(cell_content)
+        cell_content = html.Table(all_metrics,style={'width':'100%'},title=title)
+        to_show = html.Td(cell_content,style={'padding':'0px'})
 
         return to_show
     
@@ -123,8 +202,7 @@ class Results_table():
 
         table_buttons_div = html.Div([cols_segmentation_dropdown,\
                                       rows_segmentation_dropdown,\
-                                      html.H5('Loading Table', id='table-div',
-                                                style=css['table-div'])], \
+                                      html.H5('Loading Table',id='table-div',style=css['table-div'])], \
                                       style=css['table-buttons-div'], 
                                       id='table-buttons-div')
 
@@ -143,6 +221,14 @@ class Results_table():
         
         whole_page = html.Div([footer, Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
         return  whole_page
+    
+    def get_layout_new(self,columns,rows):
+
+        t = self.table.get_table(columns,rows)
+        table_buttons_div = html.Div(id='table-div',children=t,style=css['table-div'])
+
+        whole_page = html.Div([table_buttons_div], style=css['whole-reporter'])
+        return  whole_page    
 
 
 ### Data For Test #######

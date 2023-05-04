@@ -1,0 +1,176 @@
+<div>
+    <!-- HEADER (TODO: REMOVE IT TO A SEPARATE COMPONENT) -->
+    
+    <div style="width:100%;
+                height:50px;
+                border:1px solid lightgray;
+                border-radius: 4px;
+                color:#182a69;
+                background-color: #E4F0F5;
+                position: sticky;
+                z-index: 99999;
+                top:0px">
+
+        <div class="template-selection" style="margin-left: 10px;padding-top: 8px;">
+            <div style="display: flex;width:100%;height: 40px;">
+                <div class="back-icon" style="margin-top:-2px;width:40px">
+                    <img [src]="backImgSrc"
+                        (mouseover)="backImgSrc = 'assets/back-icon-orange.svg'"
+                        (mouseout)="backImgSrc = 'assets/back-icon-blue.svg'"
+                        style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                        title="Back"
+                        class="back"
+                        (click)="back()">
+                </div>
+                <div style="width:10%;padding-top:2px">
+                    <select 
+                        [(ngModel)]="statService.selectedTamplate"
+                        style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
+                        (change)="onTemplateSelected($event)"
+                        >
+                        <option *ngFor="let t of statService.templateNameOptions"
+                                        value="{{t.key}}"
+                                >{{t.value}}</option>
+                    </select>
+                </div>
+                <ng-container *ngIf="isNewTemplateMode">
+                    <div style="width:10%;padding-top: 2px;margin-left: 4px;">
+                        <input type="text" 
+                            placeholder="Template Name"
+                            [(ngModel)]="templateNameCreated"
+                            style="height:27px;width:100%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;"
+                            >
+                    </div>
+                </ng-container>
+                <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-left: 12px;margin-top: -1px;">
+                    <img [src]="saveImgSrc"
+                        (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
+                        (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
+                        style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                        title="Save Template"
+                        (click)="saveTemplate()">
+                </div>
+                <div class="pipe" style="margin-right:5px;margin-left: 7px;"></div>
+                <div style="display:flex;padding-right:3px;">
+                    <div style="margin-bottom:-10px;margin-left:3px;padding-top:10px">
+                        <label class="switch">
+                            <input type="checkbox" [(ngModel)]="statService.calculateUnique" (change)="slideUniqueChange($event)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div style="margin-left:5px;padding-top: 5px;">
+                        <p style="font-weight: bold;color:#182a69;">Calculate Unique</p>
+                    </div>
+                </div>
+                <div class="pipe"></div>
+                <div style="display:flex;margin-left: 3px;">
+                    <div style="margin-bottom:-10px;margin-left:3px;padding-top:10px">
+                        <label class="switch">
+                            <input type="checkbox" 
+                                   [(ngModel)]="statService.activeLocalDataStore" 
+                                   (change)="slideLocalDataStore($event)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div style="margin-left:5px;padding-top: 5px;">
+                        <p style="font-weight: bold;color:#182a69;">Local Data Store</p>
+                    </div>
+                    <input type="text" 
+                           [(ngModel)]="statService.localDataStorePath"  
+                           (keyup)="localDataStoreChange($event)"
+                           [ngClass]="getLocalDataStoreCls()"
+                           [readonly]="statService.activeLocalDataStore == false"
+                           style="height:27px;margin:5px;margin-top:3px !important;width:300px;border:1px solid lightgray;border-radius: 3px;outline: none;">
+                </div>
+            </div>
+            <!--
+            <mat-grid-list cols="16" rowHeight="40px">
+                <mat-grid-tile  [colspan]="1" [rowspan]="1">
+                    <div class="back-icon" style="margin-top:-2px">
+                        <img [src]="backImgSrc"
+                            (mouseover)="backImgSrc = 'assets/back-icon-orange.svg'"
+                            (mouseout)="backImgSrc = 'assets/back-icon-blue.svg'"
+                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                            title="Back"
+                            class="back"
+                            (click)="back()">
+                    </div>
+                </mat-grid-tile>
+                <mat-grid-tile [colspan]="5" [rowspan]="1">
+                    <select 
+                        [(ngModel)]="statService.selectedTamplate"
+                        style="height: 29px; width:95%;border-color:lightgray;border-radius: 3px;"
+                        (change)="onTemplateSelected($event)"
+                        >
+                        <option *ngFor="let t of statService.templateNameOptions"
+                                        value="{{t.key}}"
+                                >{{t.value}}</option>
+                    </select>
+                </mat-grid-tile>
+                
+                <ng-container *ngIf="isNewTemplateMode">
+                    <mat-grid-tile  [colspan]="5" [rowspan]="1">
+                        <input type="text" 
+                            placeholder="Template Name"
+                            [(ngModel)]="templateNameCreated"
+                            style="height:25px;width:95%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;"
+                            >
+                    </mat-grid-tile>
+                </ng-container>
+                <mat-grid-tile  [colspan]="5" [rowspan]="1">
+                    <div class="save-icon" [ngClass]="getDisabledClass()">
+                        <img [src]="saveImgSrc"
+                            (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
+                            (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
+                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                            title="Save Template"
+                            (click)="saveTemplate()">
+                    </div>
+                    <div style="margin-bottom:-10px;margin-left:3px">
+                        <label class="switch">
+                            <input type="checkbox" [(ngModel)]="statService.calculateUnique" (change)="slideUniqueChange($event)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div style="margin-left:5px;margin-top:20px">
+                        <p style="font-weight: bold;color:#182a69;">Calculate Unique</p>
+                    </div>
+                </mat-grid-tile>
+            </mat-grid-list>-->
+        </div>
+    </div>
+
+    <!-- SEGMENTATIONS -->
+    <div style="margin-top:0px">
+        
+            <ng-container *ngFor="let x of statService.currentTemplate.Segmentations;let i = index">
+                <button 
+                    class="collapsible" 
+                    (click)="clickPanel(i)" 
+                    style="font-weight: bold;"    
+                    [ngClass]="getActiveCls(i)">View - {{ getTitle(i) }}
+                </button>
+                    <div class="content" [ngStyle]="{'max-height':getHeight(i)}">
+                        <!--<p>
+                            <ngb-alert [dismissible]="false">
+                                <strong>Warning!</strong> Better check yourself, you're not looking too good.
+                            </ngb-alert>
+                        </p>-->
+                        <pkl-view 
+                            [selectedRowsSet] = "x.rows"
+                            [selectedColumnsSet] = "x.columns"
+                            [name] = "x.name"
+                            [id] = i
+                        >
+                        </pkl-view>          
+                    </div>  
+            </ng-container>
+    </div>
+
+    <div style="position:sticky;bottom:0px;height: 50px;z-index: 99999;background: #fafafa;">
+        <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;" 
+                mat-raised-button 
+                (click)="addView()">Add View</button>
+    </div>
+</div>
+
