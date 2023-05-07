@@ -1,4 +1,5 @@
 import os, sys
+from threading import Timer
 from requests import Session
 # the absolute path for this file
 current_file_directory = os.path.realpath(__file__)
@@ -9,7 +10,8 @@ from dash import Dash, html
 
 # from pyfladesk import init_gui
 from classes_and_utils.GUI_utils import *
-from flask import Flask, render_template, request,redirect, url_for,session
+from classes_and_utils.TemplatesFilesHelper import *
+from flask import Flask, jsonify, render_template, request,redirect, url_for,session
 from flask_GUI.rendering_functions import show_stats_render
 from flask_GUI.dash_apps.results_table import Results_table
 
@@ -39,9 +41,9 @@ def new_report_func():
 @server.route('/calculating_page', methods=['GET', 'POST'])
 def calculating():
     # extract the user specified directories and names
-    config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, save_stats_dir, config_dict = unpack_calc_request(request, current_file_directory)
+    config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, config_dict = unpack_calc_request(request, current_file_directory)
     # making sure save_stats_dir is empty and opening the appropriate folders
-    empty = folder_func(output_dir)
+    empty, save_stats_dir = folder_func(output_dir)
     if empty == 'FileNotFound':
         return render_template('Not_found.html')
     # if the output folder is not empty a message is sent
@@ -75,9 +77,119 @@ def Report_orig():
     report_type = 'ORIG'
     return Report(use_cached_report)
 
+@server.route('/Save_Report_Request', methods=['GET', 'POST'])
+def Save_Report_Request():
+    global report_type
+    report_type = 'NEW'
+    use_cached_report = request.args.get('use_cached_report')
+    extract_data_request(request,use_cached_report)
+    session['error_message'] = ''
+    return render_template('index.html')
+
+def extract_data_request(request,use_cached_report):
+    global exp
+    global comp_exp
+
+    comp_exp = []
+    if not use_cached_report:
+        exp,result,err_msg = load_experiment(request,False)
+
+        if exp == None and result == False and err_msg != '':
+            #return render_template("start_page.html",message=err_msg)
+            session['error_message'] = err_msg
+            return redirect(url_for("homepage"))
+        cexp,_,_ = load_experiment(request,True)
+        if cexp != None:
+            comp_exp.append(cexp)
+
+def Create_Report():
+    global exp
+    global comp_exp
+
+    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+
+    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
+    return results_table.get_webpage()
+    '''dashApp = Dash(__name__,server=server,url_base_pathname='/dash2/')# serve_locally = False)
+    dashApp.layout = results_table.get_layout()
+    @dashApp.callback(
+        Output('table-div', 'children'),
+        Input('cols_seg', 'value'),
+        Input('rows_seg', 'value')
+    )
+    def update_output(cols_input ,rows_input):
+        table_div = results_table.table.get_table(cols_input, rows_input)
+        return table_div
+
+    return dashApp.index()'''
+@server.route('/get_segmentations', methods=['POST'])    
+def get_segmentations():
+    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+    result = []
+    for k, v in segmentations.items():
+        result.append({'name':k,'values':v})
+    return jsonify(result)
+
+@server.route('/Reporter_new_wrapper', methods=['POST'])
+def Reporter_new_wrapper():
+    wp = Create_Report()
+    return jsonify(wp), 201
+
 @server.route('/Reporter_new', methods=['GET', 'POST'])
+def Create_Report():
+    global exp
+    global comp_exp
+
+    calc_unique = True if request.args.get('calc_unique') == 'true' else False
+
+    columns = [] 
+    rows = [] 
+    argCols = request.args.get('cols')
+    argRows = request.args.get('rows')
+    if argCols != None and len(argCols) > 0:
+        if argCols[-1] == ',':
+            argCols = argCols[:-1]
+        columns  = list(argCols.split(',') )
+       
+    if argRows != None and len(argRows) > 0:
+        if argRows[-1] == ',':
+            argRows = argRows[:-1]
+        rows = list(argRows.split(','))
+    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+
+    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations,calc_unique)
+    results_table.dash_app.layout = results_table.get_layout_new(columns,rows)
+    wp = results_table.get_webpage()
+
+    return wp
+
+@server.route('/get_all_templates', methods=['POST'])
+def get_all_templates():
+    helper = TemplatesFilesHelper()
+    content = helper.get_all_templates_content()
+    return jsonify(content)
+
+@server.route('/get_template_content', methods=['POST'])
+def get_template_content():
+    file_name = request.args.get('file_name')
+    helper = TemplatesFilesHelper()
+    content = helper.get_template_content(file_name)
+    return jsonify(content)
+
+@server.route('/save_template',methods=['POST'])
+def save_template():
+    data = request.json
+    name = data['name']
+    content = data['content']
+    helper = TemplatesFilesHelper()
+    result = helper.save_template(name,content)
+    return jsonify(result)
+    
+
+@server.route('/Reporter_new_old', methods=['GET', 'POST'])
 def Report_new():
     use_cached_report = request.args.get('use_cached_report')
+    
     session['error_message'] = ''
     global report_type
     report_type = 'NEW'
@@ -88,6 +200,7 @@ def Report(use_cached_report):
     global exp
     global comp_exp
     comp_exp = []
+
     if not use_cached_report:
         exp,result,err_msg = load_experiment(request,False)
 
@@ -107,7 +220,7 @@ def Report(use_cached_report):
         segmentations = {seg_category:v['possible partitions'] 
         for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
 
-        results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
+        results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations,calc_unique)
         return results_table.get_webpage()
     elif report_type == 'ORIG':
         # This is the deprecated reporter (before moving to Dash)
@@ -131,6 +244,8 @@ def save_pkl_file(pckl_file,is_reference):
         pckl_file.save(path_to_save)
         return path_to_save
 
+
+
 def load_experiment(request,is_reference):
     
     key_file_path = 'reference_file_path' if is_reference else 'report_file_path'
@@ -142,8 +257,7 @@ def load_experiment(request,is_reference):
         report_filename = request.values[key_file_path]
         if os.path.exists(report_filename):
             ret_exp = load_object(report_filename)
-            ret_exp.main_ref_dict=None
-            ret_exp.ref_main_dict=None
+
             return ret_exp,True,''
         else:
             #to do - if file not exist
@@ -156,12 +270,15 @@ def load_experiment(request,is_reference):
         
         report_filename = save_pkl_file(pckl_file,False)
         ret_exp = load_object(report_filename)
-        ret_exp.main_ref_dict=None
-        ret_exp.ref_main_dict=None
+
         return ret_exp,True,''
     
     return ret_exp, True, ''
+
+
 #########################################################
+#hagai-callback
+
 @results_table.dash_app.callback(
     Output('table-div', 'children'),
     Input('cols_seg', 'value'),
@@ -170,6 +287,7 @@ def update_results_table(cols_input ,rows_input):
     table_div = results_table.table.get_table(cols_input, rows_input)
 
     return table_div
+
 
 @server.route('/stats_pivot', methods=['GET', 'POST'])
 def statistics_reporter_dash():
@@ -180,10 +298,48 @@ def show_stats():
     return show_stats_render(request, exp, comp_exp)			
 
 #########################################################
+
+global LM
+LM = None
+def get_list_manager():
+    global LM
+    if LM == None:
+        LM = UpdateListManager()
+    return LM
+
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    comp_index, unique, state, cl_and_choice, mytup, save_path, per_video_example_hash, saved_sheldon = manage_list_request(request, exp, comp_exp, report_type)
-    return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index, unique = unique)
+    listManager = get_list_manager()
+
+    # global comp_index, unique, state, cell_name, save_path, per_video_example_hash
+    listManager.manage_list_request(request, exp, comp_exp, report_type)
+
+    return render_template('examples_list.html', 
+                            state=listManager.state, 
+                            cell_name=listManager.cell_name,
+                            save_path=listManager.saved_list,
+                            per_video_example_hash=listManager.per_video_example_hash,
+                            saved_sheldon=listManager.saved_sheldon,
+                            comp_index=listManager.comp_index,
+                            unique = listManager.show_unique)
+
+    # return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index, unique = unique)
+
+@server.route('/update_list_2', methods=['GET', 'POST'])
+def show_list2():
+    return render_template('index.html')
+
+@server.route('/is_file_exists',methods=['GET', 'POST'])
+def is_file_exists():
+    file_path = request.json['file_path']
+    if os.path.exists(file_path):
+        return {
+            'exists': True
+        }
+    else:
+        return {
+            'exists': False
+        }
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():
@@ -198,8 +354,13 @@ def show_config():
     config_dict = config_file[0]
     return render_template('show_config.html', config_dict=config_dict, config_name=config_name)
 
+def open_browser():
+      #webbrowser.open_new("http://127.0.0.1:5000")
+      pass
 
 if __name__=='__main__':
     server.debug = False
+
+    # Timer(1, open_browser).start()
     server.run()
-    
+    open_browser()

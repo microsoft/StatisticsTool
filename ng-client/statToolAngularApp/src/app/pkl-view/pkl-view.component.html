@@ -1,0 +1,60 @@
+<div class="parent" style="border:1px solid lightgray;padding: 3px;">
+    <div *ngIf="loadCounter > 0">
+        <img src="assets/spinner-90-ring-with-bg.svg" style="width:40px;height:40x" />
+    </div>
+    <div style="width:99.6%;padding:3px;border:solid 1px lightgray;
+                border-radius: 4x !important;margin-top: 3px;
+                color:#182a69;background-color:#fafafa"
+         class="pkl-view-header">
+            <div style="width:100%">
+                <table style="width:100%">
+                    <tr>
+                        <td style="width:20%">
+                            <input type="text" 
+                                class="view-name"
+                                [ngModel]="name"
+                                placeholder="View Name"
+                                (change)="onViewNameChanged($event)"
+                                style="padding-left:5px;height:38px;width:96%;border:1px solid #adadad;border-radius: 3px;"
+                            > 
+                        </td>
+                        <td style="width:38%">
+                            <segmentations 
+                                style="width:95%;background-color: white;"
+                                name="Select Rows" 
+                                [selectItems]="selectedRows"
+                                (segmentAdded)="onRowAdded($event)"
+                                (segmentRemoved)="onRowRemoved($event)"
+                                (allSegmentsAdded)="onAllRowsAdded($event)"
+                                (allSegmentsRemoved)="onAllRowsRemoved($event)">
+                            </segmentations>
+                        </td>
+                        <td style="width:38%">
+                            <segmentations 
+                                style="width:95%;background-color: white;margin-top: 2px;"
+                                name="Selct Columns" 
+                                [selectItems]="selectedColumns"
+                                (segmentAdded)="onColumnAdded($event)"
+                                (segmentRemoved)="onColumnRemoved($event)"
+                                (allSegmentsAdded)="onAllColumnsAdded($event)"
+                                (allSegmentsRemoved)="onAllColumnsRemoved($event)">
+                                >
+                            </segmentations>
+                        </td>
+                        <td style="text-align: right;"> 
+                            <img src="assets/cancel-icon.svg" style="height:33px;width: 33px;position:relative;cursor: pointer;"
+                                  title="Remove View" (click)="removeView()">
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    <iframe (load)="onlaod()" 
+            style="display:block; width:100%; height:92vh;margin-top: 3px;border:none"
+            [src]="url | safe">
+    </iframe>
+    <div *ngIf="statToolService.showFileNotFoundError()" 
+        style="position: sticky;bottom: 200px;z-index: 99999999;">
+        <ngb-alert type="danger" (closed)="statToolService.fileNotFoundError = ''">{{ statToolService.fileNotFoundError }}</ngb-alert>
+    </div>
+</div>

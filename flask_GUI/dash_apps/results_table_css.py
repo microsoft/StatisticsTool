@@ -23,8 +23,10 @@ css['table-buttons-div'] =\
 css['table-div'] = \
 {
     'position':'relative',\
-'width' :'100%', 
-'height':'100%',
+    'width' :'100%', 
+    'height':'100%',
+    'line-height':'20px',
+    'font-size':'14px'
 # 'object-fit': 'contain',
 }
 
@@ -71,4 +73,15 @@ css['whole-reporter']=\
 # 'width' :'100%', 
 # 'height':'1000px',
 # 'background-color': 'rgb(255, 255, 128)'
+}
+
+css['smallCell']=\
+{
+    'width': '1px',
+    'white-space': 'nowrap',
+}
+
+css['oddrow']=\
+{
+    'backgroud-color':'blue',
 }
