@@ -16,6 +16,7 @@ def approach_event_presence_transform(comp_data):
     wake_events = np.array(comp_data['Is_Wake_event_gt'])
     lock_events = np.array(comp_data['Is_Lock_event_gt'])
    
+    last_valid_frame = len(wake_events)
     for frame_index, w in enumerate(wake_events):
         if type(w) != str:
             last_valid_frame = frame_index
