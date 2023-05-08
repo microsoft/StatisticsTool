@@ -697,19 +697,22 @@ def manage_image_request(request, main_exp, comp_exp):
     comp_ind=eval(request.args.get('comp_index'))
     if comp_ind>-1:
         exp = comp_exp[comp_ind]
-
+    
+    local_path = None    
+    if request.args.get('local_path'):
+        local_path = request.args.get('local_path')
+    
     if request.args.get('example_name'):
         example_id = request.args.get('example_name')
         example_id = eval(example_id.replace(" ", ","))
-        if request.args.get('local_path'):
-            example_id[0] = os.path.join(request.args.get('local_path'),example_id[0])   
+        
         example_id[0] += ".json"
         global last_example_id
         last_example_id = example_id
-        data, fig = exp.visualize(bb_id=example_id)
+        data, fig = exp.visualize(bb_id=example_id, local_path = local_path)
     # request came from examples_image.html to show an save an example image (an keep showing it)
     else:
-        data, fig = exp.visualize(bb_id=last_example_id)
+        data, fig = exp.visualize(bb_id=last_example_id, local_path = local_path)
         name = last_example_id[0].replace('.json', '') + str(last_example_id[1]) + '.png'
         save_path = os.path.join(os.path.join(exp.save_stats_dir, 'saved images'), name)
         fig.savefig(save_path)
