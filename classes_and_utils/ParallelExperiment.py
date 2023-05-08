@@ -642,7 +642,7 @@ class ParallelExperiment:
 
         return frame
                 
-    def visualize(self, bb_id):
+    def visualize(self, bb_id,local_path=None):
         """
         this function searches the right bounding box and its frame and calls self.frame_visualization() to visualize it
 
@@ -663,6 +663,10 @@ class ParallelExperiment:
         
         data = self.comp_data.loc[bb_index]
         image_folder=data['video']
+        
+        if local_path:
+            image_folder = os.path.join(local_path,image_folder)
+
         frame_image = self.read_image(frame_id, image_folder)
 
        
