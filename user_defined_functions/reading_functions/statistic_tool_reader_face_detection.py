@@ -16,13 +16,22 @@ def statistic_tool_reader_face_detection(path):
 
     if len(lines) < 1:
         return None
+    
+    if json.loads(lines[0])['header']['type']=='IO':
+        log_field_type = 'FaceDetectionOutput'
+        scale_factor_x = 1920/232
+        scale_factor_y = 1080/132
+    elif json.loads(lines[0])['header']['type'][0]=='gt_log':
+        log_field_type = 'Face BB'
+        scale_factor_x = 1
+        scale_factor_y = 1
 
     line = json.loads(lines[1])
     records = []
     
     for line in lines[1:]:
         line = json.loads(line)
-        if ('type' in line['keys'] and line['keys']['type'] != 'Face BB') or 'objects' not in line['message']:
+        if ('type' in line['keys'] and line['keys']['type'] != log_field_type) or 'objects' not in line['message']:
             continue
 
         detections = []
@@ -32,7 +41,7 @@ def statistic_tool_reader_face_detection(path):
             if obj["Source"] != "FACE_DETECTION":
                 continue
             bb = obj['BoundingBox']
-            prediction = {'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']}
+            prediction = {'object_id':obj['Id'], 'x':bb['Left']*scale_factor_x,'y':bb['Top']*scale_factor_y,'width':bb['Width']*scale_factor_x,'height':bb['Height']*scale_factor_y}
             if 'Score' in obj:
                 prediction['Score'] = obj['Score']
             detections.append({'detection':True, 'prediction': prediction})
