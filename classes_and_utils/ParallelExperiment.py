@@ -642,7 +642,7 @@ class ParallelExperiment:
 
         return frame
                 
-    def visualize(self, bb_id,local_path):
+    def visualize(self, bb_id,local_path=None):
         """
         this function searches the right bounding box and its frame and calls self.frame_visualization() to visualize it
 
