@@ -35,21 +35,41 @@
                 </div>
                 <ng-container *ngIf="isNewTemplateMode">
                     <div style="width:10%;padding-top: 2px;margin-left: 4px;">
-                        <input type="text" 
+                        <input *ngIf="!isFireFox()"
+                            type="text" 
                             placeholder="Template Name"
                             [(ngModel)]="templateNameCreated"
                             style="height:27px;width:100%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;"
                             >
+                        <input *ngIf="isFireFox()"
+                            type="text" 
+                            placeholder="Template Name"
+                            [(ngModel)]="templateNameCreated"
+                            style="height:30px;width:100%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;margin-left: 11px;"
+                        >
+
                     </div>
                 </ng-container>
-                <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-left: 12px;margin-top: -1px;">
-                    <img [src]="saveImgSrc"
-                        (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
-                        (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
-                        style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
-                        title="Save Template"
-                        (click)="saveTemplate()">
-                </div>
+                <ng-container *ngIf="!isFireFox()">
+                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-left: 12px;margin-top: -1px;">
+                        <img [src]="saveImgSrc"
+                            (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
+                            (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
+                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                            title="Save Template"
+                            (click)="saveTemplate()">
+                    </div>
+                </ng-container>
+                <ng-container *ngIf="isFireFox()">
+                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-left: 12px;margin-top: -1px;margin-left: 22px;">
+                        <img [src]="saveImgSrc"
+                            (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
+                            (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
+                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                            title="Save Template"
+                            (click)="saveTemplate()">
+                    </div>
+                </ng-container>
                 <div class="pipe" style="margin-right:5px;margin-left: 7px;"></div>
                 <div style="display:flex;padding-right:3px;">
                     <div style="margin-bottom:-10px;margin-left:3px;padding-top:10px">
@@ -83,60 +103,6 @@
                            style="height:27px;margin:5px;margin-top:3px !important;width:300px;border:1px solid lightgray;border-radius: 3px;outline: none;">
                 </div>
             </div>
-            <!--
-            <mat-grid-list cols="16" rowHeight="40px">
-                <mat-grid-tile  [colspan]="1" [rowspan]="1">
-                    <div class="back-icon" style="margin-top:-2px">
-                        <img [src]="backImgSrc"
-                            (mouseover)="backImgSrc = 'assets/back-icon-orange.svg'"
-                            (mouseout)="backImgSrc = 'assets/back-icon-blue.svg'"
-                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
-                            title="Back"
-                            class="back"
-                            (click)="back()">
-                    </div>
-                </mat-grid-tile>
-                <mat-grid-tile [colspan]="5" [rowspan]="1">
-                    <select 
-                        [(ngModel)]="statService.selectedTamplate"
-                        style="height: 29px; width:95%;border-color:lightgray;border-radius: 3px;"
-                        (change)="onTemplateSelected($event)"
-                        >
-                        <option *ngFor="let t of statService.templateNameOptions"
-                                        value="{{t.key}}"
-                                >{{t.value}}</option>
-                    </select>
-                </mat-grid-tile>
-                
-                <ng-container *ngIf="isNewTemplateMode">
-                    <mat-grid-tile  [colspan]="5" [rowspan]="1">
-                        <input type="text" 
-                            placeholder="Template Name"
-                            [(ngModel)]="templateNameCreated"
-                            style="height:25px;width:95%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;"
-                            >
-                    </mat-grid-tile>
-                </ng-container>
-                <mat-grid-tile  [colspan]="5" [rowspan]="1">
-                    <div class="save-icon" [ngClass]="getDisabledClass()">
-                        <img [src]="saveImgSrc"
-                            (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
-                            (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
-                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
-                            title="Save Template"
-                            (click)="saveTemplate()">
-                    </div>
-                    <div style="margin-bottom:-10px;margin-left:3px">
-                        <label class="switch">
-                            <input type="checkbox" [(ngModel)]="statService.calculateUnique" (change)="slideUniqueChange($event)">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div style="margin-left:5px;margin-top:20px">
-                        <p style="font-weight: bold;color:#182a69;">Calculate Unique</p>
-                    </div>
-                </mat-grid-tile>
-            </mat-grid-list>-->
         </div>
     </div>
 
@@ -167,7 +133,7 @@
             </ng-container>
     </div>
 
-    <div style="position:sticky;bottom:0px;height: 50px;z-index: 99999;background: #fafafa;">
+    <div style="position:fixed;bottom:0px;left:0;height: 50px;z-index: 99999;background: #fafafa;width:100%">
         <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;" 
                 mat-raised-button 
                 (click)="addView()">Add View</button>

@@ -113,9 +113,39 @@ export class TemplateSegmentationsComponent implements OnInit {
         return ''; 
     }
 
+    agentHas(keyword:string) {
+      return navigator.userAgent.toLowerCase().search(keyword.toLowerCase()) > -1;
+    }
+
+    isFireFox(){
+      return this.agentHas("Firefox") || this.agentHas("FxiOS") || this.agentHas("Focus");
+    }
+
     getHeight(i:number){
-      if (this.statService.currentTemplate.SegmentationsClicked[i] == true)
-        return '100vh';
+      if (this.statService.currentTemplate.SegmentationsClicked[i] == true){
+        let segments = this.statService.currentTemplate.Segmentations[i];
+        
+        let numRows = 1;
+        segments.rows.forEach(r => {
+          if (r != '') {
+            let values = this.statService.optionalSegmentations.get(r);
+            numRows = numRows*values!.length;
+          }
+        })
+
+        let tableHeight = numRows * 8 * 22;
+        if (this.statService.calculateUnique == false)
+          tableHeight = numRows * 7 * 22; 
+
+        let totalHeight = 0;
+        if (segments.columns.length == 0)
+          totalHeight = tableHeight + 1 * 40 + 65 + 30;
+        else
+          totalHeight = tableHeight + (segments.columns.length * 40) + 65 + 30;
+        
+        return (totalHeight + 15) + 'px';
+        
+      }
       else
         return '0px';
     }
