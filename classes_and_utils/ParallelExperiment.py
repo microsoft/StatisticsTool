@@ -637,6 +637,7 @@ class ParallelExperiment:
                     break
         
         if frame is not None:
+            print(f'Cant find frmae {frame_id} for: {images_folder}')
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             vid.release()
 
