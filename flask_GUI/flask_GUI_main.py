@@ -341,7 +341,7 @@ def show_list2():
 @server.route('/is_file_exists',methods=['GET', 'POST'])
 def is_file_exists():
     file_path = request.json['file_path']
-    if os.path.exists(file_path):
+    if True: #os.path.exists(file_path):
         return {
             'exists': True
         }
