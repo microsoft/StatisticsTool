@@ -637,6 +637,7 @@ class ParallelExperiment:
                     break
         
         if frame is not None:
+            print(f'Cant find frmae {frame_id} for: {images_folder}')
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             vid.release()
 
@@ -659,10 +660,14 @@ class ParallelExperiment:
        
         # the video name (image folder name) and bounding box index are needed for identification of the correct bounding box (the frame id is not necessary)
         
-        _, bb_index,frame_id,_ = bb_id
+        local_path, bb_index,frame_id,_ = bb_id
         
         data = self.comp_data.loc[bb_index]
         image_folder=data['video']
+         
+        if local_path:
+            image_folder = os.path.join(local_path,image_folder)
+
         frame_image = self.read_image(frame_id, image_folder)
 
        
