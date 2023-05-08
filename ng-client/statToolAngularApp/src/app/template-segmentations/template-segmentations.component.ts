@@ -121,7 +121,7 @@ export class TemplateSegmentationsComponent implements OnInit {
       return this.agentHas("Firefox") || this.agentHas("FxiOS") || this.agentHas("Focus");
     }
 
-    getHeight(i:number){
+    getHeight(i:number):number{
       if (this.statService.currentTemplate.SegmentationsClicked[i] == true){
         let segments = this.statService.currentTemplate.Segmentations[i];
         
@@ -132,22 +132,27 @@ export class TemplateSegmentationsComponent implements OnInit {
             numRows = numRows*values!.length;
           }
         })
-
-        let tableHeight = numRows * 8 * 22;
-        if (this.statService.calculateUnique == false)
-          tableHeight = numRows * 7 * 22; 
+        let lineHeight = 22;
+        let tableHeight = numRows * 8 * lineHeight;
+        //if (this.statService.calculateUnique == false)
+        //  tableHeight = numRows * 7 * 22; 
 
         let totalHeight = 0;
+        const segmentRowHeight = 40;
+        const segmentsFilterRowHeight = 70;
+        const viewTitleHeight = 40;
         if (segments.columns.length == 0)
-          totalHeight = tableHeight + 1 * 40 + 65 + 30;
+          totalHeight = tableHeight + segmentRowHeight + segmentsFilterRowHeight + viewTitleHeight;
         else
-          totalHeight = tableHeight + (segments.columns.length * 40) + 65 + 30;
+          totalHeight = tableHeight + (segments.columns.length * segmentRowHeight) + segmentsFilterRowHeight + viewTitleHeight;
+
+        const bufferHeight = 20;  
+        let height = (totalHeight + bufferHeight);
         
-        return (totalHeight + 15) + 'px';
-        
+        return height;
       }
       else
-        return '0px';
+        return 0;
     }
 
     getTitle(i:number){

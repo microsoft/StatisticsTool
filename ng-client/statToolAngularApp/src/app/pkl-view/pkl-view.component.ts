@@ -44,6 +44,8 @@ export class PklViewComponent implements OnInit  {
 
   subscribeUniqueChange = new Subscription;
 
+  @Input() height:string = '';
+
   constructor(private httpClient:HttpClient,
               public statToolService:StatisticsToolService) {
     this.url = '/Reporter_new?calc_unique=' + statToolService.calculateUnique;
