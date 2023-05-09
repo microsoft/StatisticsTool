@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 
@@ -8,6 +8,12 @@ import { StatisticsToolService } from '../services/statistics-tool.service';
   styleUrls: ['./drawer-content.component.css']
 })
 export class DrawerContentComponent implements OnInit {
+
+  @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+        this.closeDrawer();
+    }
+  }
 
   constructor(public statToolService:StatisticsToolService) {
   }
@@ -19,4 +25,7 @@ export class DrawerContentComponent implements OnInit {
   ngOnDestroy(){
   }
 
+  closeDrawer(){
+    this.statToolService.showDrawer = false;
+  }
 }

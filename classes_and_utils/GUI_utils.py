@@ -193,11 +193,13 @@ def unpack_new_config(request):
     evaluation_func_name = request.form.get("evaluation_func")
     statistics_func_name = request.form.get('statistics_func')
     partitioning_func_name = request.form.get('partitioning_func')
+    log_names_to_evaluate = request.form.get('log_names_to_evaluate')
+
     new_config = [
         {"File Reading Function": reading_func_name, "Overlap Function": overlap_func_name, "Threshold": threshold,
          "Evaluation Function": evaluation_func_name, "Image Width": image_width, "Image Height": image_height,
          "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name,
-         "Transformation Function":transform_func_name}]
+         "Transformation Function":transform_func_name, "Log Names to Evaluate":log_names_to_evaluate }]
     return new_config, new_config_name
 
 
@@ -243,6 +245,16 @@ def unpack_calc_config_dict(config_dict):
     overlap_func_name = config_dict["Overlap Function"]
     evaluation_func_name = config_dict["Evaluation Function"]
     threshold = config_dict["Threshold"]
+    log_names_to_evaluate = None
+    
+    if "Log Names to Evaluate" in config_dict.keys():
+        log_names_to_evaluate = config_dict["Log Names to Evaluate"]
+        if type(log_names_to_evaluate) == str:
+            if log_names_to_evaluate.isspace() or log_names_to_evaluate == '':
+                log_names_to_evaluate = None
+            else:
+                log_names_to_evaluate = log_names_to_evaluate.split(',')
+
     if "Image Width" in config_dict.keys():
         image_width = config_dict["Image Width"]
         image_height = config_dict["Image Height"]
@@ -263,7 +275,7 @@ def unpack_calc_config_dict(config_dict):
     transform_func = None
     if transform_func_name != 'None':
         transform_func = get_userdefined_function(TRANSFORM_FUNCTIONS,transform_func_name)
-    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height
+    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate
 
 def get_userdefined_function(func_type,func_name):
     module_name = 'user_defined_functions' + "." + func_type + "." + func_name
@@ -285,13 +297,13 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height = unpack_calc_config_dict(
+    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = unpack_calc_config_dict(
         config_dict)
     # extract matching lists of absolute paths for the predictions, labels and images
   
     # extract all the intermediate results from the raw prediction-label files
     compared_videos, sheldon_header_data = compare_predictions_directory(pred_dir=prd_dir, output_dir = single_video_hash_saving_dir, overlap_function=overlap_func, 
-                                                                 readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir)
+                                                                 readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
         return None
@@ -606,11 +618,22 @@ class UpdateListManager():
         self.per_video_example_hash = self.create_collapsing_list(self.list_of_examples)
 
 
-    def export_list_to_sheldon(self, images_list, sheldon_header_data,output_dir, cell_name, states, is_unique, comp_index):
+    def export_list_to_sheldon(self, images_list, sheldon_header_data, output_dir, cell_name, states, is_unique, comp_index):
         segmentation_list = cell_name.split("*") if cell_name !="*" else ['All']
         sheldon_list = []
         header = {}
-        header['header']=sheldon_header_data
+
+        #TODO: Move sheldon header to here
+        #Jump file header should be created only when exporting it (on UI)
+        new_sheldon_header = create_sheldon_list_header(\
+            sheldon_header_data[PRIMARY_LOG][LOGS_PATH],
+            sheldon_header_data[PRIMARY_LOG][LOG_FILE_NAME],
+            sheldon_header_data[SECONDARY_LOG][LOGS_PATH],
+            sheldon_header_data[SECONDARY_LOG][LOG_FILE_NAME],
+             '') 
+
+
+        header['header']=new_sheldon_header
         header['header']['segmentation']= segmentation_list
         if is_unique:
             header['header']['segmentation'].append('unique')
@@ -618,20 +641,20 @@ class UpdateListManager():
 
         sheldon_list.append(json.dumps(header))
         for file in list(images_list.keys()):
-            for event in images_list[file]:
+            for event_key, actual_event in images_list[file].items():
                 sheldon_link={}
                 sheldon_link['keys']={}
                 sheldon_link['keys']['type']='debug'
                 sheldon_link['message']={}
                 sheldon_link['message']['IsChecked']='False'
 
-                vid = images_list[file][event]['frames'][0][0]
-                sheldon_link['message']['Video Location']=vid
-                sheldon_link['message']['Frame Number']= images_list[file][event]['frames'][0][2]
-                sheldon_link['message']['end_frame'] = images_list[file][event]['end_frame']
+                vid_name = actual_event['frames'][0][0].replace(".mp4","")
+                sheldon_link['message']['Video Location']=vid_name
+                sheldon_link['message']['Frame Number']= actual_event['frames'][0][2]
+                sheldon_link['message']['end_frame'] = actual_event['end_frame']
 
-                sheldon_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid, header['header'][PRIMARY_LOG][LOGS_PATH])
-                sheldon_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid, header['header'][SECONDARY_LOG][LOGS_PATH])
+                # sheldon_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid_name, header['header'][PRIMARY_LOG][LOGS_PATH])
+                # sheldon_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid_name, header['header'][SECONDARY_LOG][LOGS_PATH])
 
                 sheldon_list.append(json.dumps(sheldon_link))
         
@@ -674,17 +697,30 @@ def manage_image_request(request, main_exp, comp_exp):
     comp_ind=eval(request.args.get('comp_index'))
     if comp_ind>-1:
         exp = comp_exp[comp_ind]
-
-    if request.args.get('example_name'):
+    
+    local_path = None    
+    if request.args.get('local_path'):
+        local_path = request.args.get('local_path')
+    
+    is_name_available = request.args.get('example_name')
+    if is_name_available:
         example_id = request.args.get('example_name')
         example_id = eval(example_id.replace(" ", ","))
+        
         example_id[0] += ".json"
         global last_example_id
-        last_example_id = example_id
-        data, fig = exp.visualize(bb_id=example_id)
-    # request came from examples_image.html to show an save an example image (an keep showing it)
+        last_example_id = example_id   
+    else: # request came from examples_image.html to show an save an example image (an keep showing it)
+        example_id = last_example_id
+    
+    if local_path:
+        example_id[0] = local_path
     else:
-        data, fig = exp.visualize(bb_id=last_example_id)
+        example_id[0] = ''
+
+    data, fig = exp.visualize(bb_id=last_example_id)
+
+    if not is_name_available: # request came from examples_image.html to show an save an example image (an keep showing it)
         name = last_example_id[0].replace('.json', '') + str(last_example_id[1]) + '.png'
         save_path = os.path.join(os.path.join(exp.save_stats_dir, 'saved images'), name)
         fig.savefig(save_path)

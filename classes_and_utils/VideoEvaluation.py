@@ -2,7 +2,7 @@ import pathlib
 import numpy as np, os
 import pandas as pd
 from classes_and_utils.file_storage_handler import get_local_or_blob_full_path, list_files_in_results_path
-from utils.AlgoLogsParser import parse_video_name_from_pred_file
+from utils.LogsParser import parse_video_name_from_pred_file
 from utils.AzureStorageHelper import StoreType, read_gt_file_from_blob
 from classes_and_utils.file_storage_handler import get_local_or_blob_file
 from utils.sheldon_export_header import create_sheldon_list_header
@@ -170,7 +170,7 @@ class VideoEvaluation:
 
    
 
-def compare_predictions_directory(pred_dir, output_dir, overlap_function, readerFunction, transform_func, evaluation_func, gt_dir = None):
+def compare_predictions_directory(pred_dir, output_dir, overlap_function, readerFunction, transform_func, evaluation_func, gt_dir = None, log_names_to_evaluate = None):
     """
 
     :param GT_path_list:  a list of paths to GT files (matching to the preditions and images lists)
@@ -194,20 +194,26 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     failed = []
     skipped_not_json = []
     skipped_reading_fnc = []
-    
+    skipped_not_in_lognames = []
+
     print (f"total files num: {len(pred_path_list)}")
     #for GT_path, pred_path, image_folder_fullpath, image_folder_name in zip(GT_path_list, pred_path_list, image_folder_fullpath_list, images_folders_list):
     for pred in pred_path_list:
-        print (f"succeded-{len(succeded)} skippied_reading-{len(skipped_reading_fnc)} skipped_json-{len(skipped_not_json)}, failed-{len(failed)}, total files num-{len(pred_path_list)}\n\n")
         gt_local_path = None
         
+        #Check if file is json
         if not pred.endswith('.json'):
             print (f"not .json file skipping: {pred}")
             skipped_not_json.append(pred)
             continue
-
-
+        
+        #Check if file is in log names to evaluate
         log_name = os.path.basename(pred)
+        if log_names_to_evaluate != None:
+            if log_name not in log_names_to_evaluate:
+                skipped_not_in_lognames.append(pred)
+                continue
+
         try:
             print(f"Try to find gt for file: {pred}")
             
@@ -220,7 +226,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             try:        
                 video_name, _ = parse_video_name_from_pred_file(pred_file)
             except Exception as ex:
-                print ("failed to parse header from prediction file file: "+pred_file)
+                print ("Failed to parse header from prediction file file: " + pred_file)
                 failed.append(pred)
                 continue
         
@@ -244,23 +250,23 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             gt_local_path = os.path.normpath(gt_local_path)    
             if gt_local_path is None or not os.path.exists(gt_local_path):
                 failed.append(pred)
-                print(f"Gt file: {gt_local_path} not found for prediction: {pred}, continue with next prediction log..")
+                print(f"GT file: {gt_local_path} not found for prediction: {pred}, continue with next prediction log..")
                 continue
 
             V = VideoEvaluation(overlap_function=overlap_function, readerFunction=readerFunction, evaluation_func=evaluation_func, transform_func = transform_func)
             res = V.compute_dataframe(pred_file, gt_local_path, video_name)
             if not res:
-                print (f"reading function didn't read file: {pred} and gt:{gt_local_path}")
+                print (f"Reading function didn't read file: {pred} and gt:{gt_local_path}")
                 skipped_reading_fnc.append(pred)
                 continue
             
             #if succeded - save prediction log file name to use in sheldon header
             pred_file_name = os.path.basename(pred)
 
-            print(f"Start compare files for video {video_name}: {pred} and {gt_local_path}")
+            print(f"Starting comparing files for video {video_name}: {pred} and {gt_local_path}")
         except Exception as ex:
             failed.append(pred)
-            print(f"Failed to compare log {pred}, continue with next log")
+            print(f"Failed to compare log {pred}, continuing with next log...")
             print(ex)
             continue
 
@@ -269,17 +275,23 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
         output_files.append(output_file)
         succeded.append(pred)
 
-        print(f"finished compare predictions for video {video_name}")
+        print(f"Finished comparing predictions for video {video_name}")
+        print(f"#Succeeded: {len(succeded)}; #Skipped_reading: {len(skipped_reading_fnc)}; #Skipped_not_json: {len(skipped_not_json)}; #Failed: {len(failed)}; #Not_in_lognames: {len(skipped_not_in_lognames)} #Total Files: {len(pred_path_list)}\n\n")
 
-    print("finished all preds:\n")
-    print ("failed predictions: ")
+    print("\nFinished all Predictions!\n")
+    print ("Failed Predictions: ")
     for x in failed: print(x)
-    print ("\nskipped by reading func: ")
+    print ("\n Skipped by reading func: ")
     for x in skipped_reading_fnc: print(x)
    
+    #TODO: Indeed need to save this information, but not as a jump file header.
+    #Jump file header should be created only when exporting it (on UI)
     sheldon_pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
     sheldon_gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
-    sheldon_header_data = create_sheldon_list_header(primary_path=sheldon_pred_dir, primary_name=pred_file_name, secondary_path=sheldon_gt_dir, secondary_name=gt_file_name)
+    # sheldon_video_dir = get_local_or_blob_full_path(path, StoreType.Data)
+    sheldon_video_dir = '' #TODO:ADD Blob link
+
+    sheldon_header_data = create_sheldon_list_header(primary_path=sheldon_pred_dir, primary_name=pred_file_name, secondary_path=sheldon_gt_dir, secondary_name=gt_file_name, video_path=sheldon_video_dir)
     return output_files, sheldon_header_data
 
 

@@ -182,7 +182,7 @@ class ParallelExperiment:
         
         self.ID_storage['label'] = self.ID_storage['prediction']
 
-    def get_cell_data(self, segmentations:list, unique):
+    def get_cell_data(self, segmentations:list, unique, is_ref = False):
         len_ = len(self.masks['total_stats']['TP'])
         segmentation_mask = np.ones([len_], dtype=bool)
 
@@ -231,14 +231,20 @@ class ParallelExperiment:
                 cols = lst
             else:
                 cols = segmentations
-            uniqueTP = unique.calc_unique_detections(cols,rows,'TP')
-            uniqueFP = unique.calc_unique_detections(cols,rows,'FP')
-            uniqueFN = unique.calc_unique_detections(cols,rows,'FN')
+            uniqueTP, uniqueTP_ref, _ = unique.calc_unique_detections(cols,rows,'TP')
+            uniqueFP, uniqueFP_ref, _ = unique.calc_unique_detections(cols,rows,'FP')
+            uniqueFN, uniqueFN_ref, _  = unique.calc_unique_detections(cols,rows,'FN')
+            
+            uniqueTP = uniqueTP if not is_ref else uniqueTP_ref
+            uniqueFP = uniqueFP if not is_ref else uniqueFP_ref
+            uniqueFN = uniqueFN if not is_ref else uniqueFN_ref
+                
+
 
             self.unique_data[cell_name] = {
-                'TP':uniqueTP[0],
-                'FP':uniqueFP[0],
-                'FN':uniqueFN[0]
+                'TP':uniqueTP,
+                'FP':uniqueFP,
+                'FN':uniqueFN
             }
         return statistics_dict
 
@@ -631,6 +637,7 @@ class ParallelExperiment:
                     break
         
         if frame is not None:
+            print(f'Cant find frmae {frame_id} for: {images_folder}')
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             vid.release()
 
@@ -653,10 +660,14 @@ class ParallelExperiment:
        
         # the video name (image folder name) and bounding box index are needed for identification of the correct bounding box (the frame id is not necessary)
         
-        _, bb_index,frame_id,_ = bb_id
+        local_path, bb_index,frame_id,_ = bb_id
         
         data = self.comp_data.loc[bb_index]
         image_folder=data['video']
+         
+        if local_path:
+            image_folder = os.path.join(local_path,image_folder)
+
         frame_image = self.read_image(frame_id, image_folder)
 
        
