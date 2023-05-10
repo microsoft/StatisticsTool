@@ -125,7 +125,7 @@ class Results_table():
             if self.unique_helper != None:
                 TDs.append(html.Td(''))
             TDs.append(html.Td('REF', style={'color':'black','font-weight':'bold','white-space':'nowrap'}))
-            all_metrics.append(html.Tr(TDs))
+            all_metrics.append(html.Tr(TDs,style=css['table-row']))
         
         idx = 0
         for k in exp_data[MAIN_EXP].keys():
@@ -173,11 +173,11 @@ class Results_table():
             
             if idx % 2 == 0:
                 if row_index % 2 == 0:
-                    all_metrics.append(html.Tr(TDs,style={'background-color':'#e4f0f5'}))
+                    all_metrics.append(html.Tr(TDs,style=css['table_row_blue']))
                 else:
-                    all_metrics.append(html.Tr(TDs,style={'background-color':'#d3f0e0'}))
+                    all_metrics.append(html.Tr(TDs,style=css['table_row_green']))
             else:
-                all_metrics.append(html.Tr(TDs,style={'background-color':'white'}))
+                all_metrics.append(html.Tr(TDs,style=css['table_row_white']))
             
             idx = idx + 1
 

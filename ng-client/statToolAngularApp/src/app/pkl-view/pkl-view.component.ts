@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import {  Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
+import { Utils } from '../utils';
 
 @Component({
   selector: 'pkl-view',
@@ -9,7 +10,9 @@ import { StatisticsToolService } from '../services/statistics-tool.service';
   styleUrls: ['./pkl-view.component.css']
 })
 export class PklViewComponent implements OnInit  {
-    
+
+  @ViewChild('iframe') iframe: ElementRef|null = null;
+  
   url = '/Reporter_new';
   //subscribeGetSegment = new Subscription;
   selectedRows = '';
@@ -40,11 +43,12 @@ export class PklViewComponent implements OnInit  {
   }
   @Input() name = '';
   @Input() id = 0;
+    
   loadCounter = 0;
 
   subscribeUniqueChange = new Subscription;
 
-  @Input() height:string = '';
+  height:string = '';
 
   constructor(private httpClient:HttpClient,
               public statToolService:StatisticsToolService) {
@@ -175,9 +179,23 @@ export class PklViewComponent implements OnInit  {
 
   }
 
-  onlaod(){
-    //console.log('loaded...')
+  async onIframeLoad(){
     this.loadCounter = this.loadCounter - 1;
+    
+    if (this.iframe != null){
+      let loop = true;
+      while(loop){
+        await Utils.sleep(100);
+        let h = this.iframe.nativeElement.contentWindow.document.body.scrollHeight;
+        if (h > 100){
+          //console.log('frame:::',this.id,h);
+          h += 200;
+          this.height = h.toString() + 'px';
+          this.statToolService.viewHeights.set(this.id,this.height);  
+          loop = false;
+        }
+      }
+    }
   }
 
   onViewNameChanged(event:any){

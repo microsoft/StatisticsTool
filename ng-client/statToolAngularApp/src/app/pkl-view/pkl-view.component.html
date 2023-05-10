@@ -49,7 +49,8 @@
                 </table>
             </div>
         </div>
-    <iframe (load)="onlaod()" 
+    <iframe (load)="onIframeLoad()" 
+            #iframe
             style="display:block; width:100%; margin-top: 3px;border:none"
             [src]="url | safe"
             [ngStyle]="{'height': height}">

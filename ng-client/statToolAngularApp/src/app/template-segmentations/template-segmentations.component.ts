@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 import {Location} from '@angular/common';
 import { Router } from '@angular/router';
@@ -17,6 +16,7 @@ export class TemplateSegmentationsComponent implements OnInit {
   backImgSrc = 'assets/back-icon-blue.svg';
   saveImgSrc = 'assets/save-icon-blue.svg';
 
+
   constructor(private httpClient:HttpClient,
               public statService:StatisticsToolService,
               private location:Location,
@@ -31,6 +31,16 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   ngOnDestroy(){
+  }
+
+  getViewHeight(index:number){
+    
+    var isViewPanelOpen = this.statService.currentTemplate.SegmentationsClicked[index];
+
+    if (isViewPanelOpen)
+      return this.statService.viewHeights.get(index);
+    else
+      return '0px';  
   }
 
   onTemplateSelected(event:any){
@@ -98,6 +108,12 @@ export class TemplateSegmentationsComponent implements OnInit {
     for(let x=0;x < this.statService.currentTemplate.SegmentationsClicked.length;x++){
       if (x == i){
         this.statService.currentTemplate.SegmentationsClicked[x] = !this.statService.currentTemplate.SegmentationsClicked[x];
+        /*console.log('view-clicked',
+                    i,
+                    this.statService.currentTemplate.SegmentationsClicked[x],
+                    this.statService.viewHeights.get(x)
+        );*/
+
       }
       //else
         //this.statService.currentTemplate.SegmentationsClicked[x] = false;
@@ -121,7 +137,7 @@ export class TemplateSegmentationsComponent implements OnInit {
       return this.agentHas("Firefox") || this.agentHas("FxiOS") || this.agentHas("Focus");
     }
 
-    getHeight(i:number):number{
+    getHeight_deprecated(i:number):number{
       if (this.statService.currentTemplate.SegmentationsClicked[i] == true){
         let segments = this.statService.currentTemplate.Segmentations[i];
         

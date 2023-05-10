@@ -116,7 +116,7 @@
                     style="font-weight: bold;"    
                     [ngClass]="getActiveCls(i)">View - {{ getTitle(i) }}
                 </button>
-                    <div class="content" [ngStyle]="{'min-height':getHeight(i).toString() + 'px'}">
+                    <div class="content" [ngStyle]="{'min-height':getViewHeight(i)}">
                         <!--<p>
                             <ngb-alert [dismissible]="false">
                                 <strong>Warning!</strong> Better check yourself, you're not looking too good.
@@ -127,7 +127,6 @@
                             [selectedColumnsSet] = "x.columns"
                             [name] = "x.name"
                             [id] = i
-                            [height]="(getHeight(i) + 20).toString() + 'px'"
                         >
                         </pkl-view>          
                     </div>  

@@ -46,6 +46,7 @@ export class StatisticsToolService implements OnInit {
   segmentationsFetched = new Subject();
   openDrawer = new Subject<string>();
   uniqueValueChanged = new Subject<boolean>();
+  viewHeights = new Map<number,string>();
     
   templates:TemplateInfo[] = [];
   currentTemplate:TemplateInfo = new TemplateInfo();
