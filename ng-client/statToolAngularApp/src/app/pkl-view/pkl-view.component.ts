@@ -189,7 +189,7 @@ export class PklViewComponent implements OnInit  {
         let h = this.iframe.nativeElement.contentWindow.document.body.scrollHeight;
         if (h > 100){
           //console.log('frame:::',this.id,h);
-          h += 200;
+          h += 100;
           this.height = h.toString() + 'px';
           this.statToolService.viewHeights.set(this.id,this.height);  
           loop = false;
