@@ -19,12 +19,12 @@ def statistic_tool_reader_face_detection(path):
     
     if json.loads(lines[0])['header']['type']=='IO':
         log_field_type = 'FaceDetectionOutput'
-        scale_factor_x = 1920/232
-        scale_factor_y = 1080/132
+        emulation_matrix_str = json.loads(lines[0])['header']['emulation_matrix']
+        emulation_matrix_str = emulation_matrix_str .replace('[', '').replace(']', '').replace('\n', '').split()
+        emulation_matrix = np.array(emulation_matrix_str, dtype=float).reshape(3, 3)
     elif json.loads(lines[0])['header']['type'][0]=='gt_log':
         log_field_type = 'Face BB'
-        scale_factor_x = 1
-        scale_factor_y = 1
+        emulation_matrix = np.identity(3)
 
     line = json.loads(lines[1])
     records = []
@@ -41,7 +41,11 @@ def statistic_tool_reader_face_detection(path):
             if obj["Source"] != "FACE_DETECTION":
                 continue
             bb = obj['BoundingBox']
-            prediction = {'object_id':obj['Id'], 'x':bb['Left']*scale_factor_x,'y':bb['Top']*scale_factor_y,'width':bb['Width']*scale_factor_x,'height':bb['Height']*scale_factor_y}
+            cord = np.array([bb['Left'], bb['Top'], 1])
+            cord = emulation_matrix.dot(cord)
+            width_hight = np.array([bb['Width'], bb['Height'], 0])
+            width_hight = emulation_matrix.dot(width_hight)
+            prediction = {'object_id':obj['Id'], 'x':cord[0],'y':cord[1],'width':width_hight[0],'height':width_hight[1]}
             if 'Score' in obj:
                 prediction['Score'] = obj['Score']
             detections.append({'detection':True, 'prediction': prediction})
