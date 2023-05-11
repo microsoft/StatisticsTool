@@ -41,6 +41,10 @@ def score_partition(dataframe, from_file=False, score_ranges=(0.25, 0.5, 0.75)):
         masks_list.append(curr_mask)
         poss_part_names.append('>' + str(score_ranges[i]) + ' and <=' + str(score_ranges[i+1]))
 
+    curr_mask = (score == 'nan')
+    masks_list.append(curr_mask)
+    poss_part_names.append('nan')
+
     score = {'possible partitions': poss_part_names, 'masks': masks_list}
 
     desired_masks = {'Score': score}
