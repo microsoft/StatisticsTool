@@ -76,7 +76,7 @@ def statistic_tool_reader_classification_and_detection(path):
 
     # adding header
     header = json.loads(lines[0])
-    header = header['header']    
+    header = header['header']
     header = {k + '[header]': str(v) if type(v) == list else v for k, v in header.items()}
     metadata_row_df = pd.DataFrame(header, index=[0])
     tmp_df = pd.concat([metadata_row_df]*len(df), ignore_index=True)
