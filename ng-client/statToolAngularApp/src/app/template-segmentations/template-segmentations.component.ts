@@ -15,7 +15,7 @@ export class TemplateSegmentationsComponent implements OnInit {
   templateNameCreated = '';
   backImgSrc = 'assets/back-icon-blue.svg';
   saveImgSrc = 'assets/save-icon-blue.svg';
-
+  addGridImgSrc = 'assets/grid-add-blue.svg';
 
   constructor(private httpClient:HttpClient,
               public statService:StatisticsToolService,

@@ -50,8 +50,30 @@
 
                     </div>
                 </ng-container>
+
                 <ng-container *ngIf="!isFireFox()">
-                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-left: 12px;margin-top: -1px;">
+                    <div class="save-icon" style="margin-left: 12px;margin-top: -1px;">
+                        <img [src]="addGridImgSrc"
+                            (mouseover)="addGridImgSrc = 'assets/grid-add-orange.svg'"
+                            (mouseout)="addGridImgSrc = 'assets/grid-add-blue.svg'"
+                            style="width: 40px;height:40px;margin-top: 0px;cursor: pointer;" 
+                            title="Add View"
+                            (click)="addView()">
+                    </div>
+                </ng-container>
+                <ng-container *ngIf="isFireFox()">
+                    <div class="save-icon" style="margin-left: 22px;margin-top: -1px;">
+                        <img [src]="addGridImgSrc"
+                            (mouseover)="addGridImgSrc = 'assets/grid-add-orange.svg'"
+                            (mouseout)="addGridImgSrc = 'assets/grid-add-blue.svg'"
+                            style="width: 40px;height:40px;margin-top: 0px;cursor: pointer;" 
+                            title="Add View"
+                            (click)="addView()">
+                    </div>
+                </ng-container>
+
+                <ng-container *ngIf="!isFireFox()">
+                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-left: 5px;margin-top: -1px;">
                         <img [src]="saveImgSrc"
                             (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
                             (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
@@ -61,7 +83,7 @@
                     </div>
                 </ng-container>
                 <ng-container *ngIf="isFireFox()">
-                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-left: 12px;margin-top: -1px;margin-left: 22px;">
+                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-top: -1px;margin-left: 10px;">
                         <img [src]="saveImgSrc"
                             (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
                             (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
@@ -133,10 +155,10 @@
             </ng-container>
     </div>
 
-    <div style="position:fixed;bottom:0px;left:0;height: 50px;z-index: 99999;background: #fafafa;width:100%">
+    <!--<div style="position:fixed;bottom:0px;left:0;height: 50px;z-index: 99999;background: #fafafa;width:100%">
         <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;" 
                 mat-raised-button 
                 (click)="addView()">Add View</button>
-    </div>
+    </div>-->
 </div>
 
