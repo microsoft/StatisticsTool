@@ -5,7 +5,7 @@ current_file_directory = os.path.realpath(__file__)
 sys.path.append(os.path.join(current_file_directory, '..'))
 from utils_partition import bb_size_partition
 
-def face_bb_size_partition(dataframe, from_file=False):
+def face_bb_size_partition(dataframe, from_file=False, img_width=1280, img_height=720):
 
     desired_masks = bb_size_partition(dataframe, from_file=from_file, img_w_h=(1920,1080), bb_size_t_s_m_l=(0.05,0.15,0.25))
 

@@ -7,7 +7,7 @@
         "Image Width": "1280",
         "Image Height": "720",
         "Statistics Functions": "precision_recall",
-        "Partitioning Functions": "face_partition",
+        "Partitioning Functions": "face_bb_size_partition",
         "Log Names to Evaluate": "FaceDetectionOutput.json"
 
     }

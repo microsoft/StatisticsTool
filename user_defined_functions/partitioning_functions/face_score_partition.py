@@ -5,7 +5,7 @@ current_file_directory = os.path.realpath(__file__)
 sys.path.append(os.path.join(current_file_directory, '..'))
 from utils_partition import score_partition
 
-def face_bb_size_partition(dataframe, from_file=False):
+def face_score_partition(dataframe, from_file=False, img_width=1280, img_height=720):
 
     desired_masks = score_partition(dataframe, from_file=from_file, score_ranges=(0.25, 0.5, 0.75))
 
