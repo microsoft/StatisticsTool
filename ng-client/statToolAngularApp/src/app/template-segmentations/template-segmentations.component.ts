@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 import {Location} from '@angular/common';
 import { Router } from '@angular/router';
@@ -16,6 +15,7 @@ export class TemplateSegmentationsComponent implements OnInit {
   templateNameCreated = '';
   backImgSrc = 'assets/back-icon-blue.svg';
   saveImgSrc = 'assets/save-icon-blue.svg';
+  addGridImgSrc = 'assets/grid-add-blue.svg';
 
   constructor(private httpClient:HttpClient,
               public statService:StatisticsToolService,
@@ -31,6 +31,16 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   ngOnDestroy(){
+  }
+
+  getViewHeight(index:number){
+    
+    var isViewPanelOpen = this.statService.currentTemplate.SegmentationsClicked[index];
+
+    if (isViewPanelOpen)
+      return this.statService.viewHeights.get(index);
+    else
+      return '0px';  
   }
 
   onTemplateSelected(event:any){
@@ -98,6 +108,12 @@ export class TemplateSegmentationsComponent implements OnInit {
     for(let x=0;x < this.statService.currentTemplate.SegmentationsClicked.length;x++){
       if (x == i){
         this.statService.currentTemplate.SegmentationsClicked[x] = !this.statService.currentTemplate.SegmentationsClicked[x];
+        /*console.log('view-clicked',
+                    i,
+                    this.statService.currentTemplate.SegmentationsClicked[x],
+                    this.statService.viewHeights.get(x)
+        );*/
+
       }
       //else
         //this.statService.currentTemplate.SegmentationsClicked[x] = false;
@@ -113,11 +129,46 @@ export class TemplateSegmentationsComponent implements OnInit {
         return ''; 
     }
 
-    getHeight(i:number){
-      if (this.statService.currentTemplate.SegmentationsClicked[i] == true)
-        return '100vh';
+    agentHas(keyword:string) {
+      return navigator.userAgent.toLowerCase().search(keyword.toLowerCase()) > -1;
+    }
+
+    isFireFox(){
+      return this.agentHas("Firefox") || this.agentHas("FxiOS") || this.agentHas("Focus");
+    }
+
+    getHeight_deprecated(i:number):number{
+      if (this.statService.currentTemplate.SegmentationsClicked[i] == true){
+        let segments = this.statService.currentTemplate.Segmentations[i];
+        
+        let numRows = 1;
+        segments.rows.forEach(r => {
+          if (r != '') {
+            let values = this.statService.optionalSegmentations.get(r);
+            numRows = numRows*values!.length;
+          }
+        })
+        let lineHeight = 22;
+        let tableHeight = numRows * 8 * lineHeight;
+        //if (this.statService.calculateUnique == false)
+        //  tableHeight = numRows * 7 * 22; 
+
+        let totalHeight = 0;
+        const segmentRowHeight = 40;
+        const segmentsFilterRowHeight = 70;
+        const viewTitleHeight = 40;
+        if (segments.columns.length == 0)
+          totalHeight = tableHeight + segmentRowHeight + segmentsFilterRowHeight + viewTitleHeight;
+        else
+          totalHeight = tableHeight + (segments.columns.length * segmentRowHeight) + segmentsFilterRowHeight + viewTitleHeight;
+
+        const bufferHeight = 20;  
+        let height = (totalHeight + bufferHeight);
+        
+        return height;
+      }
       else
-        return '0px';
+        return 0;
     }
 
     getTitle(i:number){

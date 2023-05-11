@@ -49,9 +49,11 @@
                 </table>
             </div>
         </div>
-    <iframe (load)="onlaod()" 
-            style="display:block; width:100%; height:92vh;margin-top: 3px;border:none"
-            [src]="url | safe">
+    <iframe (load)="onIframeLoad()" 
+            #iframe
+            style="display:block; width:100%; margin-top: 3px;border:none"
+            [src]="url | safe"
+            [ngStyle]="{'height': height}">
     </iframe>
     <div *ngIf="statToolService.showFileNotFoundError()" 
         style="position: sticky;bottom: 200px;z-index: 99999999;">
