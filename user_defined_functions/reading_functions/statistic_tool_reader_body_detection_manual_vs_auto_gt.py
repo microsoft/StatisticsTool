@@ -24,10 +24,10 @@ def statistic_tool_reader_body_detection_manual_vs_auto_gt(path):
     records = []
 
     if 'manual_annotated' in path:
-        valid_types = ['objects', 'Body BB - manual']
+        valid_types = ['sequence', 'objects', 'Body BB - manual']
         valid_sources= ['Manual']   #includes sources of both gt logs and algo/golden logs
     else:
-        valid_types = ['objects', 'Body BB']
+        valid_types = ['sequence', 'objects', 'Body BB']
         valid_sources= ['BODY_DETECTION']   #includes sources of both gt logs and algo/golden logs    
 
     for line in lines[1:]:
