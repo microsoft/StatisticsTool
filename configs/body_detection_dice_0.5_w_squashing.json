@@ -8,7 +8,6 @@
         "Image Height": "1080",
         "Statistics Functions": "precision_recall",
         "Transformation Function": "squash_FP_and_TN_rows",
-        "Partitioning Functions": "object_size_with_annot_store",
-        "Log Names to Evaluate": "presence_log.json"
+        "Partitioning Functions": "object_size_with_annot_store"
     }
 ]

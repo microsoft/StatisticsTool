@@ -2,13 +2,12 @@
     {
         "File Reading Function": "statistic_tool_reader_classification_and_detection",
         "Overlap Function": "Dice",
-        "Threshold": "0.5",
+        "Threshold": "0.1",
         "Evaluation Function": "min_distance_evaluation",
         "Image Width": "1920",
         "Image Height": "1080",
         "Statistics Functions": "precision_recall",
-        "Transformation Function": "squash_FP_and_TN_rows",
-        "Partitioning Functions": "object_size_with_annot_store",
-        "Log Names to Evaluate": "presence_log.json"
+        "Transformation Function": "filter_dirty_labels",
+        "Partitioning Functions": "object_size_with_annot_store"
     }
 ]
