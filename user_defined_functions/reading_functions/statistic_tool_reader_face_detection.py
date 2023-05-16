@@ -2,15 +2,15 @@ from cmath import nan
 import json
 import numpy as np
 from turtle import left
-#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-#from classes_and_utils.utils import empty_when_negative_x
 import pandas as pd
+import os, sys
+
+current_file_directory = os.path.realpath(__file__)
+# adding the statistics_tool folder to path
+sys.path.append(os.path.join(current_file_directory, '..'))
+from utils_reading import transform_bb_size
 
 def statistic_tool_reader_face_detection(path):
-    #compare only gt_logs or facedetection logs
-    # if not ('GT_logs' in path or 'FaceDetectionOutput' in path):
-    #     return None
-
     with open(path,'r') as file:
         lines = file.readlines()
 
@@ -40,12 +40,8 @@ def statistic_tool_reader_face_detection(path):
         for obj in line['message']['objects']:
             if obj["Source"] != "FACE_DETECTION":
                 continue
-            bb = obj['BoundingBox']
-            cord = np.array([bb['Left'], bb['Top'], 1])
-            cord = emulation_matrix.dot(cord)
-            width_hight = np.array([bb['Width'], bb['Height'], 0])
-            width_hight = emulation_matrix.dot(width_hight)
-            prediction = {'object_id':obj['Id'], 'x':cord[0],'y':cord[1],'width':width_hight[0],'height':width_hight[1]}
+            bb = transform_bb_size(obj['BoundingBox'], emulation_matrix)
+            prediction = {'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']}
             if 'Score' in obj:
                 prediction['Score'] = obj['Score']
             detections.append({'detection':True, 'prediction': prediction})
