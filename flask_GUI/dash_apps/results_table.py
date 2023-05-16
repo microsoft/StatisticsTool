@@ -65,7 +65,7 @@ class Results_table():
             Input('cols_seg', 'value'),
             Input('rows_seg', 'value'))
         def update_output(cols_input ,rows_input):
-            return self.table.get_table(cols_input, rows_input)
+            return self.table.get_report_table(cols_input, rows_input)
         '''
 
     def set_data(self, exp, segmentations,calc_unique = False):
@@ -224,7 +224,7 @@ class Results_table():
     
     def get_layout_new(self,columns,rows):
 
-        t = self.table.get_table(columns,rows)
+        t = self.table.get_report_table(columns,rows)
         table_buttons_div = html.Div(id='table-div',children=t,style=css['table-div'])
 
         whole_page = html.Div([table_buttons_div], style=css['whole-reporter'])
@@ -273,6 +273,6 @@ if __name__ == "__main__":
     #     if len(cols_input)==0 or len(rows_input)==0:
     #         return html.H1('Empty Table')
 
-    #     table_div = rt.table.get_table(cols_input, rows_input)
+    #     table_div = rt.table.get_report_table(cols_input, rows_input)
 
     #     return table_div

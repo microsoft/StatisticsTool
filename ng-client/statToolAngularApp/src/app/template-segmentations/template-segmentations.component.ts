@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { ApplicationRef, Component, ElementRef, OnInit } from '@angular/core';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 import {Location} from '@angular/common';
 import { Router } from '@angular/router';
+import { AppComponent } from '../app.component';
 
 @Component({
   selector: 'template-segmentations',
@@ -16,7 +17,7 @@ export class TemplateSegmentationsComponent implements OnInit {
   backImgSrc = 'assets/back-icon-blue.svg';
   saveImgSrc = 'assets/save-icon-blue.svg';
   addGridImgSrc = 'assets/grid-add-blue.svg';
-
+  
   constructor(private httpClient:HttpClient,
               public statService:StatisticsToolService,
               private location:Location,
@@ -28,7 +29,8 @@ export class TemplateSegmentationsComponent implements OnInit {
       this.statService.addNewTemplate();
       sub.unsubscribe();
     })
-  }
+
+  } 
 
   ngOnDestroy(){
   }

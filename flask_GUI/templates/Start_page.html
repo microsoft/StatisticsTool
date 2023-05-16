@@ -95,7 +95,6 @@ input[type=button]:hover {
                   <option value="2">Enter PKL file path</option>
                 </select>
               </td>
-              <!--<td><input type="file" name="myFile" id="myFile"  onchange="alertFilename()" accept=".pkl" ></td>-->
               <td>
                 <div class="mb-3" style="margin-bottom: 0px !important;">
                   <input class="form-control" type="file" name="choose_report_file" id="choose_report_file"  onchange="onReportFileSelected()" accept=".pkl"/>
@@ -114,8 +113,6 @@ input[type=button]:hover {
                   <option value="2">Enter PKL file path</option>
                 </select>
               </td>
-
-              <!--<td><input type="file" name="myFile2" id="myFile2" accept=".pkl" ></td>-->
               <td>
                 <div class="mb-3" style="margin-bottom: 0px !important;">
                   <input class="form-control" type="file"  name="choose_reference_file" id="choose_reference_file" accept=".pkl">
@@ -128,16 +125,12 @@ input[type=button]:hover {
             </tr>
           </tbody>
         </table>
-        <!--
-        <div class="col-md-12" style="margin-top: 40px;">
-          <input type = "submit" id="submit_orig" value = "Load Original Report" 
-                  disabled="true" formaction="/Reporter_orig">
-        </div>-->
-        <div class="col-md-12" style="margin-top:20px" >
-          <!--<input type = "submit" id="submit_new" value = "Load New Report" 
-                disabled="true" formaction="/Reporter_new">-->
-              <input type = "submit" id="submit_new" value = "Load Report" 
-                disabled="true" formaction="/Save_Report_Request">
+         <div class="col-md-12" style="margin-top:20px" >
+              <input type = "submit" 
+                     id="submit_new" 
+                     value = "Load Report" 
+                     disabled="true" 
+                     formaction="/Report_Viewer">
         </div>
         <div id="alert" class="alert alert-danger" style="margin-top:20px;">
         </div>

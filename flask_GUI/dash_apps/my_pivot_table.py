@@ -161,7 +161,7 @@ class   PivotTable():
         
         return res1 + res2
 
-    def get_table(self, all_columns, all_rows):
+    def get_report_table(self, all_columns, all_rows):
         '''
         The main function that builds the whole table
         '''
@@ -224,7 +224,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
     Input('rows_seg', 'value')
 )
 def update_output(cols_input ,rows_input):
-    table_div = table.get_table(cols_input, rows_input)
+    table_div = table.get_report_table(cols_input, rows_input)
     return table_div
 '''
 

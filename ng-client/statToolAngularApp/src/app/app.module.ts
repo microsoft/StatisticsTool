@@ -25,7 +25,7 @@ import { DrawerContentComponent } from './drawer-content/drawer-content.componen
 import {MatExpansionModule} from '@angular/material/expansion';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
-import '@angular/localize/init'
+import '@angular/localize/init';
 
 @NgModule({
   declarations: [

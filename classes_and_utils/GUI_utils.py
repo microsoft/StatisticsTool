@@ -580,7 +580,7 @@ class UpdateListManager():
 
 
 
-    def manage_list_request(self, request, main_exp, comp_exp, report_type):
+    def manage_list_request(self, request, main_exp, comp_exp):
         """
         Accepts a the requests to /update_list route and returns all the parameter needed to show and save the list of examples asked by the user
         :param request: request from either table.html (link writen in macros.html) or in examples_list.html
@@ -607,10 +607,6 @@ class UpdateListManager():
 
         # extracting the example list for requested partitions and state
         self.list_of_examples = self.exp_in_UpdateList.get_ids_new(self.cell_name, self.state, show_unique=self.show_unique)
-
-        if report_type == 'ORIG':
-            raise Exception('Original report is not supported anymore')
-            # list_of_examples = exp_in_UpdateList.get_ids(show_unique=show_unique, state=state, total=total, primary=primary, secondary=secondary, tertiary=tertiary)
 
         # exp_in_UpdateList.state = state ## TODO: TEMP - move it to the right place
         # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see

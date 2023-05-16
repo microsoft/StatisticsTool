@@ -1,11 +1,12 @@
-import { AfterContentInit, Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { ApplicationRef, Component, ElementRef, HostListener, Input, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
 import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { NavigationStart, Router } from '@angular/router';
 import { StatisticsToolService } from './services/statistics-tool.service';
 import { MatDrawer, MatSidenav } from '@angular/material/sidenav';
+import { toJSDate } from '@ng-bootstrap/ng-bootstrap/datepicker/ngb-calendar';
 
 @Pipe({
   name: 'safe'
@@ -29,6 +30,8 @@ export class AppComponent implements OnInit {
 
   @ViewChild(MatSidenav) public drawer: any;
   showFiller = false;
+
+  @Input() config_key = '';
 
   @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
     console.log('keydown',event.key)
@@ -73,11 +76,20 @@ export class AppComponent implements OnInit {
     }
 
     constructor(private httpClient:HttpClient,
-                  private router : Router,
-                  public statToolSvc:StatisticsToolService) {
+                private router : Router,
+                public statToolSvc:StatisticsToolService,
+                public eltRef: ElementRef,
+                private appRef: ApplicationRef) {
+
     }
 
     ngOnInit(){
+      this.router.events.subscribe((event) => {
+        if (event instanceof NavigationStart){
+          if (event.url.toLowerCase() == "/report_viewer"){
+            console.log('key:',this.appRef.components[0].location.nativeElement.attributes[0].value);  
+          }
+        }})
     }
 
     getFilePath(str:string){
