@@ -23,7 +23,7 @@ def size_horizontal_vertical_and_bbox_meta(dataframe, from_file=False, img_width
     label_x_center = (2*label_x + label_width)/2
 
     # masking by the area of the bounding box
-    
+
     tiny_object_pct = 0.052  # 100px @1920
     small_object_pct = 0.15625  # 300px @1920
     large_object_pct = 0.3125  # 600px @1920
@@ -154,83 +154,38 @@ def size_horizontal_vertical_and_bbox_meta(dataframe, from_file=False, img_width
 
     desired_masks.update(desired_masks_boundary)
 
+    def get_annotation_dict(annotation_name, att_types=[], other_name='other'):
+        frame_att_all = dataframe[annotation_name].values.astype(object)
+        frame_atts = []
+        for att_type in att_types:
+            frame_att = np.full(np.shape(frame_att_all), False)
+            frame_att[frame_att_all==att_type] = True
+            frame_atts.append(frame_att)
+
+        frame_att_other = np.full(np.shape(frame_att_all), True)
+        for att_type in att_types:
+            frame_att_other[frame_att_all==att_type] = False
+        frame_atts.append(frame_att_other)
+        
+        keys = [str(att_type) for att_type in att_types]
+        keys.append(other_name)
+        frame_dict = {'possible partitions': keys, 'masks': frame_atts}
+        return frame_dict
+    
 
     # masking by bbox meta
     if "BB_Body_Orientation_gt" in dataframe.columns:
-        frame_orientation = dataframe['BB_Body_Orientation_gt'].values.astype(object)
-        frame_orientation_foward  = np.full(np.shape(frame_orientation), False)
-        frame_orientation_back  = np.full(np.shape(frame_orientation), False)
-        frame_orientation_partial  = np.full(np.shape(frame_orientation), False)
-        frame_orientation_side  = np.full(np.shape(frame_orientation), False)
-        frame_orientation_other  = np.full(np.shape(frame_orientation), True)
-
-        frame_orientation_foward[frame_orientation=='Foward'] = True
-        frame_orientation_back[frame_orientation=='Back'] = True
-        frame_orientation_partial[frame_orientation=='Partial'] = True
-        frame_orientation_side[frame_orientation=='Side'] = True
-
-        frame_orientation_other[frame_orientation=='Foward'] = False
-        frame_orientation_other[frame_orientation=='Back'] = False
-        frame_orientation_other[frame_orientation=='Partial'] = False
-        frame_orientation_other[frame_orientation=='Side'] = False
-
-        frame_orientation_dict = {'possible partitions': ['Foward','Back','Partial','Side','Other_orientation'], 'masks': [frame_orientation_foward,frame_orientation_back,frame_orientation_partial, frame_orientation_side, frame_orientation_other]}
+        frame_orientation_dict = get_annotation_dict("BB_Body_Orientation_gt", att_types=['Foward', 'Back', 'Partial', 'Side'], other_name='Other_orientation')
         desired_masks.update({"User Orientation": frame_orientation_dict})
 
     if "BB_Occluded_gt" in dataframe.columns:
-        frame_occluded = dataframe['BB_Occluded_gt'].values.astype(object)
-        frame_occluded_0  = np.full(np.shape(frame_occluded), False)
-        frame_occluded_25  = np.full(np.shape(frame_occluded), False)
-        frame_occluded_50  = np.full(np.shape(frame_occluded), False)
-        frame_occluded_75  = np.full(np.shape(frame_occluded), False)
-        frame_occluded_100  = np.full(np.shape(frame_occluded), False)
-        frame_occluded_other  = np.full(np.shape(frame_occluded), True)
-
-        frame_occluded_0[frame_occluded==0.0] = True
-        frame_occluded_25[frame_occluded==25.0] = True
-        frame_occluded_50[frame_occluded==50.0] = True
-        frame_occluded_75[frame_occluded==75.0] = True
-        frame_occluded_100[frame_occluded==100.0] = True
-
-        frame_occluded_other[frame_occluded==0.0] = False
-        frame_occluded_other[frame_occluded==25.0] = False
-        frame_occluded_other[frame_occluded==50.0] = False
-        frame_occluded_other[frame_occluded==75.0] = False
-        frame_occluded_other[frame_occluded==100.0] = False
-
-        frame_occluded_dict = {'possible partitions': ['0.0','25.0','50.0','75.0','100.0','Other_occlusion'], 'masks': [frame_occluded_0,frame_occluded_25,frame_occluded_50, frame_occluded_75, frame_occluded_100, frame_occluded_other]}
+        frame_occluded_dict = get_annotation_dict("BB_Occluded_gt", att_types=[0.0,25.0,50.0,75.0,100.0], other_name='Other_occlusion')
         desired_masks.update({"Occluded": frame_occluded_dict})
 
+
     if "BB_Body_InFrame_gt" in dataframe.columns:
-        body_inframe = dataframe['BB_Body_InFrame_gt'].values.astype(object)
-        body_inframe_SideBody  = np.full(np.shape(body_inframe), False)
-        body_inframe_FullBody  = np.full(np.shape(body_inframe), False)
-        body_inframe_UpperBoddy  = np.full(np.shape(body_inframe), False)
-        body_inframe_SideUpperBody  = np.full(np.shape(body_inframe), False)
-        body_inframe_LowerBody  = np.full(np.shape(body_inframe), False)
-        body_inframe_MidBody  = np.full(np.shape(body_inframe), False)
-        body_inframe_SideLowerBody  = np.full(np.shape(body_inframe), False)
-        body_inframe_Other  = np.full(np.shape(body_inframe), True)
-
-        body_inframe_SideBody[body_inframe=='SideBody'] = True
-        body_inframe_FullBody[body_inframe=='FullBody'] = True
-        body_inframe_UpperBoddy[body_inframe=='UpperBoddy'] = True
-        body_inframe_SideUpperBody[body_inframe=='SideUpperBody'] = True
-        body_inframe_LowerBody[body_inframe=='LowerBody'] = True
-        body_inframe_MidBody[body_inframe=='MidBody'] = True
-        body_inframe_SideLowerBody[body_inframe=='SideLowerBody'] = True
-
-        body_inframe_Other[body_inframe=='SideBody'] = False
-        body_inframe_Other[body_inframe=='FullBody'] = False
-        body_inframe_Other[body_inframe=='UpperBoddy'] = False
-        body_inframe_Other[body_inframe=='SideUpperBody'] = False
-        body_inframe_Other[body_inframe=='LowerBody'] = False
-        body_inframe_Other[body_inframe=='MidBody'] = False
-        body_inframe_Other[body_inframe=='SideLowerBody'] = False
-
-        body_inframe_dict = {'possible partitions': ['FullBody','UpperBoddy','SideBody','MidBody','LowerBody','SideUpperBody','SideLowerBody','Other_inframe'], 'masks': [body_inframe_FullBody,body_inframe_UpperBoddy, body_inframe_SideBody, body_inframe_MidBody, body_inframe_LowerBody, body_inframe_SideUpperBody, body_inframe_SideLowerBody, body_inframe_Other]}
+        body_inframe_dict = get_annotation_dict("BB_Body_InFrame_gt", att_types=['FullBody','UpperBoddy','SideBody','MidBody','LowerBody','SideUpperBody','SideLowerBody'], other_name='Other_inframe')
         desired_masks.update({"Body_Inframe": body_inframe_dict})
-
 
     # making sure there is no same 'possible partitions' for different partitions
     all_the_options = []
