@@ -477,10 +477,10 @@ class UpdateListManager():
         self.cell_name = request.args.get('cell_name') if "cell_name" in request.args else None
         self.state = request.args.get('stat') if "stat" in request.args else None  #This is a string contain 'TP' / 'FP' / 'FN
         
-        self.comp_index = 0 if ('ref' in request.args and len(comp_exp)>0) else\
-                         -1
-        self.exp_in_UpdateList = comp_exp[self.comp_index] if self.comp_index > -1 else \
-                                 main_exp
+        #self.comp_index = 0 if ('ref' in request.args and len(comp_exp)>0) else\
+        #                 -1
+        self.comp_index = 0 if comp_exp is not None else -1
+        self.exp_in_UpdateList = comp_exp if self.comp_index > -1 else main_exp
         
         # masks = exp.masks
 
@@ -692,7 +692,8 @@ def manage_image_request(request, main_exp, comp_exp):
     exp = main_exp
     comp_ind=eval(request.args.get('comp_index'))
     if comp_ind>-1:
-        exp = comp_exp[comp_ind]
+        #exp = comp_exp[comp_ind]
+        exp = comp_exp
     
     local_path = None    
     if request.args.get('local_path'):

@@ -49,7 +49,7 @@ export class AppComponent implements OnInit {
       console.log($event.data)
       if (o.action == 'update_list'){
         console.log('in update_list')
-        this.statToolSvc.drawerUpdateListUrl = o.value;
+        this.statToolSvc.drawerUpdateListUrl = o.value + "&key=" + this.statToolSvc.currentConfigKey;
       }
       if (o.action == 'show_image'){
         console.log('in show_image',o.value)
@@ -62,7 +62,7 @@ export class AppComponent implements OnInit {
           }).subscribe(res => {
             console.log('getFilePath','result',res)
             if (res.exists){
-              let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath
+              let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath + "&key=" + this.statToolSvc.currentConfigKey;;
               this.statToolSvc.drawerShowImageUrl = url;
             } else {
               this.statToolSvc.showDrawer = false;
@@ -70,7 +70,7 @@ export class AppComponent implements OnInit {
             }
           })
         } else {
-          this.statToolSvc.drawerShowImageUrl = o.value;
+          this.statToolSvc.drawerShowImageUrl = o.value  + "&key=" + this.statToolSvc.currentConfigKey;
         }
       }
     }
@@ -87,6 +87,8 @@ export class AppComponent implements OnInit {
       this.router.events.subscribe((event) => {
         if (event instanceof NavigationStart){
           if (event.url.toLowerCase() == "/report_viewer"){
+            let config_key = this.appRef.components[0].location.nativeElement.attributes[0].value;
+            this.statToolSvc.currentConfigKey = config_key;
             console.log('key:',this.appRef.components[0].location.nativeElement.attributes[0].value);  
           }
         }})

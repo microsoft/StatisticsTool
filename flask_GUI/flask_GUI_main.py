@@ -80,11 +80,12 @@ def show_config():
 #region - Functions for REPORT VIEW
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
-    use_cached_report = request.args.get('use_cached_report')
-    extract_data_request(request,use_cached_report)
-    session['error_message'] = ''
 
-    key = configuration_results.get_key_from_request(request) 
+    key = configuration_results.save_configuration(request,server)
+
+    #use_cached_report = request.args.get('use_cached_report')
+    #extract_data_request(request,use_cached_report)
+    #session['error_message'] = ''
 
     return render_template('index.html',key=key)
 
@@ -118,7 +119,10 @@ def favicon():
    
 @server.route('/get_segmentations', methods=['POST'])    
 def get_segmentations():
-    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+    key = request.json['key']
+    segmentations = configuration_results.get_item_segmentations(key)
+    #segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+
     result = []
     for k, v in segmentations.items():
         result.append({'name':k,'values':v})
@@ -133,7 +137,11 @@ def get_report_table():
     global comp_exp
 
     calc_unique = True if request.args.get('calc_unique') == 'true' else False
-
+    config_key = request.args.get('key')
+    config_item = configuration_results.get_config_item(config_key)
+    if config_item is None:
+        return None
+    
     columns = [] 
     rows = [] 
     argCols = request.args.get('cols')
@@ -147,11 +155,11 @@ def get_report_table():
         if argRows[-1] == ',':
             argRows = argRows[:-1]
         rows = list(argRows.split(','))
-    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
-
-    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations,calc_unique)
-    results_table.dash_app.layout = results_table.get_layout_new(columns,rows)
-    wp = results_table.get_webpage()
+    #segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+    segmentations = configuration_results.get_item_segmentations(config_key)
+    config_item.table_result.set_data(config_item, segmentations,calc_unique)
+    config_item.table_result.dash_app.layout = config_item.table_result.get_layout_new(columns,rows)
+    wp = config_item.table_result.get_webpage()
 
     return wp
 
@@ -253,9 +261,13 @@ def get_list_manager():
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
     listManager = get_list_manager()
+    config_key = request.args.get('key')
+    config_item = configuration_results.get_config_item(config_key)
+    if config_item is None:
+        return
 
     # global comp_index, unique, state, cell_name, save_path, per_video_example_hash
-    listManager.manage_list_request(request, exp, comp_exp)
+    listManager.manage_list_request(request, config_item.main_pkl, config_item.ref_pkl)
 
     return render_template('examples_list.html', 
                             state=listManager.state, 
@@ -282,7 +294,12 @@ def is_file_exists():
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():
-    data, save_path = manage_image_request(request, exp, comp_exp)
+    config_key = request.args.get('key')
+    config_item = configuration_results.get_config_item(config_key)
+    if config_item is None:
+        return None
+
+    data, save_path = manage_image_request(request, config_item.main_pkl, config_item.ref_pkl)
     return render_template('example_image.html', data=data, save_path=save_path)
 
 #endregion - Functions for REPORT CREATION

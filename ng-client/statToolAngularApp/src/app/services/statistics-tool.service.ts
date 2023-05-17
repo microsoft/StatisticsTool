@@ -65,6 +65,8 @@ export class StatisticsToolService implements OnInit {
   activeLocalDataStore = false;
   localDataStorePath = '';
 
+  currentConfigKey = '';
+
   constructor(private httpClient:HttpClient) { 
     this.httpClient.post<{'content':IContent,'name':string}[]>('/get_all_templates',{})
       .subscribe(res => {
@@ -72,7 +74,12 @@ export class StatisticsToolService implements OnInit {
 
         //get all optional segments
         this.optionalSegmentations = new Map<string,string[]>();
-        this.httpClient.post<{'name':string,'values':string[]}[]>('/get_segmentations',{})
+        this.httpClient.post<{'name':string,'values':string[]}[]>
+          ('/get_segmentations',
+            {
+              'key':this.currentConfigKey
+            }
+          )
           .subscribe(res => {
              res.forEach(x => {
               this.optionalSegmentations.set(x.name,x.values);

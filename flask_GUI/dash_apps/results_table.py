@@ -14,7 +14,7 @@ from flask import Flask, render_template
 from flask_GUI.constants import COLOR_GRADIENT_RED_WHITE_BLUE
 import math
 from classes_and_utils.unique_helper import UniqueHelper
-
+import uuid
 
 def get_color_from_gradient(x, gradient):
     if x<0 or x>1:
@@ -41,7 +41,7 @@ class Results_table():
         self.dash_app = Dash(
             __name__,
             server=server,
-            url_base_pathname='/dash/',
+            url_base_pathname='/dash/' + str(uuid.uuid4()) + "/",
             external_stylesheets=[dbc.themes.COSMO],suppress_callback_exceptions=True)
 
         self.table = None
@@ -68,7 +68,7 @@ class Results_table():
             return self.table.get_report_table(cols_input, rows_input)
         '''
 
-    def set_data(self, exp, segmentations,calc_unique = False):
+    def set_data_deprecated(self, exp, segmentations,calc_unique = False):
 
         if len(exp['ref']) > 0 and calc_unique and self.unique_helper is None:
             self.unique_helper = UniqueHelper(exp['main'],exp['ref'][0])
@@ -76,6 +76,16 @@ class Results_table():
 
         self.calc_unique = calc_unique
         self.table = pt.PivotTable(segmentations, data = exp, cell_function=self.get_cell_exp)
+        self.segmentation_categories = list(segmentations.keys())
+
+
+    def set_data(self, config_item, segmentations,calc_unique = False):
+
+        if config_item.ref_pkl is not None and calc_unique and self.unique_helper is None:
+            self.unique_helper = UniqueHelper(config_item.main_pkl,config_item.ref_pkl)
+       
+        self.calc_unique = calc_unique
+        self.table = pt.PivotTable(segmentations, config_item = config_item, cell_function=self.get_cell_exp)
         self.segmentation_categories = list(segmentations.keys())
 
     def get_webpage(self):
@@ -106,7 +116,7 @@ class Results_table():
             return rows
         return rows + "/" + columns
     
-    def get_cell_exp(self, all_exps, column_keys, row_keys,row_index):  
+    def get_cell_exp_deprecated(self, all_exps, column_keys, row_keys,row_index):  
         '''
         The function that return a single cell
         '''     
@@ -187,6 +197,88 @@ class Results_table():
         to_show = html.Td(cell_content,style={'padding':'0px'})
 
         return to_show
+    
+    def get_cell_exp(self, config_item, column_keys, row_keys,row_index):  
+        '''
+        The function that return a single cell
+        '''     
+        segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
+        
+        exp_data = {}
+        exp_data[MAIN_EXP] = config_item.main_pkl.get_cell_data(segmentations, self.unique_helper, False)
+        if config_item.ref_pkl is not None:
+            exp_data[REF_EXP] = config_item.ref_pkl.get_cell_data(segmentations, self.unique_helper, True) 
+
+        all_metrics = []
+        if config_item.ref_pkl is not None:
+            TDs = []
+            TDs.append(html.Td(''))
+            TDs.append(html.Td('MAIN', style={'color':'black','font-weight':'bold','white-space':'nowrap'}))
+            if self.unique_helper != None:
+                TDs.append(html.Td(''))
+            TDs.append(html.Td('REF', style={'color':'black','font-weight':'bold','white-space':'nowrap'}))
+            all_metrics.append(html.Tr(TDs,style=css['table-row']))
+        
+        idx = 0
+        for k in exp_data[MAIN_EXP].keys():
+            
+            if k == 'cell_name':
+                continue
+            
+            TDs = [html.Td(k,style={'white-space':'nowrap'})]
+            num_of_exps = len(exp_data.keys())
+
+            
+            for exp_name in exp_data.keys():
+                txt = "{}".format(exp_data[exp_name][k])
+                if k in ["TP", "FP", "FN"]:
+                    link = get_link_for_update_list(cell_name=exp_data[exp_name]['cell_name'], 
+                                                    stat=k, 
+                                                    is_ref = exp_name==REF_EXP)
+                    
+                    js = json.dumps({'action':'update_list','value': link})
+                    msg = "javascript:window.parent.postMessage({});".format(js)
+                    curr_metric = html.A(txt ,href=msg, target="")
+                    #color = 'white'
+                else:
+                    curr_metric = txt
+
+                color = 'white' if num_of_exps == 1 else\
+                get_color_by_two_values_diff(exp_data[REF_EXP][k], exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_WHITE_BLUE)
+
+                TDs.append(html.Td(curr_metric,style={'white-space': 'nowrap'}))
+
+                if self.calc_unique == True and k in ["TP", "FP", "FN"]:
+                    if self.unique_helper != None:
+                        txt_unique, link_unique = self.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name, exp_data[exp_name]['cell_name'])
+                        js = json.dumps({'action':'update_list','value': link_unique})
+                        msg = "javascript:window.parent.postMessage({});".format(js)
+                        a_unique = html.A(txt_unique ,href=msg, target="")
+
+                        TDs.append(html.Td(a_unique,style={'white-space': 'nowrap'}))
+                    else:
+                        if self.unique_helper != None:
+                            TDs.append(html.Td('',style={'white-space': 'nowrap'}))
+                else:
+                    if self.unique_helper != None:
+                        TDs.append(html.Td('',style={'white-space': 'nowrap'}))
+            
+            if idx % 2 == 0:
+                if row_index % 2 == 0:
+                    all_metrics.append(html.Tr(TDs,style=css['table_row_blue']))
+                else:
+                    all_metrics.append(html.Tr(TDs,style=css['table_row_green']))
+            else:
+                all_metrics.append(html.Tr(TDs,style=css['table_row_white']))
+            
+            idx = idx + 1
+
+        title = self.make_title(column_keys, row_keys)
+
+        cell_content = html.Table(all_metrics,style={'width':'100%'},title=title)
+        to_show = html.Td(cell_content,style={'padding':'0px'})
+
+        return to_show    
     
     def get_layout(self):
         Title_div = html.Div([dbc.Alert("Reporter Page", className="m-1"), html.H6("init_value", id='init')], style=css['title'])
