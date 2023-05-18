@@ -6,7 +6,7 @@
         "Evaluation Function": "activity_evaluation",
         "Image Width": "1280",
         "Image Height": "720",
-        "Statistics Functions": "TNR",
+        "Statistics Functions": "precision_recall_TNR_FPR",
         "Partitioning Functions": "general_clip_and_sequence",
         "Log Names to Evaluate": "presence_log.json"
     }
