@@ -1,13 +1,14 @@
 [
     {
-        "File Reading Function": "statistic_tool_reader_activity",
+        "File Reading Function": "statistic_tool_reader_activity_calssification",
         "Overlap Function": "Classification_True_False_activity",
         "Threshold": "0.5",
         "Evaluation Function": "activity_evaluation",
         "Image Width": "1280",
         "Image Height": "720",
         "Statistics Functions": "sep_FP_seq_count",
-        "Partitioning Functions": "general_clip_and_sequence",
+        "Partitioning Functions": "activity_partition",
         "Transformation Function": "separate_FP_sequence_transform"
     }
 ]
+
