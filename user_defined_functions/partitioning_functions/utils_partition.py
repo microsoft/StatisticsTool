@@ -2,6 +2,13 @@ import numpy as np
 import pandas as pd
 
 def bb_size_partition(dataframe, from_file=False, img_w_h=(1920,1080), bb_size_percent=(0.05,0.15,0.25)):
+    '''
+    This function partitions the data according to the bounding box size
+    :param dataframe: pandas dataframe than contains info of the gt bb size and the detection occurance (detection_gt, width_gt, height_gt)
+    :param ing_w_h: tuple of the image width and height that gt bb was calculated on
+    :param bb_size_percent: tuple of the bounding box size percentiles borders, for example: <5%, 5-15%, 15-25%, >25%
+    :return: dictionary with the possible partitions names and the corresponding masks
+    '''
     img_width, img_height = img_w_h
     img_size = img_width*img_height
 
@@ -29,6 +36,12 @@ def bb_size_partition(dataframe, from_file=False, img_w_h=(1920,1080), bb_size_p
     return bb_size_dict
 
 def score_partition(dataframe, from_file=False, score_ranges=(0.25, 0.5, 0.75)):
+    '''
+    This function partitions the data according to the score
+    :param dataframe: pandas dataframe than contains info of the score ('Score' column)
+    :param score_ranges: tuple of the score ranges, for example: <0.25, 0.25-0.5, 0.5-0.75, >0.75
+    :return: dictionary with the possible partitions names and the corresponding masks
+    '''
     type_ = float if from_file else object
     score = dataframe['Score'].values.astype(type_)
 
@@ -53,6 +66,14 @@ def score_partition(dataframe, from_file=False, score_ranges=(0.25, 0.5, 0.75)):
     return score_dict
 
 def check_partition(dataframe_len, masks_list, partition_name):
+    '''
+    This function checks that the sum of all partition groups is equal to the total number of samples (length of the dataframe).
+    In case the partition is not correct, it raises an error.
+    :param dataframe_len: length of the dataframe, corresponds to the total number of samples
+    :param masks_list: list of all the masks of the partition
+    :param partition_name: name of the partition to be used in case of error
+    :return: None
+    '''
     all_masks_len = 0
     for mask in masks_list:
         all_masks_len += np.sum(mask)
