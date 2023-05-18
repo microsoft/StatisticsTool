@@ -3,7 +3,7 @@ import os, sys
 current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
 sys.path.append(os.path.join(current_file_directory, '..'))
-from utils_partition import bb_size_partition, score_partition
+from utils.utils_partition import bb_size_partition, score_partition
 
 def face_partition(dataframe, from_file=False, img_width=1280, img_height=720):
 
