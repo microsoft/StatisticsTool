@@ -277,15 +277,11 @@ class Results_table():
                                         style=css['example-list-div'])
 
         image_div = html.Iframe([html.H1('Image div')], 
-                                name='iframe3', 
+                                name='iframe-image', 
                                 id='image-div', 
                                 style=css['image-div'])
 
-
-        footer = html.Div([dbc.Alert("Reporter Page222",className="m-4")], style=css['footer'])
-
-        
-        whole_page = html.Div([footer, Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
+        whole_page = html.Div([Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
         return  whole_page
     
     def get_table_div_layout(self,columns,rows):
