@@ -1,37 +1,33 @@
+#region - inports
 import mimetypes
 import os, sys
-from requests import Session
 
 from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
 current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
 sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
-from dash.dependencies import Input, Output, State
-from dash import Dash, html
 
-# from pyfladesk import init_gui
 from classes_and_utils.GUI_utils import *
 from classes_and_utils.TemplatesFilesHelper import *
-from flask import Flask, jsonify, render_template, request,redirect, url_for,session, send_from_directory
-from flask_GUI.rendering_functions import show_stats_render
-from flask_GUI.dash_apps.results_table import Results_table
+from flask import Flask, jsonify, render_template, request, send_from_directory
+#endregion
 
-
-### init Flask server ###
-#########################
+#region - init Flask server 
 server = Flask(__name__)
 server.secret_key = 'any random string'
-results_table = Results_table(server)
 configuration_results = ConfigurationResults()
 
 # getting the options for each type of necessary function
 file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
 
-#### Route for homepage ####
+#endregion - init Flask server
+
+#region - Homepage Route
 @server.route('/', methods=['GET', 'POST'])
 def homepage():
     return render_template('start_page.html')
+#endregion 
 
 #region - Functions for REPORT CREATION
 
@@ -80,30 +76,8 @@ def show_config():
 #region - Functions for REPORT VIEW
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
-
     key = configuration_results.save_configuration(request,server)
-
-    #use_cached_report = request.args.get('use_cached_report')
-    #extract_data_request(request,use_cached_report)
-    #session['error_message'] = ''
-
     return render_template('index.html',key=key)
-
-def extract_data_request(request,use_cached_report):
-    global exp
-    global comp_exp
-
-    comp_exp = []
-    if not use_cached_report:
-        exp,result,err_msg = load_experiment(request,False)
-
-        if exp == None and result == False and err_msg != '':
-            #return render_template("start_page.html",message=err_msg)
-            session['error_message'] = err_msg
-            return redirect(url_for("homepage"))
-        cexp,_,_ = load_experiment(request,True)
-        if cexp != None:
-            comp_exp.append(cexp)
 
 @server.route('/static/<file_name>')
 def send_file(file_name):
@@ -121,8 +95,7 @@ def favicon():
 def get_segmentations():
     key = request.json['key']
     segmentations = configuration_results.get_item_segmentations(key)
-    #segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
-
+    
     result = []
     for k, v in segmentations.items():
         result.append({'name':k,'values':v})
@@ -133,9 +106,7 @@ def get_segmentations():
 '''
 @server.route('/get_report_table', methods=['GET', 'POST'])
 def get_report_table():
-    global exp
-    global comp_exp
-
+    
     calc_unique = True if request.args.get('calc_unique') == 'true' else False
     config_key = request.args.get('key')
     config_item = configuration_results.get_config_item(config_key)
@@ -155,10 +126,10 @@ def get_report_table():
         if argRows[-1] == ',':
             argRows = argRows[:-1]
         rows = list(argRows.split(','))
-    #segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+    
     segmentations = configuration_results.get_item_segmentations(config_key)
     config_item.table_result.set_data(config_item, segmentations,calc_unique)
-    config_item.table_result.dash_app.layout = config_item.table_result.get_layout_new(columns,rows)
+    config_item.table_result.dash_app.layout = config_item.table_result.get_table_div_layout(columns,rows)
     wp = config_item.table_result.get_webpage()
 
     return wp
@@ -185,69 +156,6 @@ def save_template():
     result = helper.save_template(name,content)
     return jsonify(result)
     
-def save_pkl_file(pckl_file,is_reference):
-        path_to_save = os.path.join(current_file_directory.replace('flask_GUI_main.py', 'static'),
-                                    'reports',
-                                    ("comp_" + pckl_file.filename) if is_reference else pckl_file.filename)
-        # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
-        if not os.path.exists(os.path.dirname(path_to_save)):
-            os.makedirs(os.path.dirname(path_to_save))
-        if os.path.exists(path_to_save):
-            os.remove(path_to_save)
-        pckl_file.save(path_to_save)
-        return path_to_save
-
-def load_experiment(request,is_reference):
-    
-    key_file_path = 'reference_file_path' if is_reference else 'report_file_path'
-    key_choose_file = 'choose_reference_file' if is_reference else 'choose_report_file'
-    ret_exp = None
-    
-    if key_file_path in request.values and request.values[key_file_path] != '':
-        #check if file exist
-        report_filename = request.values[key_file_path]
-        if os.path.exists(report_filename):
-            ret_exp = load_object(report_filename)
-
-            return ret_exp,True,''
-        else:
-            #to do - if file not exist
-            #return render_template("start_page.html")
-            return None,False,"FILE " + report_filename.split(os.sep)[-1] + " NOT FOUND"
-            
-
-    if request.files and request.files[key_choose_file].filename != '':
-        pckl_file = request.files[key_choose_file]
-        
-        report_filename = save_pkl_file(pckl_file,False)
-        ret_exp = load_object(report_filename)
-
-        return ret_exp,True,''
-    
-    return ret_exp, True, ''
-
-
-#########################################################
-#hagai-callback
-
-@results_table.dash_app.callback(
-    Output('table-div', 'children'),
-    Input('cols_seg', 'value'),
-    Input('rows_seg', 'value'))
-def update_results_table(cols_input ,rows_input):
-    table_div = results_table.table.get_report_table(cols_input, rows_input)
-
-    return table_div
-
-
-@server.route('/stats_pivot', methods=['GET', 'POST'])
-def statistics_reporter_dash():
-    return results_table.get_webpage()
-
-@server.route('/stats_original', methods=['GET', 'POST'])
-def show_stats():
-    return show_stats_render(request, exp, comp_exp)			
-
 #########################################################
 
 global LM
@@ -304,6 +212,8 @@ def show_image():
 
 #endregion - Functions for REPORT CREATION
 
+#region - run server
 if __name__=='__main__':
     server.debug = False
     server.run()
+#endregion 

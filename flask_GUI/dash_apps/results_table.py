@@ -45,40 +45,15 @@ class Results_table():
             external_stylesheets=[dbc.themes.COSMO],suppress_callback_exceptions=True)
 
         self.table = None
-        self.dash_app.layout = self.get_layout()
+        self.dash_app.layout = self.get_whole_page_layout()
         self.unique_helper = None
-        # self.set_callbacks()
-
-    # def set_callbacks(self):
-        #HAGAI-callback
-        
+       
         self.dash_app.callback(
             Output('cols_seg', 'options'),
             Output('rows_seg', 'options'),
             Input('init', 'value')) \
             (lambda x: (self.segmentation_categories, self.segmentation_categories))
         
-
-        '''
-        self.dash_app.callback(
-            Output('table-div', 'children'),
-            Input('cols_seg', 'value'),
-            Input('rows_seg', 'value'))
-        def update_output(cols_input ,rows_input):
-            return self.table.get_report_table(cols_input, rows_input)
-        '''
-
-    def set_data_deprecated(self, exp, segmentations,calc_unique = False):
-
-        if len(exp['ref']) > 0 and calc_unique and self.unique_helper is None:
-            self.unique_helper = UniqueHelper(exp['main'],exp['ref'][0])
-       
-
-        self.calc_unique = calc_unique
-        self.table = pt.PivotTable(segmentations, data = exp, cell_function=self.get_cell_exp)
-        self.segmentation_categories = list(segmentations.keys())
-
-
     def set_data(self, config_item, segmentations,calc_unique = False):
 
         if config_item.ref_pkl is not None and calc_unique and self.unique_helper is None:
@@ -91,7 +66,6 @@ class Results_table():
     def get_webpage(self):
         return self.dash_app.index()
     
-  
     def make_title(self,column_keys, row_keys):
         columns = ''
         for c in column_keys:
@@ -280,7 +254,7 @@ class Results_table():
 
         return to_show    
     
-    def get_layout(self):
+    def get_whole_page_layout(self):
         Title_div = html.Div([dbc.Alert("Reporter Page", className="m-1"), html.H6("init_value", id='init')], style=css['title'])
 
         cols_segmentation_dropdown = html.Div(
@@ -314,7 +288,7 @@ class Results_table():
         whole_page = html.Div([footer, Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
         return  whole_page
     
-    def get_layout_new(self,columns,rows):
+    def get_table_div_layout(self,columns,rows):
 
         t = self.table.get_report_table(columns,rows)
         table_buttons_div = html.Div(id='table-div',children=t,style=css['table-div'])
