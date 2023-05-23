@@ -72,6 +72,7 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   onSubKeySelected(event:any){
+    this.statService.init();
     this.statService.selectedSubKey = event.target.value;
     this.statService.reportSelected.next(event.target.value);
   }

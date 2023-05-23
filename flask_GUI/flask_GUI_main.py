@@ -138,8 +138,10 @@ def get_report_table():
 
 @server.route('/get_all_templates', methods=['POST'])
 def get_all_templates():
+    root_key = request.json['key']
+    sub_key = request.json['sub_key']
     helper = TemplatesFilesHelper()
-    content = helper.get_all_templates_content()
+    content = helper.get_all_templates_content(root_key,sub_key)
     return jsonify(content)
 
 @server.route('/get_template_content', methods=['POST'])
@@ -154,8 +156,10 @@ def save_template():
     data = request.json
     name = data['name']
     content = data['content']
+    key = data['key']
+    sub_key = data['sub_key']
     helper = TemplatesFilesHelper()
-    result = helper.save_template(name,content)
+    result = helper.save_template(name,content,key,sub_key)
     return jsonify(result)
     
 #########################################################
@@ -171,8 +175,9 @@ def get_list_manager():
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
     listManager = get_list_manager()
-    config_key = request.args.get('key')
-    config_item = configuration_results.get_config_item(config_key)
+    root_key = request.args.get('key')
+    sub_key  = request.args.get('sub_key')
+    config_item = configuration_results.get_config_item(root_key,sub_key)
     if config_item is None:
         return
 
@@ -204,8 +209,9 @@ def is_file_exists():
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():
-    config_key = request.args.get('key')
-    config_item = configuration_results.get_config_item(config_key)
+    root_key = request.args.get('key')
+    sub_key = request.args.get('sub_key')
+    config_item = configuration_results.get_config_item(root_key,sub_key)
     if config_item is None:
         return None
 

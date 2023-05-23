@@ -49,7 +49,7 @@ export class AppComponent implements OnInit {
       console.log($event.data)
       if (o.action == 'update_list'){
         console.log('in update_list')
-        this.statToolSvc.drawerUpdateListUrl = o.value + "&key=" + this.statToolSvc.currentConfigKey;
+        this.statToolSvc.drawerUpdateListUrl = o.value + "&key=" + this.statToolSvc.currentConfigKey + "&sub_key=" + this.statToolSvc.getSelectedSubKey();
       }
       if (o.action == 'show_image'){
         console.log('in show_image',o.value)
@@ -62,7 +62,7 @@ export class AppComponent implements OnInit {
           }).subscribe(res => {
             console.log('getFilePath','result',res)
             if (res.exists){
-              let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath + "&key=" + this.statToolSvc.currentConfigKey;;
+              let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath + "&key=" + this.statToolSvc.currentConfigKey + "&sub_key=" + this.statToolSvc.getSelectedSubKey();
               this.statToolSvc.drawerShowImageUrl = url;
             } else {
               this.statToolSvc.showDrawer = false;
@@ -70,7 +70,7 @@ export class AppComponent implements OnInit {
             }
           })
         } else {
-          this.statToolSvc.drawerShowImageUrl = o.value  + "&key=" + this.statToolSvc.currentConfigKey;
+          this.statToolSvc.drawerShowImageUrl = o.value  + "&key=" + this.statToolSvc.currentConfigKey  + "&sub_key=" + this.statToolSvc.getSelectedSubKey();
         }
       }
     }
@@ -93,6 +93,7 @@ export class AppComponent implements OnInit {
            
             this.statToolSvc.currentConfigKey = key;
             this.statToolSvc.loadSubKeys(sub_keys);
+            this.statToolSvc.init();
             console.log('root key:',key);  
             console.log('sub keys:',sub_keys);  
           }

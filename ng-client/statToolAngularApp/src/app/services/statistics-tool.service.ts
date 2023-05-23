@@ -71,8 +71,21 @@ export class StatisticsToolService implements OnInit {
   subKeys:{'key':number,'value':string}[] = [];
 
   constructor(private httpClient:HttpClient) { 
+    
+  }
+  
+  init(){
 
-    this.httpClient.post<{'content':IContent,'name':string}[]>('/get_all_templates',{})
+    this.templates = [];
+    this.currentTemplate = new TemplateInfo();
+    this.templateNameOptions = [];
+    
+    let url = '/get_all_templates' 
+    this.httpClient.post<{'content':IContent,'name':string}[]>
+      (url,{
+        'key':this.currentConfigKey,
+        'sub_key': this.getSelectedSubKey()
+      })
       .subscribe(res => {
         this.processTemplates(res);
 
@@ -210,7 +223,9 @@ export class StatisticsToolService implements OnInit {
     
     this.httpClient.post<any>('/save_template',{
       'name':template_name,
-      'content':JSON.stringify(req)
+      'content':JSON.stringify(req),
+      'key': this.currentConfigKey,
+      'sub_key': this.getSelectedSubKey()
     }).subscribe(res => {
 
       this.templates = [];

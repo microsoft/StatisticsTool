@@ -31,12 +31,17 @@ class TemplatesFilesHelper:
                 templates.append(file_parts[0])
         return templates
     
-    def save_template(self,filename,content,returnAllTemplates = True):
+    def save_template(self,filename,content,key,sub_key,returnAllTemplates = True):
         _, file_extension = os.path.splitext(filename)
         if file_extension == '' or file_extension == None:
             filename += ".json"
 
-        path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,filename)
+        #path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,filename)
+        path = ''
+        if os.path.exists(os.path.join(key,sub_key)):
+            path = os.path.join(key,sub_key,filename)
+        else:
+            path = os.path.join(key,filename)
         
         with open(path,'w') as f:
             f.write(content)
@@ -57,9 +62,15 @@ class TemplatesFilesHelper:
             data = json.load(f)            
             return data
         
-    def get_all_templates_content(self):
+    def get_all_templates_content(self,root_key,sub_key):
         templates = []
-        path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,'*'))
+        #path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,'*'))
+        path = os.path.join(root_key,sub_key)
+        if os.path.exists(path) == False:
+            path = os.path.join(root_key,'*')
+        else:    
+            path = os.path.join(root_key,sub_key,'*')
+
         files = glob(path)
         for fullname in files:
             filename = fullname.split(os.sep)[-1]
