@@ -47,6 +47,7 @@ export class StatisticsToolService implements OnInit {
   openDrawer = new Subject<string>();
   uniqueValueChanged = new Subject<boolean>();
   viewHeights = new Map<number,string>();
+  reportSelected = new Subject<number>();
     
   templates:TemplateInfo[] = [];
   currentTemplate:TemplateInfo = new TemplateInfo();
@@ -56,6 +57,7 @@ export class StatisticsToolService implements OnInit {
   //templates = [{'key':0,'value':'--- select ---'},{'key':1,'value':'Template 1'},{'key':2,'value':'Template 2'},{'key':3,'value':'Template 3'}]
   templateNameOptions:{'key':number,'value':string}[] = [];
   selectedTamplate = 0;
+  selectedSubKey = 0;
 
   showDrawer = false;
 
@@ -66,34 +68,41 @@ export class StatisticsToolService implements OnInit {
   localDataStorePath = '';
 
   currentConfigKey = '';
+  subKeys:{'key':number,'value':string}[] = [];
 
   constructor(private httpClient:HttpClient) { 
+
     this.httpClient.post<{'content':IContent,'name':string}[]>('/get_all_templates',{})
       .subscribe(res => {
         this.processTemplates(res);
 
-        //get all optional segments
-        this.optionalSegmentations = new Map<string,string[]>();
-        this.httpClient.post<{'name':string,'values':string[]}[]>
-          ('/get_segmentations',
-            {
-              'key':this.currentConfigKey
-            }
-          )
-          .subscribe(res => {
-             res.forEach(x => {
-              this.optionalSegmentations.set(x.name,x.values);
-             })
-             this.segmentationsFetched.next(true);
-          }
-        )
-        
         this.updateTemplateNames();       
+
+        this.loadSegmentations(false);
   
         this.templatesFetched.next(true);
       })
 
       this.readLocalDataStoreInfoFromStorage();
+  }
+
+  loadSegmentations(reportSelected:boolean){
+    //get all optional segments
+    this.optionalSegmentations = new Map<string,string[]>();
+    this.httpClient.post<{'name':string,'values':string[]}[]>
+      ('/get_segmentations',
+        {
+          'key':this.currentConfigKey,
+          'sub_key': this.subKeys[this.selectedSubKey].value
+        }
+      )
+      .subscribe(res => {
+         res.forEach(x => {
+          this.optionalSegmentations.set(x.name,x.values);
+         })
+         this.segmentationsFetched.next(reportSelected);
+      }
+    )
   }
 
   processTemplates(items:{'content':IContent,'name':string}[]){
@@ -243,5 +252,21 @@ export class StatisticsToolService implements OnInit {
 
   showFileNotFoundError(){
     return this.fileNotFoundError.length > 0;
+  }
+
+  loadSubKeys(str:string){
+    this.subKeys = [];
+    let items = str.split(",");
+    let index = 0;
+    items.forEach(s => {
+      if (s != ''){
+        this.subKeys.push({'key':index,'value':s});
+        index++;
+      }
+    })
+  }
+
+  getSelectedSubKey(){
+    return this.subKeys[this.selectedSubKey].value;
   }
 }

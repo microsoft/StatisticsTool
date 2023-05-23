@@ -4,6 +4,7 @@ import { StatisticsToolService } from '../services/statistics-tool.service';
 import {Location} from '@angular/common';
 import { Router } from '@angular/router';
 import { AppComponent } from '../app.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'template-segmentations',
@@ -17,6 +18,8 @@ export class TemplateSegmentationsComponent implements OnInit {
   backImgSrc = 'assets/back-icon-blue.svg';
   saveImgSrc = 'assets/save-icon-blue.svg';
   addGridImgSrc = 'assets/grid-add-blue.svg';
+
+  subscribeReportSelect = new Subscription;
   
   constructor(private httpClient:HttpClient,
               public statService:StatisticsToolService,
@@ -30,9 +33,15 @@ export class TemplateSegmentationsComponent implements OnInit {
       sub.unsubscribe();
     })
 
+    this.subscribeReportSelect = this.statService.reportSelected.subscribe(res => {
+      this.statService.loadSegmentations(true);
+    })
+
   } 
 
   ngOnDestroy(){
+    if (this.subscribeReportSelect != null)
+      this.subscribeReportSelect.unsubscribe();
   }
 
   getViewHeight(index:number){
@@ -60,6 +69,11 @@ export class TemplateSegmentationsComponent implements OnInit {
     if (t != undefined){
       this.statService.onTemplateSelected(t.value);
     }
+  }
+
+  onSubKeySelected(event:any){
+    this.statService.selectedSubKey = event.target.value;
+    this.statService.reportSelected.next(event.target.value);
   }
 
   getTemplateName(){

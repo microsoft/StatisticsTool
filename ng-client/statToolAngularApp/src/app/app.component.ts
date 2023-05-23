@@ -87,9 +87,14 @@ export class AppComponent implements OnInit {
       this.router.events.subscribe((event) => {
         if (event instanceof NavigationStart){
           if (event.url.toLowerCase() == "/report_viewer"){
-            let config_key = this.appRef.components[0].location.nativeElement.attributes[0].value;
-            this.statToolSvc.currentConfigKey = config_key;
-            console.log('key:',this.appRef.components[0].location.nativeElement.attributes[0].value);  
+            let data = this.appRef.components[0].location.nativeElement.attributes[0].value;
+            let key = data.split('~')[0];
+            let sub_keys = data.split('~')[1];
+           
+            this.statToolSvc.currentConfigKey = key;
+            this.statToolSvc.loadSubKeys(sub_keys);
+            console.log('root key:',key);  
+            console.log('sub keys:',sub_keys);  
           }
         }})
     }

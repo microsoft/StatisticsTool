@@ -47,32 +47,43 @@ export class PklViewComponent implements OnInit  {
   loadCounter = 0;
 
   subscribeUniqueChange = new Subscription;
+  subscribeReportChanged = new Subscription;
 
   height:string = '';
 
   constructor(private httpClient:HttpClient,
               public statToolService:StatisticsToolService) {
-    this.url = '/get_report_table?calc_unique=' + statToolService.calculateUnique + "&key=" + this.statToolService.currentConfigKey;
+    this.url = '/get_report_table?calc_unique=' + statToolService.calculateUnique + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();
  }
 
   ngOnInit(): void {
     this.fixSelectedString();
     this.url = '/get_report_table?cols=' + this.selectedColumns
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                         + "&key=" + this.statToolService.currentConfigKey;
+                                         + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();
     this.loadCounter = 1;
 
     this.subscribeUniqueChange = this.statToolService.uniqueValueChanged.subscribe(res => {
       this.loadCounter = 1;
       this.url = '/get_report_table?cols=' + this.selectedColumns 
                                            + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                           + "&key=" + this.statToolService.currentConfigKey;
+                                           + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();
+    })
+
+    this.subscribeReportChanged = this.statToolService.reportSelected.subscribe(res => {
+      this.fixSelectedString();
+      this.loadCounter = 1;
+      this.url = '/get_report_table?cols=' + this.selectedColumns 
+                                           + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
+                                           + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();
     })
   }
 
    ngOnDestroy(){
     if (this.subscribeUniqueChange != null)
       this.subscribeUniqueChange.unsubscribe();
+    if (this.subscribeReportChanged != null)
+      this.subscribeReportChanged.unsubscribe();
   }
 
   onColumnAdded(item:{'item_id':string,'item_text':string}){
@@ -87,7 +98,7 @@ export class PklViewComponent implements OnInit  {
     this.loadCounter = 1;
     this.url = '/get_report_table?cols=' + this.selectedColumns 
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                         + "&key=" + this.statToolService.currentConfigKey;
+                                         + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();;
   }
 
   onAllColumnsAdded(items:{'item_id':string,'item_text':string}[]){
@@ -101,7 +112,7 @@ export class PklViewComponent implements OnInit  {
     this.loadCounter = 1;
     this.url = '/get_report_table?cols=' + this.selectedColumns 
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                         + "&key=" + this.statToolService.currentConfigKey;
+                                         + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();;
   }
   
   onColumnRemoved(item:{'item_id':string,'item_text':string}){
@@ -119,7 +130,7 @@ export class PklViewComponent implements OnInit  {
     this.loadCounter = 1;
     this.url = '/get_report_table?cols=' + this.selectedColumns 
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                         + "&key=" + this.statToolService.currentConfigKey;
+                                         + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();;
   }
 
   onAllColumnsRemoved(event:any){
@@ -130,7 +141,7 @@ export class PklViewComponent implements OnInit  {
     this.loadCounter = 1;
     this.url = '/get_report_table?cols=' + this.selectedColumns 
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                         + "&key=" + this.statToolService.currentConfigKey;
+                                         + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();;
   }
 
   onRowAdded(item:{'item_id':string,'item_text':string}){
@@ -145,7 +156,7 @@ export class PklViewComponent implements OnInit  {
     this.loadCounter = 1;
     this.url = '/get_report_table?cols=' + this.selectedColumns 
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                         + "&key=" + this.statToolService.currentConfigKey;
+                                         + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();;
   }
 
   onAllRowsAdded(items:{'item_id':string,'item_text':string}[]){
@@ -159,7 +170,7 @@ export class PklViewComponent implements OnInit  {
     this.loadCounter = 1;
     this.url = '/get_report_table?cols=' + this.selectedColumns 
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                         + "&key=" + this.statToolService.currentConfigKey;
+                                         + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();;
   }
   
   onRowRemoved(item:{'item_id':string,'item_text':string}){
@@ -177,7 +188,7 @@ export class PklViewComponent implements OnInit  {
     this.loadCounter = 1;
     this.url = '/get_report_table?cols=' + this.selectedColumns 
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                         + "&key=" + this.statToolService.currentConfigKey;
+                                         + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();;
   }
 
   onAllRowsRemoved(event:any){
@@ -188,7 +199,7 @@ export class PklViewComponent implements OnInit  {
     this.loadCounter = 1;
     this.url = '/get_report_table?cols=' + this.selectedColumns 
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                         + "&key=" + this.statToolService.currentConfigKey;
+                                         + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();;
   }
 
   fixSelectedString(){

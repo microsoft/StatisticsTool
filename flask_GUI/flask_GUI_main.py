@@ -76,8 +76,8 @@ def show_config():
 #region - Functions for REPORT VIEW
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
-    key = configuration_results.save_configuration(request,server)
-    return render_template('index.html',key=key)
+    root_key,sub_keys = configuration_results.save_configuration(request,server)
+    return render_template('index.html',key=root_key + "~" + sub_keys)
 
 @server.route('/static/<file_name>')
 def send_file(file_name):
@@ -94,7 +94,8 @@ def favicon():
 @server.route('/get_segmentations', methods=['POST'])    
 def get_segmentations():
     key = request.json['key']
-    segmentations = configuration_results.get_item_segmentations(key)
+    sub_key = request.json['sub_key']
+    segmentations = configuration_results.get_item_segmentations(key,sub_key)
     
     result = []
     for k, v in segmentations.items():
@@ -108,8 +109,9 @@ def get_segmentations():
 def get_report_table():
     
     calc_unique = True if request.args.get('calc_unique') == 'true' else False
-    config_key = request.args.get('key')
-    config_item = configuration_results.get_config_item(config_key)
+    root_key = request.args.get('key')
+    sub_key = request.args.get('sub_key')
+    config_item = configuration_results.get_config_item(root_key,sub_key)
     if config_item is None:
         return None
     
@@ -127,7 +129,7 @@ def get_report_table():
             argRows = argRows[:-1]
         rows = list(argRows.split(','))
     
-    segmentations = configuration_results.get_item_segmentations(config_key)
+    segmentations = configuration_results.get_item_segmentations(root_key,sub_key)
     config_item.table_result.set_data(config_item, segmentations,calc_unique)
     config_item.table_result.dash_app.layout = config_item.table_result.get_table_div_layout(columns,rows)
     wp = config_item.table_result.get_webpage()

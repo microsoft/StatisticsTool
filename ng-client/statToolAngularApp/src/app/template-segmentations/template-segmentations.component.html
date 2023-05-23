@@ -22,7 +22,19 @@
                         class="back"
                         (click)="back()">
                 </div>
-                <div style="width:10%;padding-top:2px">
+                <div style="width:10%;padding-top:2px;margin-right: 5px;">
+                    <select 
+                        [(ngModel)]="statService.selectedSubKey"
+                        style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
+                        (change)="onSubKeySelected($event)"
+                        >
+                        <option *ngFor="let s of statService.subKeys"
+                                        value="{{s.key}}"
+                                >Report - {{s.value}}</option>
+                    </select>
+                </div>
+                <div class="pipe"></div>
+                <div style="width:10%;padding-top:2px;margin-left: 3px;">
                     <select 
                         [(ngModel)]="statService.selectedTamplate"
                         style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
@@ -101,7 +113,7 @@
                         </label>
                     </div>
                     <div style="margin-left:5px;padding-top: 5px;">
-                        <p style="font-weight: bold;color:#182a69;">Calculate Unique</p>
+                        <p style="font-weight: bold;color:#182a69;">Unique</p>
                     </div>
                 </div>
                 <div class="pipe"></div>
@@ -115,14 +127,14 @@
                         </label>
                     </div>
                     <div style="margin-left:5px;padding-top: 5px;">
-                        <p style="font-weight: bold;color:#182a69;">Local Data Store</p>
+                        <p style="font-weight: bold;color:#182a69;">Local Store</p>
                     </div>
                     <input type="text" 
                            [(ngModel)]="statService.localDataStorePath"  
                            (keyup)="localDataStoreChange($event)"
                            [ngClass]="getLocalDataStoreCls()"
                            [readonly]="statService.activeLocalDataStore == false"
-                           style="height:27px;margin:5px;margin-top:3px !important;width:300px;border:1px solid lightgray;border-radius: 3px;outline: none;">
+                           style="height:27px;margin:5px;margin-top:3px !important;width:180px;border:1px solid lightgray;border-radius: 3px;outline: none;">
                 </div>
             </div>
         </div>
