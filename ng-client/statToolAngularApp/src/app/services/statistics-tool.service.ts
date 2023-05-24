@@ -42,12 +42,11 @@ export class SaveTemplateRequest {
 export class StatisticsToolService implements OnInit {
 
   optionalSegmentations = new Map<string,string[]>();
-  templatesFetched = new Subject();
-  segmentationsFetched = new Subject();
+  segmentationsFetched = new Subject<number>();
   openDrawer = new Subject<string>();
   uniqueValueChanged = new Subject<boolean>();
   viewHeights = new Map<number,string>();
-  reportSelected = new Subject<number>();
+  reportSelected = new Subject();
     
   templates:TemplateInfo[] = [];
   currentTemplate:TemplateInfo = new TemplateInfo();
@@ -74,7 +73,7 @@ export class StatisticsToolService implements OnInit {
     
   }
   
-  init(){
+  init(subKeySelected:number = 0){
 
     this.templates = [];
     this.currentTemplate = new TemplateInfo();
@@ -91,15 +90,13 @@ export class StatisticsToolService implements OnInit {
 
         this.updateTemplateNames();       
 
-        this.loadSegmentations(false);
-  
-        this.templatesFetched.next(true);
+        this.loadSegmentations(subKeySelected);
       })
 
       this.readLocalDataStoreInfoFromStorage();
   }
 
-  loadSegmentations(reportSelected:boolean){
+  loadSegmentations(subKeySelected:number = 0){
     //get all optional segments
     this.optionalSegmentations = new Map<string,string[]>();
     this.httpClient.post<{'name':string,'values':string[]}[]>
@@ -113,7 +110,7 @@ export class StatisticsToolService implements OnInit {
          res.forEach(x => {
           this.optionalSegmentations.set(x.name,x.values);
          })
-         this.segmentationsFetched.next(reportSelected);
+         this.segmentationsFetched.next(subKeySelected);
       }
     )
   }

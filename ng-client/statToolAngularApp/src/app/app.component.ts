@@ -93,6 +93,7 @@ export class AppComponent implements OnInit {
            
             this.statToolSvc.currentConfigKey = key;
             this.statToolSvc.loadSubKeys(sub_keys);
+            console.log('loadSubKeys','loaded')
             this.statToolSvc.init();
             console.log('root key:',key);  
             console.log('sub keys:',sub_keys);  

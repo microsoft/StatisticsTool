@@ -47,7 +47,7 @@ class TemplatesFilesHelper:
             f.write(content)
 
         if returnAllTemplates:
-            return self.get_all_templates_content();            
+            return self.get_all_templates_content(key,sub_key);            
 
     def get_template_content(self,filename):
         _, file_extension = os.path.splitext(filename)
@@ -76,7 +76,10 @@ class TemplatesFilesHelper:
             filename = fullname.split(os.sep)[-1]
             file_parts = filename.split('.')
             if len(file_parts) == 2 and file_parts[1] == 'json':
-                templates.append({'name':file_parts[0],'content':self.get_template_content(file_parts[0])})
+                with open(fullname,'r') as f:
+                    content = json.load(f)  
+                    #templates.append({'name':file_parts[0],'content':self.get_template_content(file_parts[0])})
+                    templates.append({'name':file_parts[0],'content':content})
         return templates
 
        

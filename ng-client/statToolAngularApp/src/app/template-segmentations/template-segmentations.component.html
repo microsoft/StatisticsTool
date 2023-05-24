@@ -22,17 +22,33 @@
                         class="back"
                         (click)="back()">
                 </div>
-                <div style="width:10%;padding-top:2px;margin-right: 5px;">
-                    <select 
-                        [(ngModel)]="statService.selectedSubKey"
-                        style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
-                        (change)="onSubKeySelected($event)"
-                        >
-                        <option *ngFor="let s of statService.subKeys"
-                                        value="{{s.key}}"
-                                >Report - {{s.value}}</option>
-                    </select>
-                </div>
+                <ng-container *ngIf="!isFireFox()">
+                    <div style="width:10%;padding-top:2px;margin-right: 5px;">
+                        <select 
+                            [(ngModel)]="statService.selectedSubKey"
+                            style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
+                            (change)="onSubKeySelected($event)"
+                            >
+                            <option *ngFor="let s of statService.subKeys"
+                                            value="{{s.key}}"
+                                    >Report - {{s.value}}</option>
+                        </select>
+                    </div>
+                </ng-container>
+                <ng-container *ngIf="isFireFox()">
+                    <div style="width:10%;padding-top:2px;margin-right: 15px;">
+                        <select 
+                            [(ngModel)]="statService.selectedSubKey"
+                            style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
+                            (change)="onSubKeySelected($event)"
+                            >
+                            <option *ngFor="let s of statService.subKeys"
+                                            value="{{s.key}}"
+                                    >Report - {{s.value}}</option>
+                        </select>
+                    </div>
+                </ng-container>
+                
                 <div class="pipe"></div>
                 <div style="width:10%;padding-top:2px;margin-left: 3px;">
                     <select 

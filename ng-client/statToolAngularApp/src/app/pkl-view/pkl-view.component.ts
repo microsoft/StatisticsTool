@@ -53,10 +53,14 @@ export class PklViewComponent implements OnInit  {
 
   constructor(private httpClient:HttpClient,
               public statToolService:StatisticsToolService) {
+    
     this.url = '/get_report_table?calc_unique=' + statToolService.calculateUnique + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();
+
+    
  }
 
   ngOnInit(): void {
+                  
     this.fixSelectedString();
     this.url = '/get_report_table?cols=' + this.selectedColumns
                                          + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
@@ -73,10 +77,13 @@ export class PklViewComponent implements OnInit  {
     this.subscribeReportChanged = this.statToolService.reportSelected.subscribe(res => {
       this.fixSelectedString();
       this.loadCounter = 1;
-      this.url = '/get_report_table?cols=' + this.selectedColumns 
-                                           + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
-                                           + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();
+      let u = '/get_report_table?cols=' + this.selectedColumns 
+              + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
+              + "&key=" + this.statToolService.currentConfigKey + "&sub_key=" + this.statToolService.getSelectedSubKey();
+      this.url = u;
     })
+
+    
   }
 
    ngOnDestroy(){

@@ -25,7 +25,7 @@ class ConfigurationResults:
     '''
         dictionary to store Config Items
         key     - PKL absolute path
-        value   - Config Item 
+        value   - dictionary of Config Items
     '''
     items_dict = None
 
@@ -33,42 +33,67 @@ class ConfigurationResults:
         self.items_dict = dict()
         self.lock = threading.Lock()
 
-    def load_configurations(self,request,server):
+    def insert_to_dictionary(self,key,value):
         self.lock.acquire()
         try:
-            main_pkl_type = self.get_pkl_type(request,True)
-            ref_dir = self.get_ref_dir(request)
-            
-            if main_pkl_type == PklType.PKL_FILE_PATH:
-                if os.path.isdir(request.values[ConfigurationResults.MAIN_REPORT_FILE_PATH]):
-                    root_key = self.load_configurations_in_directory(request.values[ConfigurationResults.MAIN_REPORT_FILE_PATH],ref_dir,server)
-                    return root_key
-                else:
-                    root_key = self.load_configurations_in_directory(request.values[ConfigurationResults.MAIN_REPORT_FILE_PATH],ref_dir,server)
-                    return root_key
-            if main_pkl_type == PklType.PKL_OBJECT:
-                file_path = self.get_pkl_object_file_path(request.files[ConfigurationResults.MAIN_REPORT_CHOOSEFILE],True)
-                ref_pkl_files = self.get_all_files_in_directory(ref_dir)
-                root_key = os.path.dirname(file_path)
-
-                basename_without_ext = os.path.splitext(os.path.basename(file_path))[0] 
-                basename = os.path.basename(file_path)
-                conf = ConfigurationItem()
-                main_pkl_path = self.save_pkl_file(request.files[ConfigurationResults.MAIN_REPORT_CHOOSEFILE],True)
-                conf.main_pkl = load_object(main_pkl_path)
-                if basename in ref_pkl_files.keys():
-                    conf.ref_pkl = load_object(ref_pkl_files[basename])
-                if server != None:
-                    conf.table_result = Results_table(server)
-                dic = dict()
-                dic[basename_without_ext] = conf
-                self.items_dict[root_key] = dic        
-
-                return root_key
-            else:
-                return ''
+            self.items_dict[key] = value
         finally:
             self.lock.release()
+
+    def get_from_dictionary(self,key):
+        self.lock.acquire()
+        try:
+            if key in self.items_dict.keys():
+                return self.items_dict[key]
+            else:
+                return None
+        finally:
+            self.lock.release()
+
+    '''
+        Loads the configurations according to the request and store it in the dictionary.
+        Each entry in the dictionary is a root-key - the base directory in the file system.
+        The value of the rook-key is also a map (dictionary) where each entry in the map is a Configuration Item.
+        root_key => (pointer to a map of Config Items - sub directories)
+                   - sub directory 1 (contains a PKL and JSON of segmentations)
+                   - sub directory 2 (contains a PKL and JSON of segmentations)
+                   - etc...
+
+        if the user choose a PKL object or he choose a path to a specific PKL (and not a PATH of directory)
+        in that case the sub directory is the name of the PKL. for example, the user select the path "c:/temp/file1.PKL"
+        the root-key is c:/temp
+        and the value is a map where the entry is "file1"
+    '''
+    def load_configurations(self,request,server):
+        
+        
+        main_pkl_type = self.get_pkl_type(request,True)
+        ref_dir       = self.get_ref_dir (request)
+        
+        if main_pkl_type == PklType.PKL_FILE_PATH:
+            return self.load_configurations_in_directory(request.values[ConfigurationResults.MAIN_REPORT_FILE_PATH],ref_dir,server)
+            
+        if main_pkl_type == PklType.PKL_OBJECT:
+            file_path = self.get_pkl_object_file_path(request.files[ConfigurationResults.MAIN_REPORT_CHOOSEFILE],True)
+            ref_pkl_files = self.get_all_files_in_directory(ref_dir)
+            root_key = os.path.dirname(file_path)
+
+            basename_without_ext = os.path.splitext(os.path.basename(file_path))[0] 
+            basename = os.path.basename(file_path)
+            conf = ConfigurationItem()
+            main_pkl_path = self.save_pkl_file(request.files[ConfigurationResults.MAIN_REPORT_CHOOSEFILE],True)
+            conf.main_pkl = load_object(main_pkl_path)
+            if basename in ref_pkl_files.keys():
+                conf.ref_pkl = load_object(ref_pkl_files[basename])
+            if server != None:
+                conf.table_result = Results_table(server)
+            dic = dict()
+            dic[basename_without_ext] = conf
+            self.insert_to_dictionary(root_key,dic)     
+
+            return root_key
+        else:
+            return ''
 
     def get_ref_dir(self,request):
         ref_pkl_type  = self.get_pkl_type(request,False)
@@ -86,57 +111,55 @@ class ConfigurationResults:
     def save_configuration(self,request,server):
         root_key = self.load_configurations(request,server)
         sub_keys = ''
-        for k in self.items_dict[root_key].keys():
+        v = self.get_from_dictionary(root_key)
+        for k in v.keys():
             sub_keys += k + ","    
             
         return root_key,sub_keys
-        self.lock.acquire()
-        try:
-            key = self.get_key_from_request(request)
-            if self.is_config_item_exist(key):
-                return key
-            else:
-                if self.get_pkl_type(request,True) == PklType.PKL_FILE_PATH and os.path.isdir(request.values[ConfigurationResults.MAIN_REPORT_FILE_PATH]):
-                    self.load_configurations_in_directory(request.values[ConfigurationResults.MAIN_REPORT_FILE_PATH],
-                                                          request.values[ConfigurationResults.REF_REPORT_FILE_PATH],server)
-                else:   
-                    # create the configuration-item
-                    # - create the main and ref pkls
-                    # - create the table result
-                    main_exp     = self.load_experiment(request,True)
-                    ref_exp      = self.load_experiment(request,False)
-                    table_result = Results_table(server)
-                    self.items_dict[key] = ConfigurationItem(main_exp,ref_exp,table_result)
-                    return key
-        finally:
-            self.lock.release()
 
     def load_configurations_in_directory(self,dir_main,dir_ref,server):
         root_key = ''
+        
+        '''
+        if the user select path of directory - the root-key is the directory path
+        otherwise, if the user select a path to a PKL file, the root path is the base driectory of that file.
+
+        for example: 
+        1. if dir_main is 'c:/temp/dirs' then root_key is 'c:/temp/dirs'
+        2. if dir main is 'c:/temp/foo/file1.pkl' then root_key is 'c:/temp/foo'
+        '''
         if os.path.isdir(dir_main):
             root_key = dir_main
         else:    
             root_key,_ = os.path.split(dir_main)   
 
+        #all the PKL files exists in the reference directory
         ref_pkl_files = self.get_all_files_in_directory(dir_ref)
+
         sub_keys = dict()
         if os.path.isdir(dir_main):
-            for v in next(os.walk(dir_main))[1]:
+            for v in next(os.walk(dir_main))[1]: # all the sub-directories (each v is sub-directory)
                 conf = ConfigurationItem()
-                config_key = ''
+                # tuke files (PKLs) in the sub directory
                 sub_dir_files = self.get_all_files_in_directory(os.path.join(dir_main,v))
                 for k in sub_dir_files.keys():
                     if k.split(".")[1] == 'pkl':
                         conf.main_pkl = load_object(sub_dir_files[k])
-                        config_key = sub_dir_files[k]
                         if k in ref_pkl_files.keys():
                             conf.ref_pkl = load_object(ref_pkl_files[k])
                 if server != None:
                     conf.table_result = Results_table(server)                        
                 sub_keys[v] = conf
-            self.items_dict[root_key] = sub_keys
+
+            self.insert_to_dictionary(root_key,sub_keys)
+
         else:
             if pathlib.Path(dir_main).suffix == '.pkl':
+                '''
+                for example - the dir_main is c:/temp/file1.pkl, then
+                basename_without_ext : 'file1'
+                basename : 'c:/temp/file1.pkl'
+                '''
                 basename_without_ext = os.path.splitext(os.path.basename(dir_main))[0] 
                 basename = os.path.basename(dir_main)
                 conf = ConfigurationItem()
@@ -147,7 +170,8 @@ class ConfigurationResults:
                     conf.table_result = Results_table(server)
                 dic = dict()
                 dic[basename_without_ext] = conf
-                self.items_dict[root_key] = dic                         
+                self.insert_to_dictionary(root_key,dic)
+                 
         return root_key
 
     def get_all_files_in_directory(self,dir):
@@ -158,37 +182,26 @@ class ConfigurationResults:
         
         return map
 
-    def is_config_item_exist(self,key):
-        if key in self.items_dict:
-            return True
-        else:
-            return False
-    
     def get_config_item(self,root_key,sub_key):
-        self.lock.acquire()
-        try:
-            if root_key in self.items_dict:
-                if sub_key in self.items_dict[root_key]:
-                    return self.items_dict[root_key][sub_key]
+        v = self.get_from_dictionary(root_key)
+        if v == None:
             return None
-        finally:
-            self.lock.release()
+        
+        if sub_key in v.keys():
+            return v[sub_key]
+        return None
 
-    def get_item_segmentations(self, key,sub_key):
-        self.lock.acquire()
-        try:
-            if key in self.items_dict:
-                item = self.items_dict[key]
-                if sub_key in item:
-                    segmentations = {seg_category:v['possible partitions'] for seg_category, v in item[sub_key].main_pkl.masks.items() if seg_category != 'total_stats'}
-                    result = []
-                    for k, v in segmentations.items():
-                        result.append({'name':k,'values':v})
-                    return segmentations
-            else:
-                return None
-        finally:
-            self.lock.release()
+    def get_item_segmentations(self,root_key,sub_key):
+        item = self.get_config_item(root_key,sub_key)
+        if item == None:
+            return None
+        
+        segmentations = {seg_category:v['possible partitions'] for seg_category, v in item.main_pkl.masks.items() if seg_category != 'total_stats'}
+        result = []
+        for k, v in segmentations.items():
+            result.append({'name':k,'values':v})
+        return segmentations
+        
 
     def get_saved_files_directory_path(self):
         return os.path.join(current_file_directory.replace('flask_GUI_main.py', 'static'),'reports')

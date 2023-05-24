@@ -19,7 +19,8 @@ export class TemplateSegmentationsComponent implements OnInit {
   saveImgSrc = 'assets/save-icon-blue.svg';
   addGridImgSrc = 'assets/grid-add-blue.svg';
 
-  subscribeReportSelect = new Subscription;
+  subscribeSegmentsReady = new Subscription;
+
   
   constructor(private httpClient:HttpClient,
               public statService:StatisticsToolService,
@@ -28,20 +29,21 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    let sub = this.statService.segmentationsFetched.subscribe(res => {
-      this.statService.addNewTemplate();
+    /*let sub = this.statService.segmentationsFetched.subscribe(res => {
+      
       sub.unsubscribe();
-    })
+    })*/
 
-    this.subscribeReportSelect = this.statService.reportSelected.subscribe(res => {
-      this.statService.loadSegmentations(true);
+    this.subscribeSegmentsReady = this.statService.segmentationsFetched.subscribe(selectedSubKey => {
+      this.statService.addNewTemplate();
+      this.statService.selectedSubKey = selectedSubKey;
+      this.statService.reportSelected.next(true);
     })
-
   } 
 
   ngOnDestroy(){
-    if (this.subscribeReportSelect != null)
-      this.subscribeReportSelect.unsubscribe();
+    if (this.subscribeSegmentsReady != null)
+      this.subscribeSegmentsReady.unsubscribe();
   }
 
   getViewHeight(index:number){
@@ -72,9 +74,7 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   onSubKeySelected(event:any){
-    this.statService.init();
-    this.statService.selectedSubKey = event.target.value;
-    this.statService.reportSelected.next(event.target.value);
+    this.statService.init(event.target.value);
   }
 
   getTemplateName(){
