@@ -43,6 +43,7 @@ def load_object(filename):
     :param filename: the path from which the function loads the pickle file
     :return: the loaded file
     """
+    ret_exp = None
     ## Load  pickle
     with open(filename, 'rb') as input:
         ret_exp = pickle.load(input)

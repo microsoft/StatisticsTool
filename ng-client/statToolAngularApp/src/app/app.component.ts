@@ -90,9 +90,11 @@ export class AppComponent implements OnInit {
             let data = this.appRef.components[0].location.nativeElement.attributes[0].value;
             let key = data.split('~')[0];
             let sub_keys = data.split('~')[1];
+            let ref_dir = data.split('~')[2];
            
             this.statToolSvc.currentConfigKey = key;
             this.statToolSvc.loadSubKeys(sub_keys);
+            this.statToolSvc.ref_dir = ref_dir;
             console.log('loadSubKeys','loaded')
             this.statToolSvc.init();
             console.log('root key:',key);  

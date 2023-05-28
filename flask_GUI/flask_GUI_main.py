@@ -76,8 +76,14 @@ def show_config():
 #region - Functions for REPORT VIEW
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
-    root_key,sub_keys = configuration_results.save_configuration(request,server)
-    return render_template('index.html',key=root_key + "~" + sub_keys)
+    current_root_key = configuration_results.get_key_from_request(request,True)
+    current_ref_dir = configuration_results.get_key_from_request(request,False)
+    root_key,sub_keys,ref_dir = configuration_results.get_config_info(current_root_key)
+    if root_key == current_root_key and ref_dir == current_ref_dir:
+        return render_template('index.html',key=root_key + "~" + sub_keys + "~" + ref_dir)    
+
+    root_key,sub_keys,ref_dir = configuration_results.save_configuration(request,server)
+    return render_template('index.html',key=root_key + "~" + sub_keys + "~" + ref_dir)
 
 @server.route('/static/<file_name>')
 def send_file(file_name):
@@ -140,8 +146,9 @@ def get_report_table():
 def get_all_templates():
     root_key = request.json['key']
     sub_key = request.json['sub_key']
+    ref_dir = request.json['ref_dir']
     helper = TemplatesFilesHelper()
-    content = helper.get_all_templates_content(root_key,sub_key)
+    content = helper.get_all_templates_content(root_key,sub_key,ref_dir)
     return jsonify(content)
 
 @server.route('/get_template_content', methods=['POST'])
@@ -158,8 +165,9 @@ def save_template():
     content = data['content']
     key = data['key']
     sub_key = data['sub_key']
+    ref_dir = data['ref_dir']
     helper = TemplatesFilesHelper()
-    result = helper.save_template(name,content,key,sub_key)
+    result = helper.save_template(name,content,key,sub_key,ref_dir)
     return jsonify(result)
     
 #########################################################
