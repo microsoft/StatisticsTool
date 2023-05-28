@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
 
 from classes_and_utils.GUI_utils import *
 from classes_and_utils.TemplatesFilesHelper import *
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
 #endregion
 
 #region - init Flask server 
@@ -40,8 +40,9 @@ def new_report_func():
 def calculating():
     # extract the user specified directories and names
     config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, config_dict = unpack_calc_request(request, current_file_directory)
+    
     # making sure save_stats_dir is empty and opening the appropriate folders
-    empty, save_stats_dir = folder_func(output_dir)
+    empty, save_stats_dir = folder_func(output_dir, os.path.basename(config_file_name))
     if empty == 'FileNotFound':
         return render_template('Not_found.html')
     # if the output folder is not empty a message is sent
@@ -77,10 +78,10 @@ def show_config():
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
     root_key,sub_keys = configuration_results.save_configuration(request,server)
-    return render_template('index.html',key=root_key + "~" + sub_keys)
+    return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}')
 
 @server.route('/static/<file_name>')
-def send_file(file_name):
+def send_static_file(file_name):
     mime = mimetypes.guess_type(file_name, strict=False)[0]
     sp= os.path.splitext(file_name)
     if len(sp)>1 and sp[1]=='.js':
