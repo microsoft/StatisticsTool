@@ -86,20 +86,23 @@ export class AppComponent implements OnInit {
     ngOnInit(){
       this.router.events.subscribe((event) => {
         if (event instanceof NavigationStart){
-          if (event.url.toLowerCase() == "/report_viewer"){
-            let data = this.appRef.components[0].location.nativeElement.attributes[0].value;
-            let key = data.split('~')[0];
-            let sub_keys = data.split('~')[1];
-           
-            this.statToolSvc.currentConfigKey = key;
-            this.statToolSvc.loadSubKeys(sub_keys);
-            console.log('loadSubKeys','loaded')
-            this.statToolSvc.init();
-            console.log('root key:',key);  
-            console.log('sub keys:',sub_keys);  
-          }
-        }})
+          let sub_keys = new URLSearchParams(window.location.search).get('sub_keys')?.toString();
+          let key = new URLSearchParams(window.location.search).get('root_key')?.toString();
+          if (sub_keys == undefined)
+            sub_keys = ''
+          if (key == undefined)
+            key = ''
+          this.statToolSvc.currentConfigKey = key;
+          this.statToolSvc.loadSubKeys(sub_keys);
+          console.log('loadSubKeys','loaded')
+          this.statToolSvc.init();
+          console.log('root key:',key);  
+          console.log('sub keys:',sub_keys);  
+        }
+      })
     }
+    
+    
 
     getFilePath(str:string){
       let startIdx = str.indexOf('[');
