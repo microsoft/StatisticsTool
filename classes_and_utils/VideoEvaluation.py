@@ -238,6 +238,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
                 #set gt_file path to be as full path in data store
                 if os.path.exists(gt_local_path) == False:
                     folder = os.path.split(video_name)[0]
+                    folder = os.path.normpath(folder)
                     gt_local_path = os.path.join(gt_dir, folder, video_folder_name+'.json')
                 #if not exists set gt_file to be as algo_logs file format
                 if os.path.exists(gt_local_path) == False:
