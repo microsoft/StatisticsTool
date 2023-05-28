@@ -1,6 +1,7 @@
 #region - inports
 import mimetypes
 import os, sys
+from classes_and_utils.UpdateListManager import UpdateListManager
 
 from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
@@ -172,17 +173,9 @@ def save_template():
     
 #########################################################
 
-global LM
-LM = None
-def get_list_manager():
-    global LM
-    if LM == None:
-        LM = UpdateListManager()
-    return LM
-
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    listManager = get_list_manager()
+    listManager = UpdateListManager()
     root_key = request.args.get('key')
     sub_key  = request.args.get('sub_key')
     config_item = configuration_results.get_config_item(root_key,sub_key)
