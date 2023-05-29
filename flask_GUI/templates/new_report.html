@@ -2,6 +2,11 @@
 <script>
   function myFunction1() {
         var form = document.getElementById('myform');
+        var iframe = document.getElementById("message_iframe")
+        iframe.contentWindow.document.open(); 
+        iframe.contentWindow.document.write("calculating...");         
+        iframe.contentWindow.document.close()
+
         var x = document.getElementById("myDIV");
         form.onsubmit = function() {
         form.target = 'message_iframe';
@@ -130,7 +135,7 @@ input[type=submit]:hover {
     </div>
 
     <div id="second" name="second" class="col-4">
-        <iframe name="add_config_iframe" id="add_config_iframe" frameborder="0" 
+        <iframe  name="add_config_iframe" id="add_config_iframe" frameborder="0" 
                 style="position:absolute; 
                     top: 200px; 
                     left: 790px;
@@ -147,7 +152,7 @@ input[type=submit]:hover {
 
 
 <div  id="myDIV" style="display:none;">
-    <iframe name="message_iframe" frameborder="0" srcdoc="<p>Calculating...</p>" style=" position:relative; top: -120px; left: 170px;" height="500" width="500" > </iframe>
+    <iframe id="message_iframe" name="message_iframe" frameborder="0" srcdoc="<p>Calculating...</p>" style=" position:relative; top: -120px; left: 170px;" height="500" width="500" > </iframe>
 </div>
 
 

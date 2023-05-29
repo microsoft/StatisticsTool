@@ -85,7 +85,7 @@ def serial_num(file_name):
     return int(file_name[last_line_occ + 1:])
 
 
-def folder_func(output_dir):
+def folder_func(output_dir, config_file_name):
     """
     Checks that the output directory folder is empty and then opens the appropriate sub folders
     :param output_dir: path to output directory
@@ -93,25 +93,26 @@ def folder_func(output_dir):
     """
     save_stats_dir = ''
     try:
-        # check that output dir is empty
-        if len(os.listdir(output_dir)) > 0:
-            empty = False
-        # assert len(os.listdir(output_dir)) == 0, 'output directory should be empty'
-        else:
-            empty = True
-            # opening the needed sub-folders
-            single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
-            os.makedirs(single_video_hash_saving_dir)
-            save_stats_dir = os.path.join(output_dir, SAVED_BY_USER)
-            os.makedirs(save_stats_dir)
-            # opening the needed sub-sub-folders
-            save_images_dir = os.path.join(save_stats_dir, "saved images")
-            save_lists_dir = os.path.join(save_stats_dir, "saved lists")
-            save_tables_dir = os.path.join(save_stats_dir, "saved tables")
-            os.makedirs(save_images_dir)
-            os.makedirs(save_lists_dir)
-            os.makedirs(save_tables_dir)
-        return empty, save_stats_dir
+        output_dir=os.path.join(output_dir,f'{os.path.splitext(config_file_name)[0]}-{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}')
+        
+        if os.path.exists(output_dir):
+            return False, save_stats_dir
+        
+        os.makedirs(output_dir)
+        # opening the needed sub-folders
+        single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
+        os.makedirs(single_video_hash_saving_dir)
+        save_stats_dir = os.path.join(output_dir, SAVED_BY_USER)
+        
+        os.makedirs(save_stats_dir)
+        # opening the needed sub-sub-folders
+        save_images_dir = os.path.join(save_stats_dir, "saved images")
+        save_lists_dir = os.path.join(save_stats_dir, "saved lists")
+        save_tables_dir = os.path.join(save_stats_dir, "saved tables")
+        os.makedirs(save_images_dir)
+        os.makedirs(save_lists_dir)
+        os.makedirs(save_tables_dir)
+        return True, save_stats_dir
     except FileNotFoundError:
         return "FileNotFound", save_stats_dir
 
@@ -218,8 +219,6 @@ def unpack_calc_request(request, current_file_directory):
     GT_dir = request.form.get('Ground Truth Directory')
     output_dir = request.form.get('Reporter Output Directory')
     
-    output_dir=os.path.join(output_dir, datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
-    os.makedirs(output_dir)
     
     single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
     
@@ -302,11 +301,11 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
     # extract matching lists of absolute paths for the predictions, labels and images
   
     # extract all the intermediate results from the raw prediction-label files
-    compared_videos, sheldon_header_data = compare_predictions_directory(pred_dir=prd_dir, output_dir = single_video_hash_saving_dir, overlap_function=overlap_func, 
+    compared_videos, sheldon_header_data, user_text = compare_predictions_directory(pred_dir=prd_dir, output_dir = single_video_hash_saving_dir, overlap_function=overlap_func, 
                                                                  readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
-        return None
+        return None, user_text, None, None
 
     # combine the intermediate results for further statistics and example extraction
     exp = experiment_from_video_evaluation_files(statistic_funcs=statistics_funcs,
@@ -314,9 +313,11 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
                                 threshold=threshold, image_width=image_width, image_height=image_height,
                                 sheldon_header_data=sheldon_header_data, evaluation_function = evaluation_func, 
                                 overlap_function = overlap_func, save_stats_dir = save_stats_dir)
-
-    save_object(exp, os.path.join(save_stats_dir, 'report_' + config_file_name.replace('.json', '') + '.pkl'))
-    return exp
+    
+    folder_name = save_stats_dir
+    report_file_name = 'report_' + config_file_name.replace('.json', '') + '.pkl'
+    save_object(exp, os.path.join(folder_name, report_file_name))
+    return exp, user_text, folder_name, report_file_name
 
 
 def unpack_stats_request(request):
@@ -413,32 +414,6 @@ def stats_4_html(primary, secondary, tertiary, masks):
         sub_rows += wanted_seg[tertiary]
     return columns, sub_rows, rows, wanted_seg, seg_num
 
-
-def manage_stats_request(request, exp):
-    """
-    Manages all the procedures needed when a request is received by /stats route
-    :param request: request from either Reporter_page.html or table.html
-    :param exp: the ParallelExperiment instance
-    :return: all the parameters needed for displaying the statistics results on table.html
-    """
-    # unpack the values of the request from different pages
-    primary, secondary, tertiary, save, unique = unpack_stats_request(request)
-    # get the partitioned statistics
-
-   
-    statistics_df, state_df, statistics_dict, state_dict = exp.statistics_visualization(primary_segmentation=primary,
-                                                                                        secondary_segmentation=secondary,
-                                                                                        tertiary_segmentation=tertiary)
-    # if asked to save the stats save_tables will do that
-    # save_path = save_tables(statistics_df, state_df, save, primary, secondary, tertiary, exp.save_stats_dir)
-    save_path = '' # TODO: need to re-use it with new pivot table
-    # combined names and dictionaries of the statistics (e.g precision/recall) and states (e.g FP/FN/TP)
-    wanted_statistics_names = list(set([index[-1] for index in statistics_dict])) + ['TP', 'FP', 'FN']
-    statistics_dict.update(state_dict)
-    
-    # get the values of the rows, columns etc. for the html table if those values exists
-    columns, sub_rows, rows, wanted_seg, seg_num = stats_4_html(primary, secondary, tertiary, exp.masks)
-    return statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path, unique
 
 class UpdateListManager():
     def __init__(self) -> None:
@@ -606,7 +581,7 @@ class UpdateListManager():
             return
 
         # extracting the example list for requested partitions and state
-        self.list_of_examples = self.exp_in_UpdateList.get_ids_new(self.cell_name, self.state, show_unique=self.show_unique)
+        self.list_of_examples = self.exp_in_UpdateList.get_ids(self.cell_name, self.state, show_unique=self.show_unique)
 
         # exp_in_UpdateList.state = state ## TODO: TEMP - move it to the right place
         # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see

@@ -394,7 +394,7 @@ class ParallelExperiment:
         return statistics_df, state_df, statistics_dict, state_dict
 
 
-    def get_ids_new(self, cell_key, state, show_unique):
+    def get_ids(self, cell_key, state, show_unique):
         if show_unique:
             ids = []
             for x in self.unique_data[cell_key][state]:
@@ -404,88 +404,6 @@ class ParallelExperiment:
         else:
             ids = self.segmented_ID_new[cell_key][state]
         return ids
-
-    def get_ids(self, show_unique, state, total=False, primary=None, secondary=None, tertiary=None):
-        """
-        This function returns the ids of examples that belongs to the asked partitions and state (TP/FP/FN)
-
-        :param state: The state (TP/FP/FN) in which its examples ids are wanted
-        :param total: Boolean, wheather to show the total statistics - without partitions
-        :param primary: #1 partition asked for
-        :param secondary: #2 partition asked for
-        :param tertiary: #3 partition asked for
-        :return: return the ids of the examples that belongs to the requested state and partitions
-        """
-
-        if not show_unique:
-            segments = self.segmented_ID
-        else:
-            segments = self.unique
-        # used in is_label_or_prd()
-        self.state = state
-        # if total experiment examples are asked
-        if total:
-            return segments['total'][state]
-
-        
-
-        
-
-        assert primary in segments or primary is None, 'primary must be one of id_dict keys or None'
-        if secondary:
-            assert secondary in segments[primary], 'secondary must be one of id_dict[primary] keys or None'
-        if tertiary:
-            assert tertiary in segments[primary][secondary], 'tertiary must be one of id_dict[primary][secondary] keys or None'
-
-        if primary:
-            # if only a primary partition is chosen
-            if not secondary:
-                # if 'TP' is a key in segments[primary] it means that there is no second partitions in segments
-                if 'TP' in segments[primary]:
-                    return segments[primary][state]
-
-                # there is at least a second partition in segments
-                sec_keys = list(segments[primary].keys())
-                # the first option in the second partition options in segments
-                first_key = sec_keys[0]
-                # if 'TP' is a key in segments[primary][first_key] it means that there is no third partitions in segments
-                if 'TP' in segments[primary][first_key]:
-                    # aggregate the ids
-                    ids = segments[primary][first_key][state]
-                    for i in range(1,len(sec_keys)):
-                        ids = np.concatenate((ids, segments[primary][sec_keys[i]][state]), axis=0)
-                    return ids
-
-                # there is a third partition in segments
-                tert_keys = list(segments[primary][first_key].keys())
-                # aggregate the ids
-                for i in range(len(sec_keys)):
-                    for j in range(len(tert_keys)):
-                        if i == j == 0:
-                            ids = segments[primary][sec_keys[i]][tert_keys[j]][state]
-                        else:
-                            ids = np.concatenate((ids, segments[primary][sec_keys[i]][tert_keys[j]][state]), axis=0)
-                return ids
-
-            # if a primary and a secondary partitions are chosen but not a tertiary
-            elif not tertiary:
-                # if 'TP' is a key in segments[primary][first_key] it means that there is no third partitions in segments
-                if 'TP' in segments[primary][secondary]:
-                    return segments[primary][secondary][state]
-
-                # there is a third partition in segments
-                tert_keys = list(segments[primary][secondary].keys())
-                # the first option in the third partition options in segments
-                first_key = tert_keys[0]
-                # aggregate the ids
-                ids = segments[primary][secondary][first_key][state]
-                for i in range(1, len(tert_keys)):
-                    ids = np.concatenate((ids, segments[primary][secondary][tert_keys[i]][state]), axis=0)
-                return ids
-            # if three partitions are chosen
-            else:
-                ids = segments[primary][secondary][tertiary][state]
-                return ids
 
     def frame_visualization_no_bb(self, data, image):
         if image is not None:

@@ -50,12 +50,15 @@ def calculating():
         return render_template('Not_empty.html')
     global exp
     # calculate the intermediate results for all the videos then combine them
-    exp = manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
-    if exp is None:
-        return "No logs to compare"
-    if exp == 'TypeError':
-        return render_template('Bad_format.html')
-    return render_template('message.html')
+    exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
+   
+    if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
+        link = 'None'
+    else:
+        link = "/Report_Viewer?use_cached_report=true"
+
+    results_text = results_text.split('\n')
+    return render_template('message.html', link=link, text=results_text)
 
 @server.route('/add_config', methods=['GET', 'POST'])
 def new_task_func():
