@@ -81,6 +81,7 @@ export class StatisticsToolService implements OnInit {
     this.templates = [];
     this.currentTemplate = new TemplateInfo();
     this.templateNameOptions = [];
+    this.selectedTamplate = 0;
     
     let url = '/get_all_templates' 
     this.httpClient.post<{'content':IContent,'name':string}[]>

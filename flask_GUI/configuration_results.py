@@ -1,5 +1,4 @@
 import os
-import threading
 from enum import Enum
 from classes_and_utils.GUI_utils import *
 from flask_GUI.dash_apps.results_table import Results_table
@@ -32,26 +31,17 @@ class ConfigurationResults:
 
     def __init__(self):
         self.items_dict = dict()
-        self.lock = threading.Lock()
 
     def insert_to_dictionary(self,key,value,ref_dir):
-        self.lock.acquire()
-        try:
-            self.items_dict[key] = value,ref_dir
-        finally:
-            self.lock.release()
+        self.items_dict[key] = value,ref_dir
 
     def get_from_dictionary(self,key):
-        self.lock.acquire()
-        try:
-            if key in self.items_dict.keys():
-                v = self.items_dict[key]
-                return v
-            else:
-                return None
-        finally:
-            self.lock.release()
-
+        if key in self.items_dict.keys():
+            v = self.items_dict[key]
+            return v
+        else:
+            return None
+        
     '''
         Loads the configurations according to the request and store it in the dictionary.
         Each entry in the dictionary is a root-key - the base directory in the file system.
@@ -71,7 +61,7 @@ class ConfigurationResults:
         
         main_pkl_type = self.get_pkl_type(request,True)
         ref_pkl_type  = self.get_pkl_type(request,False)
-        ref_dir,pkl_ref_path = self.get_ref_dir (request)
+        ref_dir,pkl_ref_path = self.get_ref_info (request)
         
         if main_pkl_type == PklType.PKL_FILE_PATH:
             return self.load_configurations_in_directory(request.values[ConfigurationResults.MAIN_REPORT_FILE_PATH],ref_dir,pkl_ref_path,server)
@@ -87,7 +77,6 @@ class ConfigurationResults:
             main_pkl_path = self.save_pkl_file(request.files[ConfigurationResults.MAIN_REPORT_CHOOSEFILE],True)
             conf.main_pkl = load_object(main_pkl_path)
             if ref_pkl_type == PklType.PKL_OBJECT:
-                #ref_pkl_path = self.save_pkl_file(request.files[ConfigurationResults.REF_REPORT_CHOOSE_FILE],False)
                 conf.ref_pkl = load_object(pkl_ref_path)
             if ref_pkl_type == PklType.PKL_FILE_PATH:
                 if basename in ref_pkl_files.keys():
@@ -102,7 +91,7 @@ class ConfigurationResults:
         else:
             return None,None
 
-    def get_ref_dir(self,request):
+    def get_ref_info(self,request):
         pkl_ref_path = ''
         ref_pkl_type  = self.get_pkl_type(request,False)
         ref_dir = ''
@@ -202,7 +191,7 @@ class ConfigurationResults:
             return v[sub_key]
         return None
     
-    def get_config_info(self,root_key):
+    def get_config_root_key_info(self,root_key):
         v = self.get_from_dictionary(root_key)
         if v == None:
             return None,None,None

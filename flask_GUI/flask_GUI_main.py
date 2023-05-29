@@ -55,6 +55,7 @@ def calculating():
         return "No logs to compare"
     if exp == 'TypeError':
         return render_template('Bad_format.html')
+    
     return render_template('message.html')
 
 @server.route('/add_config', methods=['GET', 'POST'])
@@ -79,7 +80,7 @@ def show_config():
 def Report_Viewer():
     current_root_key = configuration_results.get_key_from_request(request,True)
     current_ref_dir = configuration_results.get_key_from_request(request,False)
-    root_key,sub_keys,ref_dir = configuration_results.get_config_info(current_root_key)
+    root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
     if root_key == current_root_key and ref_dir == current_ref_dir:
         return render_template('index.html',key=root_key + "~" + sub_keys + "~" + ref_dir)    
 

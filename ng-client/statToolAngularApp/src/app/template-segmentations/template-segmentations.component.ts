@@ -184,4 +184,12 @@ export class TemplateSegmentationsComponent implements OnInit {
         return 'disableLocalDataStore';
       }
     }
+
+    getSelectedKeyTooltip(){
+      return this.statService.subKeys[this.statService.selectedSubKey].value;
+    }
+
+    getSelectedTemplateTooltip(){
+      return this.statService.templateNameOptions[this.statService.selectedTamplate].value;
+    }
  }
