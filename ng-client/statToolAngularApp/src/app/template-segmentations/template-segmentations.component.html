@@ -25,6 +25,7 @@
                 <ng-container *ngIf="!isFireFox()">
                     <div style="width:10%;padding-top:2px;margin-right: 5px;">
                         <select 
+                            [title]="getSelectedKeyTooltip()"
                             [(ngModel)]="statService.selectedSubKey"
                             style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
                             (change)="onSubKeySelected($event)"
@@ -38,6 +39,7 @@
                 <ng-container *ngIf="isFireFox()">
                     <div style="width:10%;padding-top:2px;margin-right: 15px;">
                         <select 
+                            [title]="getSelectedKeyTooltip()"
                             [(ngModel)]="statService.selectedSubKey"
                             style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
                             (change)="onSubKeySelected($event)"
@@ -52,6 +54,7 @@
                 <div class="pipe"></div>
                 <div style="width:10%;padding-top:2px;margin-left: 3px;">
                     <select 
+                        [title]="getSelectedTemplateTooltip()"
                         [(ngModel)]="statService.selectedTamplate"
                         style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
                         (change)="onTemplateSelected($event)"
@@ -61,23 +64,6 @@
                                 >{{t.value}}</option>
                     </select>
                 </div>
-                <ng-container *ngIf="isNewTemplateMode">
-                    <div style="width:10%;padding-top: 2px;margin-left: 4px;">
-                        <input *ngIf="!isFireFox()"
-                            type="text" 
-                            placeholder="Template Name"
-                            [(ngModel)]="templateNameCreated"
-                            style="height:27px;width:100%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;"
-                            >
-                        <input *ngIf="isFireFox()"
-                            type="text" 
-                            placeholder="Template Name"
-                            [(ngModel)]="templateNameCreated"
-                            style="height:30px;width:100%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;margin-left: 11px;"
-                        >
-
-                    </div>
-                </ng-container>
 
                 <ng-container *ngIf="!isFireFox()">
                     <div class="save-icon" style="margin-left: 12px;margin-top: -1px;">

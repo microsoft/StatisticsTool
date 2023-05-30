@@ -43,6 +43,7 @@ def load_object(filename):
     :param filename: the path from which the function loads the pickle file
     :return: the loaded file
     """
+    ret_exp = None
     ## Load  pickle
     with open(filename, 'rb') as input:
         ret_exp = pickle.load(input)
@@ -281,244 +282,125 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict
     return exp, user_text, folder_name, report_file_name
 
 
-class UpdateListManager():
-    def __init__(self) -> None:
-        self.per_video_example_hash = {}
-        self.exp_in_UpdateList = None #Pointer to the experiment that was choosen: main exp or ref exp
-        self.state = None #State that was choised: 'TP'/ 'FP'/ 'FN'
-        self.show_unique = None #Boolean that says if the user choose unique value
-        self.comp_index = -999 # Index of comparison exp TODO: need to change it - this is very implicitly
-        self.saved_list = None 
-        self.saved_sheldon = ''
+def unpack_stats_request(request):
+    """
+    Accepts requests for /stats route from multiple pages and returns the partition names that were selected and a save Boolean
+    :param request: request from either Reporter_page.html or table.html
+    :return: partition names that were selected and a save Boolean
+    """
+    unique = request.form.get('unique')
+    if request.form.get('partition0'):
+        # request to show statistics from Reporter_page.html
+        primary = request.form.get('partition0') if request.form.get('partition0') != 'N/A' else None
+        secondary = request.form.get('partition1') if (
+                request.form.get('partition1') != 'N/A' and primary is not None) else None
+        tertiary = request.form.get('partition2') if (
+                request.form.get('partition2') != 'N/A' and secondary is not None) else None
+        save = False
+    # elif 'stats_pivot' in request.referrer: ##Temp to parse requests from new dash pivot table
+    #     request_inputs = request.json['inputs']
+    #     segmentaion_cat_2_axis = {segmentation_category:curr_input['id']  for curr_input in request_inputs\
+    #                              for segmentation_category in curr_input['value']}
+    #     if len(segmentaion_cat_2_axis)>3:
+    #         assert "Currently can't treatmore than 3 segmentations"
+    #     segmentations = list(segmentaion_cat_2_axis.keys())
+    #     primary   = segmentations[0] if len(segmentations) >=1 else None
+    #     secondary = segmentations[1] if len(segmentations) >=2 else None
+    #     tertiary  = segmentations[2] if len(segmentations) >=3 else None
+    #     save = True
+    else:
+        # request to save the statistics from table.html
+        primary = request.args.get('primary') if request.args.get('primary') != 'None' else None
+        secondary = request.args.get('secondary') if (
+                request.args.get('secondary') != 'None' and primary is not None) else None
+        tertiary = request.args.get('tertiary') if (
+                request.args.get('tertiary') != 'None' and secondary is not None) else None
+        save = True
+    return primary, secondary, tertiary, save, unique
 
 
-    def unpack_list_request(self, request, main_exp, comp_exp):
-        """
-        Accepts a request to /update_list route and the masks boolean dictionary and return parameters for
-        extraction or saving of an example list
+def save_tables(statistics_df, state_df, save, primary, secondary, tertiary, save_stats_dir):
+    """
 
-        :param request: request from either table.html (link writen in macros.html) or in examples_list.html
-        :param masks: exp.masks (exp is an instance of ParallelExperiment)
-        :return: parameters that allow the extraction or saving of an example list
-        """
-        # total, primary, secondary, tertiary = None, None, None, None
-        # mytup is a tuple that varies in size and include the names of the selected
-        # row, sub row, column (partitions) if exists, and the name of the state chosen from the table.
-        # mytup is a match to a key in the statistics/state dictionary
-        # if "tup" in request.args: # Related to old table. Need to get rid of it after starting use new pivot table
-        #     mytup = request.args.get('tup')
-        #     mytup = eval(mytup)
-        #     # the statistics chosen for example list (such as TP/FP/FN)
-        #     state = mytup[-1]
-        #     cell_key = "*".join(mytup[:-1])+"*" ##TODO:get it directly from the cell!!
-        # request came from examples_list.html to save the example list
-        # mytup = [] #request.args.get('mytup')
-        
-        # This is the parsing from new pivot table
-        self.cell_name = request.args.get('cell_name') if "cell_name" in request.args else None
-        self.state = request.args.get('stat') if "stat" in request.args else None  #This is a string contain 'TP' / 'FP' / 'FN
-        
-        #self.comp_index = 0 if ('ref' in request.args and len(comp_exp)>0) else\
-        #                 -1
-        self.comp_index = 0 if comp_exp is not None else -1
-        self.exp_in_UpdateList = comp_exp if self.comp_index > -1 else main_exp
-        
-        # masks = exp.masks
-
-        self.show_unique = 'unique' in request.args
-        self.saved_sheldon = ''
-        # The options for possible partitions available 'time of day' 'vehicles'
-        # opt = [seg for seg in masks.keys() if seg != 'total_stats']
-        # a dictionary that will hold the "class" of partition and the choice, for example {'vehicle': 'bus'}
-        # cl_and_choice = {}
-        # if the length of mytup is only 1, it only holds the name of the state/statistics (no partitions)
-        # if len(mytup) == 1:
-        #     total = True
-        # else:
-        #     # when the length of mytup is larger than 1 the primary segmentation is 1st object in mytup
-        #     if len(mytup) > 1:
-        #         primary = mytup[0]
-        #         # checking which "class" of partition matches this " partition option"
-        #         # like matching which class does 'bus' match to in {'time of day', 'vehicles'}
-        #         for cl in opt:
-        #             if primary in masks[cl]['possible partitions']:
-        #                 cl_and_choice[cl] = primary
-        #     if len(mytup) > 2:
-        #         secondary = mytup[1]
-        #         for cl in opt:
-        #             if secondary in masks[cl]['possible partitions']:
-        #                 cl_and_choice[cl] = secondary
-        #     if len(mytup) > 3:
-        #         tertiary = mytup[2]
-        #         for cl in opt:
-        #             if tertiary in masks[cl]['possible partitions']:
-        #                 cl_and_choice[cl] = tertiary
-
-    def save_examples_list(self, arr_of_examples, cell_name, save_stats_dir, state):
-        """
-
-        :param arr_of_examples: nd array, an array of nd arrays of the form: (video_name, Index, frame)
-        :param save: Boolean, indicates whether to save the list of examples or not
-        :param save_stats_dir: folder to 'saved by user'
-        :param state: the state (TP/FP/FN) of the requested example
-        """
-        # saving the examples as a list of lists
-
-        list_of_examples = []
-        for i in range(len(arr_of_examples)):
-            list_of_examples.append(list(arr_of_examples[i, :]))
-        # adding the partitions to name of the file
-        save_dir = os.path.join(save_stats_dir, 'saved lists')
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        self.saved_list = os.path.join(save_dir, 'example_list_' + state)
-        self.saved_list += cell_name.replace("*","_")
-        self.saved_list += '.json'
-        save_json(self.saved_list, list_of_examples)
-
-    def create_collapsing_list(self, arr_of_examples):
-        """
-        :param arr_of_examples: nd array, an array of nd arrays of the form: (video_name, Index, frame)
-        :return:
-        """
-        # removing the .json for display
-        # for example in arr_of_examples:
-        #     example[0] = example[0].replace(".json", "")
-        if len(arr_of_examples) < 1:
-            return {}
-
-        # unique video names (image folder names) and an array with values corresponds to the index of certain video
-        video_names, v_idx_arr = np.unique(arr_of_examples[:, 0], return_inverse=True)
-        per_video_example_hash = {}
-        # getting the list in a hierarchy of the form:  1. video 2. frame 3. bouding box index
-        per_video_example_hash = dict.fromkeys(video_names)
-        for key in per_video_example_hash.keys():
-            per_video_example_hash[key] = {}
-        
-        start_index = -1
-        start_frame = -1
-        prev_frame = -999
-        prev_vid = ''
-        for ind, example in enumerate(arr_of_examples):
-            if example[1] - prev_frame > 1 or prev_vid != example[0]:
-                prev_vid = example[0]
-                start_index = example[1]
-                start_frame = example[2]
-                
-            prev_frame = example[1]
-            if start_frame not in per_video_example_hash[example[0]]:
-                start_index = example[1]
-                start_frame = example[2]
-                per_video_example_hash[example[0]][start_frame] = {}
-                (((per_video_example_hash[example[0]])[start_frame]))['frames']  = []
-
-            
-            (((per_video_example_hash[example[0]])[start_frame])['frames']).append(example)
-            ((per_video_example_hash[example[0]])[start_frame])['end_frame'] = example[3]
-
-        return per_video_example_hash
+    :param statistics_df: pandas dataframe of the partitioned statistics (e.g precision - recall) (multi index)
+    :param state_df: pandas dataframe of the partitioned states (e.g TP/FP/FN) (multi index)
+    :param save: Boolean, indicates whether or not to save the statistics
+    :param primary: #1 partition selected
+    :param secondary: #2 partition selected
+    :param tertiary: #3 partition selected
+    :param save_stats_dir: folder to which the data will be saved
+    :return: the path to which the data was saved
+    """
+    save_path = None
+    if save == True:
+        save_path = os.path.join(os.path.join(save_stats_dir, 'saved tables'), "segmented_statistics")
+        # adding the partitions to the name of the saved file
+        for name in [primary, secondary, tertiary]:
+            if name:
+                partition_name = "_" + name
+                save_path += partition_name
+        save_path += '.xlsx'
+        writer = pd.ExcelWriter(save_path, engine='xlsxwriter')
+        statistics_df.to_excel(writer, sheet_name='statistics', startcol=3)
+        state_df.to_excel(writer, sheet_name='state_count', startcol=3)
+        writer.save()
+    return save_path
 
 
+def stats_4_html(primary, secondary, tertiary, masks):
+    """
+    Accepts the partitions needed and returns their arrangement in a table as rows, columns etc.
 
+    :param primary: #1 partition selected
+    :param secondary: #2 partition selected
+    :param tertiary: #3 partition selected
+    :param masks: the exp.masks dictionary that contains the boolean masks for the partitions
+    :return: titles of the rows, sub-rows, column etc. of the statistical table to be shown to the user
+    """
+    wanted_seg = {}
+    # extract the partition options for each partition (example: for the partition "vehicles" the options could be 'car' and 'bus')
+    for partition in [primary, secondary, tertiary]:
+        if partition:
+            wanted_seg[partition] = masks[partition]['possible partitions']
+    # the number of partitions that was asked for by the user will determine the arrangement of the table
+    seg_num = len(wanted_seg)
+    columns, sub_rows, rows = [], [], []
+    # if there is one or more partitions the row's titles will be the 1st partition
+    if seg_num > 0:
+        rows += wanted_seg[primary]
+    # if there are two or more partitions the column's titles will be the second partition
+    if seg_num > 1:
+        columns += wanted_seg[secondary]
+    # if there are three partitions the sub rows will be the 3rd partition
+    if seg_num == 3:
+        sub_rows += wanted_seg[tertiary]
+    return columns, sub_rows, rows, wanted_seg, seg_num
 
-    def manage_list_request(self, request, main_exp, comp_exp):
-        """
-        Accepts a the requests to /update_list route and returns all the parameter needed to show and save the list of examples asked by the user
-        :param request: request from either table.html (link writen in macros.html) or in examples_list.html
-        :param exp: exp is an instance of ParallelExperiment
-        :return: all the parameter needed to show and save the list of examples asked by the user
-        """
-        # get the names of requested states and partitions, a save boolean and a dictionary of {partition_class: selected_option} (example {"vehicles":"bus"})
-        if not 'button_pressed' in request.args:
-            self.unpack_list_request(request, main_exp, comp_exp)
+def manage_stats_request(request, exp):
+    """
+    Manages all the procedures needed when a request is received by /stats route
+    :param request: request from either Reporter_page.html or table.html
+    :param exp: the ParallelExperiment instance
+    :return: all the parameters needed for displaying the statistics results on table.html
+    """
+    # unpack the values of the request from different pages
+    primary, secondary, tertiary, save, unique = unpack_stats_request(request)
+    # get the partitioned statistics
 
-        if 'sheldon' in request.args:
-            self.export_list_to_sheldon(self.per_video_example_hash, 
-                                        self.exp_in_UpdateList.sheldon_header_data, 
-                                        self.exp_in_UpdateList.save_stats_dir, 
-                                        self.cell_name,
-                                        self.state, 
-                                        self.show_unique, 
-                                        self.comp_index)
-            return
-        
-        if "save_list" in request.args:
-            self.save_examples_list(self.list_of_examples, self.cell_name, self.exp_in_UpdateList.save_stats_dir, self.state)
-            return
-
-        # extracting the example list for requested partitions and state
-        self.list_of_examples = self.exp_in_UpdateList.get_ids(self.cell_name, self.state, show_unique=self.show_unique)
-
-        # exp_in_UpdateList.state = state ## TODO: TEMP - move it to the right place
-        # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see
-
-        self.per_video_example_hash = self.create_collapsing_list(self.list_of_examples)
-
-
-    def export_list_to_sheldon(self, images_list, sheldon_header_data, output_dir, cell_name, states, is_unique, comp_index):
-        segmentation_list = cell_name.split("*") if cell_name !="*" else ['All']
-        sheldon_list = []
-        header = {}
-
-        #TODO: Move sheldon header to here
-        #Jump file header should be created only when exporting it (on UI)
-        new_sheldon_header = create_sheldon_list_header(\
-            sheldon_header_data[PRIMARY_LOG][LOGS_PATH],
-            sheldon_header_data[PRIMARY_LOG][LOG_FILE_NAME],
-            sheldon_header_data[SECONDARY_LOG][LOGS_PATH],
-            sheldon_header_data[SECONDARY_LOG][LOG_FILE_NAME],
-             '') 
-
-
-        header['header']=new_sheldon_header
-        header['header']['segmentation']= segmentation_list
-        if is_unique:
-            header['header']['segmentation'].append('unique')
-
-
-        sheldon_list.append(json.dumps(header))
-        for file in list(images_list.keys()):
-            for event_key, actual_event in images_list[file].items():
-                sheldon_link={}
-                sheldon_link['keys']={}
-                sheldon_link['keys']['type']='debug'
-                sheldon_link['message']={}
-                sheldon_link['message']['IsChecked']='False'
-
-                vid_name = actual_event['frames'][0][0].replace(".mp4","")
-                sheldon_link['message']['Video Location']=vid_name
-                sheldon_link['message']['Frame Number']= actual_event['frames'][0][2]
-                sheldon_link['message']['end_frame'] = actual_event['end_frame']
-
-                # sheldon_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid_name, header['header'][PRIMARY_LOG][LOGS_PATH])
-                # sheldon_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid_name, header['header'][SECONDARY_LOG][LOGS_PATH])
-
-                sheldon_list.append(json.dumps(sheldon_link))
-        
-        name = ''
-
-        # TODO: Need to check if output_dir  exists. If not, need to ask new directory from the user
-        assert(os.path.exists(output_dir))
-        
-        saved_file = output_dir + os.path.sep
-        if comp_index > -1:
-            saved_file = saved_file+'REF-'
-
-        saved_file = saved_file + '-'.join(segmentation_list) + "-"+states
-        if is_unique:
-            saved_file = saved_file+'-unique'
-        saved_file+='.json'
-
+   
+    statistics_df, state_df, statistics_dict, state_dict = exp.statistics_visualization(primary_segmentation=primary,
+                                                                                        secondary_segmentation=secondary,
+                                                                                        tertiary_segmentation=tertiary)
+    # if asked to save the stats save_tables will do that
+    # save_path = save_tables(statistics_df, state_df, save, primary, secondary, tertiary, exp.save_stats_dir)
+    save_path = '' # TODO: need to re-use it with new pivot table
+    # combined names and dictionaries of the statistics (e.g precision/recall) and states (e.g FP/FN/TP)
+    wanted_statistics_names = list(set([index[-1] for index in statistics_dict])) + ['TP', 'FP', 'FN']
+    statistics_dict.update(state_dict)
     
-        with open(saved_file, 'w') as f:
-            for event in sheldon_list:
-                f.write(event+'\n')
-            
-        self.saved_sheldon = saved_file
-
-
-
-
+    # get the values of the rows, columns etc. for the html table if those values exists
+    columns, sub_rows, rows, wanted_seg, seg_num = stats_4_html(primary, secondary, tertiary, exp.masks)
+    return statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path, unique
 
 def manage_image_request(request, main_exp, comp_exp):
     """

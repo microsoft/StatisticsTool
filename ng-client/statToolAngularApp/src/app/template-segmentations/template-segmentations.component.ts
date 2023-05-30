@@ -5,6 +5,9 @@ import {Location} from '@angular/common';
 import { Router } from '@angular/router';
 import { AppComponent } from '../app.component';
 import { Subscription } from 'rxjs';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { SaveTemplateDialogComponent } from '../save-template-dialog/save-template-dialog.component';
+
 
 @Component({
   selector: 'template-segmentations',
@@ -29,13 +32,9 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    /*let sub = this.statService.segmentationsFetched.subscribe(res => {
-      
-      sub.unsubscribe();
-    })*/
 
     this.subscribeSegmentsReady = this.statService.segmentationsFetched.subscribe(selectedSubKey => {
-      this.statService.addNewTemplate();
+      this.statService.addDefaultTemplate();
       this.statService.selectedSubKey = selectedSubKey;
       this.statService.reportSelected.next(true);
     })
@@ -58,13 +57,7 @@ export class TemplateSegmentationsComponent implements OnInit {
 
   onTemplateSelected(event:any){
     let tempalteId = event.target.value;
-    if (tempalteId == 0){ //new temmplate
-      this.isNewTemplateMode = true;
-      //this.statService.templates = [];
-      if (this.statService.templates.length == 0)
-        this.statService.addNewTemplate();
-      return;
-    }
+    
     this.isNewTemplateMode = false;
     this.templateNameCreated = '';
     let t = this.statService.templateNameOptions.find(x => x.key == +tempalteId);
@@ -104,10 +97,12 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   saveTemplate(){
+    this.statService.openSaveTemplateDialog();
+    /*return;
     if (this.isNewTemplateMode)
       this.statService.saveTemplate(true,this.templateNameCreated);
     else
-      this.statService.saveTemplate(false);
+      this.statService.saveTemplate(false);*/
   }
 
   slideUniqueChange(event:any){
@@ -154,40 +149,6 @@ export class TemplateSegmentationsComponent implements OnInit {
       return this.agentHas("Firefox") || this.agentHas("FxiOS") || this.agentHas("Focus");
     }
 
-    getHeight_deprecated(i:number):number{
-      if (this.statService.currentTemplate.SegmentationsClicked[i] == true){
-        let segments = this.statService.currentTemplate.Segmentations[i];
-        
-        let numRows = 1;
-        segments.rows.forEach(r => {
-          if (r != '') {
-            let values = this.statService.optionalSegmentations.get(r);
-            numRows = numRows*values!.length;
-          }
-        })
-        let lineHeight = 22;
-        let tableHeight = numRows * 8 * lineHeight;
-        //if (this.statService.calculateUnique == false)
-        //  tableHeight = numRows * 7 * 22; 
-
-        let totalHeight = 0;
-        const segmentRowHeight = 40;
-        const segmentsFilterRowHeight = 70;
-        const viewTitleHeight = 40;
-        if (segments.columns.length == 0)
-          totalHeight = tableHeight + segmentRowHeight + segmentsFilterRowHeight + viewTitleHeight;
-        else
-          totalHeight = tableHeight + (segments.columns.length * segmentRowHeight) + segmentsFilterRowHeight + viewTitleHeight;
-
-        const bufferHeight = 20;  
-        let height = (totalHeight + bufferHeight);
-        
-        return height;
-      }
-      else
-        return 0;
-    }
-
     getTitle(i:number){
       return this.statService.currentTemplate.Segmentations[i].name;
     }
@@ -203,6 +164,7 @@ export class TemplateSegmentationsComponent implements OnInit {
     }
 
     getDisabledClass(){
+      return '';
       if (this.isNewTemplateMode){
         if (this.templateNameCreated.length == 0)
           return 'disabledImg';
@@ -221,5 +183,13 @@ export class TemplateSegmentationsComponent implements OnInit {
       } else {
         return 'disableLocalDataStore';
       }
+    }
+
+    getSelectedKeyTooltip(){
+      return this.statService.subKeys[this.statService.selectedSubKey].value;
+    }
+
+    getSelectedTemplateTooltip(){
+      return this.statService.templateNameOptions[this.statService.selectedTamplate].value;
     }
  }
