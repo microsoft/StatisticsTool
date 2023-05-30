@@ -1,5 +1,7 @@
 import numpy as np
 
+from utils.sheldon_export_header import create_sheldon_list_header
+
 class UpdateListManager():
     def __init__(self) -> None:
         self.per_video_example_hash = {}
@@ -20,19 +22,7 @@ class UpdateListManager():
         :param masks: exp.masks (exp is an instance of ParallelExperiment)
         :return: parameters that allow the extraction or saving of an example list
         """
-        # total, primary, secondary, tertiary = None, None, None, None
-        # mytup is a tuple that varies in size and include the names of the selected
-        # row, sub row, column (partitions) if exists, and the name of the state chosen from the table.
-        # mytup is a match to a key in the statistics/state dictionary
-        # if "tup" in request.args: # Related to old table. Need to get rid of it after starting use new pivot table
-        #     mytup = request.args.get('tup')
-        #     mytup = eval(mytup)
-        #     # the statistics chosen for example list (such as TP/FP/FN)
-        #     state = mytup[-1]
-        #     cell_key = "*".join(mytup[:-1])+"*" ##TODO:get it directly from the cell!!
-        # request came from examples_list.html to save the example list
-        # mytup = [] #request.args.get('mytup')
-        
+      
         # This is the parsing from new pivot table
         self.cell_name = request.args.get('cell_name') if "cell_name" in request.args else None
         self.state = request.args.get('stat') if "stat" in request.args else None  #This is a string contain 'TP' / 'FP' / 'FN
@@ -46,32 +36,7 @@ class UpdateListManager():
 
         self.show_unique = 'unique' in request.args
         self.saved_sheldon = ''
-        # The options for possible partitions available 'time of day' 'vehicles'
-        # opt = [seg for seg in masks.keys() if seg != 'total_stats']
-        # a dictionary that will hold the "class" of partition and the choice, for example {'vehicle': 'bus'}
-        # cl_and_choice = {}
-        # if the length of mytup is only 1, it only holds the name of the state/statistics (no partitions)
-        # if len(mytup) == 1:
-        #     total = True
-        # else:
-        #     # when the length of mytup is larger than 1 the primary segmentation is 1st object in mytup
-        #     if len(mytup) > 1:
-        #         primary = mytup[0]
-        #         # checking which "class" of partition matches this " partition option"
-        #         # like matching which class does 'bus' match to in {'time of day', 'vehicles'}
-        #         for cl in opt:
-        #             if primary in masks[cl]['possible partitions']:
-        #                 cl_and_choice[cl] = primary
-        #     if len(mytup) > 2:
-        #         secondary = mytup[1]
-        #         for cl in opt:
-        #             if secondary in masks[cl]['possible partitions']:
-        #                 cl_and_choice[cl] = secondary
-        #     if len(mytup) > 3:
-        #         tertiary = mytup[2]
-        #         for cl in opt:
-        #             if tertiary in masks[cl]['possible partitions']:
-        #                 cl_and_choice[cl] = tertiary
+      
 
     def save_examples_list(self, arr_of_examples, cell_name, save_stats_dir, state):
         """
@@ -166,7 +131,7 @@ class UpdateListManager():
             return
 
         # extracting the example list for requested partitions and state
-        self.list_of_examples = self.exp_in_UpdateList.get_ids_new(self.cell_name, self.state, show_unique=self.show_unique)
+        self.list_of_examples = self.exp_in_UpdateList.get_ids(self.cell_name, self.state, show_unique=self.show_unique)
 
         # exp_in_UpdateList.state = state ## TODO: TEMP - move it to the right place
         # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see
@@ -234,3 +199,5 @@ class UpdateListManager():
                 f.write(event+'\n')
             
         self.saved_sheldon = saved_file
+
+
