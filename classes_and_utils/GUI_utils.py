@@ -23,7 +23,7 @@ OVERLAP_FUNCTIONS = 'overlap_functions'
 PARTITIONING_FUNCTIONS = 'partitioning_functions'
 STATISTICS_FUNCTIONS = 'statistics_functions'
 TRANSFORM_FUNCTIONS = 'transform_functions'
-SAVED_BY_USER = "saved by user"
+
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
 
@@ -46,13 +46,7 @@ def load_object(filename):
     ## Load  pickle
     with open(filename, 'rb') as input:
         ret_exp = pickle.load(input)
-    
-    ## If output dir (save_stats_dir) does not exist - create it
-    if not os.path.exists(ret_exp.save_stats_dir):
-        pkl_output_dir = os.path.split(filename)[0]
-        ret_exp.save_stats_dir = os.path.join(pkl_output_dir, SAVED_BY_USER)
-        if not os.path.exists(ret_exp.save_stats_dir): # Verify if the new directory exists
-            os.makedirs(ret_exp.save_stats_dir)
+
 
     ## Update values
     ret_exp.main_ref_dict=None
@@ -60,61 +54,28 @@ def load_object(filename):
 
     return ret_exp
 
-def serial_num(file_name):
-    """
-    This function acts as a key value in python's built in function sort(),
-    its goal is to make the sort() function sort according to the serial number of the files which use the form:
-    **name**_serialnumber.file_type
-    :param file_name: the file's name
-    :return: serial_number as an int
-    """
-
-    # remove file extension from file name (name.png >>> name)
-    file_name = os.path.splitext(file_name)[0]
-    # find all indices of dot occurrences in the file name
-    dot_occurrences = [i.start() for i in re.finditer("\.", file_name)]
-    assert len(
-        dot_occurrences) == 0, "file name: " + file_name + " file names are not allowed to have dots in them please change that"
-    # find all indices of under line occurrences in the file name
-    line_occurrences = [i.start() for i in re.finditer("_", file_name)]
-    #assert len(line_occurrences) > 0, "file name: " + file_name + " does not include a serial of the form _xxxx"
-    # the serial number should be after the last underline
-    if len(line_occurrences) == 0:
-        return int(file_name)
-    last_line_occ = line_occurrences[-1]
-    return int(file_name[last_line_occ + 1:])
-
-
 def folder_func(output_dir, config_file_name):
     """
     Checks that the output directory folder is empty and then opens the appropriate sub folders
     :param output_dir: path to output directory
     :return: Boolean, indicates whether the folder was empty or not
     """
-    save_stats_dir = ''
     try:
         output_dir=os.path.join(output_dir,f'{os.path.splitext(config_file_name)[0]}-{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}')
         
         if os.path.exists(output_dir):
-            return False, save_stats_dir
+            return False, output_dir
         
         os.makedirs(output_dir)
         # opening the needed sub-folders
         single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
         os.makedirs(single_video_hash_saving_dir)
-        save_stats_dir = os.path.join(output_dir, SAVED_BY_USER)
         
-        os.makedirs(save_stats_dir)
         # opening the needed sub-sub-folders
-        save_images_dir = os.path.join(save_stats_dir, "saved images")
-        save_lists_dir = os.path.join(save_stats_dir, "saved lists")
-        save_tables_dir = os.path.join(save_stats_dir, "saved tables")
-        os.makedirs(save_images_dir)
-        os.makedirs(save_lists_dir)
-        os.makedirs(save_tables_dir)
-        return True, save_stats_dir
+       
+        return True, output_dir
     except FileNotFoundError:
-        return "FileNotFound", save_stats_dir
+        return "FileNotFound", output_dir
 
 '''
     directoryName -  one of the followings:
@@ -125,6 +86,14 @@ def folder_func(output_dir, config_file_name):
     5. statistics_functions
     6. transform_functions
 '''
+
+
+def get_userdefined_function(func_type,func_name):
+    module_name = 'user_defined_functions' + "." + func_type + "." + func_name
+    module = __import__(module_name, fromlist='user_defined_functions')
+    reading_func = getattr(module,func_name)
+    return reading_func
+
 def get_users_defined_functions(directoryName):
     user_defined_functions = []
     path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), 'user_defined_functions', directoryName,'*'))
@@ -219,15 +188,12 @@ def unpack_calc_request(request, current_file_directory):
     GT_dir = request.form.get('Ground Truth Directory')
     output_dir = request.form.get('Reporter Output Directory')
     
-    
-    single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
-    
     # finding the wanted configuration file location and loading it
     config_path = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'),
                                                  os.path.join('configs', config_file_name))
     config_file = loading_json(config_path)
     config_dict = config_file[0]
-    return config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, config_dict
+    return config_file_name, prd_dir, GT_dir, output_dir, config_dict
 
 
 def unpack_calc_config_dict(config_dict):
@@ -276,13 +242,8 @@ def unpack_calc_config_dict(config_dict):
         transform_func = get_userdefined_function(TRANSFORM_FUNCTIONS,transform_func_name)
     return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate
 
-def get_userdefined_function(func_type,func_name):
-    module_name = 'user_defined_functions' + "." + func_type + "." + func_name
-    module = __import__(module_name, fromlist='user_defined_functions')
-    reading_func = getattr(module,func_name)
-    return reading_func
 
-def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir = None):
+def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict, gt_dir = None):
     """
 
     :param config_file_name: the name of the selected configurations file
@@ -299,9 +260,9 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
     reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = unpack_calc_config_dict(
         config_dict)
     # extract matching lists of absolute paths for the predictions, labels and images
-  
+    intermediate_dir = os.path.join(save_stats_dir,"intermediate resutls")
     # extract all the intermediate results from the raw prediction-label files
-    compared_videos, sheldon_header_data, user_text = compare_predictions_directory(pred_dir=prd_dir, output_dir = single_video_hash_saving_dir, overlap_function=overlap_func, 
+    compared_videos, sheldon_header_data, user_text = compare_predictions_directory(pred_dir=prd_dir, output_dir = save_stats_dir, overlap_function=overlap_func, 
                                                                  readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
@@ -312,107 +273,12 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
                                 compared_videos=compared_videos, segmentation_funcs=partitioning_func,
                                 threshold=threshold, image_width=image_width, image_height=image_height,
                                 sheldon_header_data=sheldon_header_data, evaluation_function = evaluation_func, 
-                                overlap_function = overlap_func, save_stats_dir = save_stats_dir)
+                                overlap_function = overlap_func)
     
     folder_name = save_stats_dir
-    report_file_name = 'report_' + config_file_name.replace('.json', '') + '.pkl'
+    report_file_name = config_file_name.replace('.json', '') + '.pkl'
     save_object(exp, os.path.join(folder_name, report_file_name))
     return exp, user_text, folder_name, report_file_name
-
-
-def unpack_stats_request(request):
-    """
-    Accepts requests for /stats route from multiple pages and returns the partition names that were selected and a save Boolean
-    :param request: request from either Reporter_page.html or table.html
-    :return: partition names that were selected and a save Boolean
-    """
-    unique = request.form.get('unique')
-    if request.form.get('partition0'):
-        # request to show statistics from Reporter_page.html
-        primary = request.form.get('partition0') if request.form.get('partition0') != 'N/A' else None
-        secondary = request.form.get('partition1') if (
-                request.form.get('partition1') != 'N/A' and primary is not None) else None
-        tertiary = request.form.get('partition2') if (
-                request.form.get('partition2') != 'N/A' and secondary is not None) else None
-        save = False
-    # elif 'stats_pivot' in request.referrer: ##Temp to parse requests from new dash pivot table
-    #     request_inputs = request.json['inputs']
-    #     segmentaion_cat_2_axis = {segmentation_category:curr_input['id']  for curr_input in request_inputs\
-    #                              for segmentation_category in curr_input['value']}
-    #     if len(segmentaion_cat_2_axis)>3:
-    #         assert "Currently can't treatmore than 3 segmentations"
-    #     segmentations = list(segmentaion_cat_2_axis.keys())
-    #     primary   = segmentations[0] if len(segmentations) >=1 else None
-    #     secondary = segmentations[1] if len(segmentations) >=2 else None
-    #     tertiary  = segmentations[2] if len(segmentations) >=3 else None
-    #     save = True
-    else:
-        # request to save the statistics from table.html
-        primary = request.args.get('primary') if request.args.get('primary') != 'None' else None
-        secondary = request.args.get('secondary') if (
-                request.args.get('secondary') != 'None' and primary is not None) else None
-        tertiary = request.args.get('tertiary') if (
-                request.args.get('tertiary') != 'None' and secondary is not None) else None
-        save = True
-    return primary, secondary, tertiary, save, unique
-
-
-def save_tables(statistics_df, state_df, save, primary, secondary, tertiary, save_stats_dir):
-    """
-
-    :param statistics_df: pandas dataframe of the partitioned statistics (e.g precision - recall) (multi index)
-    :param state_df: pandas dataframe of the partitioned states (e.g TP/FP/FN) (multi index)
-    :param save: Boolean, indicates whether or not to save the statistics
-    :param primary: #1 partition selected
-    :param secondary: #2 partition selected
-    :param tertiary: #3 partition selected
-    :param save_stats_dir: folder to which the data will be saved
-    :return: the path to which the data was saved
-    """
-    save_path = None
-    if save == True:
-        save_path = os.path.join(os.path.join(save_stats_dir, 'saved tables'), "segmented_statistics")
-        # adding the partitions to the name of the saved file
-        for name in [primary, secondary, tertiary]:
-            if name:
-                partition_name = "_" + name
-                save_path += partition_name
-        save_path += '.xlsx'
-        writer = pd.ExcelWriter(save_path, engine='xlsxwriter')
-        statistics_df.to_excel(writer, sheet_name='statistics', startcol=3)
-        state_df.to_excel(writer, sheet_name='state_count', startcol=3)
-        writer.save()
-    return save_path
-
-
-def stats_4_html(primary, secondary, tertiary, masks):
-    """
-    Accepts the partitions needed and returns their arrangement in a table as rows, columns etc.
-
-    :param primary: #1 partition selected
-    :param secondary: #2 partition selected
-    :param tertiary: #3 partition selected
-    :param masks: the exp.masks dictionary that contains the boolean masks for the partitions
-    :return: titles of the rows, sub-rows, column etc. of the statistical table to be shown to the user
-    """
-    wanted_seg = {}
-    # extract the partition options for each partition (example: for the partition "vehicles" the options could be 'car' and 'bus')
-    for partition in [primary, secondary, tertiary]:
-        if partition:
-            wanted_seg[partition] = masks[partition]['possible partitions']
-    # the number of partitions that was asked for by the user will determine the arrangement of the table
-    seg_num = len(wanted_seg)
-    columns, sub_rows, rows = [], [], []
-    # if there is one or more partitions the row's titles will be the 1st partition
-    if seg_num > 0:
-        rows += wanted_seg[primary]
-    # if there are two or more partitions the column's titles will be the second partition
-    if seg_num > 1:
-        columns += wanted_seg[secondary]
-    # if there are three partitions the sub rows will be the 3rd partition
-    if seg_num == 3:
-        sub_rows += wanted_seg[tertiary]
-    return columns, sub_rows, rows, wanted_seg, seg_num
 
 
 class UpdateListManager():
@@ -695,6 +561,8 @@ def manage_image_request(request, main_exp, comp_exp):
     if not is_name_available: # request came from examples_image.html to show an save an example image (an keep showing it)
         name = last_example_id[0].replace('.json', '') + str(last_example_id[1]) + '.png'
         save_path = os.path.join(os.path.join(exp.save_stats_dir, 'saved images'), name)
+        if os.path.exists(save_path) == False:
+            os.makedirs(save_path)
         fig.savefig(save_path)
     return data, save_path
 

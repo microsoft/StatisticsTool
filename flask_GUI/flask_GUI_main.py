@@ -39,7 +39,7 @@ def new_report_func():
 @server.route('/calculating_page', methods=['GET', 'POST'])
 def calculating():
     # extract the user specified directories and names
-    config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, config_dict = unpack_calc_request(request, current_file_directory)
+    config_file_name, prd_dir, GT_dir, output_dir, config_dict = unpack_calc_request(request, current_file_directory)
     
     # making sure save_stats_dir is empty and opening the appropriate folders
     empty, save_stats_dir = folder_func(output_dir, os.path.basename(config_file_name))
@@ -50,7 +50,7 @@ def calculating():
         return render_template('Not_empty.html')
     global exp
     # calculate the intermediate results for all the videos then combine them
-    exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
+    exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
    
     if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
         link = 'None'
