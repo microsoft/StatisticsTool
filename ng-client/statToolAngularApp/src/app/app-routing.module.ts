@@ -3,7 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { AppComponent } from './app.component';
 
 const routes: Routes = [
-  { path: 'update_list',component:AppComponent  } 
+  { path: 'update_list',component:AppComponent },
+  {path: 'index.html',component:AppComponent  } 
 
 ];
 

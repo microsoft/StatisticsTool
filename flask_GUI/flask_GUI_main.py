@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
 
 from classes_and_utils.GUI_utils import *
 from classes_and_utils.TemplatesFilesHelper import *
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
 #endregion
 
 #region - init Flask server 
@@ -41,8 +41,9 @@ def new_report_func():
 def calculating():
     # extract the user specified directories and names
     config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, config_dict = unpack_calc_request(request, current_file_directory)
+    
     # making sure save_stats_dir is empty and opening the appropriate folders
-    empty, save_stats_dir = folder_func(output_dir)
+    empty, save_stats_dir = folder_func(output_dir, os.path.basename(config_file_name))
     if empty == 'FileNotFound':
         return render_template('Not_found.html')
     # if the output folder is not empty a message is sent
@@ -50,13 +51,15 @@ def calculating():
         return render_template('Not_empty.html')
     global exp
     # calculate the intermediate results for all the videos then combine them
-    exp = manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
-    if exp is None:
-        return "No logs to compare"
-    if exp == 'TypeError':
-        return render_template('Bad_format.html')
-    
-    return render_template('message.html')
+    exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
+   
+    if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
+        link = 'None'
+    else:
+        link = "/Report_Viewer?use_cached_report=true"
+
+    results_text = results_text.split('\n')
+    return render_template('message.html', link=link, text=results_text)
 
 @server.route('/add_config', methods=['GET', 'POST'])
 def new_task_func():
@@ -82,13 +85,13 @@ def Report_Viewer():
     current_ref_dir = configuration_results.get_key_from_request(request,False)
     root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
     if root_key == current_root_key and ref_dir == current_ref_dir:
-        return render_template('index.html',key=root_key + "~" + sub_keys + "~" + ref_dir)    
+        return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
 
     root_key,sub_keys,ref_dir = configuration_results.save_configuration(request,server)
-    return render_template('index.html',key=root_key + "~" + sub_keys + "~" + ref_dir)
+    return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')
 
 @server.route('/static/<file_name>')
-def send_file(file_name):
+def send_static_file(file_name):
     mime = mimetypes.guess_type(file_name, strict=False)[0]
     sp= os.path.splitext(file_name)
     if len(sp)>1 and sp[1]=='.js':
