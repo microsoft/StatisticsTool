@@ -1,6 +1,7 @@
 #region - inports
 import mimetypes
 import os, sys
+from classes_and_utils.UpdateListManager import UpdateListManager
 
 from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
@@ -80,8 +81,14 @@ def show_config():
 #region - Functions for REPORT VIEW
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
-    root_key,sub_keys = configuration_results.save_configuration(request,server)
-    return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}')
+    current_root_key = configuration_results.get_key_from_request(request,True)
+    current_ref_dir = configuration_results.get_key_from_request(request,False)
+    root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
+    if root_key == current_root_key and ref_dir == current_ref_dir:
+        return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
+
+    root_key,sub_keys,ref_dir = configuration_results.save_configuration(request,server)
+    return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')
 
 @server.route('/static/<file_name>')
 def send_static_file(file_name):
@@ -144,8 +151,9 @@ def get_report_table():
 def get_all_templates():
     root_key = request.json['key']
     sub_key = request.json['sub_key']
+    ref_dir = request.json['ref_dir']
     helper = TemplatesFilesHelper()
-    content = helper.get_all_templates_content(root_key,sub_key)
+    content = helper.get_all_templates_content(root_key,sub_key,ref_dir)
     return jsonify(content)
 
 @server.route('/get_template_content', methods=['POST'])
@@ -162,23 +170,16 @@ def save_template():
     content = data['content']
     key = data['key']
     sub_key = data['sub_key']
+    ref_dir = data['ref_dir']
     helper = TemplatesFilesHelper()
-    result = helper.save_template(name,content,key,sub_key)
+    result = helper.save_template(name,content,key,sub_key,ref_dir)
     return jsonify(result)
     
 #########################################################
 
-global LM
-LM = None
-def get_list_manager():
-    global LM
-    if LM == None:
-        LM = UpdateListManager()
-    return LM
-
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    listManager = get_list_manager()
+    listManager = UpdateListManager()
     root_key = request.args.get('key')
     sub_key  = request.args.get('sub_key')
     config_item = configuration_results.get_config_item(root_key,sub_key)

@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { connect, Subject } from 'rxjs';
+import { SaveTemplateDialogComponent } from '../save-template-dialog/save-template-dialog.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 
 export class SegmentationItem {
@@ -68,8 +70,9 @@ export class StatisticsToolService implements OnInit {
 
   currentConfigKey = '';
   subKeys:{'key':number,'value':string}[] = [];
+  ref_dir = '';
 
-  constructor(private httpClient:HttpClient) { 
+  constructor(private httpClient:HttpClient,private modalService: NgbModal) { 
     
   }
   
@@ -78,12 +81,14 @@ export class StatisticsToolService implements OnInit {
     this.templates = [];
     this.currentTemplate = new TemplateInfo();
     this.templateNameOptions = [];
+    this.selectedTamplate = 0;
     
     let url = '/get_all_templates' 
     this.httpClient.post<{'content':IContent,'name':string}[]>
       (url,{
         'key':this.currentConfigKey,
-        'sub_key': this.getSelectedSubKey()
+        'sub_key': this.getSelectedSubKey(),
+        'ref_dir':this.ref_dir
       })
       .subscribe(res => {
         this.processTemplates(res);
@@ -134,7 +139,7 @@ export class StatisticsToolService implements OnInit {
 
   updateTemplateNames(){
     this.templateNameOptions = [];
-    this.templateNameOptions.push({'key':0,'value':'--- New Template ---'});
+    this.templateNameOptions.push({'key':0,'value':'Default (Total)'});
     for(let i = 0;i< this.templates.length;i++){
       if (this.templates[i].name != '')
         this.templateNameOptions.push({'key':(i+1),'value':this.templates[i].name});
@@ -157,6 +162,8 @@ export class StatisticsToolService implements OnInit {
 
   onTemplateSelected(templateName:string){
     this.currentTemplate = this.templates.find(x => x.name == templateName)!;
+    let find = this.templateNameOptions.find(x => x.value == templateName);
+    this.selectedTamplate = find!.key;
   }
 
   getTemplateSegments(templateName:string,index:number,isRows:boolean){
@@ -180,12 +187,12 @@ export class StatisticsToolService implements OnInit {
     //this.currentTemplate.wasChanged = true;
   }
   
-  addNewTemplate(){
+  addDefaultTemplate(){
     let t = this.templates.find(x => x.name == "")
     if (t == undefined){
       t = new TemplateInfo();
     }
-    t.name = "";
+    t.name = "Default (Total)";
     let s = new SegmentationItem();
     s.name = 'Total';
     s.columns = [];
@@ -194,7 +201,6 @@ export class StatisticsToolService implements OnInit {
     t.SegmentationsClicked.push(true);
     this.templates.push(t);
     this.currentTemplate = t;
-    console.log('addNewTemplate',JSON.stringify(this.templates),'current:',JSON.stringify(this.currentTemplate));
   }
 
   addSegmentations(){
@@ -203,7 +209,34 @@ export class StatisticsToolService implements OnInit {
     this.currentTemplate.SegmentationsClicked.push(true);
   }
 
-  saveTemplate(isNewTemplate:boolean,newTemplateName:string = ''){
+  saveTemplate(templateName:string){
+
+    let req = new SaveTemplateRequest();
+    req.name = templateName;
+    this.currentTemplate.Segmentations.forEach(s => {
+      let seg = new SaveTemplate_SegmentItem();
+      seg.columns = s.columns.join(",");
+      seg.rows = s.rows.join(",");
+      seg.name = s.name;
+      req.segmentations.push(seg);
+    })
+    
+    this.httpClient.post<any>('/save_template',{
+      'name':templateName,
+      'content':JSON.stringify(req),
+      'key': this.currentConfigKey,
+      'sub_key': this.getSelectedSubKey(),
+      'ref_dir':this.ref_dir
+    }).subscribe(res => {
+
+      this.templates = [];
+      this.processTemplates(res);
+      this.updateTemplateNames();       
+      this.onTemplateSelected(templateName);
+    })
+  }
+
+  saveTemplate_old(isNewTemplate:boolean,newTemplateName:string = ''){
     let template_name = this.currentTemplate.name;
     if (isNewTemplate)
       template_name = newTemplateName;
@@ -280,5 +313,18 @@ export class StatisticsToolService implements OnInit {
 
   getSelectedSubKey(){
     return this.subKeys[this.selectedSubKey].value;
+  }
+
+  openSaveTemplateDialog(){
+    this.modalService.open(SaveTemplateDialogComponent,{ centered: true }).result.then(res => {
+    });    
+  }
+
+  closeSaveTempalteDialog(){
+    this.modalService.dismissAll();
+  }
+
+  getSelectedTemplateName(){
+    return this.templateNameOptions[this.selectedTamplate].value;
   }
 }

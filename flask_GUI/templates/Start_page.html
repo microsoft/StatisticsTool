@@ -91,8 +91,8 @@ input[type=button]:hover {
               <td><b>Report File</b></td>
               <td>
                 <select class="form-select" aria-label="Default select example" id="report_file_type" onchange="onFileTypeChanged('report_file_type')">
-                  <option selected value="1">Choose PKL file</option>
-                  <option value="2">Enter PKL file path</option>
+                  <option value="1">Choose PKL file</option>
+                  <option selected value="2">Enter PKL file path</option>
                 </select>
               </td>
               <td>
@@ -109,8 +109,8 @@ input[type=button]:hover {
               <td><b>Reference Report</b></td>
               <td>
                 <select class="form-select" aria-label="Default select example"  id="reference_file_type" onchange="onFileTypeChanged('reference_file_type')">
-                  <option selected value="1">Choose PKL file</option>
-                  <option value="2">Enter PKL file path</option>
+                  <option value="1">Choose PKL file</option>
+                  <option selected value="2">Enter PKL file path</option>
                 </select>
               </td>
               <td>
@@ -141,8 +141,8 @@ input[type=button]:hover {
 
     <script>
       window.onload = function  () {      
-        $('#report_file_path').hide();
-        $('#reference_file_path').hide();
+        $('#choose_report_file').hide();
+        $('#choose_reference_file').hide();
       } 
       
       $(document).ready(function(e){

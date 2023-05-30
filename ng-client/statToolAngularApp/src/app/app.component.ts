@@ -88,12 +88,16 @@ export class AppComponent implements OnInit {
         if (event instanceof NavigationStart){
           let sub_keys = new URLSearchParams(window.location.search).get('sub_keys')?.toString();
           let key = new URLSearchParams(window.location.search).get('root_key')?.toString();
+          let ref_dir = new URLSearchParams(window.location.search).get('ref_dir')?.toString();
           if (sub_keys == undefined)
             sub_keys = ''
           if (key == undefined)
             key = ''
+          if (ref_dir == undefined)
+            ref_dir = '' 
           this.statToolSvc.currentConfigKey = key;
           this.statToolSvc.loadSubKeys(sub_keys);
+          this.statToolSvc.ref_dir = ref_dir;
           console.log('loadSubKeys','loaded')
           this.statToolSvc.init();
           console.log('root key:',key);  
