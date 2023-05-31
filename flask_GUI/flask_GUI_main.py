@@ -2,6 +2,7 @@
 import mimetypes
 import traceback
 import os, sys
+import re
 from classes_and_utils.UpdateListManager import UpdateListManager
 
 from flask_GUI.configuration_results import ConfigurationResults
@@ -228,8 +229,9 @@ def show_image():
     if config_item is None:
         return None
     
-    detection_text_list, data, save_path = manage_image_request(request, config_item.main_pkl, config_item.ref_pkl)
-    return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list)
+    detection_text_list, data, save_path = manage_image_request(request, config_item.main_pkl, config_item.ref_pkl, root_key, sub_key)
+    full_path = re.escape(request.full_path)+"&save_image"
+    return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list, request = full_path)
 
 #endregion - Functions for REPORT CREATION
 

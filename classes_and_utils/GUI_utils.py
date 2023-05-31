@@ -405,7 +405,7 @@ def manage_stats_request(request, exp):
     columns, sub_rows, rows, wanted_seg, seg_num = stats_4_html(primary, secondary, tertiary, exp.masks)
     return statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path, unique
 
-def manage_image_request(request, main_exp, comp_exp):
+def manage_image_request(request, main_exp, comp_exp, root_key, sub_key):
     """
     Accepts the requests to /show_im route and returns an encoded image and the path where the image was saved (if it was saved)
 
@@ -413,7 +413,10 @@ def manage_image_request(request, main_exp, comp_exp):
     :param exp: exp is an instance of ParallelExperiment
     :return: an encoded image and the path where the image was saved (if it was saved)
     """
+    
     save_path = False
+    data = None
+    image = None
     # request came from examples_list.html to show an example image
     exp = main_exp
     comp_ind=eval(request.args.get('comp_index'))
@@ -439,14 +442,21 @@ def manage_image_request(request, main_exp, comp_exp):
     pred_bbs, label_bbs, selected_pred_index, selected_label_index = exp.get_detection_bounding_boxes(bb_index)
     detection_text_list = exp.get_detection_properties_text_list(bb_index)
     out_figure = draw_detection_on_figure(image, pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
-    data = base64.b64encode(out_figure.getbuffer()).decode("ascii")
+    if out_figure is not None:
+        data = base64.b64encode(out_figure.getbuffer()).decode("ascii")
     
-    if not is_name_available: # request came from examples_image.html to show an save an example image (an keep showing it)
-        name = example_id[0].replace('.json', '') + str(example_id[1]) + '.png'
-        save_path = os.path.join(os.path.join(, 'saved images'), name)
+    if out_figure and 'save_image' in request.args:
+        name = example_id[0].replace('.json', '')
+        name = name.replace(':','')
+        if name.startswith('/'):
+            name = name[1:]
+        save_path = os.path.join(os.path.join(root_key, sub_key, 'saved images'), name)
+        save_path = os.path.normpath(save_path)
         if os.path.exists(save_path) == False:
             os.makedirs(save_path)
-        data.savefig(save_path)
+        save_file = os.path.join(save_path,  str(example_id[1]) + '.png')
+        with open(save_file, "wb") as outfile:
+            outfile.write(out_figure.getbuffer())
         
     return detection_text_list, data, save_path
 

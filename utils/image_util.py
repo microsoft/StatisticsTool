@@ -61,7 +61,7 @@ def draw_detection_on_figure(image_in, prd_bbs, label_bbs, selected_pred = -1, s
         thikness =  1
         if index == selected_pred:
             thikness = 3
-        draw_rect_on_image(image, bb_x_coordinate, bb_y_coordinate, bb_width, bb_height, (0, 0, 255), thikness)
+        draw_rect_on_image(image, bb_x_coordinate, bb_y_coordinate, bb_width, bb_height, (255, 0, 0), thikness)
     for index, bb in enumerate(label_bbs):
         (bb_x_coordinate, bb_y_coordinate, bb_width, bb_height) = bb
         thikness =  1
@@ -69,13 +69,7 @@ def draw_detection_on_figure(image_in, prd_bbs, label_bbs, selected_pred = -1, s
             thikness = 3
         draw_rect_on_image(image, bb_x_coordinate, bb_y_coordinate, bb_width, bb_height, (0, 255, 0), thikness)
         
-    fig = plt.figure()
-    plt.imshow(image)
-    red_patch = mpatches.Patch(color=(0, 0, 1), label='prediction')
-    green_patch = mpatches.Patch(color=(0, 1, 0), label='GT')
-    plt.legend(ncol=2, loc='lower left', fontsize='small', handles=[red_patch, green_patch], bbox_to_anchor=(0, 1))
-
-    output = BytesIO()
-    fig.savefig(output, format="png")
+    _, buffer = cv2.imencode(".png", image)
+    output = BytesIO(buffer)
     
     return output

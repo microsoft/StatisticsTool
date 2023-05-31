@@ -171,16 +171,17 @@ class ParallelExperiment:
         
         all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==bb_obj['frame_id']) & (self.comp_data['video']==bb_obj['video']))]
 
-        matched.append([bb_obj['x'], bb_obj['y'], bb_obj['width'], bb_obj['height']])
+        if 'x' in bb_obj and bb_obj['x'] is not None:  
+            matched.append([bb_obj['x'], bb_obj['y'], bb_obj['width'], bb_obj['height']])
         pred_index = -1
         label_index = -1
         for ind in all_frmae_obj.index:
             obj=all_frmae_obj.loc[ind]
-            if not math.isnan(obj['x_gt']):
+            if 'x_gt' in obj and not math.isnan(obj['x_gt']):
                 label_bbs.append([obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']])
                 if ind == detection_index:
                     label_index = len(label_bbs)-1
-            if not math.isnan(obj['x']):
+            if 'x' in obj  and not math.isnan(obj['x']):
                 prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
                 if ind == detection_index:
                     pred_index = len(prd_bbs) -1            
