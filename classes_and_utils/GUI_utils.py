@@ -1,6 +1,9 @@
+import base64
 from datetime import datetime
 import sys, os
 from glob import glob
+
+from utils.image_util import draw_detection_on_figure, read_frame_from_video
 
 sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
 from app_config.constants import constants
@@ -23,6 +26,8 @@ OVERLAP_FUNCTIONS = 'overlap_functions'
 PARTITIONING_FUNCTIONS = 'partitioning_functions'
 STATISTICS_FUNCTIONS = 'statistics_functions'
 TRANSFORM_FUNCTIONS = 'transform_functions'
+
+INTERMEDIATE_RESULTS_DIR="intermediate resutls"
 
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
@@ -68,11 +73,6 @@ def folder_func(output_dir, config_file_name):
             return False, output_dir
         
         os.makedirs(output_dir)
-        # opening the needed sub-folders
-        single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
-        os.makedirs(single_video_hash_saving_dir)
-        
-        # opening the needed sub-sub-folders
        
         return True, output_dir
     except FileNotFoundError:
@@ -260,10 +260,13 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict
     # extract the functions specified in the configuration file
     reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = unpack_calc_config_dict(
         config_dict)
-    # extract matching lists of absolute paths for the predictions, labels and images
-    intermediate_dir = os.path.join(save_stats_dir,"intermediate resutls")
+    
+    intermediate_dir = os.path.join(save_stats_dir,INTERMEDIATE_RESULTS_DIR)
+    if not os.path.exists(intermediate_dir):
+        os.makedirs(intermediate_dir)
+        
     # extract all the intermediate results from the raw prediction-label files
-    compared_videos, sheldon_header_data, user_text = compare_predictions_directory(pred_dir=prd_dir, output_dir = save_stats_dir, overlap_function=overlap_func, 
+    compared_videos, sheldon_header_data, user_text = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
                                                                  readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
@@ -426,27 +429,26 @@ def manage_image_request(request, main_exp, comp_exp):
     if is_name_available:
         example_id = request.args.get('example_name')
         example_id = eval(example_id.replace(" ", ","))
-        
-        example_id[0] += ".json"
-        global last_example_id
-        last_example_id = example_id   
-    else: # request came from examples_image.html to show an save an example image (an keep showing it)
-        example_id = last_example_id
-    
+   
+    video, bb_index,frame_id,_ = example_id
     if local_path:
-        example_id[0] = local_path
-    else:
-        example_id[0] = ''
-
-    data, fig = exp.visualize(bb_id=last_example_id)
-
+        video = os.path.join(local_path,video)
+    
+    image = read_frame_from_video(video, frame_id)
+    
+    pred_bbs, label_bbs, selected_pred_index, selected_label_index = exp.get_detection_bounding_boxes(bb_index)
+    detection_text_list = exp.get_detection_properties_text_list(bb_index)
+    out_figure = draw_detection_on_figure(image, pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
+    data = base64.b64encode(out_figure.getbuffer()).decode("ascii")
+    
     if not is_name_available: # request came from examples_image.html to show an save an example image (an keep showing it)
-        name = last_example_id[0].replace('.json', '') + str(last_example_id[1]) + '.png'
-        save_path = os.path.join(os.path.join(exp.save_stats_dir, 'saved images'), name)
+        name = example_id[0].replace('.json', '') + str(example_id[1]) + '.png'
+        save_path = os.path.join(os.path.join(, 'saved images'), name)
         if os.path.exists(save_path) == False:
             os.makedirs(save_path)
-        fig.savefig(save_path)
-    return data, save_path
+        data.savefig(save_path)
+        
+    return detection_text_list, data, save_path
 
 
 def calc_unique_detections(partitions, exp, ref_exp, main_ref_dict, ref_main_dict):

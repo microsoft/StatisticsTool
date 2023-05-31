@@ -1,5 +1,6 @@
 #region - inports
 import mimetypes
+import traceback
 import os, sys
 from classes_and_utils.UpdateListManager import UpdateListManager
 
@@ -81,14 +82,21 @@ def show_config():
 #region - Functions for REPORT VIEW
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
-    current_root_key = configuration_results.get_key_from_request(request,True)
-    current_ref_dir = configuration_results.get_key_from_request(request,False)
-    root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
-    if root_key == current_root_key and ref_dir == current_ref_dir:
-        return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
+    try:
+        current_root_key = configuration_results.get_key_from_request(request,True)
+        current_ref_dir = configuration_results.get_key_from_request(request,False)
+        root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
+        if not (root_key == current_root_key and ref_dir == current_ref_dir):
+            root_key,sub_keys,ref_dir = configuration_results.save_configuration(request,server)
 
-    root_key,sub_keys,ref_dir = configuration_results.save_configuration(request,server)
-    return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')
+        return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')
+    except Exception as ex:
+        print (f"error: {ex}. Traceback: ")
+        for a in traceback.format_tb(ex.__traceback__): print(a)
+        print (f"exception message: {ex}.")
+
+        return f'Failed to load report from {current_root_key}'
+    
 
 @server.route('/static/<file_name>')
 def send_static_file(file_name):
@@ -219,9 +227,9 @@ def show_image():
     config_item = configuration_results.get_config_item(root_key,sub_key)
     if config_item is None:
         return None
-
-    data, save_path = manage_image_request(request, config_item.main_pkl, config_item.ref_pkl)
-    return render_template('example_image.html', data=data, save_path=save_path)
+    
+    detection_text_list, data, save_path = manage_image_request(request, config_item.main_pkl, config_item.ref_pkl)
+    return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list)
 
 #endregion - Functions for REPORT CREATION
 

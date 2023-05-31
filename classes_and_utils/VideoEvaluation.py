@@ -270,8 +270,13 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             print(f"Failed to compare log {pred}, continuing with next log...")
             print(ex)
             continue
-
-        output_file =  os.path.join(output_dir, video_name + '.json')
+        
+        video_folder = video_name
+        if video_folder.startswith('/'):
+            video_folder = video_folder[1:]
+        video_folder = video_folder.replace(':',os.path.sep)
+        output_file =  os.path.join(output_dir, video_folder + '.json')
+        output_file = os.path.normpath(output_file)
         V.save_data(output_file)
         output_files.append(output_file)
         succeded.append(pred)

@@ -177,7 +177,7 @@ class ConfigurationResults:
     def get_all_files_in_directory(self,dir):
         map = dict()
         for (dirpath, dirnames, filenames) in os.walk(dir):
-            for f in filenames:
+            for f in filenames+dirnames:
                 map[f] = os.path.join(dirpath,f)
         
         return map
