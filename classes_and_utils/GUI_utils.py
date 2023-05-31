@@ -1,6 +1,9 @@
+import base64
 from datetime import datetime
 import sys, os
 from glob import glob
+
+from utils.image_util import draw_detection_on_figure, read_frame_from_video
 
 sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
 from app_config.constants import constants
@@ -23,7 +26,9 @@ OVERLAP_FUNCTIONS = 'overlap_functions'
 PARTITIONING_FUNCTIONS = 'partitioning_functions'
 STATISTICS_FUNCTIONS = 'statistics_functions'
 TRANSFORM_FUNCTIONS = 'transform_functions'
-SAVED_BY_USER = "saved by user"
+
+INTERMEDIATE_RESULTS_DIR="intermediate resutls"
+
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
 
@@ -47,13 +52,7 @@ def load_object(filename):
     ## Load  pickle
     with open(filename, 'rb') as input:
         ret_exp = pickle.load(input)
-    
-    ## If output dir (save_stats_dir) does not exist - create it
-    if not os.path.exists(ret_exp.save_stats_dir):
-        pkl_output_dir = os.path.split(filename)[0]
-        ret_exp.save_stats_dir = os.path.join(pkl_output_dir, SAVED_BY_USER)
-        if not os.path.exists(ret_exp.save_stats_dir): # Verify if the new directory exists
-            os.makedirs(ret_exp.save_stats_dir)
+
 
     ## Update values
     ret_exp.main_ref_dict=None
@@ -61,61 +60,23 @@ def load_object(filename):
 
     return ret_exp
 
-def serial_num(file_name):
-    """
-    This function acts as a key value in python's built in function sort(),
-    its goal is to make the sort() function sort according to the serial number of the files which use the form:
-    **name**_serialnumber.file_type
-    :param file_name: the file's name
-    :return: serial_number as an int
-    """
-
-    # remove file extension from file name (name.png >>> name)
-    file_name = os.path.splitext(file_name)[0]
-    # find all indices of dot occurrences in the file name
-    dot_occurrences = [i.start() for i in re.finditer("\.", file_name)]
-    assert len(
-        dot_occurrences) == 0, "file name: " + file_name + " file names are not allowed to have dots in them please change that"
-    # find all indices of under line occurrences in the file name
-    line_occurrences = [i.start() for i in re.finditer("_", file_name)]
-    #assert len(line_occurrences) > 0, "file name: " + file_name + " does not include a serial of the form _xxxx"
-    # the serial number should be after the last underline
-    if len(line_occurrences) == 0:
-        return int(file_name)
-    last_line_occ = line_occurrences[-1]
-    return int(file_name[last_line_occ + 1:])
-
-
 def folder_func(output_dir, config_file_name):
     """
     Checks that the output directory folder is empty and then opens the appropriate sub folders
     :param output_dir: path to output directory
     :return: Boolean, indicates whether the folder was empty or not
     """
-    save_stats_dir = ''
     try:
         output_dir=os.path.join(output_dir,f'{os.path.splitext(config_file_name)[0]}-{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}')
         
         if os.path.exists(output_dir):
-            return False, save_stats_dir
+            return False, output_dir
         
         os.makedirs(output_dir)
-        # opening the needed sub-folders
-        single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
-        os.makedirs(single_video_hash_saving_dir)
-        save_stats_dir = os.path.join(output_dir, SAVED_BY_USER)
-        
-        os.makedirs(save_stats_dir)
-        # opening the needed sub-sub-folders
-        save_images_dir = os.path.join(save_stats_dir, "saved images")
-        save_lists_dir = os.path.join(save_stats_dir, "saved lists")
-        save_tables_dir = os.path.join(save_stats_dir, "saved tables")
-        os.makedirs(save_images_dir)
-        os.makedirs(save_lists_dir)
-        os.makedirs(save_tables_dir)
-        return True, save_stats_dir
+       
+        return True, output_dir
     except FileNotFoundError:
-        return "FileNotFound", save_stats_dir
+        return "FileNotFound", output_dir
 
 '''
     directoryName -  one of the followings:
@@ -126,6 +87,14 @@ def folder_func(output_dir, config_file_name):
     5. statistics_functions
     6. transform_functions
 '''
+
+
+def get_userdefined_function(func_type,func_name):
+    module_name = 'user_defined_functions' + "." + func_type + "." + func_name
+    module = __import__(module_name, fromlist='user_defined_functions')
+    reading_func = getattr(module,func_name)
+    return reading_func
+
 def get_users_defined_functions(directoryName):
     user_defined_functions = []
     path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), 'user_defined_functions', directoryName,'*'))
@@ -220,15 +189,12 @@ def unpack_calc_request(request, current_file_directory):
     GT_dir = request.form.get('Ground Truth Directory')
     output_dir = request.form.get('Reporter Output Directory')
     
-    
-    single_video_hash_saving_dir = os.path.join(output_dir, "intermediate results")
-    
     # finding the wanted configuration file location and loading it
     config_path = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'),
                                                  os.path.join('configs', config_file_name))
     config_file = loading_json(config_path)
     config_dict = config_file[0]
-    return config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, config_dict
+    return config_file_name, prd_dir, GT_dir, output_dir, config_dict
 
 
 def unpack_calc_config_dict(config_dict):
@@ -277,13 +243,8 @@ def unpack_calc_config_dict(config_dict):
         transform_func = get_userdefined_function(TRANSFORM_FUNCTIONS,transform_func_name)
     return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate
 
-def get_userdefined_function(func_type,func_name):
-    module_name = 'user_defined_functions' + "." + func_type + "." + func_name
-    module = __import__(module_name, fromlist='user_defined_functions')
-    reading_func = getattr(module,func_name)
-    return reading_func
 
-def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir = None):
+def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict, gt_dir = None):
     """
 
     :param config_file_name: the name of the selected configurations file
@@ -299,10 +260,13 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
     # extract the functions specified in the configuration file
     reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = unpack_calc_config_dict(
         config_dict)
-    # extract matching lists of absolute paths for the predictions, labels and images
-  
+    
+    intermediate_dir = os.path.join(save_stats_dir,INTERMEDIATE_RESULTS_DIR)
+    if not os.path.exists(intermediate_dir):
+        os.makedirs(intermediate_dir)
+        
     # extract all the intermediate results from the raw prediction-label files
-    compared_videos, sheldon_header_data, user_text = compare_predictions_directory(pred_dir=prd_dir, output_dir = single_video_hash_saving_dir, overlap_function=overlap_func, 
+    compared_videos, sheldon_header_data, user_text = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
                                                                  readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
@@ -313,10 +277,10 @@ def manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_di
                                 compared_videos=compared_videos, segmentation_funcs=partitioning_func,
                                 threshold=threshold, image_width=image_width, image_height=image_height,
                                 sheldon_header_data=sheldon_header_data, evaluation_function = evaluation_func, 
-                                overlap_function = overlap_func, save_stats_dir = save_stats_dir)
+                                overlap_function = overlap_func)
     
     folder_name = save_stats_dir
-    report_file_name = 'report_' + config_file_name.replace('.json', '') + '.pkl'
+    report_file_name = config_file_name.replace('.json', '') + '.pkl'
     save_object(exp, os.path.join(folder_name, report_file_name))
     return exp, user_text, folder_name, report_file_name
 
@@ -441,7 +405,7 @@ def manage_stats_request(request, exp):
     columns, sub_rows, rows, wanted_seg, seg_num = stats_4_html(primary, secondary, tertiary, exp.masks)
     return statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path, unique
 
-def manage_image_request(request, main_exp, comp_exp):
+def manage_image_request(request, main_exp, comp_exp, root_key, sub_key):
     """
     Accepts the requests to /show_im route and returns an encoded image and the path where the image was saved (if it was saved)
 
@@ -449,7 +413,10 @@ def manage_image_request(request, main_exp, comp_exp):
     :param exp: exp is an instance of ParallelExperiment
     :return: an encoded image and the path where the image was saved (if it was saved)
     """
+    
     save_path = False
+    data = None
+    image = None
     # request came from examples_list.html to show an example image
     exp = main_exp
     comp_ind=eval(request.args.get('comp_index'))
@@ -465,25 +432,33 @@ def manage_image_request(request, main_exp, comp_exp):
     if is_name_available:
         example_id = request.args.get('example_name')
         example_id = eval(example_id.replace(" ", ","))
-        
-        example_id[0] += ".json"
-        global last_example_id
-        last_example_id = example_id   
-    else: # request came from examples_image.html to show an save an example image (an keep showing it)
-        example_id = last_example_id
-    
+   
+    video, bb_index,frame_id,_ = example_id
     if local_path:
-        example_id[0] = local_path
-    else:
-        example_id[0] = ''
-
-    data, fig = exp.visualize(bb_id=last_example_id)
-
-    if not is_name_available: # request came from examples_image.html to show an save an example image (an keep showing it)
-        name = last_example_id[0].replace('.json', '') + str(last_example_id[1]) + '.png'
-        save_path = os.path.join(os.path.join(exp.save_stats_dir, 'saved images'), name)
-        fig.savefig(save_path)
-    return data, save_path
+        video = os.path.join(local_path,video)
+    
+    image = read_frame_from_video(video, frame_id)
+    
+    pred_bbs, label_bbs, selected_pred_index, selected_label_index = exp.get_detection_bounding_boxes(bb_index)
+    detection_text_list = exp.get_detection_properties_text_list(bb_index)
+    out_figure = draw_detection_on_figure(image, pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
+    if out_figure is not None:
+        data = base64.b64encode(out_figure.getbuffer()).decode("ascii")
+    
+    if out_figure and 'save_image' in request.args:
+        name = example_id[0].replace('.json', '')
+        name = name.replace(':','')
+        if name.startswith('/'):
+            name = name[1:]
+        save_path = os.path.join(os.path.join(root_key, sub_key, 'saved images'), name)
+        save_path = os.path.normpath(save_path)
+        if os.path.exists(save_path) == False:
+            os.makedirs(save_path)
+        save_file = os.path.join(save_path,  str(example_id[1]) + '.png')
+        with open(save_file, "wb") as outfile:
+            outfile.write(out_figure.getbuffer())
+        
+    return detection_text_list, data, save_path
 
 
 def calc_unique_detections(partitions, exp, ref_exp, main_ref_dict, ref_main_dict):

@@ -38,7 +38,7 @@ class ConfigurationResults:
     def get_from_dictionary(self,key):
         if key in self.items_dict.keys():
             v = self.items_dict[key]
-            return v
+            return v[0]
         else:
             return None
         
@@ -108,7 +108,7 @@ class ConfigurationResults:
     def save_configuration(self,request,server):
         root_key,ref_dir = self.load_configurations(request,server)
         sub_keys = ''
-        v = self.get_from_dictionary(root_key)[0]
+        v = self.get_from_dictionary(root_key)
         for k in v.keys():
             sub_keys += k + ","    
             
@@ -177,13 +177,13 @@ class ConfigurationResults:
     def get_all_files_in_directory(self,dir):
         map = dict()
         for (dirpath, dirnames, filenames) in os.walk(dir):
-            for f in filenames:
+            for f in filenames+dirnames:
                 map[f] = os.path.join(dirpath,f)
         
         return map
 
     def get_config_item(self,root_key,sub_key):
-        v = self.get_from_dictionary(root_key)[0]
+        v = self.get_from_dictionary(root_key)
         if v == None:
             return None
         
