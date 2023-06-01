@@ -32,7 +32,7 @@ INTERMEDIATE_RESULTS_DIR="intermediate resutls"
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
 
-def save_object(obj, filename):
+def save_experiment(obj, filename):
     """
     Saves an object using pickle in a certain path
     :param obj: any python object (in this project we use it to save an instance of  class ParallelExperiment)
@@ -174,12 +174,11 @@ def unpack_new_config(request):
     return new_config, new_config_name
 
 
-def unpack_calc_request(request, current_file_directory):
+def unpack_calc_request(request):
     """
     Accepts request from new_report.html and unpack the parameters for a new report as variables
 
     :param request: request that was sent to '/calculating_page' route
-    :param current_file_directory: full path to flask_GUI_main.py
     :return: parameters needed for a new report
     """
     # receiving the wanted configuration file name from the form
@@ -189,20 +188,17 @@ def unpack_calc_request(request, current_file_directory):
     GT_dir = request.form.get('Ground Truth Directory')
     output_dir = request.form.get('Reporter Output Directory')
     
+    return config_file_name, prd_dir, GT_dir, output_dir
+
+
+def load_config(config_file_name, current_file_directory):
+    
     # finding the wanted configuration file location and loading it
     config_path = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'),
                                                  os.path.join('configs', config_file_name))
     config_file = loading_json(config_path)
     config_dict = config_file[0]
-    return config_file_name, prd_dir, GT_dir, output_dir, config_dict
-
-
-def unpack_calc_config_dict(config_dict):
-    """
-    Accepts a dictionary with configuration names and returns the correct functions and variables
-    :param config_dict: a dictionary with the selected configuration for the report
-    :return: the functions mentioned in the configuration dictionary
-    """
+    
     # extracting the configuration from the config file (which is a dictionary at this point)
     transform_func_name = 'None'
     if 'Transformation Function' in config_dict:
@@ -244,7 +240,7 @@ def unpack_calc_config_dict(config_dict):
     return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate
 
 
-def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict, gt_dir = None):
+def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, current_file_directory, gt_dir = None):
     """
 
     :param config_file_name: the name of the selected configurations file
@@ -258,8 +254,8 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = unpack_calc_config_dict(
-        config_dict)
+    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = load_config(
+        config_file_name, current_file_directory)
     
     intermediate_dir = os.path.join(save_stats_dir,INTERMEDIATE_RESULTS_DIR)
     if not os.path.exists(intermediate_dir):
@@ -281,7 +277,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict
     
     folder_name = save_stats_dir
     report_file_name = config_file_name.replace('.json', '') + '.pkl'
-    save_object(exp, os.path.join(folder_name, report_file_name))
+    save_experiment(exp, os.path.join(folder_name, report_file_name))
     return exp, user_text, folder_name, report_file_name
 
 
