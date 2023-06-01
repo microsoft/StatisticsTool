@@ -276,3 +276,16 @@ class ConfigurationResults:
         path = os.path.join(current_file_directory.replace(os.path.basename(__file__), 'static'),
                                     'reports','comp' if not is_main_pkl else "",pckl_file.filename)
         return path 
+    
+    def add_exp(self,exp,key,sub_key,ref_dir,server):
+        if key in self.items_dict.keys():
+            v = self.items_dict[key]
+            v[sub_key].main_pkl = exp
+            v[sub_key].table_result = Results_table(server)
+        else:
+            conf = ConfigurationItem()
+            conf.main_pkl = exp
+            conf.table_result = Results_table(server)
+            dic = dict()
+            dic[sub_key] = conf
+            self.items_dict[key] = dic,ref_dir
