@@ -51,14 +51,18 @@ def calculating():
     # if the output folder is not empty a message is sent
     elif not empty:
         return render_template('Not_empty.html')
-    global exp
+    
     # calculate the intermediate results for all the videos then combine them
     exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, current_file_directory, gt_dir=GT_dir)
    
+    key = folder_name.replace(' ','_')
+    sub_key = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
+    configuration_results.add_exp(exp,key,sub_key,'',server)
+
     if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
         link = 'None'
     else:
-        link = "/Report_Viewer?use_cached_report=true"
+        link = "/Report_Viewer?use_cached_report=true&key=" + key + "&sub_key=" + sub_key
 
     results_text = results_text.split('\n')
     return render_template('message.html', link=link, text=results_text)
@@ -83,14 +87,19 @@ def show_config():
 #region - Functions for REPORT VIEW
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
-    try:
-        current_root_key = configuration_results.get_key_from_request(request,True)
-        current_ref_dir = configuration_results.get_key_from_request(request,False)
-        root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
-        if not (root_key == current_root_key and ref_dir == current_ref_dir):
-            root_key,sub_keys,ref_dir = configuration_results.save_configuration(request,server)
 
-        return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')
+    try:
+        if request.args.get('use_cached_report') == 'true':
+            root_key = request.args.get('key')
+            sub_keys = request.args.get('sub_key')
+            ref_dir = ''
+            return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
+        else:
+            current_root_key = configuration_results.get_key_from_request(request,True)
+            current_ref_dir = configuration_results.get_key_from_request(request,False)
+            root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
+            if root_key == current_root_key and ref_dir == current_ref_dir:
+                return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
     except Exception as ex:
         print (f"error: {ex}. Traceback: ")
         for a in traceback.format_tb(ex.__traceback__): print(a)
