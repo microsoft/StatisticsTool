@@ -1,6 +1,8 @@
 #region - inports
 import mimetypes
+import traceback
 import os, sys
+import re
 from classes_and_utils.UpdateListManager import UpdateListManager
 
 from flask_GUI.configuration_results import ConfigurationResults
@@ -40,7 +42,7 @@ def new_report_func():
 @server.route('/calculating_page', methods=['GET', 'POST'])
 def calculating():
     # extract the user specified directories and names
-    config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, config_dict = unpack_calc_request(request, current_file_directory)
+    config_file_name, prd_dir, GT_dir, output_dir, config_dict = unpack_calc_request(request, current_file_directory)
     
     # making sure save_stats_dir is empty and opening the appropriate folders
     empty, save_stats_dir = folder_func(output_dir, os.path.basename(config_file_name))
@@ -51,7 +53,7 @@ def calculating():
         return render_template('Not_empty.html')
     
     # calculate the intermediate results for all the videos then combine them
-    exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
+    exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
    
     key = folder_name.replace(' ','_')
     sub_key = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
@@ -86,20 +88,25 @@ def show_config():
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
 
-    if request.args.get('use_cached_report') == 'true':
-        root_key = request.args.get('key')
-        sub_keys = request.args.get('sub_key')
-        ref_dir = ''
-        return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
+    try:
+        if request.args.get('use_cached_report') == 'true':
+            root_key = request.args.get('key')
+            sub_keys = request.args.get('sub_key')
+            ref_dir = ''
+            return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
+        else:
+            current_root_key = configuration_results.get_key_from_request(request,True)
+            current_ref_dir = configuration_results.get_key_from_request(request,False)
+            root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
+            if root_key == current_root_key and ref_dir == current_ref_dir:
+                return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
+    except Exception as ex:
+        print (f"error: {ex}. Traceback: ")
+        for a in traceback.format_tb(ex.__traceback__): print(a)
+        print (f"exception message: {ex}.")
 
-    current_root_key = configuration_results.get_key_from_request(request,True)
-    current_ref_dir = configuration_results.get_key_from_request(request,False)
-    root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
-    if root_key == current_root_key and ref_dir == current_ref_dir:
-        return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
-
-    root_key,sub_keys,ref_dir = configuration_results.save_configuration(request,server)
-    return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')
+        return f'Failed to load report from {current_root_key}'
+    
 
 @server.route('/static/<file_name>')
 def send_static_file(file_name):
@@ -230,9 +237,10 @@ def show_image():
     config_item = configuration_results.get_config_item(root_key,sub_key)
     if config_item is None:
         return None
-
-    data, save_path = manage_image_request(request, config_item.main_pkl, config_item.ref_pkl)
-    return render_template('example_image.html', data=data, save_path=save_path)
+    
+    detection_text_list, data, save_path = manage_image_request(request, config_item.main_pkl, config_item.ref_pkl, root_key, sub_key)
+    full_path = re.escape(request.full_path)+"&save_image"
+    return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list, request = full_path)
 
 #endregion - Functions for REPORT CREATION
 

@@ -1,14 +1,8 @@
+
 import math
-import pathlib
-import pandas as pd, os, base64, matplotlib, re
+import pandas as pd, os
 import numpy as np
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import cv2
-import matplotlib.patches as mpatches
-from io import BytesIO
-from classes_and_utils.utils import loading_json
-from classes_and_utils.file_storage_handler import path_exists, get_local_video_path
+
 
 # Irit's totos:
 # todo return number of processed files on GUI
@@ -18,81 +12,8 @@ from classes_and_utils.file_storage_handler import path_exists, get_local_video_
 # todo return number of prediction bounding boxes that didn't have a GT at all
 
 class ParallelExperiment:
-    """
-    A class that combines the intermediate results from individual videos into two large data structures,
-    one for predictions and one for GT, and returns segmented statistics,
-    segmented list of bounding boxes ids, example images with bounding box overlay from the entire experiment
-
-    ...
-
-    Attributes:
-    ----------
-        inputs:
-        ----------
-        files_dir : str
-            Path to intermediate results folder
-        statistic_funcs : function
-            A function that wraps all the statistics (e.g precision - recall) needed. example in statisticsFunctions.py
-        segmentation_funcs : function
-            A function that partition the data (e.g day/night, bus/car/person). example in partitioningFunctions.py
-      
-        non inputs (internal):
-        ----------
-        masks : dictionary
-            A dictionary that contains boolean arrays that indicates which bounding box belongs to which partitions and which TP/FP/FN
-            for example: {'total_stats': {'TP': TP_bolean_mask, ... }, 'size':{'possible partitions': ['large', 'small'], 'prediction masks': [prd_large_mask, prd_small_mask], 'labels masks': [label_large_mask, label_small_mask]}}
-        ID_storage : dictionary
-            A dictionary that holds the ids of bounding boxes in two arrays (id = (video name, index in original data structure, frame number))
-            the keys are 'prediction', 'labels' (one array for predictions and one for labels)
-        segmented_ID : dictionary
-            A dictionary that holds the id's for the segmented examples.
-            for one partition: id_dict = {'primary partition option 1':{'TP': array_of_TP_ids, 'FP': array_of_FP_ids ....}, 'primary partition option 2' : {'TP': array_of_TP_ids, 'FP': array_of_FP_ids ....}]
-            for two partitions : id dict = {'primary partition option 1':{'secondary partition option 1':{'TP': array_of_TP_ids, 'FP': array_of_FP_ids ....} ....} ....}
-            theres also an option for 3 partitions by the same logic
-        segmented_ID_new ***********
-        combined_prd_dataframe : pandas dataframe
-            Aggregation of all the videos prediction data in a single dataframe
-        combined_label_dataframe : pandas dataframe
-            Aggregation of all the videos label data in a single dataframe
-        state : str
-            indicates if the requested example is TP/FP/FN
-        label_or_prd : str
-            indicates if the requested example is a prediction or label
-
-    Methods
-    -------
-    OneFileProcedure(filename)
-        Loads a single video intermediate results, and aggregates two dataframes with bounding box data,
-        one for predictions and one for ground truth
-
-    combine_from_text(save_dataframe=False)
-        Iterates over all the single video results in self.files_dir and aggregate them
-        into two dataframes  one for predictions and one for ground truth
-
-    get_TP_FP_FN_masks(prd_state, label_state, threshold, from_file=False)
-        Aceepts the 'state' column of the preditions and labels aggregated dataframe and return boolean masks of TP/FP/FN
-
-    get_segmentation_masks(threshold, from_file=False, label_file_dir=None, prd_file_dir=None)
-        Calculates the bolean segmentation masks (self.masks) and the ids of prediction/labels (self.ID_storage)
-
-    statistics_visualization(primary_segmentation=None, secondary_segmentation=None, tertiary_segmentations=None , show_total_stats=None, save=False)
-        Return the segmented statistics and id_dict for GUI needs
-
-    get_ids(id_dict, state='TP', total=False, primary=None, secondary=None, tertiary=None)
-        Return the ids of examples that belongs to a certein partition (and sub partitions)
-
-    frame_visualization(frame_labels, frame_prds, wanted_bb, matched, image)
-        Returns an image of a frame and the bounding boxes of the frame are overlayed on top
-        (selected bounding box and its match has a thick frame)
-
-    is_label_or_prd()
-        Returns self.label_or_prd
-
-    visualize(bb_id, from_file=False, label_file_dir=None, prd_file_dir=None)
-        Accepts a bb_id and display its frame by calling self.frame_visualization()
-
-    """
-    def __init__(self, statistic_funcs, image_width, image_height,segmentation_funcs,sheldon_header_data, overlap_function, evaluation_function, save_stats_dir):
+ 
+    def __init__(self, statistic_funcs, image_width, image_height,segmentation_funcs,sheldon_header_data, overlap_function, evaluation_function):
         self.statistic_funcs = statistic_funcs
         self.evaluation_function = evaluation_function
         self.overlap_function = overlap_function
@@ -105,17 +26,9 @@ class ParallelExperiment:
         self.image_width = int(image_width)
         self.image_height = int(image_height)
         self.sheldon_header_data = sheldon_header_data
-        self.save_stats_dir = save_stats_dir
         
     
-
     def combine_from_text(self, compared_videos):
-        """
-        Agrregates the data from the intermediate results folder to two dataframes one for predictions and one for GT
-
-        :param save_dataframe: Boolean, whether to save the aggregated Dataframes, default: false
-
-        """
         self.comp_data = None
         datafrme_dict = []
         for file_name in compared_videos:
@@ -130,11 +43,7 @@ class ParallelExperiment:
     @staticmethod
     def get_TP_FP_FN_masks(comp_data, threshold):
         """
-
-        :param prd_state: state column (which containts either overlap float or FP ) of the aggregated predictions, dataframe self.combined_prd_dataframe
-        :param label_state: state column (which containts either overlap float or FN ) of the aggregated labels, dataframe self.combined_label_dataframe
         :param threshold: float , above this value an overlap is considered a hit (the prediction will be TP)
-        :param from_file: Boolean, indicates whether the dataframe was loaded from a saved file, default: false
         :return: Boolean masks of TP, FP, FN that indicates which row in the predictions dataframe is TP/FP
                  and which row in the labels dataframe is a FN (row = bounding box)
         """
@@ -151,14 +60,7 @@ class ParallelExperiment:
                
 
     def get_segmentation_masks(self, threshold):
-        """
-        Calculates the boolean segmentation masks (self.masks) and the ids of prediction/labels (self.ID_storage)
 
-        :param threshold: float , above this value an overlap is considered a hit (the prediction will be TP)
-        :param from_file: Boolean, indicates whether the dataframe should be loaded from a saved file, default: false
-        :param label_file_dir: The path in which to load the saved label file , default: None
-        :param prd_file_dir: The path in which to load the saved prediction file , default: None
-        """
         assert threshold >= 0, 'threshold should be a positive number'
        
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
@@ -248,152 +150,6 @@ class ParallelExperiment:
             }
         return statistics_dict
 
-
-    def statistics_visualization(self, primary_segmentation=None, secondary_segmentation=None, tertiary_segmentation=None):
-        """
-        Calculates the segmented statistics and the relevant examples (self.segmented_ID)
-
-        :param primary_segmentation: name of the #1 partition asked for in the GUI
-        :param secondary_segmentation: name of the #2 partition asked for in the GUI
-        :param tertiary_segmentation: name of the #3 partition asked for in the GUI
-        :return: The segmented statistic and segmented states as dictionaries and as dataframes (statistics_df, state_df, statistics_dict, state_dict)
-
-        """
-        # if the primary partition is None then the function returns the none segmented statistics (total statistics) and examples
-        if primary_segmentation is None:
-            # the amount of TP/FP/FN is the sum of True booleans in the appropriate place in self.masks
-            TP, FP, FN = sum(self.masks['total_stats']['TP']), sum(self.masks['total_stats']['FP']), sum(self.masks['total_stats']['FN'])
-            # calculating the statistics
-
-            if self.statistic_funcs.__name__=='sep_FN_seq_count':
-                statistics_dict = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*self.masks['total_stats']['FN']))
-            elif self.statistic_funcs.__name__=='sep_FP_seq_count':
-                statistics_dict = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*self.masks['total_stats']['FP']))
-            else:
-                statistics_dict = self.statistic_funcs(TP, FP, FN, len(self.comp_data['frame_id']))
-            state_dict = {'TP': TP, 'FP': FP, 'FN': FN, 'TOTAL_PRED': len(self.comp_data['frame_id'])}
-            # getting the ids of the TP/FP/FN examples
-            self.segmented_ID['total'] = {'TP': self.ID_storage["prediction"][self.masks['total_stats']['TP']], 'FP': self.ID_storage['prediction'][self.masks['total_stats']['FP']], 'FN': self.ID_storage['label'][self.masks['total_stats']['FN']]}
-            # turning the dictionaries into pandas dataframes
-            statistics_df = pd.DataFrame(statistics_dict, index=[0])
-            state_df = pd.DataFrame(state_dict, index=[0])
-
-        # if the primary partition is not None then segmented statistics and examples are calculated
-        else:
-            assert primary_segmentation in self.masks.keys(), 'Primary segmentation should be based on the keys of the self.masks dictionary'
-            assert secondary_segmentation in self.masks.keys() or secondary_segmentation is None, 'secondary segmentation should be based on the keys of the self.masks dictionary'
-            assert tertiary_segmentation in self.masks.keys() or tertiary_segmentation is None, 'tertiary_segmentation should be based on the keys of the self.masks dictionary'
-
-            # possible partitions for the primary partition (e.g if the primary example is 'size' then possible partitions will be 'big' and 'small')
-            prime_possible_partitions = self.masks[primary_segmentation]['possible partitions']
-            statistics_dict, state_dict = {}, {}
-            # if primary segmentation is not None and secondary segmentation is None then only one partition is asked for
-            if secondary_segmentation is None:
-                for i, seg_name in enumerate(prime_possible_partitions):
-                    # for a specific partition, the partitioned - TP mask is the element wise multiplication between the total TP mask and the partition mask (same for FP/FN)
-                    TP_mask = self.masks['total_stats']['TP'] & self.masks[primary_segmentation]['masks'][i]
-                    FP_mask = self.masks['total_stats']['FP'] & self.masks[primary_segmentation]['masks'][i]
-                    FN_mask = self.masks['total_stats']['FN'] & self.masks[primary_segmentation]['masks'][i]
-                    # the number of TP is the sum of the mask (same for FP/FN)
-                    num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
-                    total_preds = sum(self.masks[primary_segmentation]['masks'][i])
-                    # calculating the statistics
-                    if self.statistic_funcs.__name__=='sep_FN_seq_count':
-                        temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*FN_mask))
-                    elif self.statistic_funcs.__name__=='sep_FP_seq_count':
-                        temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*FN_mask))
-                    else:
-                        temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN, total_preds)
-                    temp_stat_d.update({'TOTAL_PREDS':total_preds})
-                    # updating the statistics and state dictionaries with tuple keys that allow multi-indexing in pandas
-                    statistics_dict.update({(seg_name, stat_name): temp_stat_d[stat_name] for stat_name in temp_stat_d})
-                    state_dict.update({(seg_name, name): stat for name, stat in zip(['TP', 'FP', 'FN'], [num_TP, num_FP, num_FN])})
-                    # update self.segmented_ID with the relevent example that belongs to the current partition - TP/FP/FN
-                    self.segmented_ID[seg_name] = {'TP': self.ID_storage["prediction"][TP_mask], 'FP': self.ID_storage['prediction'][FP_mask], 'FN': self.ID_storage['label'][FN_mask]}
-
-                # Constructing multi-index dataframes from the statistics/state dictionaries (this is what we save when the user ask to save the table in the GUI)
-                index = pd.MultiIndex.from_tuples([tup for tup in statistics_dict], names=['Primary', 'Statistics'])
-                statistics_df = pd.DataFrame(statistics_dict.values(), index=index)
-                statistics_df = statistics_df.unstack(level=1)
-                index2 = pd.MultiIndex.from_tuples([tup for tup in state_dict], names=['Primary', 'Statistics'])
-                state_df = pd.DataFrame(state_dict.values(), index=index2)
-
-            # if the primary and secondary partitions are asked for (not None) and the tertiary is None
-            elif secondary_segmentation and tertiary_segmentation is None:
-                # possible partitions for the secondary partition
-                sec_possible_partitions = self.masks[secondary_segmentation]['possible partitions']
-                for i, seg_name in enumerate(prime_possible_partitions):
-                    self.segmented_ID[seg_name] = {}
-                    for j, seg_name2 in enumerate(sec_possible_partitions):
-                        # for a specific sub partition, the partitioned - TP mask is the element wise multiplication between the total TP mask and the two partitions masks (same for FP/FN)
-                        TP_mask = self.masks['total_stats']['TP'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j]
-                        FP_mask = self.masks['total_stats']['FP'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j]
-                        FN_mask = self.masks['total_stats']['FN'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j]
-                        # the number of TP is the sum of the mask (same for FP/FN)
-                        num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
-                        total_preds = sum(self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j])
-                        # calculating the statistics
-                        if self.statistic_funcs.__name__=='sep_FN_seq_count':
-                            temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*FN_mask))
-                        elif self.statistic_funcs.__name__=='sep_FP_seq_count':
-                            temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*FN_mask))
-                        else:
-                            temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN, total_preds)
-                        temp_stat_d.update({'TOTAL_PREDS':total_preds})
-                        # updating the statistics and state dictionaries with tuple keys that allow multi-indexing in pandas
-                        statistics_dict.update({(seg_name, seg_name2, stat_name): temp_stat_d[stat_name] for stat_name in temp_stat_d})
-                        state_dict.update({(seg_name, seg_name2, name): stat for name, stat in zip(['TP', 'FP', 'FN'], [num_TP, num_FP, num_FN])})
-                        # update self.segmented_ID with the relevant example that belongs to the current sub partition - TP/FP/FN
-                        self.segmented_ID[seg_name][seg_name2] = {'TP': self.ID_storage["prediction"][TP_mask], 'FP': self.ID_storage['prediction'][FP_mask], 'FN': self.ID_storage['label'][FN_mask]}
-
-                # Constructing multi-index dataframes from the statistics/state dictionaries (this is what we save when the user ask to save the table in the GUI)
-                index = pd.MultiIndex.from_tuples([tup for tup in statistics_dict], names=['Primary', 'Secondary ', 'Statistics'])
-                statistics_df = pd.DataFrame(statistics_dict.values(), index=index)
-                statistics_df = statistics_df.unstack(level=1)
-                index2 = pd.MultiIndex.from_tuples([tup for tup in state_dict], names=['Primary', 'Secondary', 'Statistics'])
-                state_df = pd.DataFrame(state_dict.values(), index=index2)
-
-            # if all three partitions are asked for (not None)
-            else:
-                # possible partitions for the secondary and tertiary partition
-                sec_possible_partitions = self.masks[secondary_segmentation]['possible partitions']
-                tert_possible_partitions = self.masks[tertiary_segmentation]['possible partitions']
-                for i, seg_name in enumerate(prime_possible_partitions):
-                    self.segmented_ID[seg_name] = {}
-                    for j, seg_name2 in enumerate(sec_possible_partitions):
-                        self.segmented_ID[seg_name][seg_name2] = {}
-                        for k, seg_name3 in enumerate(tert_possible_partitions):
-                            # for a specific sub-sub partition, the partitioned - TP mask is the element wise multiplication between the total TP mask and the three partitions masks (same for FP/FN)
-                            TP_mask = self.masks['total_stats']['TP'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k]
-                            FP_mask = self.masks['total_stats']['FP'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k]
-                            FN_mask = self.masks['total_stats']['FN'] & self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k]
-                            # the number of TP is the sum of the mask (same for FP/FN)
-                            num_TP, num_FP, num_FN = np.sum(TP_mask), np.sum(FP_mask), np.sum(FN_mask)
-                            total_preds = sum(self.masks[primary_segmentation]['masks'][i] & self.masks[secondary_segmentation]['masks'][j] & self.masks[tertiary_segmentation]['masks'][k])
-                            # calculating the statistics
-                            if self.statistic_funcs.__name__=='sep_FN_seq_count':
-                               temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FN sequence count']*FN_mask))
-                            elif self.statistic_funcs.__name__=='sep_FP_seq_count':
-                                temp_stat_d = self.statistic_funcs(sum(self.comp_data['Separate FP sequence count']*FN_mask))
-                            else:
-                                temp_stat_d = self.statistic_funcs(num_TP, num_FP, num_FN, total_preds)
-                            temp_stat_d.update({'TOTAL_PREDS':total_preds})
-                            # updating the statistics and state dictionaries with tuple keys that allow multi-indexing in pandas
-                            statistics_dict.update({(seg_name, seg_name2, seg_name3, stat_name): temp_stat_d[stat_name] for stat_name in temp_stat_d})
-                            state_dict.update({(seg_name, seg_name2, seg_name3, name): stat for name, stat in zip(['TP', 'FP', 'FN'], [num_TP, num_FP, num_FN])})
-                            # update self.segmented_ID with the relevant example that belongs to the current sub-sub partition - TP/FP/FN
-                            self.segmented_ID[seg_name][seg_name2][seg_name3] = {'TP': self.ID_storage["prediction"][TP_mask], 'FP': self.ID_storage['prediction'][FP_mask], 'FN': self.ID_storage['label'][FN_mask]}
-
-                # Constructing multi-index dataframes from the statistics/state dictionaries (this is what we save when the user ask to save the table in the GUI)
-                index = pd.MultiIndex.from_tuples([tup for tup in statistics_dict], names=['Primary', 'Secondary', 'Tertiary', 'Statistics'])
-                statistics_df = pd.DataFrame(statistics_dict.values(), index=index)
-                statistics_df = statistics_df.unstack(level=1)
-                index2 = pd.MultiIndex.from_tuples([tup for tup in state_dict], names=['Primary', 'Secondary', 'Tertiary', 'Statistics'])
-                state_df = pd.DataFrame(state_dict.values(), index=index2)
-
-        return statistics_df, state_df, statistics_dict, state_dict
-
-
     def get_ids(self, cell_key, state, show_unique):
         if show_unique:
             ids = []
@@ -405,203 +161,51 @@ class ParallelExperiment:
             ids = self.segmented_ID_new[cell_key][state]
         return ids
 
-    def frame_visualization_no_bb(self, data, image):
-        if image is not None:
-            shape = np.shape(image)
-            orig_image_height, orig_image_width = shape[0], shape[1]
-            result = cv2.resize(image, (self.image_width, self.image_height))
-        else:
-            result = np.full((self.image_height, self.image_width), 125, dtype=np.uint8)
-        text = data.to_string()
-        y0, dy = 60, 70
-        
-        for ind,i in enumerate(data.keys()):
-            y = y0 + ind*dy
-            result = cv2.putText(result, f'{i} - {data.values[ind]}', (50, y ), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 4, cv2.LINE_AA)
-       # result=cv2.putText(result, data.to_string(), (10,450), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 8, cv2.LINE_4)
-        fig = plt.figure()
-        plt.imshow(result)
-        red_patch = mpatches.Patch(color=(0, 0, 1), label='prediction')
-        green_patch = mpatches.Patch(color=(0, 1, 0), label='GT')
-        plt.legend(ncol=2, loc='lower left', fontsize='small', handles=[red_patch, green_patch], bbox_to_anchor=(0, 1))
-        # used example in https://matplotlib.org/3.3.0/faq/howto_faq.html to show matplotlib figure on a web app
-        output = BytesIO()
-        fig.savefig(output, format="png")
-        ret_data = base64.b64encode(output.getbuffer()).decode("ascii")
-        return ret_data, fig
+       
+    def get_detection_bounding_boxes(self, detection_index):
+        bb_obj = self.comp_data.loc[detection_index]
 
-    def frame_visualization(self, bb_index, image):
-        """
-        Overlay a frame's bounding boxes on top of the frame
-
-        :param frame_labels: list of x,y,w,h arrays of a frame's Ground Truth bounding boxes
-        :param frame_prds: list of x,y,w,h arrays of a single frame's predicted bounding boxes
-        :param selected_bb: the bounding box example that was chosen
-        :param matched:  the matching bounding box to the wanted_bb
-        :param image: the frame of the selected bounding box
-        :return: encoded image for html use and a matplotlib figure, of the relevant frame with an overlay of its bounding boxes
-        """
-
-        bb_obj=self.comp_data.loc[bb_index]
-        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==bb_obj['frame_id']) & (self.comp_data['video']==bb_obj['video']))]
-        
         label_bbs = []
         prd_bbs = []
         matched = []
+        
+        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==bb_obj['frame_id']) & (self.comp_data['video']==bb_obj['video']))]
 
-        for ind in range(0,len(all_frmae_obj)):
-            obj=all_frmae_obj.iloc[ind]
-            if not math.isnan(obj['x_gt']):
+        if 'x' in bb_obj and bb_obj['x'] is not None:  
+            matched.append([bb_obj['x'], bb_obj['y'], bb_obj['width'], bb_obj['height']])
+        pred_index = -1
+        label_index = -1
+        for ind in all_frmae_obj.index:
+            obj=all_frmae_obj.loc[ind]
+            if 'x_gt' in obj and not math.isnan(obj['x_gt']):
                 label_bbs.append([obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']])
-            if not math.isnan(obj['x']):
+                if ind == detection_index:
+                    label_index = len(label_bbs)-1
+            if 'x' in obj  and not math.isnan(obj['x']):
                 prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
+                if ind == detection_index:
+                    pred_index = len(prd_bbs) -1            
+    
+
+        return prd_bbs, label_bbs, pred_index, label_index
+    
+
+    def get_detection_properties_text_list(self, detection_index):
+        data = self.comp_data.loc[detection_index]
+
+        detection_variables_text_list = [f"{key}: {data[key]}" for key in data.keys()]
+
+        return detection_variables_text_list
+    
+    def get_detection_video_frame(self, detection_index):
+        data = self.comp_data.loc[detection_index]
         
-        selected_bb = [bb_obj['x'], bb_obj['y'], bb_obj['width'], bb_obj['height']]
-        if not math.isnan(obj['x_gt']):
-            matched = [bb_obj['x_gt'],bb_obj['y_gt'],bb_obj['width_gt'],bb_obj['height_gt']]
-            
-      
-        # if an image is availble we resize it to a fixed size and save its dimensions for bounding box scaling
-        if image is not None:
-            shape = np.shape(image)
-            orig_image_height, orig_image_width = shape[0], shape[1]
-            result = cv2.resize(image, (self.image_width, self.image_height))
-        # when the image is not available we use a black background to display the bounding boxes
-        #TODO take care of that possibility
-        else:
-            orig_image_width, orig_image_height = self.image_width, self.image_height
-            result = np.zeros((self.image_width, self.image_height, 3), dtype=np.uint8)
-        # iterating over the frame's GT and prediction bounding boxes
-        for i, bb_list in enumerate([label_bbs, prd_bbs]):
-            for temp_bb in bb_list:
-                (x, y, w, h) = temp_bb
-                # when bounding box coordinates are normalized between 0-1
-                # a pixel position in the image plane is equals to (normalized_x * image_horizontal_size, normalized_y * image_vertical_size)
-                if x <= 1 and y <= 1 and w <= 1 and h <= 1:
-                    bb_x_coordinate = x * orig_image_width
-                    bb_y_coordinate = y * orig_image_height
-                    bb_width = w * orig_image_width
-                    bb_height = h * orig_image_height
-                # bounding box coordinates are not normalized
-                else:
-                    bb_x_coordinate = x
-                    bb_y_coordinate = y
-                    bb_width = w
-                    bb_height = h
-
-                # Match the BB to the image after the resize
-                width_ratio = self.image_width / orig_image_width
-                height_ratio = self.image_height / orig_image_height
-                bb_x_top_left = bb_x_coordinate * width_ratio
-                bb_y_top_left = bb_y_coordinate * height_ratio
-                bb_x_bottom_right = (bb_x_coordinate + bb_width) * width_ratio
-                bb_y_bottom_right = (bb_y_coordinate + bb_height) * height_ratio
-
-                # represents the top left corner of rectangle
-                start_point = (int(bb_x_top_left), int(bb_y_top_left))
-                # represents the bottom right corner of rectangle
-                end_point = (int(bb_x_bottom_right), int(bb_y_bottom_right))
-                # green for labels, blue for predictions
-                color = (0, 255, 0) if i == 0 else (0, 0, 255)
-                # Line thickness of 1 px
-                thickness = 1
-                # Draw the selected or matching bounding box with thickness of 3 px
-                if np.array_equal(temp_bb, selected_bb, equal_nan=True) or np.array_equal(temp_bb, matched, equal_nan=True):
-                    thickness = 3
-                # Draw a rectangle that represents the bounding box
-                cv2.rectangle(result, start_point, end_point, color, thickness)
-
-        fig = plt.figure()
-        plt.imshow(result)
-        red_patch = mpatches.Patch(color=(0, 0, 1), label='prediction')
-        green_patch = mpatches.Patch(color=(0, 1, 0), label='GT')
-        plt.legend(ncol=2, loc='lower left', fontsize='small', handles=[red_patch, green_patch], bbox_to_anchor=(0, 1))
-        # used example in https://matplotlib.org/3.3.0/faq/howto_faq.html to show matplotlib figure on a web app
-        output = BytesIO()
-        fig.savefig(output, format="png")
-        data = base64.b64encode(output.getbuffer()).decode("ascii")
-        return data, fig
-
-    # def is_label_or_prd(self):
-    #     if self.state in ['TP', 'FP']:
-    #         self.label_or_prd = 'prediction'
-    #     else:
-    #         self.label_or_prd = 'label'
-
-    def read_image(self, frame_id, images_folder):
-        frame = None
-        vid = None
-        local_video_path = get_local_video_path(images_folder)
-        if local_video_path is None:
-            return None
-          
-        if pathlib.Path(local_video_path).suffix == ".mp4":
-            vid= cv2.VideoCapture(local_video_path)
-            vid.set(cv2.CAP_PROP_POS_FRAMES, int(frame_id))
-            _, frame = vid.read()
-        else:
-            # filtering out images that don't have the frame number in them before a more exact filtering
-            optional_images_names = [name for name in os.listdir(local_video_path) if str(frame_id) in name]
-            
-            # finding the exact frame image by using the correct images names form: blabla_framenumber.bla
-            for opt in optional_images_names:
-                dots = [i.start() for i in re.finditer("\.", opt)]
-                lines = [i.start() for i in re.finditer("_", opt)]
-                last_dot_idx = dots[-1]
-                last_line_idx = lines[-1]+1 if len(lines)>0 else 0
-                opt_frame_number = int(opt[last_line_idx: last_dot_idx])
-                if opt_frame_number == int(frame_id):
-                    frame = cv2.imread(os.path.join(local_video_path, opt))
-                    break
-        
-        if frame is not None:
-            print(f'Cant find frmae {frame_id} for: {images_folder}')
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            vid.release()
-
-        return frame
-                
-    def visualize(self, bb_id):
-        """
-        this function searches the right bounding box and its frame and calls self.frame_visualization() to visualize it
-
-        :param bb_id: the id of the bounding box example that was asked for
-        :param from_file: Boolean, indicates whether the dataframe was loaded from a saved file, default: false
-        :param label_file_dir: the path to extract the label file if from_file is True, default: None
-        :param prd_file_dir: the path to extract the predictions file if from_file is True, default: None
-        :return: returns the output of self.frame_visualization() which is an encoded image for html use and a matplotlib figure,
-         of the relevant frame with an overlay of its bounding boxes
-        """
-        # checks what is the relevant dataframe to search for the asked example (predictions or labels)
-        # self.is_label_or_prd()
-       
-       
-        # the video name (image folder name) and bounding box index are needed for identification of the correct bounding box (the frame id is not necessary)
-        
-        local_path, bb_index,frame_id,_ = bb_id
-        
-        data = self.comp_data.loc[bb_index]
-        image_folder=data['video']
+        video=data['video']
          
-        if local_path:
-            image_folder = os.path.join(local_path,image_folder)
-
-        frame_image = self.read_image(frame_id, image_folder)
-
-       
-        if 'x' not in data:
-            return self.frame_visualization_no_bb(data, frame_image)
-
-        
-        # returning the output of frame_visualization which is are an encoded image (for html use) and matplotlib figure
-        return self.frame_visualization(bb_index, frame_image)
+        return video
 
 
-
-
-
-
-def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, image_width, image_height,sheldon_header_data, overlap_function, evaluation_function, save_stats_dir):
+def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, image_width, image_height,sheldon_header_data, overlap_function, evaluation_function):
     """
 
     param statistic_funcs: same as in ParallelExperiment
@@ -614,7 +218,7 @@ def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, seg
     """
     exp = ParallelExperiment(statistic_funcs=statistic_funcs, segmentation_funcs=segmentation_funcs, 
                             image_width=image_width, image_height=image_height,sheldon_header_data=sheldon_header_data, 
-                            evaluation_function=evaluation_function, overlap_function=overlap_function, save_stats_dir=save_stats_dir)
+                            evaluation_function=evaluation_function, overlap_function=overlap_function)
                             
     exp.combine_from_text(compared_videos)
     exp.get_segmentation_masks(float(threshold))
