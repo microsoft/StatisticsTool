@@ -204,6 +204,7 @@ class ConfigurationResults:
         return root_key,sub_keys,ref_dir    
 
     def get_item_segmentations(self,root_key,sub_key):
+        
         item = self.get_config_item(root_key,sub_key)
         if item == None:
             return None

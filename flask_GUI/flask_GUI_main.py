@@ -4,6 +4,9 @@ import traceback
 import os, sys
 import re
 from classes_and_utils.UpdateListManager import UpdateListManager
+from classes_and_utils.configuration.ConfigurationHelper import ConfigurationHelper
+from classes_and_utils.configuration.ConfigurationManager import ConfigurationManager
+from classes_and_utils.configuration.ConfigurationItem import ConfigurationItem
 
 from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
@@ -20,6 +23,7 @@ from flask import Flask, jsonify, redirect, render_template, request, send_from_
 server = Flask(__name__)
 server.secret_key = 'any random string'
 configuration_results = ConfigurationResults()
+configuration_manager = ConfigurationManager()
 
 # getting the options for each type of necessary function
 file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
@@ -88,6 +92,12 @@ def show_config():
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
 
+    main, is_main_an_object, ref, is_ref_an_object = ConfigurationHelper.get_request_experiments_info(request)
+    main_added_experiments = configuration_manager.add(main,is_main_an_object)
+    ref_added_experiments  = configuration_manager.add(ref,is_ref_an_object)
+    js = ConfigurationHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+    return redirect(f'static/index.html?reports={js}')
+
     try:
         if request.args.get('use_cached_report') == 'true':
             root_key = request.args.get('key')
@@ -95,6 +105,7 @@ def Report_Viewer():
             ref_dir = ''
             return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
         else:
+            root_key,ref_dir = configuration_results.load_configurations(request,server)
             current_root_key = configuration_results.get_key_from_request(request,True)
             current_ref_dir = configuration_results.get_key_from_request(request,False)
             root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
@@ -122,9 +133,9 @@ def favicon():
    
 @server.route('/get_segmentations', methods=['POST'])    
 def get_segmentations():
-    key = request.json['key']
-    sub_key = request.json['sub_key']
-    segmentations = configuration_results.get_item_segmentations(key,sub_key)
+    main_path = request.json['main']
+    
+    segmentations = configuration_manager.get_item_segmentations(main_path)
     
     result = []
     for k, v in segmentations.items():
@@ -138,11 +149,14 @@ def get_segmentations():
 def get_report_table():
     
     calc_unique = True if request.args.get('calc_unique') == 'true' else False
-    root_key = request.args.get('key')
-    sub_key = request.args.get('sub_key')
-    config_item = configuration_results.get_config_item(root_key,sub_key)
-    if config_item is None:
+    main_path = request.args.get('main')
+    ref_path = request.args.get('ref')
+
+    if configuration_manager.get_experiment(main_path) == None:
         return None
+
+    main = configuration_manager.get_experiment(main_path)
+    ref = configuration_manager.get_experiment(ref_path)
     
     columns = [] 
     rows = [] 
@@ -158,8 +172,16 @@ def get_report_table():
             argRows = argRows[:-1]
         rows = list(argRows.split(','))
     
-    segmentations = configuration_results.get_item_segmentations(root_key,sub_key)
-    config_item.table_result.set_data(config_item, segmentations,calc_unique)
+    segmentations = configuration_manager.get_item_segmentations(main_path)
+    res_table = configuration_manager.get_results_table(main_path,ref_path)
+    if res_table == None:
+        res_table = configuration_manager.add_results_table(main_path,ref_path,server)
+
+    config_item = ConfigurationItem()
+    config_item.main_pkl = main
+    config_item.ref_pkl = ref
+    config_item.table_result = res_table
+    res_table.set_data(config_item, segmentations,calc_unique)
     config_item.table_result.dash_app.layout = config_item.table_result.get_table_div_layout(columns,rows)
     wp = config_item.table_result.get_webpage()
 
@@ -167,11 +189,13 @@ def get_report_table():
 
 @server.route('/get_all_templates', methods=['POST'])
 def get_all_templates():
-    root_key = request.json['key']
-    sub_key = request.json['sub_key']
-    ref_dir = request.json['ref_dir']
+    main = request.json['main']
+    ref = request.json['ref']
+    main_dir,_ = os.path.split(main)
+    ref_dir,_ = os.path.split(ref)
+    
     helper = TemplatesFilesHelper()
-    content = helper.get_all_templates_content(root_key,sub_key,ref_dir)
+    content = helper.get_all_templates_content(main_dir,ref_dir)
     return jsonify(content)
 
 @server.route('/get_template_content', methods=['POST'])
