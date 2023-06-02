@@ -25,29 +25,29 @@
                 <ng-container *ngIf="!isFireFox()">
                     <div style="width:10%;padding-top:2px;margin-right: 5px;">
                         <select 
-                            [title]="getSelectedKeyTooltip()"
-                            [(ngModel)]="statService.selectedSubKey"
+                            [title]="getSelectedMainReportTooltip()"
+                            [(ngModel)]="statService.selectedReport"
                             style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
-                            (change)="onSubKeySelected($event)"
+                            (change)="onReportSelected($event)"
                             >
-                            <option *ngFor="let s of statService.subKeys"
+                            <option *ngFor="let s of statService.reportlistItems"
                                             value="{{s.key}}"
-                                    >Report - {{s.value}}</option>
+                                    >Report - {{ statService.getReportDesc(s.value)}}</option>
                         </select>
                     </div>
                 </ng-container>
                 <ng-container *ngIf="isFireFox()">
                     <div style="width:10%;padding-top:2px;margin-right: 15px;">
                         <select 
-                            [title]="getSelectedKeyTooltip()"
-                            [(ngModel)]="statService.selectedSubKey"
+                            [title]="getSelectedMainReportTooltip()"
+                            [(ngModel)]="statService.selectedReport"
                             style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
-                            (change)="onSubKeySelected($event)"
+                            (change)="onReportSelected($event)"
                             >
-                            <option *ngFor="let s of statService.subKeys"
+                            <option *ngFor="let s of statService.reportlistItems"
                                             value="{{s.key}}"
-                                    >Report - {{s.value}}</option>
-                        </select>
+                                    >Report - {{ statService.getReportDesc(s.value)}}</option>
+                    </select>
                     </div>
                 </ng-container>
                 

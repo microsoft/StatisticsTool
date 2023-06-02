@@ -33,9 +33,9 @@ export class TemplateSegmentationsComponent implements OnInit {
 
   ngOnInit(): void {
 
-    this.subscribeSegmentsReady = this.statService.segmentationsFetched.subscribe(selectedSubKey => {
+    this.subscribeSegmentsReady = this.statService.segmentationsFetched.subscribe(selectedReport => {
       this.statService.addDefaultTemplate();
-      this.statService.selectedSubKey = selectedSubKey;
+      this.statService.selectedReport = selectedReport;
       this.statService.reportSelected.next(true);
     })
   } 
@@ -66,8 +66,8 @@ export class TemplateSegmentationsComponent implements OnInit {
     }
   }
 
-  onSubKeySelected(event:any){
-    this.statService.init(event.target.value);
+  onReportSelected(event:any){
+    this.statService.init('',event.target.value);
   }
 
   getTemplateName(){
@@ -185,8 +185,8 @@ export class TemplateSegmentationsComponent implements OnInit {
       }
     }
 
-    getSelectedKeyTooltip(){
-      return this.statService.subKeys[this.statService.selectedSubKey].value;
+    getSelectedMainReportTooltip(){
+      return this.statService.reportlistItems[this.statService.selectedReport].value;
     }
 
     getSelectedTemplateTooltip(){
