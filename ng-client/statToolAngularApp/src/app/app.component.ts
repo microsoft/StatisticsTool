@@ -49,7 +49,7 @@ export class AppComponent implements OnInit {
       console.log($event.data)
       if (o.action == 'update_list'){
         console.log('in update_list')
-        this.statToolSvc.drawerUpdateListUrl = o.value + "&key=" + this.statToolSvc.currentConfigKey + "&sub_key=" + this.statToolSvc.getSelectedMainReport();
+        this.statToolSvc.drawerUpdateListUrl = o.value + "&main=" + this.statToolSvc.getSelectedMainReport() + "&ref=" + this.statToolSvc.getSelectedRefReport();
       }
       if (o.action == 'show_image'){
         console.log('in show_image',o.value)
@@ -62,7 +62,7 @@ export class AppComponent implements OnInit {
           }).subscribe(res => {
             console.log('getFilePath','result',res)
             if (res.exists){
-              let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath + "&key=" + this.statToolSvc.currentConfigKey + "&sub_key=" + this.statToolSvc.getSelectedMainReport();
+              let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath + "&main=" + this.statToolSvc.getSelectedMainReport() + "&ref=" + this.statToolSvc.getSelectedRefReport();
               this.statToolSvc.drawerShowImageUrl = url;
             } else {
               this.statToolSvc.showDrawer = false;
@@ -70,7 +70,7 @@ export class AppComponent implements OnInit {
             }
           })
         } else {
-          this.statToolSvc.drawerShowImageUrl = o.value  + "&key=" + this.statToolSvc.currentConfigKey  + "&sub_key=" + this.statToolSvc.getSelectedMainReport();
+          this.statToolSvc.drawerShowImageUrl = o.value  + "&main=" + this.statToolSvc.getSelectedMainReport() + "&ref=" + this.statToolSvc.getSelectedRefReport();
         }
       }
     }
@@ -86,9 +86,8 @@ export class AppComponent implements OnInit {
     ngOnInit(){
       this.router.events.subscribe((event) => {
         if (event instanceof NavigationStart){
-          let reports = new URLSearchParams(window.location.search).get('reports')?.toString();
-          this.statToolSvc.init(reports);
-          console.log('reports',reports);
+          let reportsPairs = new URLSearchParams(window.location.search).get('reports')?.toString();
+          this.statToolSvc.init(reportsPairs);
 
           /*let sub_keys = new URLSearchParams(window.location.search).get('sub_keys')?.toString();
           let key = new URLSearchParams(window.location.search).get('root_key')?.toString();

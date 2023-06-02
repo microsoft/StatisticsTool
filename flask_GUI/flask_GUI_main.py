@@ -59,14 +59,17 @@ def calculating():
     # calculate the intermediate results for all the videos then combine them
     exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
    
-    key = folder_name.replace(' ','_')
-    sub_key = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
-    configuration_results.add_exp(exp,key,sub_key,'',server)
+    #key = folder_name.replace(' ','_')
+    #sub_key = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
+    #configuration_results.add_exp(exp,key,sub_key,'',server)
+    #exp_path = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
+    exp_path = os.path.join(folder_name,report_file_name)
+    configuration_manager.add_experiment( exp_path,exp)
 
     if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
         link = 'None'
     else:
-        link = "/Report_Viewer?use_cached_report=true&key=" + key + "&sub_key=" + sub_key
+        link = "/Report_Viewer?use_cached_report=true&main=" + exp_path
 
     results_text = results_text.split('\n')
     return render_template('message.html', link=link, text=results_text)
@@ -92,11 +95,20 @@ def show_config():
 @server.route('/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
 
-    main, is_main_an_object, ref, is_ref_an_object = ConfigurationHelper.get_request_experiments_info(request)
-    main_added_experiments = configuration_manager.add(main,is_main_an_object)
-    ref_added_experiments  = configuration_manager.add(ref,is_ref_an_object)
-    js = ConfigurationHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
-    return redirect(f'static/index.html?reports={js}')
+    try:
+        main, is_main_an_object, ref, is_ref_an_object,main_dir = ConfigurationHelper.get_request_experiments_info(request)
+        
+        main_added_experiments = configuration_manager.add(main,is_main_an_object)
+        ref_added_experiments  = configuration_manager.add(ref,is_ref_an_object)
+        js = ConfigurationHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+        return redirect(f'static/index.html?reports={js}')
+    
+    except Exception as ex:
+        print (f"error: {ex}. Traceback: ")
+        for a in traceback.format_tb(ex.__traceback__): print(a)
+        print (f"exception message: {ex}.")
+
+        return f'Failed to load report from {main_dir}'
 
     try:
         if request.args.get('use_cached_report') == 'true':
@@ -156,7 +168,7 @@ def get_report_table():
         return None
 
     main = configuration_manager.get_experiment(main_path)
-    ref = configuration_manager.get_experiment(ref_path)
+    ref = configuration_manager.get_experiment(ref_path) if ref_path != '' else None
     
     columns = [] 
     rows = [] 
@@ -210,11 +222,10 @@ def save_template():
     data = request.json
     name = data['name']
     content = data['content']
-    key = data['key']
-    sub_key = data['sub_key']
-    ref_dir = data['ref_dir']
+    main_path = data['main']
+    ref_path = data['ref']
     helper = TemplatesFilesHelper()
-    result = helper.save_template(name,content,key,sub_key,ref_dir)
+    result = helper.save_template(name,content,main_path,ref_path)
     return jsonify(result)
     
 #########################################################
@@ -222,14 +233,14 @@ def save_template():
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
     listManager = UpdateListManager()
-    root_key = request.args.get('key')
-    sub_key  = request.args.get('sub_key')
-    config_item = configuration_results.get_config_item(root_key,sub_key)
-    if config_item is None:
-        return
+    main_path = request.args.get('main')
+    ref_path  = request.args.get('ref')
+    main_exp = configuration_manager.get_experiment(main_path)
+    ref_exp = configuration_manager.get_experiment(ref_path)
+    
 
     # global comp_index, unique, state, cell_name, save_path, per_video_example_hash
-    listManager.manage_list_request(request, config_item.main_pkl, config_item.ref_pkl)
+    listManager.manage_list_request(request, main_exp,ref_exp)
 
     return render_template('examples_list.html', 
                             state=listManager.state, 
@@ -256,13 +267,14 @@ def is_file_exists():
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():
-    root_key = request.args.get('key')
-    sub_key = request.args.get('sub_key')
-    config_item = configuration_results.get_config_item(root_key,sub_key)
-    if config_item is None:
-        return None
+    main_path = request.args.get('main')
+    ref_path = request.args.get('ref')
+    main_exp = configuration_manager.get_experiment(main_path)
+    ref_exp = configuration_manager.get_experiment(ref_path)
+
+    main_dir,_ = os.path.split(main_path)
     
-    detection_text_list, data, save_path = manage_image_request(request, config_item.main_pkl, config_item.ref_pkl, root_key, sub_key)
+    detection_text_list, data, save_path = manage_image_request(request,main_exp, ref_exp,main_dir)
     full_path = re.escape(request.full_path)+"&save_image"
     return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list, request = full_path)
 

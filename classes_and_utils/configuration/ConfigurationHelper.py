@@ -13,17 +13,27 @@ class ConfigurationHelper:
     '''
     @staticmethod
     def get_request_experiments_info(request):
+
+        #create report case
+        if request.args.get('use_cached_report') == 'true':
+            main_path = request.args.get('main')
+            main_dir,_ = os.path.split(main_path)
+            return main_dir,False,None,False,main_dir
+
         main = None
         is_main_an_object = False
         ref = None
         is_ref_an_object = False
+        main_dir = ''
         
         if request.files and request.files[MAIN_REPORT_CHOOSEFILE].filename != '':
             is_main_an_object = True
             main = request.files[MAIN_REPORT_CHOOSEFILE]
+            main_dir,_ = os.path.split(main.filename)
         else:
             is_main_an_object = False
             main = request.values and request.values[MAIN_REPORT_FILE_PATH]
+            main_dir = main
 
         if request.files and request.files[REF_REPORT_CHOOSE_FILE].filename != '':
             is_ref_an_object = True
@@ -32,7 +42,7 @@ class ConfigurationHelper:
             is_ref_an_object = False
             ref = request.values and request.values[REF_REPORT_FILE_PATH]            
 
-        return main, is_main_an_object, ref, is_ref_an_object    
+        return main, is_main_an_object, ref, is_ref_an_object,main_dir  
     
     @staticmethod
     def build_main_ref_pairs(main_experiments,ref_experiments):

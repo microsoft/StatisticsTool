@@ -80,14 +80,15 @@ export class StatisticsToolService implements OnInit {
   }
   
   init(reportsPairs:string = '',selectedReport:number = 0){
-    this.processReportsPairs(reportsPairs);
+    if (reportsPairs != '')
+      this.processReportsPairs(reportsPairs);
     this.templates = [];
     this.currentTemplate = new TemplateInfo();
     this.templateNameOptions = [];
     this.selectedTamplate = 0;
     
-    let main = this.reportlistItems.find(x => x.key == selectedReport)!;
-    let ref = this.mainRefPairs.find(x => x.main == main.value);
+    let main  = this.reportlistItems.find(x => x.key == selectedReport)!;
+    let ref   = this.mainRefPairs.find(x => x.main == main.value);
 
     let url = '/get_all_templates';
     this.httpClient.post<{'content':IContent,'name':string}[]>
@@ -251,9 +252,8 @@ export class StatisticsToolService implements OnInit {
     this.httpClient.post<any>('/save_template',{
       'name':templateName,
       'content':JSON.stringify(req),
-      'key': this.currentConfigKey,
-      'sub_key': this.getSelectedMainReport(),
-      'ref_dir':this.ref_dir
+      'main': this.getSelectedMainReport(),
+      'ref': this.getSelectedRefReport(),
     }).subscribe(res => {
 
       this.templates = [];
@@ -350,8 +350,7 @@ export class StatisticsToolService implements OnInit {
       return ref.ref;
     return '';
   }
-
-  
+ 
 
   openSaveTemplateDialog(){
     this.modalService.open(SaveTemplateDialogComponent,{ centered: true }).result.then(res => {

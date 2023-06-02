@@ -27,6 +27,8 @@ class ConfigurationManager:
         return res_table
 
     def get_experiment(self,experiment_path):
+        if experiment_path is None or experiment_path == '':
+            return None
         return self.experiments[experiment_path]
     
     def get_results_table(self,main_experiment_path,ref_experiment_path):
@@ -51,10 +53,13 @@ class ConfigurationManager:
 
     def add_experiment_object(self,experiment_object):
         key = str(uuid.uuid4()) + "\\" + "Upload" + "\\" + experiment_object.filename
+
         self.add_experiment(key,experiment_object)
         return key
     
     def add(self,value,is_an_experiment_object):
+        if value == None:
+            return ''
         if is_an_experiment_object:
             return self.add_experiment_object(value)
         else:

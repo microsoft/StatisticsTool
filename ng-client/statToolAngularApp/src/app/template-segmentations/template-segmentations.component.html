@@ -28,7 +28,7 @@
                             [title]="getSelectedMainReportTooltip()"
                             [(ngModel)]="statService.selectedReport"
                             style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
-                            (change)="onSubKeySelected($event)"
+                            (change)="onReportSelected($event)"
                             >
                             <option *ngFor="let s of statService.reportlistItems"
                                             value="{{s.key}}"
@@ -42,12 +42,12 @@
                             [title]="getSelectedMainReportTooltip()"
                             [(ngModel)]="statService.selectedReport"
                             style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
-                            (change)="onSubKeySelected($event)"
+                            (change)="onReportSelected($event)"
                             >
-                            <option *ngFor="let s of statService.subKeys"
+                            <option *ngFor="let s of statService.reportlistItems"
                                             value="{{s.key}}"
-                                    >Report - {{s.value}}</option>
-                        </select>
+                                    >Report - {{ statService.getReportDesc(s.value)}}</option>
+                    </select>
                     </div>
                 </ng-container>
                 

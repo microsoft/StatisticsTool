@@ -66,8 +66,8 @@ export class TemplateSegmentationsComponent implements OnInit {
     }
   }
 
-  onSubKeySelected(event:any){
-    this.statService.init(event.target.value);
+  onReportSelected(event:any){
+    this.statService.init('',event.target.value);
   }
 
   getTemplateName(){
@@ -186,10 +186,10 @@ export class TemplateSegmentationsComponent implements OnInit {
     }
 
     getSelectedMainReportTooltip(){
-      //return this.statService.subKeys[this.statService.selectedReport].value;
+      return this.statService.reportlistItems[this.statService.selectedReport].value;
     }
 
     getSelectedTemplateTooltip(){
-      //return this.statService.templateNameOptions[this.statService.selectedTamplate].value;
+      return this.statService.templateNameOptions[this.statService.selectedTamplate].value;
     }
  }
