@@ -8,7 +8,7 @@ from classes_and_utils.configuration.ConfigurationHelper import ConfigurationHel
 from classes_and_utils.configuration.ConfigurationManager import ConfigurationManager
 from classes_and_utils.configuration.ConfigurationItem import ConfigurationItem
 
-from flask_GUI.configuration_results import ConfigurationResults
+#from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
 current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
@@ -22,7 +22,7 @@ from flask import Flask, jsonify, redirect, render_template, request, send_from_
 #region - init Flask server 
 server = Flask(__name__)
 server.secret_key = 'any random string'
-configuration_results = ConfigurationResults()
+#configuration_results = ConfigurationResults()
 configuration_manager = ConfigurationManager()
 
 # getting the options for each type of necessary function
@@ -109,7 +109,7 @@ def Report_Viewer():
         print (f"exception message: {ex}.")
 
         return f'Failed to load report from {main_dir}'
-
+    '''
     try:
         if request.args.get('use_cached_report') == 'true':
             root_key = request.args.get('key')
@@ -129,7 +129,7 @@ def Report_Viewer():
         print (f"exception message: {ex}.")
 
         return f'Failed to load report from {current_root_key}'
-    
+    '''
 
 @server.route('/static/<file_name>')
 def send_static_file(file_name):
