@@ -22,7 +22,6 @@ from flask import Flask, jsonify, redirect, render_template, request, send_from_
 #region - init Flask server 
 server = Flask(__name__)
 server.secret_key = 'any random string'
-#configuration_results = ConfigurationResults()
 configuration_manager = ConfigurationManager()
 
 # getting the options for each type of necessary function
@@ -58,18 +57,13 @@ def calculating():
     
     # calculate the intermediate results for all the videos then combine them
     exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
-   
-    #key = folder_name.replace(' ','_')
-    #sub_key = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
-    #configuration_results.add_exp(exp,key,sub_key,'',server)
-    #exp_path = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
     exp_path = os.path.join(folder_name,report_file_name)
-    configuration_manager.add_experiment( exp_path,exp)
+    configuration_manager.add_experiment(exp_path,exp)
 
     if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
         link = 'None'
     else:
-        link = "/Report_Viewer?use_cached_report=true&main=" + exp_path
+        link = "/Report_Viewer?use_cached_report=true&main=" +  re.escape(exp_path)
 
     results_text = results_text.split('\n')
     return render_template('message.html', link=link, text=results_text)
@@ -100,8 +94,8 @@ def Report_Viewer():
         
         main_added_experiments = configuration_manager.add(main,is_main_an_object)
         ref_added_experiments  = configuration_manager.add(ref,is_ref_an_object)
-        js = ConfigurationHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
-        return redirect(f'static/index.html?reports={js}')
+        js_pairs = ConfigurationHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+        return redirect(f'static/index.html?reports={js_pairs}')
     
     except Exception as ex:
         print (f"error: {ex}. Traceback: ")
@@ -109,28 +103,7 @@ def Report_Viewer():
         print (f"exception message: {ex}.")
 
         return f'Failed to load report from {main_dir}'
-    '''
-    try:
-        if request.args.get('use_cached_report') == 'true':
-            root_key = request.args.get('key')
-            sub_keys = request.args.get('sub_key')
-            ref_dir = ''
-            return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
-        else:
-            root_key,ref_dir = configuration_results.load_configurations(request,server)
-            current_root_key = configuration_results.get_key_from_request(request,True)
-            current_ref_dir = configuration_results.get_key_from_request(request,False)
-            root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
-            if root_key == current_root_key and ref_dir == current_ref_dir:
-                return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
-    except Exception as ex:
-        print (f"error: {ex}. Traceback: ")
-        for a in traceback.format_tb(ex.__traceback__): print(a)
-        print (f"exception message: {ex}.")
-
-        return f'Failed to load report from {current_root_key}'
-    '''
-
+    
 @server.route('/static/<file_name>')
 def send_static_file(file_name):
     mime = mimetypes.guess_type(file_name, strict=False)[0]
