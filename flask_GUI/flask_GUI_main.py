@@ -1,5 +1,6 @@
 #region - inports
 import mimetypes
+import urllib.parse
 import traceback
 import os, sys
 import re
@@ -7,6 +8,7 @@ from classes_and_utils.UpdateListManager import UpdateListManager
 from classes_and_utils.configuration.ConfigurationHelper import ConfigurationHelper
 from classes_and_utils.configuration.ConfigurationManager import ConfigurationManager
 from classes_and_utils.configuration.ConfigurationItem import ConfigurationItem
+from flask_GUI.dash_apps.results_table import Results_table
 
 #from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
@@ -63,7 +65,7 @@ def calculating():
     if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
         link = 'None'
     else:
-        link = "/Report_Viewer?use_cached_report=true&main=" +  re.escape(exp_path)
+        link = "/Report_Viewer?use_cached_report=true&main=" +  urllib.parse.quote(exp_path)
 
     results_text = results_text.split('\n')
     return render_template('message.html', link=link, text=results_text)
@@ -143,32 +145,19 @@ def get_report_table():
     main = configuration_manager.get_experiment(main_path)
     ref = configuration_manager.get_experiment(ref_path) if ref_path != '' else None
     
-    columns = [] 
-    rows = [] 
-    argCols = request.args.get('cols')
-    argRows = request.args.get('rows')
-    if argCols != None and len(argCols) > 0:
-        if argCols[-1] == ',':
-            argCols = argCols[:-1]
-        columns  = list(argCols.split(',') )
-       
-    if argRows != None and len(argRows) > 0:
-        if argRows[-1] == ',':
-            argRows = argRows[:-1]
-        rows = list(argRows.split(','))
+    columns = ConfigurationHelper.parse_segmentations_csv(request.args.get('cols'))
+    rows    = ConfigurationHelper.parse_segmentations_csv(request.args.get('rows'))
     
-    segmentations = configuration_manager.get_item_segmentations(main_path)
     res_table = configuration_manager.get_results_table(main_path,ref_path)
     if res_table == None:
-        res_table = configuration_manager.add_results_table(main_path,ref_path,server)
+        res_table = Results_table(server)
+        segmentations = configuration_manager.get_item_segmentations(main_path)
+        res_table.set_data(main,ref,segmentations,calc_unique)
+        res_table = configuration_manager.add_results_table(main_path,ref_path,res_table)
+    else:
+        res_table.set_unique(calc_unique)
 
-    config_item = ConfigurationItem()
-    config_item.main_pkl = main
-    config_item.ref_pkl = ref
-    config_item.table_result = res_table
-    res_table.set_data(config_item, segmentations,calc_unique)
-    config_item.table_result.dash_app.layout = config_item.table_result.get_table_div_layout(columns,rows)
-    wp = config_item.table_result.get_webpage()
+    wp = res_table.get_webpage(columns,rows)
 
     return wp
 

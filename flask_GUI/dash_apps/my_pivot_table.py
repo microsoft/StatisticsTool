@@ -16,10 +16,12 @@ def default_get_cell(data, column_keys, row_keys,row_index):
 
 class   PivotTable():
 
-    def __init__(self, segmentations, config_item, cell_function = default_get_cell):
+    def __init__(self, segmentations, main_exp,ref_exp, cell_function = default_get_cell):
         self.segmentations = segmentations
         self.get_cell = cell_function
-        self.config_item = config_item
+        #self.config_item = config_item
+        self.main_exp = main_exp
+        self.ref_exp = ref_exp
 
     def get_row(self, rows_keys, columns_order, horizontal_span_size, all_rows_cats,idx, idx_hist):
         '''
@@ -41,7 +43,7 @@ class   PivotTable():
         ## The core of the table
         ## This for-loop goes over all columns of the row, and collect the cells
         for column_keys in columns_order:
-            single_row.append(self.get_cell(self.config_item, column_keys, rows_keys,idx))
+            single_row.append(self.get_cell(self.main_exp,self.ref_exp, column_keys, rows_keys,idx))
 
         single_row = [html.Tr(single_row)]
         return single_row
