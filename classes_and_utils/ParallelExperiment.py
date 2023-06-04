@@ -13,7 +13,7 @@ import numpy as np
 
 class ParallelExperiment:
  
-    def __init__(self, statistic_funcs, image_width, image_height,segmentation_funcs,sheldon_header_data, overlap_function, evaluation_function):
+    def __init__(self, statistic_funcs, segmentation_funcs,sheldon_header_data, overlap_function, evaluation_function):
         self.statistic_funcs = statistic_funcs
         self.evaluation_function = evaluation_function
         self.overlap_function = overlap_function
@@ -23,8 +23,6 @@ class ParallelExperiment:
         self.segmented_ID = {}
         self.segmented_ID_new = {}
         self.unique_data = {}
-        self.image_width = int(image_width)
-        self.image_height = int(image_height)
         self.sheldon_header_data = sheldon_header_data
         
     
@@ -205,19 +203,17 @@ class ParallelExperiment:
         return video
 
 
-def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, image_width, image_height,sheldon_header_data, overlap_function, evaluation_function):
+def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, sheldon_header_data, overlap_function, evaluation_function):
     """
 
     param statistic_funcs: same as in ParallelExperiment
     :param compared_videos: same as in ParallelExperiment
     :param segmentation_funcs: same as in ParallelExperiment
     :param threshold: the threshold to use (above the threshold a prediction is TP)
-    :param image_width: the image width size to reshape to
-    :param image_height: the image height size to reshapw to
     :return:
     """
     exp = ParallelExperiment(statistic_funcs=statistic_funcs, segmentation_funcs=segmentation_funcs, 
-                            image_width=image_width, image_height=image_height,sheldon_header_data=sheldon_header_data, 
+                            sheldon_header_data=sheldon_header_data, 
                             evaluation_function=evaluation_function, overlap_function=overlap_function)
                             
     exp.combine_from_text(compared_videos)

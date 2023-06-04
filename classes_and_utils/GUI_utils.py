@@ -164,8 +164,6 @@ def unpack_new_config(request):
     """
     new_config_name = request.form.get('name')
     threshold = request.form.get('Threshold')
-    image_width = request.form.get('image_width')
-    image_height = request.form.get('image_height')
     reading_func_name = request.form.get('Reading_func')
     transform_func_name = request.form.get('transform_func')
     overlap_func_name = request.form.get('overlap_func')
@@ -176,8 +174,7 @@ def unpack_new_config(request):
 
     new_config = [
         {"File Reading Function": reading_func_name, "Overlap Function": overlap_func_name, "Threshold": threshold,
-         "Evaluation Function": evaluation_func_name, "Image Width": image_width, "Image Height": image_height,
-         "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name,
+         "Evaluation Function": evaluation_func_name, "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name,
          "Transformation Function":transform_func_name, "Log Names to Evaluate":log_names_to_evaluate }]
     return new_config, new_config_name
 
@@ -224,14 +221,6 @@ def load_config(config_file_name):
             else:
                 log_names_to_evaluate = log_names_to_evaluate.split(',')
 
-    if "Image Width" in config_dict.keys():
-        image_width = config_dict["Image Width"]
-        image_height = config_dict["Image Height"]
-    # Case Image width and height weren't supplied in the JSON
-    else:
-        # Set default size 500x500
-        image_width = 500
-        image_height = 500
     statistics_func_name = config_dict["Statistics Functions"]
     partitioning_func_name = config_dict["Partitioning Functions"]
 
@@ -244,7 +233,7 @@ def load_config(config_file_name):
     transform_func = None
     if transform_func_name != 'None':
         transform_func = get_userdefined_function(TRANSFORM_FUNCTIONS,transform_func_name)
-    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate
+    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate
 
 
 def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = None):
@@ -261,7 +250,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = load_config(config_file_name)
+    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, log_names_to_evaluate = load_config(config_file_name)
     
     intermediate_dir = os.path.join(save_stats_dir,INTERMEDIATE_RESULTS_DIR)
     if not os.path.exists(intermediate_dir):
@@ -277,8 +266,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     # combine the intermediate results for further statistics and example extraction
     exp = experiment_from_video_evaluation_files(statistic_funcs=statistics_funcs,
                                 compared_videos=compared_videos, segmentation_funcs=partitioning_func,
-                                threshold=threshold, image_width=image_width, image_height=image_height,
-                                sheldon_header_data=sheldon_header_data, evaluation_function = evaluation_func, 
+                                threshold=threshold, sheldon_header_data=sheldon_header_data, evaluation_function = evaluation_func, 
                                 overlap_function = overlap_func)
     
     folder_name = save_stats_dir
