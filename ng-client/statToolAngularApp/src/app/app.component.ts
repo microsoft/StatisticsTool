@@ -34,7 +34,6 @@ export class AppComponent implements OnInit {
   @Input() config_key = '';
 
   @HostListener('document:keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
-    console.log('keydown',event.key)
     if (event.key === "Escape") {
         this.statToolSvc.showDrawer = false;
     }

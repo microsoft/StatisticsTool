@@ -53,7 +53,7 @@ class ConfigurationManager:
 
     def add_experiment_object(self,experiment_object):
         key = str(uuid.uuid4()) + "\\" + "Upload" + "\\" + experiment_object.filename
-
+        experiment_object = load_object(experiment_object)
         self.add_experiment(key,experiment_object)
         return key
     

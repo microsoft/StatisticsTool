@@ -1,11 +1,9 @@
 import sys, os, json
 from glob import glob
 from pathlib import Path
-from flask_GUI.configuration_results import ConfigurationResults
 
 REPORTS_TEMPLATES_FOLDER_NAME = "reports_templates"
 
-configuration_results = ConfigurationResults()
 class TemplateItem:
     name = ''
     content = ''
@@ -36,16 +34,8 @@ class TemplatesFilesHelper:
         if file_extension == '' or file_extension == None:
             filename += ".json"
 
-        #path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,filename)
         path = ''
 
-        '''if sub_key.index('/') > 0:
-            sub_key = sub_key.split('/')[0]
-
-        if os.path.exists(os.path.join(key,sub_key)):
-            path = os.path.join(key,sub_key,filename)
-        else:
-            path = os.path.join(key,filename)'''
         dir_main,_ = os.path.split(main_path)
         path = os.path.join(dir_main,filename)
         
@@ -74,9 +64,6 @@ class TemplatesFilesHelper:
     '''    
     def get_all_templates_content(self,main_dir,ref_dir):
         
-        #if sub_key.find('/') != -1:
-        #    sub_key = sub_key.split('/')[0]
-        
         templates = self.get_all_templates_content_inner(main_dir)        
 
         if len(templates) > 0:
@@ -88,16 +75,7 @@ class TemplatesFilesHelper:
        
     def get_all_templates_content_inner(self,folder,recursive=False):
         templates = []
-        '''
-        if sub_key.find('/') != -1:
-            sub_key = sub_key.split('/')[0]
         
-        path = os.path.join(root_key,sub_key)
-        if os.path.exists(path) == False:
-            path = os.path.join(root_key,'*')
-        else:    
-            path = os.path.join(root_key,sub_key,'*')
-        '''
         files = glob(folder + '\*.json', recursive=recursive)
         for fullname in files:
             with open(fullname,'r') as f:
