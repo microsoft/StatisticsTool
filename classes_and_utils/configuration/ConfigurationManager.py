@@ -21,8 +21,7 @@ class ConfigurationManager:
     def add_experiment(self,experiment_path,experiment_object):
         self.experiments[experiment_path] = experiment_object
 
-    def add_results_table(self,main_experiment_path,ref_experiment_path,server):
-        res_table = Results_table(server)
+    def add_results_table(self,main_experiment_path,ref_experiment_path,res_table):
         self.results_tables[(main_experiment_path,ref_experiment_path)] = res_table
         return res_table
 

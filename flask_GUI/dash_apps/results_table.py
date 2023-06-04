@@ -36,6 +36,7 @@ def get_color_by_two_values_diff(ref, main, gradient):
 
 
 class Results_table():
+    
     def __init__(self, server):
 
         self.dash_app = Dash(
@@ -47,23 +48,33 @@ class Results_table():
         self.table = None
         self.dash_app.layout = self.get_whole_page_layout()
         self.unique_helper = None
+        self.main_exp = None
+        self.ref_exp = None
        
         self.dash_app.callback(
             Output('cols_seg', 'options'),
             Output('rows_seg', 'options'),
             Input('init', 'value')) \
             (lambda x: (self.segmentation_categories, self.segmentation_categories))
-        
-    def set_data(self, config_item, segmentations,calc_unique = False):
+    
+    def set_unique(self,calc_unique):
+        self.calc_unique = calc_unique
+        if calc_unique and self.unique_helper == None:
+            self.unique_helper = UniqueHelper(self.main_exp,self.ref_exp)
 
-        if config_item.ref_pkl is not None and calc_unique and self.unique_helper is None:
-            self.unique_helper = UniqueHelper(config_item.main_pkl,config_item.ref_pkl)
+    def set_data(self, main_exp, ref_exp, segmentations,calc_unique = False):
+        self.main_exp = main_exp
+        self.ref_exp = ref_exp
+
+        if main_exp is not None and calc_unique and self.unique_helper is None:
+            self.unique_helper = UniqueHelper(main_exp,ref_exp)
        
         self.calc_unique = calc_unique
-        self.table = pt.PivotTable(segmentations, config_item = config_item, cell_function=self.get_cell_exp)
+        self.table = pt.PivotTable(segmentations, main_exp,ref_exp, cell_function=self.get_cell_exp)
         self.segmentation_categories = list(segmentations.keys())
 
-    def get_webpage(self):
+    def get_webpage(self,columns,rows):
+        self.dash_app.layout = self.get_table_div_layout(columns,rows)
         return self.dash_app.index()
     
     def make_title(self,column_keys, row_keys):
@@ -90,19 +101,19 @@ class Results_table():
             return rows
         return rows + "/" + columns
     
-    def get_cell_exp(self, config_item, column_keys, row_keys,row_index):  
+    def get_cell_exp(self, main_exp,ref_exp, column_keys, row_keys,row_index):  
         '''
         The function that return a single cell
         '''     
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
         
         exp_data = {}
-        exp_data[MAIN_EXP] = config_item.main_pkl.get_cell_data(segmentations, self.unique_helper, False)
-        if config_item.ref_pkl is not None:
-            exp_data[REF_EXP] = config_item.ref_pkl.get_cell_data(segmentations, self.unique_helper, True) 
+        exp_data[MAIN_EXP] = main_exp.get_cell_data(segmentations, self.unique_helper, False)
+        if ref_exp is not None:
+            exp_data[REF_EXP] = ref_exp.get_cell_data(segmentations, self.unique_helper, True) 
 
         all_metrics = []
-        if config_item.ref_pkl is not None:
+        if ref_exp is not None:
             TDs = []
             TDs.append(html.Td(''))
             TDs.append(html.Td('MAIN', style={'color':'black','font-weight':'bold','white-space':'nowrap'}))
