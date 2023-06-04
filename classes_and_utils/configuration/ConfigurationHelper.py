@@ -11,7 +11,7 @@ class ConfigurationHelper:
     '''
         input:   request
         retruns: main object ,is main object a directory or experiment,ref object, is ref object a directory or experiment
-    '''
+    '''    
     @staticmethod
     def get_request_experiments_info(request):
 
@@ -19,8 +19,8 @@ class ConfigurationHelper:
         if request.args.get('use_cached_report') == 'true':
             main_path = request.args.get('main')
             main_path = urllib.parse.unquote_plus(main_path)
-            main_dir,_ = os.path.split(main_path)
-            return main_dir,False,None,False,main_dir
+            
+            return main_path, None
 
         main = None
         ref = None

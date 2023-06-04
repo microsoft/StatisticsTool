@@ -19,6 +19,7 @@ import re, pickle
 import numpy as np
 import json
 from pathlib import Path
+import shutil
 
 READING_FUNCTIONS = 'reading_functions'
 EVALUATION_FUNCTIONS = 'evaluation_functions'
@@ -37,15 +38,32 @@ def get_configs_folder():
     folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), CONFIG_FILE_NAME)
     return folder
 
-def save_experiment(obj, filename):
+def save_experiment(obj, out_folder, config_file_name):
     """
     Saves an object using pickle in a certain path
     :param obj: any python object (in this project we use it to save an instance of  class ParallelExperiment)
     :param filename: full path to the saved object
     """
-    with open(filename, 'wb') as output:  # Overwrites any existing file.
+    report_name = os.path.splitext(config_file_name)[0]
+    report_file_name = report_name + '.pkl'
+    report_output_file = os.path.join(out_folder, report_file_name)
+
+    with open(report_output_file, 'wb') as output:  # Overwrites any existing file.
         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
+    metadata = {}  
+
+    config_file_path = os.path.join(get_configs_folder(), config_file_name)
+    if os.path.exists(config_file_path):
+        with open(config_file_path) as conf:
+            metadata = json.load(conf)[0]
+    
+    metadata.update(obj.sheldon_header_data)
+    output_file = os.path.join(out_folder,report_name+".json")
+    with open(output_file, 'w') as f:
+        json.dump(metadata, f)
+
+    return report_output_file
 
 def load_object(file):
     """
@@ -261,7 +279,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
                                                                  readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
-        return None, user_text, None, None
+        return None, user_text, None
 
     # combine the intermediate results for further statistics and example extraction
     exp = experiment_from_video_evaluation_files(statistic_funcs=statistics_funcs,
@@ -270,9 +288,9 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
                                 overlap_function = overlap_func)
     
     folder_name = save_stats_dir
-    report_file_name = config_file_name.replace('.json', '') + '.pkl'
-    save_experiment(exp, os.path.join(folder_name, report_file_name))
-    return exp, user_text, folder_name, report_file_name
+    
+    report_file_name = save_experiment(exp, folder_name, config_file_name)
+    return exp, user_text, report_file_name
 
 
 def unpack_stats_request(request):

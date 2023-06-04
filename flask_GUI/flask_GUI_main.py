@@ -58,14 +58,14 @@ def calculating():
         return render_template('Not_empty.html')
     
     # calculate the intermediate results for all the videos then combine them
-    exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir=GT_dir)
-    exp_path = os.path.join(folder_name,report_file_name)
-    configuration_manager.add_experiment(exp_path,exp)
+    exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir=GT_dir)
+   
+    configuration_manager.add_experiment(report_file_name,exp)
 
-    if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
+    if exp == 'TypeError' or exp is None or report_file_name is None:
         link = 'None'
     else:
-        link = "/Report_Viewer?use_cached_report=true&main=" +  urllib.parse.quote(exp_path)
+        link = "/Report_Viewer?use_cached_report=true&main=" +  urllib.parse.quote(report_file_name)
 
     results_text = results_text.split('\n')
     return render_template('message.html', link=link, text=results_text)
@@ -105,7 +105,7 @@ def Report_Viewer():
         print (f"exception message: {ex}.")
 
         return f'Failed to load report for request {request.values}'
-    
+
 @server.route('/static/<file_name>')
 def send_static_file(file_name):
     mime = mimetypes.guess_type(file_name, strict=False)[0]
