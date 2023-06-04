@@ -42,7 +42,7 @@ def save_object(obj, filename):
         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
 
-def load_object(filename):
+def load_object(file):
     """
     Loads a pickle file from a path
     :param filename: the path from which the function loads the pickle file
@@ -50,10 +50,14 @@ def load_object(filename):
     """
     ret_exp = None
     ## Load  pickle
-    with open(filename, 'rb') as input:
-        ret_exp = pickle.load(input)
-
-
+    if type(file).__name__ == 'str':
+        with open(file, 'rb') as input:
+            ret_exp = pickle.load(input)
+    elif type(file).__name__ == 'FileStorage':
+        ret_exp = pickle.load(file.stream)
+    else:
+        raise TypeError("Unable to load pickle")
+    
     ## Update values
     ret_exp.main_ref_dict=None
     ret_exp.ref_main_dict=None
