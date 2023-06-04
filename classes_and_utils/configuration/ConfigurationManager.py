@@ -36,18 +36,23 @@ class ConfigurationManager:
         return None
     
     def add_experiments_in_folder(self,folder):
-        if os.path.isdir(folder) == False:
-            return ''
+        total = []
+        if folder and os.path.isdir(folder) == False:
+            total.append(folder)
+        else:        
         
+            files = glob(folder + '/**/*.pkl', recursive=True)
+            for v in files:
+                total.append(v)
         experiments_added = ''
-        files = glob(folder + '/**/*.pkl', recursive=True)
-        for v in files:
+            
+        for v in total:    
             experiment = load_object(v)
             self.add_experiment(v,experiment)
             if len(experiments_added) > 0:
                 experiments_added += ","
             experiments_added += str(v)
-
+    
         return experiments_added
 
     def add_experiment_object(self,experiment_object):
@@ -56,13 +61,14 @@ class ConfigurationManager:
         self.add_experiment(key,experiment_object)
         return key
     
-    def add(self,value,is_an_experiment_object):
-        if value == None:
+    def add(self,value):
+        if not value:
             return ''
-        if is_an_experiment_object:
-            return self.add_experiment_object(value)
-        else:
+        
+        if type(value) == str:
             return self.add_experiments_in_folder(value)
+        else:
+            return self.add_experiment_object(value)
         
     def get_item_segmentations(self,main_path):
         

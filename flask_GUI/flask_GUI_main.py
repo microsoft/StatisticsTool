@@ -41,13 +41,13 @@ def homepage():
 
 @server.route('/create_new_report', methods=['GET', 'POST'])
 def new_report_func():
-    possible_configs = manage_new_report_page(request, current_file_directory)
+    possible_configs = manage_new_report_page(request)
     return render_template('new_report.html', possible_configs=possible_configs)
 
 @server.route('/calculating_page', methods=['GET', 'POST'])
 def calculating():
     # extract the user specified directories and names
-    config_file_name, prd_dir, GT_dir, output_dir, config_dict = unpack_calc_request(request, current_file_directory)
+    config_file_name, prd_dir, GT_dir, output_dir = unpack_calc_request(request)
     
     # making sure save_stats_dir is empty and opening the appropriate folders
     empty, save_stats_dir = folder_func(output_dir, os.path.basename(config_file_name))
@@ -58,14 +58,14 @@ def calculating():
         return render_template('Not_empty.html')
     
     # calculate the intermediate results for all the videos then combine them
-    exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
-    exp_path = os.path.join(folder_name,report_file_name)
-    configuration_manager.add_experiment(exp_path,exp)
+    exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir=GT_dir)
+   
+    configuration_manager.add_experiment(report_file_name,exp)
 
-    if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
+    if exp == 'TypeError' or exp is None or report_file_name is None:
         link = 'None'
     else:
-        link = "/Report_Viewer?use_cached_report=true&main=" +  urllib.parse.quote(exp_path)
+        link = "/Report_Viewer?use_cached_report=true&main=" +  urllib.parse.quote(report_file_name)
 
     results_text = results_text.split('\n')
     return render_template('message.html', link=link, text=results_text)
@@ -81,7 +81,7 @@ def show_help():
 @server.route('/show', methods=['GET', 'POST'])
 def show_config():
     config_name = request.args.get('Configuration')
-    path_to_wanted_config = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'), os.path.join('configs', config_name))
+    path_to_wanted_config = os.path.join(get_configs_folder(), config_name)
     config_file = loading_json(path_to_wanted_config)
     config_dict = config_file[0]
     return render_template('show_config.html', config_dict=config_dict, config_name=config_name)
@@ -92,10 +92,10 @@ def show_config():
 def Report_Viewer():
 
     try:
-        main, is_main_an_object, ref, is_ref_an_object,main_dir = ConfigurationHelper.get_request_experiments_info(request)
+        main, ref = ConfigurationHelper.get_request_experiments_info(request)
         
-        main_added_experiments = configuration_manager.add(main,is_main_an_object)
-        ref_added_experiments  = configuration_manager.add(ref,is_ref_an_object)
+        main_added_experiments = configuration_manager.add(main)
+        ref_added_experiments  = configuration_manager.add(ref)
         js_pairs = ConfigurationHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
         return redirect(f'static/index.html?reports={js_pairs}')
     
@@ -104,8 +104,8 @@ def Report_Viewer():
         for a in traceback.format_tb(ex.__traceback__): print(a)
         print (f"exception message: {ex}.")
 
-        return f'Failed to load report from {main_dir}'
-    
+        return f'Failed to load report for request {request.values}'
+
 @server.route('/static/<file_name>')
 def send_static_file(file_name):
     mime = mimetypes.guess_type(file_name, strict=False)[0]
@@ -187,6 +187,8 @@ def save_template():
     main_path = data['main']
     ref_path = data['ref']
     helper = TemplatesFilesHelper()
+    if not name:
+        return 
     result = helper.save_template(name,content,main_path,ref_path)
     return jsonify(result)
     

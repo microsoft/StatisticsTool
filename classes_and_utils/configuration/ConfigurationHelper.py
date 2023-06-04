@@ -11,7 +11,7 @@ class ConfigurationHelper:
     '''
         input:   request
         retruns: main object ,is main object a directory or experiment,ref object, is ref object a directory or experiment
-    '''
+    '''    
     @staticmethod
     def get_request_experiments_info(request):
 
@@ -19,32 +19,24 @@ class ConfigurationHelper:
         if request.args.get('use_cached_report') == 'true':
             main_path = request.args.get('main')
             main_path = urllib.parse.unquote_plus(main_path)
-            main_dir,_ = os.path.split(main_path)
-            return main_dir,False,None,False,main_dir
+            
+            return main_path, None
 
         main = None
-        is_main_an_object = False
         ref = None
-        is_ref_an_object = False
-        main_dir = ''
         
         if request.files and request.files[MAIN_REPORT_CHOOSEFILE].filename != '':
-            is_main_an_object = True
-            main = request.files[MAIN_REPORT_CHOOSEFILE]
-            main_dir,_ = os.path.split(main.filename)
+            main = request.files[MAIN_REPORT_CHOOSEFILE] 
         else:
-            is_main_an_object = False
             main = request.values and request.values[MAIN_REPORT_FILE_PATH]
-            main_dir = main
+          
 
         if request.files and request.files[REF_REPORT_CHOOSE_FILE].filename != '':
-            is_ref_an_object = True
             ref = request.files[REF_REPORT_CHOOSE_FILE]
         else:
-            is_ref_an_object = False
             ref = request.values and request.values[REF_REPORT_FILE_PATH]            
 
-        return main, is_main_an_object, ref, is_ref_an_object,main_dir  
+        return main, ref  
     
     @staticmethod
     def build_main_ref_pairs(main_experiments,ref_experiments):

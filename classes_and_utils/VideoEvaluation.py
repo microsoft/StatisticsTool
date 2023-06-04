@@ -292,14 +292,13 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
    
     #TODO: Indeed need to save this information, but not as a jump file header.
     #Jump file header should be created only when exporting it (on UI)
-    sheldon_pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
-    sheldon_gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
-    # sheldon_video_dir = get_local_or_blob_full_path(path, StoreType.Data)
-    sheldon_video_dir = '' #TODO:ADD Blob link
+    pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
+    gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
+    video_dir = '' #TODO:ADD Blob link
     
     user_text = f"Processed successfully: {len(succeded)} files\n Reading function skipped: {len(skipped_reading_fnc)} files\n Not .json files: {len(skipped_not_json)}\n Failed with an error: {len(failed)} files\n Filtered out by log name: {len(skipped_not_in_lognames)}\n"
 
-    sheldon_header_data = create_sheldon_list_header(primary_path=sheldon_pred_dir, primary_name=pred_file_name, secondary_path=sheldon_gt_dir, secondary_name=gt_file_name, video_path=sheldon_video_dir)
+    sheldon_header_data = create_sheldon_list_header(primary_path=pred_dir, primary_name=pred_file_name, secondary_path=gt_dir, secondary_name=gt_file_name, video_path=video_dir)
     return output_files, sheldon_header_data, user_text
 
 

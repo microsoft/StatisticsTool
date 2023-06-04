@@ -19,6 +19,7 @@ import re, pickle
 import numpy as np
 import json
 from pathlib import Path
+import shutil
 
 READING_FUNCTIONS = 'reading_functions'
 EVALUATION_FUNCTIONS = 'evaluation_functions'
@@ -28,19 +29,41 @@ STATISTICS_FUNCTIONS = 'statistics_functions'
 TRANSFORM_FUNCTIONS = 'transform_functions'
 
 INTERMEDIATE_RESULTS_DIR="intermediate resutls"
+CONFIG_FILE_NAME = "configs"
 
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
 
-def save_object(obj, filename):
+def get_configs_folder():
+    folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), CONFIG_FILE_NAME)
+    return folder
+
+def save_experiment(obj, out_folder, config_file_name):
     """
     Saves an object using pickle in a certain path
     :param obj: any python object (in this project we use it to save an instance of  class ParallelExperiment)
     :param filename: full path to the saved object
     """
-    with open(filename, 'wb') as output:  # Overwrites any existing file.
+    report_name = os.path.splitext(config_file_name)[0]
+    report_file_name = report_name + '.pkl'
+    report_output_file = os.path.join(out_folder, report_file_name)
+
+    with open(report_output_file, 'wb') as output:  # Overwrites any existing file.
         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
+    metadata = {}  
+
+    config_file_path = os.path.join(get_configs_folder(), config_file_name)
+    if os.path.exists(config_file_path):
+        with open(config_file_path) as conf:
+            metadata = json.load(conf)[0]
+    
+    metadata.update(obj.sheldon_header_data)
+    output_file = os.path.join(out_folder,report_name+".json")
+    with open(output_file, 'w') as f:
+        json.dump(metadata, f)
+
+    return report_output_file
 
 def load_object(file):
     """
@@ -126,7 +149,7 @@ def options_for_funcs():
     return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs
 
 
-def manage_new_report_page(request, current_file_directory):
+def manage_new_report_page(request):
     """
     Accepts request from multiple pages and show the available configuration files
     adds a new configuration file if request came from new_task_config.html
@@ -135,20 +158,19 @@ def manage_new_report_page(request, current_file_directory):
     :param current_file_directory: full path to flask_GUI_main.py
     :return: list of available configuration files
     """
-
+    configs_folder = get_configs_folder()
     # if a new config is added in the GUI
     if "add_config" in request.url:
         # unpack the fields in the request and concentrate it in a configuration dictionary
         new_config, new_config_name = unpack_new_config(request)
-        path_to_save = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'),
-                                                      os.path.join('configs', new_config_name))
+        path_to_save = os.path.join(configs_folder, new_config_name+'.json')
         # save the dictionary in the config folder as a json file
-        save_json(path_to_save + '.json', new_config)
+        save_json(path_to_save, new_config)
     # check what are the available config files in the config folder
-    path_to_configs = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'), 'configs')
-    if not os.path.exists(path_to_configs):
-        os.makedirs(path_to_configs)
-    possible_configs = os.listdir(path_to_configs)
+   
+    if not os.path.exists(configs_folder):
+        os.makedirs(configs_folder)
+    possible_configs = os.listdir(configs_folder)
     return possible_configs
 
 
@@ -160,8 +182,6 @@ def unpack_new_config(request):
     """
     new_config_name = request.form.get('name')
     threshold = request.form.get('Threshold')
-    image_width = request.form.get('image_width')
-    image_height = request.form.get('image_height')
     reading_func_name = request.form.get('Reading_func')
     transform_func_name = request.form.get('transform_func')
     overlap_func_name = request.form.get('overlap_func')
@@ -172,18 +192,16 @@ def unpack_new_config(request):
 
     new_config = [
         {"File Reading Function": reading_func_name, "Overlap Function": overlap_func_name, "Threshold": threshold,
-         "Evaluation Function": evaluation_func_name, "Image Width": image_width, "Image Height": image_height,
-         "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name,
+         "Evaluation Function": evaluation_func_name, "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name,
          "Transformation Function":transform_func_name, "Log Names to Evaluate":log_names_to_evaluate }]
     return new_config, new_config_name
 
 
-def unpack_calc_request(request, current_file_directory):
+def unpack_calc_request(request):
     """
     Accepts request from new_report.html and unpack the parameters for a new report as variables
 
     :param request: request that was sent to '/calculating_page' route
-    :param current_file_directory: full path to flask_GUI_main.py
     :return: parameters needed for a new report
     """
     # receiving the wanted configuration file name from the form
@@ -193,20 +211,16 @@ def unpack_calc_request(request, current_file_directory):
     GT_dir = request.form.get('Ground Truth Directory')
     output_dir = request.form.get('Reporter Output Directory')
     
+    return config_file_name, prd_dir, GT_dir, output_dir
+
+
+def load_config(config_file_name):
+    
     # finding the wanted configuration file location and loading it
-    config_path = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'),
-                                                 os.path.join('configs', config_file_name))
+    config_path = os.path.join(get_configs_folder(), config_file_name)
     config_file = loading_json(config_path)
     config_dict = config_file[0]
-    return config_file_name, prd_dir, GT_dir, output_dir, config_dict
-
-
-def unpack_calc_config_dict(config_dict):
-    """
-    Accepts a dictionary with configuration names and returns the correct functions and variables
-    :param config_dict: a dictionary with the selected configuration for the report
-    :return: the functions mentioned in the configuration dictionary
-    """
+    
     # extracting the configuration from the config file (which is a dictionary at this point)
     transform_func_name = 'None'
     if 'Transformation Function' in config_dict:
@@ -225,14 +239,6 @@ def unpack_calc_config_dict(config_dict):
             else:
                 log_names_to_evaluate = log_names_to_evaluate.split(',')
 
-    if "Image Width" in config_dict.keys():
-        image_width = config_dict["Image Width"]
-        image_height = config_dict["Image Height"]
-    # Case Image width and height weren't supplied in the JSON
-    else:
-        # Set default size 500x500
-        image_width = 500
-        image_height = 500
     statistics_func_name = config_dict["Statistics Functions"]
     partitioning_func_name = config_dict["Partitioning Functions"]
 
@@ -245,10 +251,10 @@ def unpack_calc_config_dict(config_dict):
     transform_func = None
     if transform_func_name != 'None':
         transform_func = get_userdefined_function(TRANSFORM_FUNCTIONS,transform_func_name)
-    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate
+    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate
 
 
-def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict, gt_dir = None):
+def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = None):
     """
 
     :param config_file_name: the name of the selected configurations file
@@ -262,8 +268,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = unpack_calc_config_dict(
-        config_dict)
+    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, log_names_to_evaluate = load_config(config_file_name)
     
     intermediate_dir = os.path.join(save_stats_dir,INTERMEDIATE_RESULTS_DIR)
     if not os.path.exists(intermediate_dir):
@@ -274,19 +279,18 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, config_dict
                                                                  readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
-        return None, user_text, None, None
+        return None, user_text, None
 
     # combine the intermediate results for further statistics and example extraction
     exp = experiment_from_video_evaluation_files(statistic_funcs=statistics_funcs,
                                 compared_videos=compared_videos, segmentation_funcs=partitioning_func,
-                                threshold=threshold, image_width=image_width, image_height=image_height,
-                                sheldon_header_data=sheldon_header_data, evaluation_function = evaluation_func, 
+                                threshold=threshold, sheldon_header_data=sheldon_header_data, evaluation_function = evaluation_func, 
                                 overlap_function = overlap_func)
     
     folder_name = save_stats_dir
-    report_file_name = config_file_name.replace('.json', '') + '.pkl'
-    save_object(exp, os.path.join(folder_name, report_file_name))
-    return exp, user_text, folder_name, report_file_name
+    
+    report_file_name = save_experiment(exp, folder_name, config_file_name)
+    return exp, user_text, report_file_name
 
 
 def unpack_stats_request(request):
