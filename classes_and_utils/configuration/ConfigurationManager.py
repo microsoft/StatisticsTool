@@ -57,13 +57,14 @@ class ConfigurationManager:
         self.add_experiment(key,experiment_object)
         return key
     
-    def add(self,value,is_an_experiment_object):
+    def add(self,value):
         if value == None:
             return ''
-        if is_an_experiment_object:
-            return self.add_experiment_object(value)
-        else:
+        
+        if type(value) == str:
             return self.add_experiments_in_folder(value)
+        else:
+            return self.add_experiment_object(value)
         
     def get_item_segmentations(self,main_path):
         

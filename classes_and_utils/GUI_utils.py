@@ -28,9 +28,14 @@ STATISTICS_FUNCTIONS = 'statistics_functions'
 TRANSFORM_FUNCTIONS = 'transform_functions'
 
 INTERMEDIATE_RESULTS_DIR="intermediate resutls"
+CONFIG_FILE_NAME = "configs"
 
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
+
+def get_configs_folder():
+    folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), CONFIG_FILE_NAME)
+    return folder
 
 def save_experiment(obj, filename):
     """
@@ -126,7 +131,7 @@ def options_for_funcs():
     return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs
 
 
-def manage_new_report_page(request, current_file_directory):
+def manage_new_report_page(request):
     """
     Accepts request from multiple pages and show the available configuration files
     adds a new configuration file if request came from new_task_config.html
@@ -135,20 +140,19 @@ def manage_new_report_page(request, current_file_directory):
     :param current_file_directory: full path to flask_GUI_main.py
     :return: list of available configuration files
     """
-
+    configs_folder = get_configs_folder()
     # if a new config is added in the GUI
     if "add_config" in request.url:
         # unpack the fields in the request and concentrate it in a configuration dictionary
         new_config, new_config_name = unpack_new_config(request)
-        path_to_save = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'),
-                                                      os.path.join('configs', new_config_name))
+        path_to_save = os.path.join(configs_folder, new_config_name+'.json')
         # save the dictionary in the config folder as a json file
-        save_json(path_to_save + '.json', new_config)
+        save_json(path_to_save, new_config)
     # check what are the available config files in the config folder
-    path_to_configs = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'), 'configs')
-    if not os.path.exists(path_to_configs):
-        os.makedirs(path_to_configs)
-    possible_configs = os.listdir(path_to_configs)
+   
+    if not os.path.exists(configs_folder):
+        os.makedirs(configs_folder)
+    possible_configs = os.listdir(configs_folder)
     return possible_configs
 
 
@@ -195,11 +199,10 @@ def unpack_calc_request(request):
     return config_file_name, prd_dir, GT_dir, output_dir
 
 
-def load_config(config_file_name, current_file_directory):
+def load_config(config_file_name):
     
     # finding the wanted configuration file location and loading it
-    config_path = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'),
-                                                 os.path.join('configs', config_file_name))
+    config_path = os.path.join(get_configs_folder(), config_file_name)
     config_file = loading_json(config_path)
     config_dict = config_file[0]
     
@@ -244,7 +247,7 @@ def load_config(config_file_name, current_file_directory):
     return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate
 
 
-def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, current_file_directory, gt_dir = None):
+def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = None):
     """
 
     :param config_file_name: the name of the selected configurations file
@@ -258,8 +261,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, current_fil
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = load_config(
-        config_file_name, current_file_directory)
+    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, image_width, image_height, log_names_to_evaluate = load_config(config_file_name)
     
     intermediate_dir = os.path.join(save_stats_dir,INTERMEDIATE_RESULTS_DIR)
     if not os.path.exists(intermediate_dir):
