@@ -4,8 +4,11 @@ import traceback
 import os, sys
 import re
 from classes_and_utils.UpdateListManager import UpdateListManager
+from classes_and_utils.configuration.ConfigurationHelper import ConfigurationHelper
+from classes_and_utils.configuration.ConfigurationManager import ConfigurationManager
+from classes_and_utils.configuration.ConfigurationItem import ConfigurationItem
 
-from flask_GUI.configuration_results import ConfigurationResults
+#from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
 current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
@@ -19,7 +22,8 @@ from flask import Flask, jsonify, redirect, render_template, request, send_from_
 #region - init Flask server 
 server = Flask(__name__)
 server.secret_key = 'any random string'
-configuration_results = ConfigurationResults()
+#configuration_results = ConfigurationResults()
+configuration_manager = ConfigurationManager()
 
 # getting the options for each type of necessary function
 file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
@@ -55,14 +59,17 @@ def calculating():
     # calculate the intermediate results for all the videos then combine them
     exp, results_text, folder_name, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, current_file_directory, gt_dir=GT_dir)
    
-    key = folder_name.replace(' ','_')
-    sub_key = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
-    configuration_results.add_exp(exp,key,sub_key,'',server)
+    #key = folder_name.replace(' ','_')
+    #sub_key = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
+    #configuration_results.add_exp(exp,key,sub_key,'',server)
+    #exp_path = os.path.splitext(os.path.basename(report_file_name))[0].replace(' ','_')
+    exp_path = os.path.join(folder_name,report_file_name)
+    configuration_manager.add_experiment( exp_path,exp)
 
     if exp == 'TypeError' or exp is None or folder_name is None or report_file_name is None:
         link = 'None'
     else:
-        link = "/Report_Viewer?use_cached_report=true&key=" + key + "&sub_key=" + sub_key
+        link = "/Report_Viewer?use_cached_report=true&main=" + exp_path
 
     results_text = results_text.split('\n')
     return render_template('message.html', link=link, text=results_text)
@@ -89,12 +96,28 @@ def show_config():
 def Report_Viewer():
 
     try:
+        main, is_main_an_object, ref, is_ref_an_object,main_dir = ConfigurationHelper.get_request_experiments_info(request)
+        
+        main_added_experiments = configuration_manager.add(main,is_main_an_object)
+        ref_added_experiments  = configuration_manager.add(ref,is_ref_an_object)
+        js = ConfigurationHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+        return redirect(f'static/index.html?reports={js}')
+    
+    except Exception as ex:
+        print (f"error: {ex}. Traceback: ")
+        for a in traceback.format_tb(ex.__traceback__): print(a)
+        print (f"exception message: {ex}.")
+
+        return f'Failed to load report from {main_dir}'
+    '''
+    try:
         if request.args.get('use_cached_report') == 'true':
             root_key = request.args.get('key')
             sub_keys = request.args.get('sub_key')
             ref_dir = ''
             return redirect(f'static/index.html?root_key={root_key}&sub_keys={sub_keys}&ref_dir={ref_dir}')   
         else:
+            root_key,ref_dir = configuration_results.load_configurations(request,server)
             current_root_key = configuration_results.get_key_from_request(request,True)
             current_ref_dir = configuration_results.get_key_from_request(request,False)
             root_key,sub_keys,ref_dir = configuration_results.get_config_root_key_info(current_root_key)
@@ -106,7 +129,7 @@ def Report_Viewer():
         print (f"exception message: {ex}.")
 
         return f'Failed to load report from {current_root_key}'
-    
+    '''
 
 @server.route('/static/<file_name>')
 def send_static_file(file_name):
@@ -122,9 +145,9 @@ def favicon():
    
 @server.route('/get_segmentations', methods=['POST'])    
 def get_segmentations():
-    key = request.json['key']
-    sub_key = request.json['sub_key']
-    segmentations = configuration_results.get_item_segmentations(key,sub_key)
+    main_path = request.json['main']
+    
+    segmentations = configuration_manager.get_item_segmentations(main_path)
     
     result = []
     for k, v in segmentations.items():
@@ -138,11 +161,14 @@ def get_segmentations():
 def get_report_table():
     
     calc_unique = True if request.args.get('calc_unique') == 'true' else False
-    root_key = request.args.get('key')
-    sub_key = request.args.get('sub_key')
-    config_item = configuration_results.get_config_item(root_key,sub_key)
-    if config_item is None:
+    main_path = request.args.get('main')
+    ref_path = request.args.get('ref')
+
+    if configuration_manager.get_experiment(main_path) == None:
         return None
+
+    main = configuration_manager.get_experiment(main_path)
+    ref = configuration_manager.get_experiment(ref_path) if ref_path != '' else None
     
     columns = [] 
     rows = [] 
@@ -158,8 +184,16 @@ def get_report_table():
             argRows = argRows[:-1]
         rows = list(argRows.split(','))
     
-    segmentations = configuration_results.get_item_segmentations(root_key,sub_key)
-    config_item.table_result.set_data(config_item, segmentations,calc_unique)
+    segmentations = configuration_manager.get_item_segmentations(main_path)
+    res_table = configuration_manager.get_results_table(main_path,ref_path)
+    if res_table == None:
+        res_table = configuration_manager.add_results_table(main_path,ref_path,server)
+
+    config_item = ConfigurationItem()
+    config_item.main_pkl = main
+    config_item.ref_pkl = ref
+    config_item.table_result = res_table
+    res_table.set_data(config_item, segmentations,calc_unique)
     config_item.table_result.dash_app.layout = config_item.table_result.get_table_div_layout(columns,rows)
     wp = config_item.table_result.get_webpage()
 
@@ -167,11 +201,13 @@ def get_report_table():
 
 @server.route('/get_all_templates', methods=['POST'])
 def get_all_templates():
-    root_key = request.json['key']
-    sub_key = request.json['sub_key']
-    ref_dir = request.json['ref_dir']
+    main = request.json['main']
+    ref = request.json['ref']
+    main_dir,_ = os.path.split(main)
+    ref_dir,_ = os.path.split(ref)
+    
     helper = TemplatesFilesHelper()
-    content = helper.get_all_templates_content(root_key,sub_key,ref_dir)
+    content = helper.get_all_templates_content(main_dir,ref_dir)
     return jsonify(content)
 
 @server.route('/get_template_content', methods=['POST'])
@@ -186,11 +222,10 @@ def save_template():
     data = request.json
     name = data['name']
     content = data['content']
-    key = data['key']
-    sub_key = data['sub_key']
-    ref_dir = data['ref_dir']
+    main_path = data['main']
+    ref_path = data['ref']
     helper = TemplatesFilesHelper()
-    result = helper.save_template(name,content,key,sub_key,ref_dir)
+    result = helper.save_template(name,content,main_path,ref_path)
     return jsonify(result)
     
 #########################################################
@@ -198,14 +233,14 @@ def save_template():
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
     listManager = UpdateListManager()
-    root_key = request.args.get('key')
-    sub_key  = request.args.get('sub_key')
-    config_item = configuration_results.get_config_item(root_key,sub_key)
-    if config_item is None:
-        return
+    main_path = request.args.get('main')
+    ref_path  = request.args.get('ref')
+    main_exp = configuration_manager.get_experiment(main_path)
+    ref_exp = configuration_manager.get_experiment(ref_path)
+    
 
     # global comp_index, unique, state, cell_name, save_path, per_video_example_hash
-    listManager.manage_list_request(request, config_item.main_pkl, config_item.ref_pkl)
+    listManager.manage_list_request(request, main_exp,ref_exp)
 
     return render_template('examples_list.html', 
                             state=listManager.state, 
@@ -232,13 +267,14 @@ def is_file_exists():
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():
-    root_key = request.args.get('key')
-    sub_key = request.args.get('sub_key')
-    config_item = configuration_results.get_config_item(root_key,sub_key)
-    if config_item is None:
-        return None
+    main_path = request.args.get('main')
+    ref_path = request.args.get('ref')
+    main_exp = configuration_manager.get_experiment(main_path)
+    ref_exp = configuration_manager.get_experiment(ref_path)
+
+    main_dir,_ = os.path.split(main_path)
     
-    detection_text_list, data, save_path = manage_image_request(request, config_item.main_pkl, config_item.ref_pkl, root_key, sub_key)
+    detection_text_list, data, save_path = manage_image_request(request,main_exp, ref_exp,main_dir)
     full_path = re.escape(request.full_path)+"&save_image"
     return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list, request = full_path)
 

@@ -55,10 +55,9 @@ export class StatisticsToolService implements OnInit {
   calculateUnique = false;
   fileNotFoundError = '';
 
-  //templates = [{'key':0,'value':'--- select ---'},{'key':1,'value':'Template 1'},{'key':2,'value':'Template 2'},{'key':3,'value':'Template 3'}]
   templateNameOptions:{'key':number,'value':string}[] = [];
   selectedTamplate = 0;
-  selectedSubKey = 0;
+  selectedReport = 0;
 
   showDrawer = false;
 
@@ -72,50 +71,79 @@ export class StatisticsToolService implements OnInit {
   subKeys:{'key':number,'value':string}[] = [];
   ref_dir = '';
 
+  mainRefPairs:{'main':string,'ref':string}[] = [];
+  reportlistItems:{'key':number,'value':string}[] = []
+
+  
   constructor(private httpClient:HttpClient,private modalService: NgbModal) { 
     
   }
   
-  init(subKeySelected:number = 0){
-
+  init(reportsPairs:string = '',selectedReport:number = 0){
+    if (reportsPairs != '')
+      this.processReportsPairs(reportsPairs);
     this.templates = [];
     this.currentTemplate = new TemplateInfo();
     this.templateNameOptions = [];
     this.selectedTamplate = 0;
     
-    let url = '/get_all_templates' 
+    let main  = this.reportlistItems.find(x => x.key == selectedReport)!;
+    let ref   = this.mainRefPairs.find(x => x.main == main.value);
+
+    let url = '/get_all_templates';
     this.httpClient.post<{'content':IContent,'name':string}[]>
       (url,{
-        'key':this.currentConfigKey,
-        'sub_key': this.getSelectedSubKey(),
-        'ref_dir':this.ref_dir
+        'main':main.value,
+        'ref': ref!.ref,
       })
       .subscribe(res => {
         this.processTemplates(res);
 
         this.updateTemplateNames();       
 
-        this.loadSegmentations(subKeySelected);
+        this.loadSegmentations(selectedReport);
       })
 
       this.readLocalDataStoreInfoFromStorage();
   }
 
-  loadSegmentations(subKeySelected:number = 0){
+  processReportsPairs(reportPairs:string){
+    if (reportPairs == '')
+      return;
+    
+      this.mainRefPairs = JSON.parse(reportPairs);
+      this.reportlistItems = [];
+      let index = 0;
+      this.mainRefPairs.forEach(pair => {
+        let parts = pair.main.split("\\");
+        this.reportlistItems.push({'key':index,'value':pair.main})
+        index++;
+      })
+  }
+
+  getReportDesc(reportfileName:string){
+    let parts = reportfileName.split("\\");
+    let dir = parts[parts.length-2];
+    let file = parts[parts.length-1];
+    return dir + "\\" + file;
+  }
+
+  loadSegmentations(selectedReport:number = 0){
     //get all optional segments
+    let main = this.reportlistItems.find(x => x.key == selectedReport)!;
+
     this.optionalSegmentations = new Map<string,string[]>();
     this.httpClient.post<{'name':string,'values':string[]}[]>
       ('/get_segmentations',
         {
-          'key':this.currentConfigKey,
-          'sub_key': this.subKeys[this.selectedSubKey].value
+          'main': main.value
         }
       )
       .subscribe(res => {
          res.forEach(x => {
           this.optionalSegmentations.set(x.name,x.values);
          })
-         this.segmentationsFetched.next(subKeySelected);
+         this.segmentationsFetched.next(selectedReport);
       }
     )
   }
@@ -224,9 +252,8 @@ export class StatisticsToolService implements OnInit {
     this.httpClient.post<any>('/save_template',{
       'name':templateName,
       'content':JSON.stringify(req),
-      'key': this.currentConfigKey,
-      'sub_key': this.getSelectedSubKey(),
-      'ref_dir':this.ref_dir
+      'main': this.getSelectedMainReport(),
+      'ref': this.getSelectedRefReport(),
     }).subscribe(res => {
 
       this.templates = [];
@@ -255,7 +282,7 @@ export class StatisticsToolService implements OnInit {
       'name':template_name,
       'content':JSON.stringify(req),
       'key': this.currentConfigKey,
-      'sub_key': this.getSelectedSubKey()
+      'sub_key': this.getSelectedMainReport()
     }).subscribe(res => {
 
       this.templates = [];
@@ -311,9 +338,19 @@ export class StatisticsToolService implements OnInit {
     })
   }
 
-  getSelectedSubKey(){
-    return this.subKeys[this.selectedSubKey].value;
+  getSelectedMainReport(){
+    let main = this.reportlistItems[this.selectedReport];
+    return main.value;
   }
+
+  getSelectedRefReport(){
+    let main = this.reportlistItems[this.selectedReport];
+    let ref = this.mainRefPairs.find(x => x.main == main.value);
+    if (ref != undefined)
+      return ref.ref;
+    return '';
+  }
+ 
 
   openSaveTemplateDialog(){
     this.modalService.open(SaveTemplateDialogComponent,{ centered: true }).result.then(res => {

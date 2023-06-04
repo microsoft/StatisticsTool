@@ -19,7 +19,7 @@ export class SegmentationsComponent implements OnInit{
     arr.forEach(a => {
       this.selected.push({'item_id':a,'item_text':a})
     })
-    console.log('foo','items:',JSON.stringify(arr),'selected:',JSON.stringify(this.selected));
+    
   }
   
   @Input() name = '';

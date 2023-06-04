@@ -401,7 +401,7 @@ def manage_stats_request(request, exp):
     columns, sub_rows, rows, wanted_seg, seg_num = stats_4_html(primary, secondary, tertiary, exp.masks)
     return statistics_dict, wanted_seg, seg_num, wanted_statistics_names, columns, sub_rows, rows, primary, secondary, tertiary, save_path, unique
 
-def manage_image_request(request, main_exp, comp_exp, root_key, sub_key):
+def manage_image_request(request, main_exp, comp_exp,main_directory):
     """
     Accepts the requests to /show_im route and returns an encoded image and the path where the image was saved (if it was saved)
 
@@ -446,7 +446,8 @@ def manage_image_request(request, main_exp, comp_exp, root_key, sub_key):
         name = name.replace(':','')
         if name.startswith('/'):
             name = name[1:]
-        save_path = os.path.join(os.path.join(root_key, sub_key, 'saved images'), name)
+        
+        save_path = os.path.join(os.path.join(main_directory, 'saved images'), name)
         save_path = os.path.normpath(save_path)
         if os.path.exists(save_path) == False:
             os.makedirs(save_path)

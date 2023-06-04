@@ -31,7 +31,7 @@ class TemplatesFilesHelper:
                 templates.append(file_parts[0])
         return templates
     
-    def save_template(self,filename,content,key,sub_key,ref_dir,returnAllTemplates = True):
+    def save_template(self,filename,content,main_path,ref_path,returnAllTemplates = True):
         _, file_extension = os.path.splitext(filename)
         if file_extension == '' or file_extension == None:
             filename += ".json"
@@ -39,19 +39,23 @@ class TemplatesFilesHelper:
         #path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,filename)
         path = ''
 
-        if sub_key.index('/') > 0:
+        '''if sub_key.index('/') > 0:
             sub_key = sub_key.split('/')[0]
 
         if os.path.exists(os.path.join(key,sub_key)):
             path = os.path.join(key,sub_key,filename)
         else:
-            path = os.path.join(key,filename)
+            path = os.path.join(key,filename)'''
+        dir_main,_ = os.path.split(main_path)
+        path = os.path.join(dir_main,filename)
         
         with open(path,'w') as f:
             f.write(content)
 
+        dir_ref,_ = os.path.split(ref_path)
+
         if returnAllTemplates:
-            return self.get_all_templates_content(key,sub_key,ref_dir);            
+            return self.get_all_templates_content(dir_main,dir_ref)
 
     def get_template_content(self,filename):
         _, file_extension = os.path.splitext(filename)
@@ -68,23 +72,23 @@ class TemplatesFilesHelper:
     '''
         if no templates under Main and REF has templates - take the REF templates
     '''    
-    def get_all_templates_content(self,root_key,sub_key,ref_dir):
+    def get_all_templates_content(self,main_dir,ref_dir):
         
-        if sub_key.find('/') != -1:
-            sub_key = sub_key.split('/')[0]
+        #if sub_key.find('/') != -1:
+        #    sub_key = sub_key.split('/')[0]
         
-        templates = self.get_all_templates_content_inner(root_key,sub_key)        
+        templates = self.get_all_templates_content_inner(main_dir)        
 
         if len(templates) > 0:
             return templates
         
         #search in REF directory
-        templates = self.get_all_templates_content_inner(ref_dir,sub_key)        
+        templates = self.get_all_templates_content_inner(ref_dir,True)        
         return templates
        
-    def get_all_templates_content_inner(self,root_key,sub_key):
+    def get_all_templates_content_inner(self,folder,recursive=False):
         templates = []
-
+        '''
         if sub_key.find('/') != -1:
             sub_key = sub_key.split('/')[0]
         
@@ -93,14 +97,11 @@ class TemplatesFilesHelper:
             path = os.path.join(root_key,'*')
         else:    
             path = os.path.join(root_key,sub_key,'*')
-
-        files = glob(path)
+        '''
+        files = glob(folder + '\*.json', recursive=recursive)
         for fullname in files:
-            filename = fullname.split(os.sep)[-1]
-            file_parts = filename.split('.')
-            if len(file_parts) == 2 and file_parts[1] == 'json':
-                with open(fullname,'r') as f:
-                    content = json.load(f)  
+            with open(fullname,'r') as f:
+                content = json.load(f)  
                     
-                    templates.append({'name':file_parts[0],'content':content})
+            templates.append({'name':os.path.splitext(os.path.basename(fullname))[0],'content':content})
         return templates
