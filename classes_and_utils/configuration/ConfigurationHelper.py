@@ -1,4 +1,5 @@
-import os,json
+import os,json,urllib.parse
+
 
 MAIN_REPORT_FILE_PATH   = 'report_file_path'
 MAIN_REPORT_CHOOSEFILE  = 'choose_report_file'
@@ -14,9 +15,10 @@ class ConfigurationHelper:
     @staticmethod
     def get_request_experiments_info(request):
 
-        #create report case
+        #"create report" case
         if request.args.get('use_cached_report') == 'true':
             main_path = request.args.get('main')
+            main_path = urllib.parse.unquote_plus(main_path)
             main_dir,_ = os.path.split(main_path)
             return main_dir,False,None,False,main_dir
 
@@ -55,3 +57,13 @@ class ConfigurationHelper:
 
         json_res = json.dumps(arr)                
         return json_res                    
+    
+    @staticmethod
+    def parse_segmentations_csv(csv_segs):
+        items = []
+        if csv_segs != None and len(csv_segs) > 0:
+            if csv_segs[-1] == ',':
+                csv_segs = csv_segs[:-1]
+            items  = list(csv_segs.split(',') )
+        return items
+        
