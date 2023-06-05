@@ -27,4 +27,8 @@ export class SaveTemplateDialogComponent {
     this.statService.saveTemplate(this.templateName)
     this.close();
   }
+
+  disableSaveButton(){
+    return this.templateName == '';
+  }
 } 

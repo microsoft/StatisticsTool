@@ -1,24 +1,20 @@
-import { ApplicationRef, Component, ElementRef, HostListener, Input, OnInit, ViewChild } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
+import { Component, ElementRef, HostListener, Input, OnInit } from '@angular/core';
 import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { NavigationStart, Router } from '@angular/router';
 import { StatisticsToolService } from './services/statistics-tool.service';
-import { MatDrawer, MatSidenav } from '@angular/material/sidenav';
-import { toJSDate } from '@ng-bootstrap/ng-bootstrap/datepicker/ngb-calendar';
 
 @Pipe({
   name: 'safe'
 })
 export class SafePipe implements PipeTransform {
 
-  constructor(private sanitizer: DomSanitizer,
-              private httpClient:HttpClient) { }
+  constructor(private sanitizer: DomSanitizer) { 
+  }
+
   transform(url:string) {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
-
 }
 
 @Component({
@@ -28,7 +24,6 @@ export class SafePipe implements PipeTransform {
 })
 export class AppComponent implements OnInit {
 
-  @ViewChild(MatSidenav) public drawer: any;
   showFiller = false;
 
   @Input() config_key = '';
@@ -40,86 +35,40 @@ export class AppComponent implements OnInit {
     }
   }
 
-    @HostListener("window:message",["$event"])
-    SampleFunction($event:MessageEvent) {
-      
-      this.statToolSvc.openDrawer.next($event.data);
-      let o = $event.data as {'action':string, 'value':string};
-      
-      console.log($event.data)
-      if (o.action == 'update_list'){
-        console.log('in update_list')
-        this.statToolSvc.drawerUpdateListUrl = o.value + "&main=" + this.statToolSvc.getSelectedMainReport() + "&ref=" + this.statToolSvc.getSelectedRefReport();
-      }
-      if (o.action == 'show_image'){
-        console.log('in show_image',o.value)
-        
-        //check if path exists
-        if (this.statToolSvc.activeLocalDataStore && this.statToolSvc.localDataStorePath.length > 0){
-          let filepath = this.getFilePath(o.value) 
-          this.httpClient.post<{'exists':boolean}>('/is_file_exists',{
-            'file_path':filepath
-          }).subscribe(res => {
-            console.log('getFilePath','result',res)
-            if (res.exists){
-              let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath + "&main=" + this.statToolSvc.getSelectedMainReport() + "&ref=" + this.statToolSvc.getSelectedRefReport();
-              this.statToolSvc.drawerShowImageUrl = url;
-            } else {
-              this.statToolSvc.showDrawer = false;
-              this.statToolSvc.fileNotFoundError = 'File ' + filepath + " not found!"
-            }
-          })
-        } else {
-          this.statToolSvc.drawerShowImageUrl = o.value  + "&main=" + this.statToolSvc.getSelectedMainReport() + "&ref=" + this.statToolSvc.getSelectedRefReport();
-        }
-      }
-    }
-
-    constructor(private httpClient:HttpClient,
-                private router : Router,
-                public statToolSvc:StatisticsToolService,
-                public eltRef: ElementRef,
-                private appRef: ApplicationRef) {
-
-    }
-
-    ngOnInit(){
-      this.router.events.subscribe((event) => {
-        if (event instanceof NavigationStart){
-          let reportsPairs = new URLSearchParams(window.location.search).get('reports')?.toString();
-          this.statToolSvc.init(reportsPairs);
-
-          /*let sub_keys = new URLSearchParams(window.location.search).get('sub_keys')?.toString();
-          let key = new URLSearchParams(window.location.search).get('root_key')?.toString();
-          let ref_dir = new URLSearchParams(window.location.search).get('ref_dir')?.toString();
-          if (sub_keys == undefined)
-            sub_keys = ''
-          if (key == undefined)
-            key = ''
-          if (ref_dir == undefined)
-            ref_dir = '' 
-          this.statToolSvc.currentConfigKey = key;
-          this.statToolSvc.loadSubKeys(sub_keys);
-          this.statToolSvc.ref_dir = ref_dir;
-          console.log('loadSubKeys','loaded')
-          this.statToolSvc.init();
-          console.log('root key:',key);  
-          console.log('sub keys:',sub_keys);  */
-        }
-      })
-    }
+  @HostListener("window:message",["$event"])
+  SampleFunction($event:MessageEvent) {
     
-    
+    this.statToolSvc.openDrawer.next($event.data);
+    let o = $event.data as {'action':string, 'value':string};
 
-    getFilePath(str:string){
-      let startIdx = str.indexOf('[');
-      let endIdx = str.indexOf('.mp4');
-      let path = str.slice(startIdx+2,endIdx);
-      path = path += ".mp4"
+    if (o.action == 'update_list'){
+      let updateListUrl = o.value + "&main_path=" + this.statToolSvc.getSelectedMainReport() + "&ref_path=" + this.statToolSvc.getSelectedRefReport();
+      console.log('update_list',updateListUrl);
+      this.statToolSvc.drawerUpdateListUrl = updateListUrl;
+    }
+    if (o.action == 'show_image'){
+      
+      //check if path exists
       if (this.statToolSvc.activeLocalDataStore && this.statToolSvc.localDataStorePath.length > 0){
-        path = this.statToolSvc.localDataStorePath + "\\" + path;
+          let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath + "&main_path=" + this.statToolSvc.getSelectedMainReport() + "&ref_path=" + this.statToolSvc.getSelectedRefReport();
+          this.statToolSvc.drawerShowImageUrl = url;
+      } else {
+        this.statToolSvc.drawerShowImageUrl = o.value  + "&main_path=" + this.statToolSvc.getSelectedMainReport() + "&ref_path=" + this.statToolSvc.getSelectedRefReport();
       }
-
-      return path;
     }
   }
+
+  constructor(private router : Router,
+              public statToolSvc:StatisticsToolService,
+              public eltRef: ElementRef) {
+  }
+
+  ngOnInit(){
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart){
+        let reportsPairs = new URLSearchParams(window.location.search).get('reports')?.toString();
+        this.statToolSvc.init(reportsPairs);
+      }
+    })
+  }
+}

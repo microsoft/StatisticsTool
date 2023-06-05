@@ -19,14 +19,18 @@ class ConfigurationManager:
     results_tables  = dict()
 
     def add_experiment(self,experiment_path,experiment_object):
+        if experiment_path in self.experiments.keys():
+            return
         self.experiments[experiment_path] = experiment_object
 
     def add_results_table(self,main_experiment_path,ref_experiment_path,res_table):
+        if (main_experiment_path,ref_experiment_path) in self.results_tables.keys():
+            return
         self.results_tables[(main_experiment_path,ref_experiment_path)] = res_table
         return res_table
 
     def get_experiment(self,experiment_path):
-        if experiment_path is None or experiment_path == '':
+        if experiment_path is None or experiment_path == '' or experiment_path not in self.experiments.keys():
             return None
         return self.experiments[experiment_path]
     
@@ -36,17 +40,15 @@ class ConfigurationManager:
         return None
     
     def add_experiments_in_folder(self,folder):
+        experiments_added = []
         if os.path.isdir(folder) == False:
-            return ''
+            return experiments_added
         
-        experiments_added = ''
         files = glob(folder + '/**/*.pkl', recursive=True)
         for v in files:
             experiment = load_object(v)
             self.add_experiment(v,experiment)
-            if len(experiments_added) > 0:
-                experiments_added += ","
-            experiments_added += str(v)
+            experiments_added.append(str(v))
 
         return experiments_added
 

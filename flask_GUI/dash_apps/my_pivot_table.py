@@ -43,7 +43,7 @@ class   PivotTable():
         ## The core of the table
         ## This for-loop goes over all columns of the row, and collect the cells
         for column_keys in columns_order:
-            single_row.append(self.get_cell(self.main_exp,self.ref_exp, column_keys, rows_keys,idx))
+            single_row.append(self.get_cell(column_keys, rows_keys,idx))
 
         single_row = [html.Tr(single_row)]
         return single_row

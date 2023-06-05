@@ -120,7 +120,7 @@ def favicon():
    
 @server.route('/get_segmentations', methods=['POST'])    
 def get_segmentations():
-    main_path = request.json['main']
+    main_path = request.json['main_path']
     
     segmentations = configuration_manager.get_item_segmentations(main_path)
     
@@ -136,8 +136,8 @@ def get_segmentations():
 def get_report_table():
     
     calc_unique = True if request.args.get('calc_unique') == 'true' else False
-    main_path = request.args.get('main')
-    ref_path = request.args.get('ref')
+    main_path = request.args.get('main_path')
+    ref_path = request.args.get('ref_path')
 
     if configuration_manager.get_experiment(main_path) == None:
         return None
@@ -155,7 +155,8 @@ def get_report_table():
         res_table.set_data(main,ref,segmentations,calc_unique)
         res_table = configuration_manager.add_results_table(main_path,ref_path,res_table)
     else:
-        res_table.set_unique(calc_unique)
+        if ref is not None:
+            res_table.set_unique(calc_unique)
 
     wp = res_table.get_webpage(columns,rows)
 
@@ -163,8 +164,8 @@ def get_report_table():
 
 @server.route('/get_all_templates', methods=['POST'])
 def get_all_templates():
-    main = request.json['main']
-    ref = request.json['ref']
+    main = request.json['main_path']
+    ref = request.json['ref_path']
     main_dir,_ = os.path.split(main)
     ref_dir,_ = os.path.split(ref)
     
@@ -184,8 +185,8 @@ def save_template():
     data = request.json
     name = data['name']
     content = data['content']
-    main_path = data['main']
-    ref_path = data['ref']
+    main_path = data['main_path']
+    ref_path = data['ref_path']
     helper = TemplatesFilesHelper()
     result = helper.save_template(name,content,main_path,ref_path)
     return jsonify(result)
@@ -195,8 +196,8 @@ def save_template():
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
     listManager = UpdateListManager()
-    main_path = request.args.get('main')
-    ref_path  = request.args.get('ref')
+    main_path = request.args.get('main_path')
+    ref_path  = request.args.get('ref_path')
     main_exp = configuration_manager.get_experiment(main_path)
     ref_exp = configuration_manager.get_experiment(ref_path)
     
@@ -213,24 +214,10 @@ def show_list():
                             comp_index=listManager.comp_index,
                             unique = listManager.show_unique)
 
-    # return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index, unique = unique)
-
-@server.route('/is_file_exists',methods=['GET', 'POST'])
-def is_file_exists():
-    file_path = request.json['file_path']
-    if True: #os.path.exists(file_path):
-        return {
-            'exists': True
-        }
-    else:
-        return {
-            'exists': False
-        }
-
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():
-    main_path = request.args.get('main')
-    ref_path = request.args.get('ref')
+    main_path = request.args.get('main_path')
+    ref_path = request.args.get('ref_path')
     main_exp = configuration_manager.get_experiment(main_path)
     ref_exp = configuration_manager.get_experiment(ref_path)
 

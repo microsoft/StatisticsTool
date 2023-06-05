@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl,ReactiveFormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 

@@ -101,19 +101,19 @@ class Results_table():
             return rows
         return rows + "/" + columns
     
-    def get_cell_exp(self, main_exp,ref_exp, column_keys, row_keys,row_index):  
+    def get_cell_exp(self,column_keys, row_keys,row_index):  
         '''
         The function that return a single cell
         '''     
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
         
         exp_data = {}
-        exp_data[MAIN_EXP] = main_exp.get_cell_data(segmentations, self.unique_helper, False)
-        if ref_exp is not None:
-            exp_data[REF_EXP] = ref_exp.get_cell_data(segmentations, self.unique_helper, True) 
+        exp_data[MAIN_EXP] = self.main_exp.get_cell_data(segmentations, self.unique_helper, False)
+        if self.ref_exp is not None:
+            exp_data[REF_EXP] = self.ref_exp.get_cell_data(segmentations, self.unique_helper, True) 
 
         all_metrics = []
-        if ref_exp is not None:
+        if self.ref_exp is not None:
             TDs = []
             TDs.append(html.Td(''))
             TDs.append(html.Td('MAIN', style={'color':'black','font-weight':'bold','white-space':'nowrap'}))
