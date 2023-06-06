@@ -39,7 +39,10 @@ def get_color_by_two_values_diff(ref, main, gradient):
     return get_color_from_gradient(color_presentage, gradient)
 
 def get_text_color_by_stat(main, gradient):
-     return get_color_from_gradient(main, gradient)
+    ret_val = get_color_from_gradient(main, gradient)
+    if ret_val == 'white':
+        ret_val = 'black'
+    return ret_val
 
 
 class Results_table():
@@ -162,7 +165,7 @@ class Results_table():
             
             for exp_name in exp_data.keys():
                 txt = "{}".format(exp_data[exp_name][k])
-                if k in ["TP", "FP", "FN"]:
+                if k in ["TP", "FP", "FN", "TN"]:
                     link = get_link_for_update_list(cell_name=exp_data[exp_name]['cell_name'], 
                                                     stat=k, 
                                                     is_ref = exp_name==REF_EXP)
