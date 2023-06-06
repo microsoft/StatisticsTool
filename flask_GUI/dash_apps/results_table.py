@@ -3,15 +3,13 @@ current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
 sys.path.append(os.path.join(os.path.join(os.path.join(current_file_directory, '..'), '..'), '..'))
 
-from dash import Dash, html, dcc, dash_table
+from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 import pandas as pd
 import flask_GUI.dash_apps.my_pivot_table as pt
 from classes_and_utils.GUI_utils import *
 from flask_GUI.dash_apps.results_table_css import css
-from flask import Flask, render_template
-from flask_GUI.constants import COLOR_GRADIENT_RED_WHITE_BLUE
+from flask_GUI.constants import COLOR_GRADIENT_RED_BLUE, COLOR_GRADIENT_RED_WHITE_BLUE
 import math
 from classes_and_utils.unique_helper import UniqueHelper
 import uuid
@@ -27,12 +25,21 @@ def get_color_from_gradient(x, gradient):
     
 def get_color_by_two_values_diff(ref, main, gradient):
 
-    if ref ==0 or type(main)==str or type(ref)==str:
+    if type(main)==str or type(ref)==str:
         return 'white'
-    precentage_change = min(1, (main/ref) - 1) #not allowing more that 100% improvement
+    
+    if ref == 0:
+        if main == 0:
+            precentage_change = 0
+        else:
+            precentage_change = 1
+    else:
+        precentage_change = min(1, (main/ref) - 1) #not allowing more that 100% improvement
     color_presentage = (1 + precentage_change) * 0.5
     return get_color_from_gradient(color_presentage, gradient)
 
+def get_text_color_by_stat(main, gradient):
+     return get_color_from_gradient(main, gradient)
 
 
 class Results_table():
@@ -51,11 +58,6 @@ class Results_table():
         self.main_exp = None
         self.ref_exp = None
        
-        self.dash_app.callback(
-            Output('cols_seg', 'options'),
-            Output('rows_seg', 'options'),
-            Input('init', 'value')) \
-            (lambda x: (self.segmentation_categories, self.segmentation_categories))
     
     def set_unique(self,calc_unique):
         self.calc_unique = calc_unique
@@ -101,6 +103,26 @@ class Results_table():
             return rows
         return rows + "/" + columns
     
+    
+    def generate_unique_html_dash_element(self,column_keys,row_keys, stat_functions,exp_name, cell_name):
+        '''
+            stat_func: TP,TN,FN
+        '''        
+        unique_array,unique_array_ref,_ = self.unique_helper.calc_unique_detections(column_keys,row_keys,stat_functions)
+        link_unique = get_link_for_update_list(cell_name=cell_name, 
+                                                stat=stat_functions, 
+                                                is_ref = exp_name==REF_EXP,
+                                                is_unique = True)
+        num = 0
+        if exp_name == MAIN_EXP:
+            num = len(unique_array)
+        else:
+            num = len(unique_array_ref)
+
+        txt_unique = "(unique: " + str(num) + ")"
+        
+        return txt_unique,link_unique
+
     def get_cell_exp(self, main_exp,ref_exp, column_keys, row_keys,row_index):  
         '''
         The function that return a single cell
@@ -130,7 +152,13 @@ class Results_table():
             
             TDs = [html.Td(k,style={'white-space':'nowrap'})]
             num_of_exps = len(exp_data.keys())
-
+            
+            bg_color = '#ffffff'
+            style ={'white-space': 'nowrap', 'color': 'black'}
+            if num_of_exps > 1: #if there is more than one report so use backgournd color not text color
+                bg_color = get_color_by_two_values_diff(exp_data[REF_EXP][k], exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_WHITE_BLUE)
+                style['background-color'] = bg_color
+                
             
             for exp_name in exp_data.keys():
                 txt = "{}".format(exp_data[exp_name][k])
@@ -141,22 +169,24 @@ class Results_table():
                     
                     js = json.dumps({'action':'update_list','value': link})
                     msg = "javascript:window.parent.postMessage({});".format(js)
-                    curr_metric = html.A(txt ,href=msg, target="")
-                    #color = 'white'
+                    cur_style = {'text-decoration':'underline'}
+                    #if there is background color so change the text to black and add underline
+                    if bg_color != 'white' and bg_color != '#ffffff':
+                        cur_style['color'] = 'black'
+                    curr_metric = html.A(txt ,href=msg, target="", style=cur_style)                   
                 else:
                     curr_metric = txt
-
-                color = 'white' if num_of_exps == 1 else\
-                get_color_by_two_values_diff(exp_data[REF_EXP][k], exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_WHITE_BLUE)
-
-                TDs.append(html.Td(curr_metric,style={'white-space': 'nowrap'}))
+                    if bg_color == 'white' or bg_color == '#ffffff':
+                        style['color'] = get_text_color_by_stat(1-exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_BLUE)               
+                   
+                TDs.append(html.Td(curr_metric,style=style))
 
                 if self.calc_unique == True and k in ["TP", "FP", "FN"]:
                     if self.unique_helper != None:
-                        txt_unique, link_unique = self.unique_helper.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name, exp_data[exp_name]['cell_name'])
+                        txt_unique, link_unique = self.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name, exp_data[exp_name]['cell_name'])
                         js = json.dumps({'action':'update_list','value': link_unique})
                         msg = "javascript:window.parent.postMessage({});".format(js)
-                        a_unique = html.A(txt_unique ,href=msg, target="")
+                        a_unique = html.A(txt_unique,href=msg, target="")
 
                         TDs.append(html.Td(a_unique,style={'white-space': 'nowrap'}))
                     else:
@@ -240,30 +270,3 @@ data_for_test =[\
                 ]
 
 df =pd.DataFrame.from_records(data_for_test, columns=cols_for_test)
-
-if __name__ == "__main__":
-    server = Flask(__name__)
-
-    rt = Results_table(server)
-    # rt.dash_app.run_server()
-    
-    @server.route('/', methods=['GET', 'POST'])
-    def statistics_reporter_dash():
-        return rt.get_webpage()
-
-    # server.run()
-    rt.dash_app.run_server()
-    
-    # @rt.dash_app.callback(
-    #     Output('table-div', 'children'),
-    #     Input('cols_seg', 'value'),
-    #     Input('rows_seg', 'value')
-    # )
-    # def update_results_table(cols_input ,rows_input):
-    #     # print("In callback")
-    #     if len(cols_input)==0 or len(rows_input)==0:
-    #         return html.H1('Empty Table')
-
-    #     table_div = rt.table.get_report_table(cols_input, rows_input)
-
-    #     return table_div

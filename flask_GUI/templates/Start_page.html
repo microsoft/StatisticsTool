@@ -58,6 +58,7 @@ input[type=button]:hover {
                     <br>
 
               <h1 style="font-family: Arial, Helvetica, sans-serif;">Welcome to Statistics-Tool </h1>
+              <a href="{{wiki_page}}" target="_blank" rel="noopener noreferrer">Statistics-Tool Wiki..</a>
         </div>
 
                     <br>
@@ -97,7 +98,7 @@ input[type=button]:hover {
               </td>
               <td>
                 <div class="mb-3" style="margin-bottom: 0px !important;">
-                  <input class="form-control" type="file" name="choose_report_file" id="choose_report_file"  onchange="onReportFileSelected()" accept=".pkl"/>
+                  <input class="form-control" type="file" name="choose_report_file" id="choose_report_file"  onchange="onReportFileSelected()" accept="{{exp_ext}}"/>
                 </div>
                 <div class="form-group">
                   <input type="text" class="form-control" id="report_file_path" value="">
@@ -115,7 +116,7 @@ input[type=button]:hover {
               </td>
               <td>
                 <div class="mb-3" style="margin-bottom: 0px !important;">
-                  <input class="form-control" type="file"  name="choose_reference_file" id="choose_reference_file" accept=".pkl">
+                  <input class="form-control" type="file"  name="choose_reference_file" id="choose_reference_file" accept="{{exp_ext}}">
                 </div>
                 <div class="form-group">  
                   <input type="text" class="form-control" id="reference_file_path" value="">
@@ -204,7 +205,7 @@ input[type=button]:hover {
 
         return true;
 
-        if (String(filename).toLocaleLowerCase().endsWith(".pkl"))
+        if (String(filename).toLocaleLowerCase().endsWith("{{exp_ext}}"))
           return true;
         return false;
       }

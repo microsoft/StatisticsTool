@@ -28,6 +28,9 @@ PARTITIONING_FUNCTIONS = 'partitioning_functions'
 STATISTICS_FUNCTIONS = 'statistics_functions'
 TRANSFORM_FUNCTIONS = 'transform_functions'
 
+METADATA_EXTENTION = '.metadata.json'
+EXPERIMENT_EXTENTION = '.pkl'
+WIKI_URL =  "https://www.deviceswiki.com/wiki/Statistics_Tool"
 INTERMEDIATE_RESULTS_DIR="intermediate resutls"
 CONFIG_FILE_NAME = "configs"
 
@@ -45,7 +48,7 @@ def save_experiment(obj, out_folder, config_file_name):
     :param filename: full path to the saved object
     """
     report_name = os.path.splitext(config_file_name)[0]
-    report_file_name = report_name + '.pkl'
+    report_file_name = report_name + EXPERIMENT_EXTENTION
     report_output_file = os.path.join(out_folder, report_file_name)
 
     with open(report_output_file, 'wb') as output:  # Overwrites any existing file.
@@ -59,7 +62,7 @@ def save_experiment(obj, out_folder, config_file_name):
             metadata = json.load(conf)[0]
     
     metadata.update(obj.sheldon_header_data)
-    output_file = os.path.join(out_folder,report_name+".json")
+    output_file = os.path.join(out_folder,METADATA_EXTENTION)
     with open(output_file, 'w') as f:
         json.dump(metadata, f)
 
