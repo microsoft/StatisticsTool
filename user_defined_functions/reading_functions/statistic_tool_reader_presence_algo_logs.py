@@ -5,7 +5,7 @@ from turtle import left
 #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #from classes_and_utils.utils import empty_when_negative_x
 import pandas as pd
-from utils.LogsParser import is_golden_log, transform_bb_to_original_frame_size, get_fps
+from utils.LogsParser import is_golden_log, transform_bb_to_original_frame_size, get_fps, get_emulation_matrix
 
 def statistic_tool_reader_presence_algo_logs(path):
     with open(path,'r') as file:
@@ -20,6 +20,8 @@ def statistic_tool_reader_presence_algo_logs(path):
     records = []
     valid_types = ['Body BB', 'objects'] #includes types of both gt logs and algo/golden logs
     valid_sources= ['BODY_DETECTION','BODY_DETEDCTION']   #includes sources of both gt logs and algo/golden logs
+
+    emulation_matrix = get_emulation_matrix(header)
 
     for line in lines[1:]:
         line = json.loads(line)
@@ -36,7 +38,7 @@ def statistic_tool_reader_presence_algo_logs(path):
 
             # Add Bounding box to predictions
             if  log_is_algo:
-                bb = transform_bb_to_original_frame_size(bb, header)
+                bb = transform_bb_to_original_frame_size(bb, emulation_matrix)
             
             detections.append({'detection':True, 'prediction':{'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height'],'fps_original_video':get_fps(header)}})
 
