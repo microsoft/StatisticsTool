@@ -103,10 +103,11 @@ class ParallelExperiment:
         FP_masks = self.masks['total_stats']['FP'] & segmentation_mask
         FN_masks = self.masks['total_stats']['FN'] & segmentation_mask
 
-        TP, FP, FN = np.sum(TP_masks), np.sum(FP_masks), np.sum(FN_masks)
+        TP, FP, FN, total_examples = np.sum(TP_masks), np.sum(FP_masks), np.sum(FN_masks), np.sum(segmentation_mask)
+        TN = total_examples - (TP + FP + FN)
 
-        statistics_dict = self.statistic_funcs(TP, FP, FN, len(self.comp_data['frame_id']))
-        statistics_dict.update({'TP': TP, 'FP': FP, 'FN': FN, 'TOTAL_FRAMES': len(self.comp_data['frame_id'])})
+        statistics_dict = self.statistic_funcs(TP, FP, FN, total_examples)
+        statistics_dict.update({'TP': TP, 'FP': FP, 'TN': TN, 'FN': FN, 'TOTAL_EXAMPLES': total_examples})
         statistics_dict['cell_name'] = cell_name
 
         if not hasattr(self, 'segmented_ID_new'): # temp just for backward compatability
