@@ -34,7 +34,7 @@ file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics
 #region - Homepage Route
 @server.route('/', methods=['GET', 'POST'])
 def homepage():
-    return render_template('start_page.html')
+    return render_template('start_page.html', exp_ext = EXPERIMENT_EXTENTION, wiki_page = WIKI_URL)
 #endregion 
 
 #region - Functions for REPORT CREATION
@@ -42,7 +42,7 @@ def homepage():
 @server.route('/create_new_report', methods=['GET', 'POST'])
 def new_report_func():
     possible_configs = manage_new_report_page(request)
-    return render_template('new_report.html', possible_configs=possible_configs)
+    return render_template('new_report.html', possible_configs=possible_configs, wiki_page = WIKI_URL)
 
 @server.route('/calculating_page', methods=['GET', 'POST'])
 def calculating():
