@@ -4,8 +4,6 @@
         "Overlap Function": "Classification_True_False",
         "Threshold": "0.5",
         "Evaluation Function": "activity_evaluation",
-        "Image Width": "1280",
-        "Image Height": "720",
         "Statistics Functions": "presence_approach_flicker_seq_count",
         "Partitioning Functions": "presence_partition",
         "Transformation Function": "approach_event_presence_transform"
