@@ -135,7 +135,6 @@ def get_segmentations():
 @server.route('/get_report_table', methods=['GET', 'POST'])
 def get_report_table():
     
-    calc_unique = True if request.args.get('calc_unique') == 'true' else False
     main_path = request.args.get('main')
     ref_path = request.args.get('ref')
 
@@ -144,7 +143,10 @@ def get_report_table():
 
     main = configuration_manager.get_experiment(main_path)
     ref = configuration_manager.get_experiment(ref_path) if ref_path != '' else None
+
+    calc_unique = True if ref and request.args.get('calc_unique') == 'true' else False
     
+
     columns = ConfigurationHelper.parse_segmentations_csv(request.args.get('cols'))
     rows    = ConfigurationHelper.parse_segmentations_csv(request.args.get('rows'))
     

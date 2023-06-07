@@ -107,7 +107,7 @@ class ParallelExperiment:
         TN = total_examples - (TP + FP + FN)
 
         statistics_dict = self.statistic_funcs(TP, FP, FN, total_examples)
-        statistics_dict.update({'TP': TP, 'FP': FP, 'TN': TN, 'FN': FN, 'TOTAL_EXAMPLES': total_examples})
+        statistics_dict.update({'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN, 'TOTAL_EXAMPLES': total_examples})
         statistics_dict['cell_name'] = cell_name
 
         if not hasattr(self, 'segmented_ID_new'): # temp just for backward compatability

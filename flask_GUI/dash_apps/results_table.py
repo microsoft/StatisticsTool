@@ -169,7 +169,8 @@ class Results_table():
                     link = get_link_for_update_list(cell_name=exp_data[exp_name]['cell_name'], 
                                                     stat=k, 
                                                     is_ref = exp_name==REF_EXP)
-                    
+                    if k == "TN":
+                        link = ""
                     js = json.dumps({'action':'update_list','value': link})
                     msg = "javascript:window.parent.postMessage({});".format(js)
                     cur_style = {'text-decoration':'underline'}

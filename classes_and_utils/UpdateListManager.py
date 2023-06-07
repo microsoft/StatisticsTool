@@ -2,7 +2,7 @@ import numpy as np
 import os
 from classes_and_utils.utils import save_json
 
-from utils.sheldon_export_header import create_sheldon_list_header
+from utils.sheldon_export_header import *
 
 class UpdateListManager():
     def __init__(self) -> None:
@@ -115,8 +115,8 @@ class UpdateListManager():
         :return: all the parameter needed to show and save the list of examples asked by the user
         """
         # get the names of requested states and partitions, a save boolean and a dictionary of {partition_class: selected_option} (example {"vehicles":"bus"})
-        if not 'button_pressed' in request.args:
-            self.unpack_list_request(request, main_exp, comp_exp)
+        
+        self.unpack_list_request(request, main_exp, comp_exp)
 
         if 'sheldon' in request.args:
             self.export_list_to_sheldon(self.per_video_example_hash, 
