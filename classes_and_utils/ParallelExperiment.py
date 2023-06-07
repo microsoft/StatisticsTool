@@ -13,7 +13,7 @@ import numpy as np
 
 class ParallelExperiment:
  
-    def __init__(self, statistic_funcs, image_width, image_height,segmentation_funcs,sheldon_header_data, overlap_function, evaluation_function):
+    def __init__(self, statistic_funcs, segmentation_funcs,sheldon_header_data, overlap_function, evaluation_function):
         self.statistic_funcs = statistic_funcs
         self.evaluation_function = evaluation_function
         self.overlap_function = overlap_function
@@ -23,8 +23,6 @@ class ParallelExperiment:
         self.segmented_ID = {}
         self.segmented_ID_new = {}
         self.unique_data = {}
-        self.image_width = int(image_width)
-        self.image_height = int(image_height)
         self.sheldon_header_data = sheldon_header_data
         
     
@@ -105,10 +103,11 @@ class ParallelExperiment:
         FP_masks = self.masks['total_stats']['FP'] & segmentation_mask
         FN_masks = self.masks['total_stats']['FN'] & segmentation_mask
 
-        TP, FP, FN = np.sum(TP_masks), np.sum(FP_masks), np.sum(FN_masks)
+        TP, FP, FN, total_examples = np.sum(TP_masks), np.sum(FP_masks), np.sum(FN_masks), np.sum(segmentation_mask)
+        TN = total_examples - (TP + FP + FN)
 
-        statistics_dict = self.statistic_funcs(TP, FP, FN, len(self.comp_data['frame_id']))
-        statistics_dict.update({'TP': TP, 'FP': FP, 'FN': FN, 'TOTAL_FRAMES': len(self.comp_data['frame_id'])})
+        statistics_dict = self.statistic_funcs(TP, FP, FN, total_examples)
+        statistics_dict.update({'TP': TP, 'FP': FP, 'TN': TN, 'FN': FN, 'TOTAL_EXAMPLES': total_examples})
         statistics_dict['cell_name'] = cell_name
 
         if not hasattr(self, 'segmented_ID_new'): # temp just for backward compatability
@@ -205,19 +204,17 @@ class ParallelExperiment:
         return video
 
 
-def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, image_width, image_height,sheldon_header_data, overlap_function, evaluation_function):
+def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, sheldon_header_data, overlap_function, evaluation_function):
     """
 
     param statistic_funcs: same as in ParallelExperiment
     :param compared_videos: same as in ParallelExperiment
     :param segmentation_funcs: same as in ParallelExperiment
     :param threshold: the threshold to use (above the threshold a prediction is TP)
-    :param image_width: the image width size to reshape to
-    :param image_height: the image height size to reshapw to
     :return:
     """
     exp = ParallelExperiment(statistic_funcs=statistic_funcs, segmentation_funcs=segmentation_funcs, 
-                            image_width=image_width, image_height=image_height,sheldon_header_data=sheldon_header_data, 
+                            sheldon_header_data=sheldon_header_data, 
                             evaluation_function=evaluation_function, overlap_function=overlap_function)
                             
     exp.combine_from_text(compared_videos)

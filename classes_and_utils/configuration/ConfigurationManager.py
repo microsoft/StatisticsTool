@@ -40,17 +40,20 @@ class ConfigurationManager:
         return None
     
     def add_experiments_in_folder(self,folder):
-        experiments_added = []
-        if os.path.isdir(folder) == False:
-            return experiments_added
+        total = []
+        if folder and os.path.isdir(folder) == False:
+            total.append(folder)
+        else:        
         
-        files = glob(folder + '/**/*' + Constants.EXPERIMENT_EXTENSION, recursive=True)
-        for v in files:
+            files = glob(folder + '/**/*' + Constants.EXPERIMENT_EXTENSION, recursive=True)
+            for v in files:
+                total.append(v)
+        
+        for v in total:    
             experiment = load_object(v)
             self.add_experiment(v,experiment)
-            experiments_added.append(str(v))
-
-        return experiments_added
+            
+        return total
 
     def add_experiment_object(self,experiment_object):
         key = str(uuid.uuid4()) + "\\" + "Upload" + "\\" + experiment_object.filename
@@ -58,13 +61,14 @@ class ConfigurationManager:
         self.add_experiment(key,experiment_object)
         return key
     
-    def add(self,value,is_an_experiment_object):
-        if value == None:
+    def add(self,value):
+        if not value:
             return ''
-        if is_an_experiment_object:
-            return self.add_experiment_object(value)
-        else:
+        
+        if type(value) == str:
             return self.add_experiments_in_folder(value)
+        else:
+            return self.add_experiment_object(value)
         
     def get_item_segmentations(self,main_path):
         

@@ -14,3 +14,13 @@ COLOR_GRADIENT_RED_WHITE_BLUE = [\
 '#6765e2',
 '#4e4bdd',
 ]
+
+COLOR_GRADIENT_RED_BLUE = [\
+'#0000FF',
+'#5000FF',
+'#a200FF',
+'#FF00FF',
+'#fF004F',
+'#fF001F',
+'#fF0000',
+]
