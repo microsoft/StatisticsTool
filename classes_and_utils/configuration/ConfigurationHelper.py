@@ -1,11 +1,5 @@
 import os,json,urllib.parse
-
-
-MAIN_REPORT_FILE_PATH   = 'report_file_path'
-MAIN_REPORT_CHOOSEFILE  = 'choose_report_file'
-REF_REPORT_FILE_PATH    = 'reference_file_path'
-REF_REPORT_CHOOSE_FILE  = 'choose_reference_file'
-
+from classes_and_utils.consts import Constants
 class ConfigurationHelper:
 
     '''
@@ -28,21 +22,21 @@ class ConfigurationHelper:
         is_ref_an_object = False
         main_dir = ''
         
-        if request.files and request.files[MAIN_REPORT_CHOOSEFILE].filename != '':
+        if request.files and request.files[Constants.MAIN_REPORT_CHOOSEFILE].filename != '':
             is_main_an_object = True
-            main = request.files[MAIN_REPORT_CHOOSEFILE]
+            main = request.files[Constants.MAIN_REPORT_CHOOSEFILE]
             main_dir,_ = os.path.split(main.filename)
         else:
             is_main_an_object = False
-            main = request.values and request.values[MAIN_REPORT_FILE_PATH]
+            main = request.values and request.values[Constants.MAIN_REPORT_FILE_PATH]
             main_dir = main
 
-        if request.files and request.files[REF_REPORT_CHOOSE_FILE].filename != '':
+        if request.files and request.files[Constants.REF_REPORT_CHOOSE_FILE].filename != '':
             is_ref_an_object = True
-            ref = request.files[REF_REPORT_CHOOSE_FILE]
+            ref = request.files[Constants.REF_REPORT_CHOOSE_FILE]
         else:
             is_ref_an_object = False
-            ref = request.values and request.values[REF_REPORT_FILE_PATH]            
+            ref = request.values and request.values[Constants.REF_REPORT_FILE_PATH]            
 
         return main, is_main_an_object, ref, is_ref_an_object,main_dir  
     
