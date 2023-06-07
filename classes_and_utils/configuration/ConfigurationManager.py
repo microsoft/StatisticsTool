@@ -1,8 +1,8 @@
 from glob import glob
 import uuid,os
 from flask_GUI.dash_apps.results_table import Results_table
-
 from classes_and_utils.GUI_utils import *
+from classes_and_utils.consts import Constants
 
 class ConfigurationManager:
 
@@ -44,7 +44,7 @@ class ConfigurationManager:
         if os.path.isdir(folder) == False:
             return experiments_added
         
-        files = glob(folder + '/**/*.pkl', recursive=True)
+        files = glob(folder + '/**/*' + Constants.EXPERIMENT_EXTENSION, recursive=True)
         for v in files:
             experiment = load_object(v)
             self.add_experiment(v,experiment)

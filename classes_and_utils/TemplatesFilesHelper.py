@@ -3,9 +3,8 @@ from glob import glob
 from pathlib import Path
 from jsonschema import validate
 import jsonschema
+from classes_and_utils.consts import Constants
 
-
-REPORTS_TEMPLATES_FOLDER_NAME = "reports_templates"
 
 schema = {
   "$schema": "http://json-schema.org/draft-04/schema#",
@@ -78,7 +77,7 @@ class TemplatesFilesHelper:
         
         _, file_extension = os.path.splitext(filename)
         if file_extension == '' or file_extension == None:
-            filename += ".json"
+            filename += Constants.TEMPLATE_EXTENSION
 
         path = ''
 
@@ -97,9 +96,9 @@ class TemplatesFilesHelper:
     def get_template_content(self,filename):
         _, file_extension = os.path.splitext(filename)
         if file_extension == '' or file_extension == None:
-            filename += ".json"
+            filename += Constants.TEMPLATE_EXTENSION
 
-        path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), REPORTS_TEMPLATES_FOLDER_NAME,filename)
+        path = os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), Constants.REPORTS_TEMPLATES_FOLDER_NAME,filename)
         if os.path.exists(path) == False:
             return ''
         
@@ -123,13 +122,13 @@ class TemplatesFilesHelper:
     def get_all_templates_content_inner(self,folder,recursive=False):
         templates = []
         
-        files = glob(folder + '\*.json', recursive=recursive)
+        files = glob(folder + '\*' + Constants.TEMPLATE_EXTENSION, recursive=recursive)
         for fullname in files:
             with open(fullname,'r') as f:
                 try:
                     content = json.load(f)
                     validate(instance=content, schema=schema)
-                    templates.append({'name':os.path.splitext(os.path.basename(fullname))[0],'content':content})
+                    templates.append({'name':str(os.path.basename(fullname)).replace(Constants.TEMPLATE_EXTENSION,''),'content':content})
                 except jsonschema.exceptions.ValidationError as err:
                     print(err)
                       
