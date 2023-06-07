@@ -108,6 +108,21 @@ def folder_func(output_dir, config_file_name):
     except FileNotFoundError:
         return "FileNotFound", output_dir
 
+'''
+    directoryName -  one of the followings:
+    1. evaluation_functions
+    2. overlap_functions
+    3. partitioning_functions
+    4. reading_functions
+    5. statistics_functions
+    6. transform_functions
+'''
+def get_userdefined_function(func_type,func_name):
+    module_name = 'user_defined_functions' + "." + func_type + "." + func_name
+    module = __import__(module_name, fromlist='user_defined_functions')
+    reading_func = getattr(module,func_name)
+    return reading_func
+
 
 def get_users_defined_functions(directoryName):
     user_defined_functions = []
