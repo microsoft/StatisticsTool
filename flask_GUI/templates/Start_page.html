@@ -128,7 +128,7 @@ input[type=button]:hover {
         </table>
          <div class="col-md-12" style="margin-top:20px" >
               <input type = "submit" 
-                     id="submit_new" 
+                     id="submit" 
                      value = "Load Report" 
                      disabled="true" 
                      formaction="/Report_Viewer">
@@ -144,6 +144,16 @@ input[type=button]:hover {
       window.onload = function  () {      
         $('#choose_report_file').hide();
         $('#choose_reference_file').hide();
+        
+        var main_report = localStorage.getItem("main_report");
+        var ref_report = localStorage.getItem("ref_report");
+        
+        if (main_report != null){
+          $('#report_file_path').val(main_report);
+          $('#submit').prop('disabled', false); 
+        }
+        if (ref_report != null)
+          $('#reference_file_path').val(ref_report);
       } 
       
       $(document).ready(function(e){
@@ -170,12 +180,14 @@ input[type=button]:hover {
               
               if ($('#report_file_type').find(":selected").val() == "2"){
                 var filename = $('#report_file_path').val();
+                localStorage.setItem("main_report", filename);
                 var inputReportFileInfo = '<input type="hidden" name=' + "'report_file_path'" + " value='" + filename + "'/>";
                 $(this).append(inputReportFileInfo);
               }
 
               if ($('#reference_file_type').find(":selected").val() == "2"){
                 var filename = $('#reference_file_path').val();
+                localStorage.setItem("ref_report", filename);
                 var inputReferenceFileInfo = '<input type="hidden" name=' + "'reference_file_path'" + " value='" + filename + "'/>";
                 $(this).append(inputReferenceFileInfo);
               }
@@ -187,18 +199,15 @@ input[type=button]:hover {
       $("#report_file_path").on('change keydown paste input', function(){
         var filename = $('#report_file_path').val();
         if (isPKLFileName(filename)){
-          $('#submit_orig').prop('disabled', false); 
-          $('#submit_new').prop('disabled', false); 
+          $('#submit').prop('disabled', false); 
         }
         else {
-          $('#submit_orig').prop('disabled', true); 
-          $('#submit_new').prop('disabled', true); 
+          $('#submit').prop('disabled', true); 
         }
       });
 
       function onReportFileSelected(){
-        $('#submit_orig').prop('disabled', false); 
-        $('#submit_new').prop('disabled', false); 
+        $('#submit').prop('disabled', false); 
       }
 
       function isPKLFileName(filename){
@@ -214,8 +223,7 @@ input[type=button]:hover {
           if (id == 'report_file_type') 
           {
               if ($('#report_file_type').find(":selected").val() == "1"){
-                $('#submit_orig').prop('disabled', true); 
-                $('#submit_new').prop('disabled', true); 
+                $('#submit').prop('disabled', true); 
                 $('#choose_report_file').show();
                 $('#report_file_path').hide();
               } else {
@@ -223,12 +231,10 @@ input[type=button]:hover {
                 $('#report_file_path').show();
                 var filename = $('#report_file_path').val();
                 if (isPKLFileName(filename)){
-                  $('#submit_orig').prop('disabled', false); 
-                  $('#submit_new').prop('disabled', false); 
+                  $('#submit').prop('disabled', false); 
                 }
                 else{ 
-                  $('#submit_orig').prop('disabled', true); 
-                  $('#submit_new').prop('disabled', true); 
+                  $('#submit').prop('disabled', true); 
                 }
               }
               
