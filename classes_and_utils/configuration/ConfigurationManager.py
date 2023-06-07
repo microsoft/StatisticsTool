@@ -1,8 +1,8 @@
 from glob import glob
 import uuid,os
 from flask_GUI.dash_apps.results_table import Results_table
-
 from classes_and_utils.GUI_utils import *
+from classes_and_utils.consts import Constants
 
 class ConfigurationManager:
 
@@ -19,14 +19,18 @@ class ConfigurationManager:
     results_tables  = dict()
 
     def add_experiment(self,experiment_path,experiment_object):
+        if experiment_path in self.experiments.keys():
+            return
         self.experiments[experiment_path] = experiment_object
 
     def add_results_table(self,main_experiment_path,ref_experiment_path,res_table):
+        if (main_experiment_path,ref_experiment_path) in self.results_tables.keys():
+            return
         self.results_tables[(main_experiment_path,ref_experiment_path)] = res_table
         return res_table
 
     def get_experiment(self,experiment_path):
-        if experiment_path is None or experiment_path == '':
+        if experiment_path is None or experiment_path == '' or experiment_path not in self.experiments.keys():
             return None
         return self.experiments[experiment_path]
     
@@ -41,19 +45,15 @@ class ConfigurationManager:
             total.append(folder)
         else:        
         
-            files = glob(folder + '/**/*.pkl', recursive=True)
+            files = glob(folder + '/**/*' + Constants.EXPERIMENT_EXTENSION, recursive=True)
             for v in files:
                 total.append(v)
-        experiments_added = ''
-            
+        
         for v in total:    
             experiment = load_object(v)
             self.add_experiment(v,experiment)
-            if len(experiments_added) > 0:
-                experiments_added += ","
-            experiments_added += str(v)
-    
-        return experiments_added
+            
+        return total
 
     def add_experiment_object(self,experiment_object):
         key = str(uuid.uuid4()) + "\\" + "Upload" + "\\" + experiment_object.filename

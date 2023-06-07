@@ -3,10 +3,7 @@ import { ApplicationRef, Component, ElementRef, OnInit } from '@angular/core';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 import {Location} from '@angular/common';
 import { Router } from '@angular/router';
-import { AppComponent } from '../app.component';
 import { Subscription } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { SaveTemplateDialogComponent } from '../save-template-dialog/save-template-dialog.component';
 
 
 @Component({
@@ -24,11 +21,9 @@ export class TemplateSegmentationsComponent implements OnInit {
 
   subscribeSegmentsReady = new Subscription;
 
-  
-  constructor(private httpClient:HttpClient,
+  constructor(
               public statService:StatisticsToolService,
-              private location:Location,
-              private router:Router) {
+              private location:Location) {
   }
 
   ngOnInit(): void {
@@ -98,17 +93,9 @@ export class TemplateSegmentationsComponent implements OnInit {
 
   saveTemplate(){
     this.statService.openSaveTemplateDialog();
-    /*return;
-    if (this.isNewTemplateMode)
-      this.statService.saveTemplate(true,this.templateNameCreated);
-    else
-      this.statService.saveTemplate(false);*/
   }
 
   slideUniqueChange(event:any){
-    //console.log('slideUniqueChange',event.checked)
-    //this.statService.calculateUnique = event.checked;
-    //this.statService.uniqueValueChanged.next(event.checked);
     this.statService.uniqueValueChanged.next(this.statService.calculateUnique);
   }
 
@@ -120,16 +107,7 @@ export class TemplateSegmentationsComponent implements OnInit {
     for(let x=0;x < this.statService.currentTemplate.SegmentationsClicked.length;x++){
       if (x == i){
         this.statService.currentTemplate.SegmentationsClicked[x] = !this.statService.currentTemplate.SegmentationsClicked[x];
-        /*console.log('view-clicked',
-                    i,
-                    this.statService.currentTemplate.SegmentationsClicked[x],
-                    this.statService.viewHeights.get(x)
-        );*/
-
-      }
-      //else
-        //this.statService.currentTemplate.SegmentationsClicked[x] = false;
-        //console.log('clicked - false',i,this.statService.currentTemplate.SegmentationsClicked[x]);
+       }
       }
     }
 
@@ -161,16 +139,6 @@ export class TemplateSegmentationsComponent implements OnInit {
         console.log('path-remove-static',path)
       }
       window.location.href = 'http://127.0.0.1:5000/';
-    }
-
-    getDisabledClass(){
-      return '';
-      if (this.isNewTemplateMode){
-        if (this.templateNameCreated.length == 0)
-          return 'disabledImg';
-      }
-
-      return '';
     }
 
     localDataStoreChange(event:any){
