@@ -160,4 +160,10 @@ export class TemplateSegmentationsComponent implements OnInit {
     getSelectedTemplateTooltip(){
       return this.statService.templateNameOptions[this.statService.selectedTamplate].value;
     }
+
+    disableUnique(){
+      if (this.statService.getSelectedRefReport() == '')
+        return true;
+      return false;
+    }
  }

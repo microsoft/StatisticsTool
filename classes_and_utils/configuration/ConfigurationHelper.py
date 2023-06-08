@@ -27,7 +27,8 @@ class ConfigurationHelper:
         if request.files and request.files[Constants.REF_REPORT_CHOOSE_FILE].filename != '':
             ref = request.files[Constants.REF_REPORT_CHOOSE_FILE]
         else:
-            ref = request.values and request.values[Constants.REF_REPORT_FILE_PATH]            
+            if Constants.REF_REPORT_FILE_PATH in request.values.keys():
+                ref = request.values and request.values[Constants.REF_REPORT_FILE_PATH]            
 
         return main, ref  
     

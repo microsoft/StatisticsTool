@@ -109,7 +109,6 @@ export class StatisticsToolService implements OnInit {
       this.reportlistItems = [];
       let index = 0;
       this.mainRefPairs.forEach(pair => {
-        let parts = pair.main.split("\\");
         this.reportlistItems.push({'key':index,'value':pair.main})
         index++;
       })
