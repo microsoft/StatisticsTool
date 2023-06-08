@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { connect, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { SaveTemplateDialogComponent } from '../save-template-dialog/save-template-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -67,16 +66,11 @@ export class StatisticsToolService implements OnInit {
   activeLocalDataStore = false;
   localDataStorePath = '';
 
-  currentConfigKey = '';
-  subKeys:{'key':number,'value':string}[] = [];
-  ref_dir = '';
-
-  mainRefPairs:{'main':string,'ref':string}[] = [];
+  mainRefPairs:   {'main':string,'ref':string}[] = [];
   reportlistItems:{'key':number,'value':string}[] = []
 
   
   constructor(private httpClient:HttpClient,private modalService: NgbModal) { 
-    
   }
   
   init(reportsPairs:string = '',selectedReport:number = 0){
@@ -93,8 +87,8 @@ export class StatisticsToolService implements OnInit {
     let url = '/get_all_templates';
     this.httpClient.post<{'content':IContent,'name':string}[]>
       (url,{
-        'main':main.value,
-        'ref': ref!.ref,
+        'main_path':main.value,
+        'ref_path': ref!.ref,
       })
       .subscribe(res => {
         this.processTemplates(res);
@@ -136,7 +130,7 @@ export class StatisticsToolService implements OnInit {
     this.httpClient.post<{'name':string,'values':string[]}[]>
       ('/get_segmentations',
         {
-          'main': main.value
+          'main_path': main.value
         }
       )
       .subscribe(res => {
@@ -178,28 +172,10 @@ export class StatisticsToolService implements OnInit {
         
   }
 
-  getSegmentations(){
-    /*let keys:string[] = [];
-    this.optionalSegmentations.forEach((v,k) => {
-      keys.push(k)
-    });
-
-    return keys;*/
-    return '';
-  }
-
   onTemplateSelected(templateName:string){
     this.currentTemplate = this.templates.find(x => x.name == templateName)!;
     let find = this.templateNameOptions.find(x => x.value == templateName);
     this.selectedTamplate = find!.key;
-  }
-
-  getTemplateSegments(templateName:string,index:number,isRows:boolean){
-    /*let seg = this.mapTemplateSegments.get(templateName)!
-    if (isRows)
-      return seg[index].rows;
-    else
-      return seg[index].columns;*/
   }
 
   updateSegments(id:number,templateName:string,csvColumns:string,csvRows:string){
@@ -207,12 +183,10 @@ export class StatisticsToolService implements OnInit {
     let rows = csvRows.split(",");
     this.currentTemplate.Segmentations[id].columns = cols;
     this.currentTemplate.Segmentations[id].rows = rows;
-    //this.currentTemplate.wasChanged = true;
   }
 
   updateSegmentationName(templateName:string,id:number,segName:string){
     this.currentTemplate.Segmentations[id].name = segName;
-    //this.currentTemplate.wasChanged = true;
   }
   
   addDefaultTemplate(){
@@ -252,43 +226,18 @@ export class StatisticsToolService implements OnInit {
     this.httpClient.post<any>('/save_template',{
       'name':templateName,
       'content':JSON.stringify(req),
-      'main': this.getSelectedMainReport(),
-      'ref': this.getSelectedRefReport(),
+      'main_path': this.getSelectedMainReport(),
+      'ref_path': this.getSelectedRefReport(),
     }).subscribe(res => {
 
       this.templates = [];
-      this.processTemplates(res);
-      this.updateTemplateNames();       
-      this.onTemplateSelected(templateName);
-    })
-  }
-
-  saveTemplate_old(isNewTemplate:boolean,newTemplateName:string = ''){
-    let template_name = this.currentTemplate.name;
-    if (isNewTemplate)
-      template_name = newTemplateName;
-
-    let req = new SaveTemplateRequest();
-    req.name = template_name;
-    this.currentTemplate.Segmentations.forEach(s => {
-      let seg = new SaveTemplate_SegmentItem();
-      seg.columns = s.columns.join(",");
-      seg.rows = s.rows.join(",");
-      seg.name = s.name;
-      req.segmentations.push(seg);
-    })
-    
-    this.httpClient.post<any>('/save_template',{
-      'name':template_name,
-      'content':JSON.stringify(req),
-      'key': this.currentConfigKey,
-      'sub_key': this.getSelectedMainReport()
-    }).subscribe(res => {
-
-      this.templates = [];
-      this.processTemplates(res);
-      this.updateTemplateNames();       
-      this.onTemplateSelected(template_name);
+      if (res.length == 0){
+        this.addDefaultTemplate();
+      } else {
+        this.processTemplates(res);
+        this.updateTemplateNames();       
+        this.onTemplateSelected(templateName);
+      }
     })
   }
 
@@ -324,18 +273,6 @@ export class StatisticsToolService implements OnInit {
 
   showFileNotFoundError(){
     return this.fileNotFoundError.length > 0;
-  }
-
-  loadSubKeys(str:string){
-    this.subKeys = [];
-    let items = str.split(",");
-    let index = 0;
-    items.forEach(s => {
-      if (s != ''){
-        this.subKeys.push({'key':index,'value':s});
-        index++;
-      }
-    })
   }
 
   getSelectedMainReport(){

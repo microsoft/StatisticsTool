@@ -1,6 +1,4 @@
 <div>
-    <!-- HEADER (TODO: REMOVE IT TO A SEPARATE COMPONENT) -->
-    
     <div style="width:100%;
                 height:50px;
                 border:1px solid lightgray;
@@ -22,34 +20,20 @@
                         class="back"
                         (click)="back()">
                 </div>
-                <ng-container *ngIf="!isFireFox()">
-                    <div style="width:10%;padding-top:2px;margin-right: 5px;">
-                        <select 
-                            [title]="getSelectedMainReportTooltip()"
-                            [(ngModel)]="statService.selectedReport"
-                            style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
-                            (change)="onReportSelected($event)"
-                            >
-                            <option *ngFor="let s of statService.reportlistItems"
-                                            value="{{s.key}}"
-                                    >Report - {{ statService.getReportDesc(s.value)}}</option>
-                        </select>
-                    </div>
-                </ng-container>
-                <ng-container *ngIf="isFireFox()">
-                    <div style="width:10%;padding-top:2px;margin-right: 15px;">
-                        <select 
-                            [title]="getSelectedMainReportTooltip()"
-                            [(ngModel)]="statService.selectedReport"
-                            style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
-                            (change)="onReportSelected($event)"
-                            >
-                            <option *ngFor="let s of statService.reportlistItems"
-                                            value="{{s.key}}"
-                                    >Report - {{ statService.getReportDesc(s.value)}}</option>
+                <div style="width:10%;padding-top:2px;" 
+                    [ngStyle]="{'margin-right':isFireFox() ? '15px' : '5px'}"
+                    >
+                    <select 
+                        [title]="getSelectedMainReportTooltip()"
+                        [(ngModel)]="statService.selectedReport"
+                        style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
+                        (change)="onReportSelected($event)"
+                        >
+                        <option *ngFor="let s of statService.reportlistItems"
+                                        value="{{s.key}}"
+                                >Report - {{ statService.getReportDesc(s.value)}}</option>
                     </select>
-                    </div>
-                </ng-container>
+                </div>
                 
                 <div class="pipe"></div>
                 <div style="width:10%;padding-top:2px;margin-left: 3px;">
@@ -64,48 +48,28 @@
                                 >{{t.value}}</option>
                     </select>
                 </div>
+                <div class="save-icon" style="margin-top: -1px;"
+                     [ngStyle]="{'margin-left': isFireFox() ? '22px' : '12px'}">
+                    <img [src]="addGridImgSrc"
+                        (mouseover)="addGridImgSrc = 'assets/grid-add-orange.svg'"
+                        (mouseout)="addGridImgSrc = 'assets/grid-add-blue.svg'"
+                        style="width: 40px;height:40px;margin-top: 0px;cursor: pointer;" 
+                        title="Add View"
+                        (click)="addView()">
+                </div>
 
-                <ng-container *ngIf="!isFireFox()">
-                    <div class="save-icon" style="margin-left: 12px;margin-top: -1px;">
-                        <img [src]="addGridImgSrc"
-                            (mouseover)="addGridImgSrc = 'assets/grid-add-orange.svg'"
-                            (mouseout)="addGridImgSrc = 'assets/grid-add-blue.svg'"
-                            style="width: 40px;height:40px;margin-top: 0px;cursor: pointer;" 
-                            title="Add View"
-                            (click)="addView()">
-                    </div>
-                </ng-container>
-                <ng-container *ngIf="isFireFox()">
-                    <div class="save-icon" style="margin-left: 22px;margin-top: -1px;">
-                        <img [src]="addGridImgSrc"
-                            (mouseover)="addGridImgSrc = 'assets/grid-add-orange.svg'"
-                            (mouseout)="addGridImgSrc = 'assets/grid-add-blue.svg'"
-                            style="width: 40px;height:40px;margin-top: 0px;cursor: pointer;" 
-                            title="Add View"
-                            (click)="addView()">
-                    </div>
-                </ng-container>
-
-                <ng-container *ngIf="!isFireFox()">
-                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-left: 5px;margin-top: -1px;">
-                        <img [src]="saveImgSrc"
-                            (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
-                            (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
-                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
-                            title="Save Template"
-                            (click)="saveTemplate()">
-                    </div>
-                </ng-container>
-                <ng-container *ngIf="isFireFox()">
-                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-top: -1px;margin-left: 10px;">
-                        <img [src]="saveImgSrc"
-                            (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
-                            (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
-                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
-                            title="Save Template"
-                            (click)="saveTemplate()">
-                    </div>
-                </ng-container>
+                
+                <div class="save-icon" 
+                    style="margin-top: -1px;"
+                    [ngStyle]="{'margin-left': isFireFox() ? '10px' : '5px'}">
+                    <img [src]="saveImgSrc"
+                        (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
+                        (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
+                        style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                        title="Save Template"
+                        (click)="saveTemplate()">
+                </div>
+                
                 <div class="pipe" style="margin-right:5px;margin-left: 7px;"></div>
                 <div style="display:flex;padding-right:3px;">
                     <div style="margin-bottom:-10px;margin-left:3px;padding-top:10px">
@@ -153,11 +117,6 @@
                     [ngClass]="getActiveCls(i)">View - {{ getTitle(i) }}
                 </button>
                     <div class="content" [ngStyle]="{'min-height':getViewHeight(i)}">
-                        <!--<p>
-                            <ngb-alert [dismissible]="false">
-                                <strong>Warning!</strong> Better check yourself, you're not looking too good.
-                            </ngb-alert>
-                        </p>-->
                         <pkl-view 
                             [selectedRowsSet] = "x.rows"
                             [selectedColumnsSet] = "x.columns"
@@ -168,11 +127,5 @@
                     </div>  
             </ng-container>
     </div>
-
-    <!--<div style="position:fixed;bottom:0px;left:0;height: 50px;z-index: 99999;background: #fafafa;width:100%">
-        <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;" 
-                mat-raised-button 
-                (click)="addView()">Add View</button>
-    </div>-->
 </div>
 

@@ -1,11 +1,5 @@
 import os,json,urllib.parse
-
-
-MAIN_REPORT_FILE_PATH   = 'report_file_path'
-MAIN_REPORT_CHOOSEFILE  = 'choose_report_file'
-REF_REPORT_FILE_PATH    = 'reference_file_path'
-REF_REPORT_CHOOSE_FILE  = 'choose_reference_file'
-
+from classes_and_utils.consts import Constants
 class ConfigurationHelper:
 
     '''
@@ -25,30 +19,41 @@ class ConfigurationHelper:
         main = None
         ref = None
         
-        if request.files and request.files[MAIN_REPORT_CHOOSEFILE].filename != '':
-            main = request.files[MAIN_REPORT_CHOOSEFILE] 
+        if request.files and request.files[Constants.MAIN_REPORT_CHOOSEFILE].filename != '':
+            main = request.files[Constants.MAIN_REPORT_CHOOSEFILE]
         else:
-            main = request.values and request.values[MAIN_REPORT_FILE_PATH]
-          
+            main = request.values and request.values[Constants.MAIN_REPORT_FILE_PATH]
 
-        if request.files and request.files[REF_REPORT_CHOOSE_FILE].filename != '':
-            ref = request.files[REF_REPORT_CHOOSE_FILE]
+        if request.files and request.files[Constants.REF_REPORT_CHOOSE_FILE].filename != '':
+            ref = request.files[Constants.REF_REPORT_CHOOSE_FILE]
         else:
-            ref = request.values and request.values[REF_REPORT_FILE_PATH]            
+            ref = request.values and request.values[Constants.REF_REPORT_FILE_PATH]            
 
         return main, ref  
     
     @staticmethod
     def build_main_ref_pairs(main_experiments,ref_experiments):
 
+        list_main = list()
+        list_ref  = list()
+        if type(main_experiments).__name__ == 'str':
+            list_main.append(main_experiments)
+        else:
+            list_main = list(main_experiments)    
+        if type(ref_experiments).__name__ == 'str':
+            list_ref.append(ref_experiments)
+        else:
+            list_ref = list(ref_experiments)    
+
+
         arr = []
 
         map_ref_exp = dict()
-        for f in ref_experiments.split(","):
+        for f in list_ref:
             _,file = os.path.split(f)
             map_ref_exp[str(file).lower()] = f
 
-        for v in main_experiments.split(","):
+        for v in list_main:
             _, main_file = os.path.split(v)
             if str(main_file).lower() in map_ref_exp.keys():
                 arr.append({'main':v,'ref':map_ref_exp[str(main_file).lower()]})
