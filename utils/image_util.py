@@ -68,7 +68,8 @@ def draw_detection_on_figure(image_in, prd_bbs, label_bbs, selected_pred = -1, s
         if index == selected_label:
             thikness = 3
         draw_rect_on_image(image, bb_x_coordinate, bb_y_coordinate, bb_width, bb_height, (0, 255, 0), thikness)
-        
+    
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)   
     _, buffer = cv2.imencode(".png", image)
     output = BytesIO(buffer)
     

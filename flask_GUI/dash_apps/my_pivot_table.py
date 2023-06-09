@@ -19,7 +19,6 @@ class   PivotTable():
     def __init__(self, segmentations, main_exp,ref_exp, cell_function = default_get_cell):
         self.segmentations = segmentations
         self.get_cell = cell_function
-        #self.config_item = config_item
         self.main_exp = main_exp
         self.ref_exp = ref_exp
 
@@ -144,24 +143,6 @@ class   PivotTable():
 
         return cols_titles
 
-    def get_keys_permutations(self,colums,rows):
-        list1 = ['large','medium','small']
-        list2 = ['right','left']
-        list3 = ['up','down']
-        list4 = ['Recall','Precision','FPR','TOTAL_PRED']
-        list5 = ['TP','FP','FN']
-        
-        res1 = [ (i, j, k,t) for i in list1
-                 for j in list2
-                 for k in list3
-                 for t in list4]
-        
-        res2 = [ (i, j, k,t) for i in list1
-                 for j in list2
-                 for k in list3
-                 for t in list5]
-        
-        return res1 + res2
 
     def get_report_table(self, all_columns, all_rows):
         '''
@@ -196,60 +177,4 @@ class   PivotTable():
                             )
 
         return table
-
-
-##############################################################################################
-## Bellow is an example of how to use this class ###
-def table_page_example(segmentations):
-    default_cols_segmentation = [list(segmentations.keys())[0]]
-    default_rows_segmentation = [list(segmentations.keys())[1]]
-
-
-    ######################
-    Title_div = html.Div([dbc.Alert("Hello, Bootstrap!", className="m-5")])
-
-    cols_segmentation_dropdown = dcc.Dropdown(list(segmentations.keys()), default_cols_segmentation,
-                                       id='cols_seg', multi=True)
-    rows_segmentation_dropdown = dcc.Dropdown(list(segmentations.keys()), default_rows_segmentation,
-                                       id='rows_seg', multi=True)
-
-    table_div = html.Div([html.H1('Loading Table')], id='table-div')
-
-    return html.Div([Title_div, cols_segmentation_dropdown, rows_segmentation_dropdown, table_div], style={'border':'solid'})
-
-app = Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
-#HAGAI-callback
-'''
-@app.callback(
-    Output('table-div', 'children'),
-    Input('cols_seg', 'value'),
-    Input('rows_seg', 'value')
-)
-def update_output(cols_input ,rows_input):
-    table_div = table.get_report_table(cols_input, rows_input)
-    return table_div
-'''
-
-if __name__ == '__main__':
-
-    segmentations = {\
-        'Size' :  ['Small', 'Medium', 'large','mysize'],
-        'Location'  :  ['Indoor', 'Outdoor'],
-        'Light':  ['Day', 'Night', 'dawn'],
-        'Status': ['approachin', 'leaving']} 
-
-    cols =  ['Location', 'Light', 'Size', 'Status', 'TP', 'FP', 'FN']
-
-    data=[\
-                ['Indoor', 'Day',    'Small', 'approachin',  45, 50, 20],
-                ['Indoor', 'Day',    'Small', 'approachin',  20, 88, 270],
-                ['Outdoor', 'Day',   'Medium', 'leaving',    100, 66, 420],
-                ['Outdoor', 'Night', 'Small', 'approachin',  4, 40, 205],
-                    ]
-
-    df =pd.DataFrame.from_records(data, columns=cols)
-    table = PivotTable(segmentations, df)
-    app.layout = table_page_example(segmentations)
-    app.run_server()
-    app.server.debug = True
 

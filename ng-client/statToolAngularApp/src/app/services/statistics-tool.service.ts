@@ -115,10 +115,10 @@ export class StatisticsToolService implements OnInit {
   }
 
   getReportDesc(reportfileName:string){
-    let parts = reportfileName.split("\\");
+    let parts = reportfileName.split(/[\\/]/);;
     let dir = parts[parts.length-2];
     let file = parts[parts.length-1];
-    return dir + "\\" + file;
+    return dir + "/" + file;
   }
 
   loadSegmentations(selectedReport:number = 0){

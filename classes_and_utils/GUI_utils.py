@@ -6,20 +6,14 @@ from glob import glob
 from utils.image_util import draw_detection_on_figure, read_frame_from_video
 
 sys.path.append(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
-from app_config.constants import constants
-from app_config.config import app_config
 from utils.AzureStorageHelper import *
 from classes_and_utils.ParallelExperiment import *
-from classes_and_utils.VideoEvaluation import compare_predictions_directory, VideoEvaluation
-from inspect import getmembers, isfunction
+from classes_and_utils.VideoEvaluation import compare_predictions_directory
 from classes_and_utils.utils import loading_json, save_json
 from utils.sheldon_export_header import *
-from classes_and_utils.file_storage_handler import calc_log_file_full_path
-import re, pickle
-import numpy as np
+import pickle
 import json
 from pathlib import Path
-import shutil
 
 READING_FUNCTIONS = 'reading_functions'
 EVALUATION_FUNCTIONS = 'evaluation_functions'
@@ -62,7 +56,7 @@ def save_experiment(obj, out_folder, config_file_name):
             metadata = json.load(conf)[0]
     
     metadata.update(obj.sheldon_header_data)
-    output_file = os.path.join(out_folder,METADATA_EXTENTION)
+    output_file = os.path.join(out_folder,report_name+METADATA_EXTENTION)
     with open(output_file, 'w') as f:
         json.dump(metadata, f)
 
@@ -294,7 +288,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     report_file_name = save_experiment(exp, folder_name, config_file_name)
     return exp, user_text, report_file_name
 
-def manage_image_request(request, main_exp, comp_exp,main_directory):
+def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, local_path, example_name):
     """
     Accepts the requests to /show_im route and returns an encoded image and the path where the image was saved (if it was saved)
 
@@ -307,26 +301,19 @@ def manage_image_request(request, main_exp, comp_exp,main_directory):
     data = None
     image = None
     # request came from examples_list.html to show an example image
-    exp = main_exp
-    comp_ind=eval(request.args.get('comp_index'))
-    if comp_ind>-1:
-        #exp = comp_exp[comp_ind]
-        exp = comp_exp
-    
-    local_path = None    
-    if request.args.get('local_path'):
-        local_path = request.args.get('local_path')
-    
-    is_name_available = request.args.get('example_name')
-    if is_name_available:
-        example_id = request.args.get('example_name')
-        example_id = eval(example_id.replace(" ", ","))
+
+    if example_name:
+        example_id = eval(example_name.replace(" ", ","))
    
     video, bb_index,frame_id,_ = example_id
     if local_path:
         video = os.path.join(local_path,video)
     
     image = read_frame_from_video(video, frame_id)
+    
+    exp = main_exp
+    if use_ref:
+        exp = ref_exp
     
     pred_bbs, label_bbs, selected_pred_index, selected_label_index = exp.get_detection_bounding_boxes(bb_index)
     detection_text_list = exp.get_detection_properties_text_list(bb_index)
@@ -349,12 +336,5 @@ def manage_image_request(request, main_exp, comp_exp,main_directory):
             outfile.write(out_figure.getbuffer())
         
     return detection_text_list, data, save_path
-
-def get_link_for_update_list(cell_name:str, stat:str, is_ref:bool = False, is_unique:bool = False)-> str:
-    unique_flag = "&unique" if is_unique else ""
-    ref_flag = "&ref" if is_ref else ""
-    link = f"/update_list?cell_name={cell_name}&stat={stat}"+ref_flag+unique_flag
-    return link
-
 
 

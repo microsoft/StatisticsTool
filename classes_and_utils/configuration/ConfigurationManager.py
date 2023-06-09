@@ -19,9 +19,11 @@ class ConfigurationManager:
     results_tables  = dict()
 
     def add_experiment(self,experiment_path,experiment_object):
-        if experiment_path in self.experiments.keys():
-            return
-        self.experiments[experiment_path] = experiment_object
+        norm_path = self.norm_exp_name(experiment_path)
+        if norm_path not in self.experiments.keys():
+            self.experiments[norm_path] = experiment_object
+
+        return norm_path
 
     def add_results_table(self,main_experiment_path,ref_experiment_path,res_table):
         if (main_experiment_path,ref_experiment_path) in self.results_tables.keys():
@@ -42,26 +44,30 @@ class ConfigurationManager:
     def add_experiments_in_folder(self,folder):
         total = []
         if folder and os.path.isdir(folder) == False:
-            total.append(folder)
+            experiment = load_object(folder)
+            exp_key = self.add_experiment(folder,experiment)
+            total.append(exp_key)
         else:        
         
             files = glob(folder + '/**/*' + Constants.EXPERIMENT_EXTENSION, recursive=True)
             for v in files:
-                total.append(v)
+                experiment = load_object(v)
+                exp_key = self.add_experiment(v,experiment)
+                total.append(exp_key)
         
-        for v in total:    
-            experiment = load_object(v)
-            self.add_experiment(v,experiment)
-            
         return total
 
     def add_experiment_object(self,experiment_object):
-        key = str(uuid.uuid4()) + "\\" + "Upload" + "\\" + experiment_object.filename
+        key = str(uuid.uuid4()) + "/" + "Upload" + "/" + experiment_object.filename
         experiment_object = load_object(experiment_object)
         self.add_experiment(key,experiment_object)
         return key
     
-    def add(self,value):
+    def norm_exp_name(self, name):
+        norm_name = name.replace('\\','/')
+        return norm_name
+    
+    def add(self, value):
         if not value:
             return ''
         

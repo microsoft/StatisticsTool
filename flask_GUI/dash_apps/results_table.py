@@ -61,16 +61,23 @@ class Results_table():
         self.main_exp = None
         self.ref_exp = None
        
+    def get_main_exp(self):
+        return self.main_exp
+    
+    def get_ref_exp(self):
+        return self.ref_exp
     
     def set_unique(self,calc_unique):
         self.calc_unique = calc_unique
         if calc_unique and self.unique_helper == None:
             self.unique_helper = UniqueHelper(self.main_exp,self.ref_exp)
 
-    def set_data(self, main_exp, ref_exp, segmentations,calc_unique = False):
+    def set_data(self, main_exp, ref_exp, main_path, ref_path, segmentations,calc_unique = False):
         self.main_exp = main_exp
         self.ref_exp = ref_exp
-
+        self.main_path = main_path
+        self.ref_path = ref_path
+        
         if main_exp is not None and calc_unique and self.unique_helper is None:
             self.unique_helper = UniqueHelper(main_exp,ref_exp)
        
@@ -106,13 +113,32 @@ class Results_table():
             return rows
         return rows + "/" + columns
     
-    
+    def get_ids(self, cell_key, stat, show_ref_report, unique):
+        ids = []
+        if unique and self.unique_helper:
+            ids = self.unique_helper.get_ids(cell_key, stat, show_ref_report)
+        else:
+            if not show_ref_report:
+                ids = self.main_exp.get_ids(cell_key, stat)
+            else:
+                ids = self.ref_exp.get_ids(cell_key, stat)
+
+                
+        return ids
+
+    def get_link_for_update_list(self,cell_name:str, stat:str, is_ref:bool = False, is_unique:bool = False)-> str:
+        unique_flag = "&unique" if is_unique else ""
+        ref_flag = "&ref" if is_ref else ""
+        link = f"/update_list?cell_name={cell_name}&stat={stat}&main_path={self.main_path}&ref_path={self.ref_path}"+ref_flag+unique_flag
+        return link
+
+
     def generate_unique_html_dash_element(self,column_keys,row_keys, stat_functions,exp_name, cell_name):
         '''
             stat_func: TP,TN,FN
         '''        
         unique_array,unique_array_ref,_ = self.unique_helper.calc_unique_detections(column_keys,row_keys,stat_functions)
-        link_unique = get_link_for_update_list(cell_name=cell_name, 
+        link_unique = self.get_link_for_update_list(cell_name=cell_name, 
                                                 stat=stat_functions, 
                                                 is_ref = exp_name==REF_EXP,
                                                 is_unique = True)
@@ -126,23 +152,28 @@ class Results_table():
         
         return txt_unique,link_unique
 
+       
     def get_cell_exp(self, column_keys, row_keys,row_index):  
         '''
         The function that return a single cell
         '''     
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
         
+        cell_name = self.main_exp.calc_cell_name(segmentations)
         exp_data = {}
-        exp_data[MAIN_EXP] = self.main_exp.get_cell_data(segmentations, self.unique_helper, False)
+        exp_data[MAIN_EXP] = self.main_exp.get_cell_data(cell_name, segmentations)
         if self.ref_exp is not None:
-            exp_data[REF_EXP] = self.ref_exp.get_cell_data(segmentations, self.unique_helper, True) 
+            exp_data[REF_EXP] = self.ref_exp.get_cell_data(cell_name, segmentations) 
+        
+        if self.unique_helper:
+            self.unique_helper.calc_cell_data(cell_name, segmentations=segmentations)
 
         all_metrics = []
         if self.ref_exp is not None:
             TDs = []
             TDs.append(html.Td(''))
             TDs.append(html.Td('MAIN', style={'color':'black','font-weight':'bold','white-space':'nowrap'}))
-            if self.unique_helper != None:
+            if self.calc_unique == True and self.unique_helper != None:
                 TDs.append(html.Td(''))
             TDs.append(html.Td('REF', style={'color':'black','font-weight':'bold','white-space':'nowrap'}))
             all_metrics.append(html.Tr(TDs,style=css['table-row']))
@@ -165,8 +196,8 @@ class Results_table():
             
             for exp_name in exp_data.keys():
                 txt = "{}".format(exp_data[exp_name][k])
-                if k in ["TP", "FP", "FN", "TN"]:
-                    link = get_link_for_update_list(cell_name=exp_data[exp_name]['cell_name'], 
+                if k in ["TP", "FP", "FN"]:
+                    link = self.get_link_for_update_list(cell_name=exp_data[exp_name]['cell_name'], 
                                                     stat=k, 
                                                     is_ref = exp_name==REF_EXP)
                     if k == "TN":
@@ -193,11 +224,8 @@ class Results_table():
                         a_unique = html.A(txt_unique,href=msg, target="")
 
                         TDs.append(html.Td(a_unique,style={'white-space': 'nowrap'}))
-                    else:
-                        if self.unique_helper != None:
-                            TDs.append(html.Td('',style={'white-space': 'nowrap'}))
                 else:
-                    if self.unique_helper != None:
+                    if self.calc_unique == True and self.unique_helper != None:
                         TDs.append(html.Td('',style={'white-space': 'nowrap'}))
             
             if idx % 2 == 0:
@@ -254,23 +282,3 @@ class Results_table():
 
         whole_page = html.Div([table_buttons_div], style=css['whole-reporter'])
         return  whole_page    
-
-
-### Data For Test #######
-segmentations_for_test = {\
-    'size' :  ['tiny', 'small', 'medium', 'large'],
-    'Enviroment'  :  ['Indoor_Enviroment', 'Outdoor_Enviroment'],
-    'Location':  ['Room_Location', 'Crowded environment_Location', 'Office_Location', 'Outdoor_Location'],
-    'User_Movement_Type': ['Approach_PC_User_Movement_Type', 'None_User_Movement_Type']} 
-
-
-cols_for_test =  ['Location', 'Light', 'Size', 'Status', 'TP', 'FP', 'FN']
-
-data_for_test =[\
-            ['Indoor', 'Day',    'Small', 'approachin',  45, 50, 20],
-            ['Indoor', 'Day',    'Small', 'approachin',  20, 88, 270],
-            ['Outdoor', 'Day',   'Medium', 'leaving',    100, 66, 420],
-            ['Outdoor', 'Night', 'Small', 'approachin',  4, 40, 205],
-                ]
-
-df =pd.DataFrame.from_records(data_for_test, columns=cols_for_test)

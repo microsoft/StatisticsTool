@@ -3,7 +3,7 @@ Legend: <span style="color:blue;">Prediction ----     </span> <span style="color
 <br>
 <img style='max-width: 100%; max-height: 100%;' src='data:image/png;base64,{{data}}'/>
 <p>
-   <a style="font-family: Arial, Helvetica, sans-serif;" target="" href='javascript:window.parent.postMessage({"action":"show_image","value":"{{request}}"})'> Save Image</a> 
+   <a style="font-family: Arial, Helvetica, sans-serif;" target="" href='javascript:window.parent.postMessage({"action":"show_image","value":"/show_im?example_name={{example_name}}&comp_index={{comp_index}}&main_path={{main_path}}&ref_path={{ref_path}}&save_image"})'> Save Image</a> 
     {% if save_path: %}
     <p style="font-family: Arial, Helvetica, sans-serif;"> Image was saved to: <br>
         {{save_path}} 

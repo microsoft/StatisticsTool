@@ -22,7 +22,6 @@ class ParallelExperiment:
         self.ID_storage = {}
         self.segmented_ID = {}
         self.segmented_ID_new = {}
-        self.unique_data = {}
         self.sheldon_header_data = sheldon_header_data
         
     
@@ -82,23 +81,29 @@ class ParallelExperiment:
         
         self.ID_storage['label'] = self.ID_storage['prediction']
 
-    def get_cell_data(self, segmentations:list, unique, is_ref = False):
-        len_ = len(self.masks['total_stats']['TP'])
-        segmentation_mask = np.ones([len_], dtype=bool)
-
+    def calc_cell_name(self, segmentations):
         cell_name = ""
         if len(segmentations) > 0: # This is the empty table case
             #list(segmentations.keys())[0] != 'None':
             for curr_segmentation in segmentations:
                 assert(len(curr_segmentation)==1)
-                seg_cat, seg_value = list(curr_segmentation.keys())[0], list(curr_segmentation.values())[0]
-                seg_idx = self.masks[seg_cat]['possible partitions'].index(seg_value)
-                segmentation_mask &= self.masks[seg_cat]['masks'][seg_idx]
+                _, seg_value = list(curr_segmentation.keys())[0], list(curr_segmentation.values())[0]
                 cell_name = cell_name + "{}*".format(seg_value)
         else:
-            # cell_name = cell_name + "{}*".format('None')
             cell_name = "*"
 
+        return cell_name
+    
+    def get_cell_data(self, cell_name, segmentations,):
+        len_ = len(self.masks['total_stats']['TP'])
+        segmentation_mask = np.ones([len_], dtype=bool)
+        
+        for curr_segmentation in segmentations:
+            assert(len(curr_segmentation)==1)
+            seg_cat, seg_value = list(curr_segmentation.keys())[0], list(curr_segmentation.values())[0]
+            seg_idx = self.masks[seg_cat]['possible partitions'].index(seg_value)
+            segmentation_mask &= self.masks[seg_cat]['masks'][seg_idx]
+      
         TP_masks = self.masks['total_stats']['TP'] & segmentation_mask
         FP_masks = self.masks['total_stats']['FP'] & segmentation_mask
         FN_masks = self.masks['total_stats']['FN'] & segmentation_mask
@@ -113,51 +118,15 @@ class ParallelExperiment:
         if not hasattr(self, 'segmented_ID_new'): # temp just for backward compatability
             self.segmented_ID_new = {}
 
-        if not hasattr(self, 'unique_data'):
-            self.unique_data = {}    
-
         self.segmented_ID_new[cell_name] = {
             'TP': self.ID_storage["prediction"][TP_masks],\
             'FP': self.ID_storage['prediction'][FP_masks],\
             'FN': self.ID_storage['label'][FN_masks]}
 
-        #todo - hagai
-        if unique is not None:
-            dict = {'None':'None'}
-            lst = []
-            lst.append(dict)
-            cols = []
-            rows = lst
-            if segmentations == []:
-                cols = lst
-            else:
-                cols = segmentations
-            uniqueTP, uniqueTP_ref, _ = unique.calc_unique_detections(cols,rows,'TP')
-            uniqueFP, uniqueFP_ref, _ = unique.calc_unique_detections(cols,rows,'FP')
-            uniqueFN, uniqueFN_ref, _  = unique.calc_unique_detections(cols,rows,'FN')
-            
-            uniqueTP = uniqueTP if not is_ref else uniqueTP_ref
-            uniqueFP = uniqueFP if not is_ref else uniqueFP_ref
-            uniqueFN = uniqueFN if not is_ref else uniqueFN_ref
-                
-
-
-            self.unique_data[cell_name] = {
-                'TP':uniqueTP,
-                'FP':uniqueFP,
-                'FN':uniqueFN
-            }
         return statistics_dict
 
-    def get_ids(self, cell_key, state, show_unique):
-        if show_unique:
-            ids = []
-            for x in self.unique_data[cell_key][state]:
-                ids.append(x)
-            ids = np.array(ids)
-            
-        else:
-            ids = self.segmented_ID_new[cell_key][state]
+    def get_ids(self, cell_key, state):
+        ids = self.segmented_ID_new[cell_key][state]
         return ids
 
        

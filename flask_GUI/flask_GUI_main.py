@@ -7,7 +7,6 @@ import re
 from classes_and_utils.UpdateListManager import UpdateListManager
 from classes_and_utils.configuration.ConfigurationHelper import ConfigurationHelper
 from classes_and_utils.configuration.ConfigurationManager import ConfigurationManager
-from classes_and_utils.configuration.ConfigurationItem import ConfigurationItem
 from flask_GUI.dash_apps.results_table import Results_table
 
 #from flask_GUI.configuration_results import ConfigurationResults
@@ -154,7 +153,7 @@ def get_report_table():
     if res_table == None:
         res_table = Results_table(server)
         segmentations = configuration_manager.get_item_segmentations(main_path)
-        res_table.set_data(main,ref,segmentations,calc_unique)
+        res_table.set_data(main,ref, main_path, ref_path, segmentations,calc_unique)
         res_table = configuration_manager.add_results_table(main_path,ref_path,res_table)
     else:
         if ref is not None:
@@ -199,37 +198,49 @@ def save_template():
 
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    listManager = UpdateListManager()
     main_path = request.args.get('main_path')
     ref_path  = request.args.get('ref_path')
-    main_exp = configuration_manager.get_experiment(main_path)
-    ref_exp = configuration_manager.get_experiment(ref_path)
-    
+    list_ref_report  = 'ref' in request.args
+    cell_name = request.args.get('cell_name') if "cell_name" in request.args else None
+    stat = request.args.get('stat') if "stat" in request.args else None  #This is a string contain 'TP' / 'FP' / 'FN
+    show_unique = 'unique' in request.args
 
-    # global comp_index, unique, state, cell_name, save_path, per_video_example_hash
-    listManager.manage_list_request(request, main_exp,ref_exp)
+    results_table = configuration_manager.get_results_table(main_path, ref_path)
+    per_video_example_hash, saved_file = UpdateListManager.manage_list_request(results_table, main_path, cell_name, stat, show_unique, list_ref_report, 'sheldon' in request.args)
 
+    unique_flag = '' if show_unique is False else 'unique'
     return render_template('examples_list.html', 
-                            state=listManager.state, 
-                            cell_name=listManager.cell_name,
-                            save_path=listManager.saved_list,
-                            per_video_example_hash=listManager.per_video_example_hash,
-                            saved_sheldon=listManager.saved_sheldon,
-                            comp_index=listManager.comp_index,
-                            unique = listManager.show_unique)
+                            state=stat, 
+                            cell_name=cell_name,
+                            per_video_example_hash = per_video_example_hash,
+                            saved_sheldon = saved_file,
+                            comp_index = 0 if ref_path else -1,
+                            unique = unique_flag,
+                            main_path = main_path,
+                            ref_path = ref_path
+    )
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():
     main_path = request.args.get('main_path')
     ref_path = request.args.get('ref_path')
+    comp_index=eval(request.args.get('comp_index'))
+    
+    local_path = None    
+    if request.args.get('local_path'):
+        local_path = request.args.get('local_path')
+    
+    example_name = request.args.get('example_name')
+
     main_exp = configuration_manager.get_experiment(main_path)
     ref_exp = configuration_manager.get_experiment(ref_path)
 
     main_dir,_ = os.path.split(main_path)
     
-    detection_text_list, data, save_path = manage_image_request(request,main_exp, ref_exp,main_dir)
-    full_path = re.escape(request.full_path)+"&save_image"
-    return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list, request = full_path)
+    detection_text_list, data, save_path = manage_image_request(request,main_exp, ref_exp,main_dir, comp_index>-1, local_path, example_name)
+    
+    example_name = example_name.replace('\\','/')
+    return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list, example_name = example_name, main_path=main_path, ref_path=ref_path, comp_index = comp_index)
 
 #endregion - Functions for REPORT CREATION
 

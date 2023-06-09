@@ -41,7 +41,7 @@ export class AppComponent implements OnInit {
     let o = $event.data as {'action':string, 'value':string};
 
     if (o.action == 'update_list'){
-      let updateListUrl = o.value + "&main_path=" + this.statToolSvc.getSelectedMainReport() + "&ref_path=" + this.statToolSvc.getSelectedRefReport();
+      let updateListUrl = o.value;
       console.log('update_list',updateListUrl);
       this.statToolSvc.drawerUpdateListUrl = updateListUrl;
     }
@@ -49,10 +49,10 @@ export class AppComponent implements OnInit {
       
       //check if path exists
       if (this.statToolSvc.activeLocalDataStore && this.statToolSvc.localDataStorePath.length > 0){
-          let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath + "&main_path=" + this.statToolSvc.getSelectedMainReport() + "&ref_path=" + this.statToolSvc.getSelectedRefReport();
+          let url = o.value + "&local_path=" + this.statToolSvc.localDataStorePath;
           this.statToolSvc.drawerShowImageUrl = url;
       } else {
-        this.statToolSvc.drawerShowImageUrl = o.value  + "&main_path=" + this.statToolSvc.getSelectedMainReport() + "&ref_path=" + this.statToolSvc.getSelectedRefReport();
+        this.statToolSvc.drawerShowImageUrl = o.value;
       }
     }
   }
