@@ -90,12 +90,12 @@ def statistic_tool_reader_presence_calssification(path):
 
                 if prev_user_status=='Approach_PC' and curr_user_status!='Approach_PC':
                     # Mark frames from approach start to last 3 second before last approach frame with presence_time_mask = False
-                    last_ind_to_mask = max(first_approach_ind,ind-sec_num_to_mask)
+                    last_ind_to_mask = int(max(first_approach_ind,ind-sec_num_to_mask))
                     presence_time_mask[first_approach_ind:last_ind_to_mask] = False
                     approach_duration = ind - first_approach_ind
                     #print(-approach_duration+1)
                     approach_index_from_end[first_approach_ind:ind] = np.arange(-approach_duration+1,1)
-                    approach_index_from_end[ind-1:ind+(min(post_app_frame_num,len(approach_index_from_end)-ind))-1] = np.arange(0,(min(post_app_frame_num,len(approach_index_from_end)-ind)))
+                    approach_index_from_end[ind-1:ind+(int(min(post_app_frame_num,len(approach_index_from_end)-ind)))-1] = np.arange(0,(int(min(post_app_frame_num,len(approach_index_from_end)-ind))))
                     #if first_approach_ind!=last_ind_to_mask:
                     #    print('found')
                     
@@ -161,6 +161,17 @@ def statistic_tool_reader_presence_calssification(path):
                 data['predictions'][0]['Background_People_Activity'] = line['message']['Background_People_Activity']
             if 'User_Status' in line['message']:
                 data['predictions'][0]['User_Status'] = line['message']['User_Status']
+            if 'System_Context' in line['message']:
+                data['predictions'][0]['System_Context'] = line['message']['System_Context']
+            if 'Is_Wake_event' in line['message']:
+                data['predictions'][0]['Is_Wake_event'] = line['message']['Is_Wake_event']
+            if 'Is_Lock_event' in line['message']:
+                data['predictions'][0]['Is_Lock_event'] = line['message']['Is_Lock_event']
+            if 'Activity_ROI' in line['message']:
+                data['predictions'][0]['Activity_ROI'] = line['message']['Activity_ROI']
+            if 'Presence_ROI' in line['message']:
+                data['predictions'][0]['Presence_ROI'] = line['message']['Presence_ROI']
+            
 
 
             if 'static' in line['message']:
