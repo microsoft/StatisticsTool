@@ -71,10 +71,7 @@ class ConfigurationManager:
         if not value:
             return ''
         
-        if type(value) == str:
-            return self.add_experiments_in_folder(value)
-        else:
-            return self.add_experiment_object(value)
+        return self.add_experiments_in_folder(value)
         
     def get_item_segmentations(self,main_path):
         

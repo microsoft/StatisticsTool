@@ -24,11 +24,14 @@ export class SaveTemplateDialogComponent {
   }
 
   save(){
+    if (this.templateName == '')
+      return;
     this.statService.saveTemplate(this.templateName)
     this.close();
   }
 
   disableSaveButton(){
+    return false;
     return this.templateName == '';
   }
 } 

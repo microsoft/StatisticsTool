@@ -154,11 +154,17 @@ export class TemplateSegmentationsComponent implements OnInit {
     }
 
     getSelectedMainReportTooltip(){
-      return this.statService.reportlistItems[this.statService.selectedReport].value;
+      if (this.statService.reportlistItems && this.statService.selectedReport in this.statService.reportlistItems)
+        return this.statService.reportlistItems[this.statService.selectedReport].value;
+      else
+        return ''
     }
 
     getSelectedTemplateTooltip(){
-      return this.statService.templateNameOptions[this.statService.selectedTamplate].value;
+      if (this.statService.templateNameOptions && this.statService.selectedTamplate in this.statService.templateNameOptions)
+        return this.statService.templateNameOptions[this.statService.selectedTamplate].value;
+      else
+        return ''
     }
 
     disableUnique(){

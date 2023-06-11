@@ -73,7 +73,7 @@ class TemplateItem:
 
 class TemplatesFilesHelper:
     
-    def save_template(self,filename,content,main_path,ref_path,returnAllTemplates = True):
+    def save_template(self,filename,content,main_path):
         
         _, file_extension = os.path.splitext(filename)
         if file_extension == '' or file_extension == None:
@@ -88,10 +88,6 @@ class TemplatesFilesHelper:
             with open(path,'w') as f:
                 f.write(content)
 
-        dir_ref,_ = os.path.split(ref_path)
-
-        if returnAllTemplates:
-            return self.get_all_templates_content(dir_main,dir_ref)
 
     def get_template_content(self,filename):
         _, file_extension = os.path.splitext(filename)
@@ -108,15 +104,25 @@ class TemplatesFilesHelper:
     '''
         if no templates under Main and REF has templates - take the REF templates
     '''    
-    def get_all_templates_content(self,main_dir,ref_dir):
-        
+    def get_all_templates_content(self,main_path,ref_path):
+        main_dir,_ = os.path.split(main_path)
+        ref_dir,_ = os.path.split(ref_path)
+
         templates = self.get_all_templates_content_inner(main_dir)        
 
-        if len(templates) > 0:
-            return templates
-        
         #search in REF directory
-        templates = self.get_all_templates_content_inner(ref_dir,True)        
+        templates_ref = self.get_all_templates_content_inner(ref_dir,True)  
+
+        #load template from ref reprort that not exists in main reports and save them in main report folder
+        for t in templates_ref:
+            exitsts = False
+            for loaded in templates:
+                if loaded['name'] == t['name']:
+                    exitsts = True
+                    break
+            if not exitsts:
+                templates.append(t)
+                self.save_template(t['name'], json.dumps(t['content']), main_path)
         return templates
        
     def get_all_templates_content_inner(self,folder,recursive=False):
@@ -129,7 +135,8 @@ class TemplatesFilesHelper:
                     content = json.load(f)
                     validate(instance=content, schema=schema)
                     templates.append({'name':str(os.path.basename(fullname)).replace(Constants.TEMPLATE_EXTENSION,''),'content':content})
-                except jsonschema.exceptions.ValidationError as err:
+                except Exception as err:
+                    print ('Failed to load template file: '+f)
                     print(err)
                       
         return templates

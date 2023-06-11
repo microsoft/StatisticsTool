@@ -12,11 +12,12 @@
                     class="form-control"
                     placeholder="Tempalte Name"
                     [(ngModel)]="templateName"
+                    name = "templateName"
                 />
             </div>
         </div>
     </form>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="save()" [disabled]="disableSaveButton()">Save</button>
+    <button type="button" class="btn btn-outline-dark" (click)="save()" >Save</button>
 </div>

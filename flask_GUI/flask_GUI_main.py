@@ -167,11 +167,9 @@ def get_report_table():
 def get_all_templates():
     main = request.json['main_path']
     ref = request.json['ref_path']
-    main_dir,_ = os.path.split(main)
-    ref_dir,_ = os.path.split(ref)
-    
+   
     helper = TemplatesFilesHelper()
-    content = helper.get_all_templates_content(main_dir,ref_dir)
+    content = helper.get_all_templates_content(main,ref)
     return jsonify(content)
 
 @server.route('/get_template_content', methods=['POST'])
@@ -191,7 +189,8 @@ def save_template():
     helper = TemplatesFilesHelper()
     if not name:
         return 
-    result = helper.save_template(name,content,main_path,ref_path)
+    helper.save_template(name,content,main_path)
+    result = helper.get_all_templates_content(main_path, ref_path)
     return jsonify(result)
     
 #########################################################
