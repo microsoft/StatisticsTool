@@ -161,6 +161,17 @@ def statistic_tool_reader_presence_calssification(path):
                 data['predictions'][0]['Background_People_Activity'] = line['message']['Background_People_Activity']
             if 'User_Status' in line['message']:
                 data['predictions'][0]['User_Status'] = line['message']['User_Status']
+            if 'System_Context' in line['message']:
+                data['predictions'][0]['System_Context'] = line['message']['System_Context']
+            if 'Is_Wake_event' in line['message']:
+                data['predictions'][0]['Is_Wake_event'] = line['message']['Is_Wake_event']
+            if 'Is_Lock_event' in line['message']:
+                data['predictions'][0]['Is_Lock_event'] = line['message']['Is_Lock_event']
+            if 'Activity_ROI' in line['message']:
+                data['predictions'][0]['Activity_ROI'] = line['message']['Activity_ROI']
+            if 'Presence_ROI' in line['message']:
+                data['predictions'][0]['Presence_ROI'] = line['message']['Presence_ROI']
+            
 
 
             if 'static' in line['message']:
