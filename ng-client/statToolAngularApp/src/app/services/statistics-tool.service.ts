@@ -142,6 +142,8 @@ export class StatisticsToolService implements OnInit {
   }
 
   processTemplates(items:{'content':IContent,'name':string}[]){
+    
+    this.addDefaultTemplate();
     items.forEach(x => {
       let c:IContent = JSON.parse(JSON.stringify(x.content));
       let t = new TemplateInfo();
@@ -160,10 +162,9 @@ export class StatisticsToolService implements OnInit {
 
   updateTemplateNames(){
     this.templateNameOptions = [];
-    this.templateNameOptions.push({'key':0,'value':'Default (Total)'});
     for(let i = 0;i< this.templates.length;i++){
       if (this.templates[i].name != '')
-        this.templateNameOptions.push({'key':(i+1),'value':this.templates[i].name});
+        this.templateNameOptions.push({'key':(i),'value':this.templates[i].name});
     }
   }
 
@@ -230,13 +231,10 @@ export class StatisticsToolService implements OnInit {
     }).subscribe(res => {
 
       this.templates = [];
-      if (res.length == 0){
-        this.addDefaultTemplate();
-      } else {
-        this.processTemplates(res);
-        this.updateTemplateNames();       
-        this.onTemplateSelected(templateName);
-      }
+      this.processTemplates(res);
+      this.updateTemplateNames();       
+      this.onTemplateSelected(templateName);
+      
     })
   }
 
