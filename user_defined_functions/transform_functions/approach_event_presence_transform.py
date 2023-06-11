@@ -4,6 +4,39 @@ import os
 
 import matplotlib.pyplot as plt
 
+def check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left, bb_top, bb_width, bb_height):
+        # nan_frames = (np.isnan(bb_left) | (bb_left == None))
+        nan_frames = len(bb_left) * [False]
+        for f in range(len(bb_left)):
+            if type(bb_left[f]) is not list:
+                try:
+                    if np.isnan(bb_left[f]) or bb_left[f] is None:
+                        nan_frames[f] = True
+                except:
+                    if list(bb_left)[f] is None:
+                        nan_frames[f] = True
+        is_on_edge = False
+        is_no_face = False
+        if np.sum(nan_frames) == len(nan_frames):
+            is_no_face = True
+        edge_tolerace_in_pixels = 10
+        for frame in range(len(bb_left)):
+            if nan_frames[frame]:
+                continue
+            else:
+                if type(bb_left[frame]) is not list:
+                    if bb_left[frame] < edge_tolerace_in_pixels or (res_edge_x - (bb_left[frame] + bb_width[frame])) < edge_tolerace_in_pixels:
+                        is_on_edge = True
+                    if bb_top[frame] < edge_tolerace_in_pixels or (res_edge_y - (bb_top[frame] + bb_height[frame])) < edge_tolerace_in_pixels:
+                        is_on_edge = True
+                else:
+                    for b_ in range(len(bb_left[frame])):
+                        if bb_left[frame][b_] < edge_tolerace_in_pixels or (res_edge_x - (bb_left[frame][b_] + bb_width[frame][b_])) < edge_tolerace_in_pixels:
+                            is_on_edge = True
+                        if bb_top[frame][b_] < edge_tolerace_in_pixels or (res_edge_y - (bb_top[frame][b_] + bb_height[frame][b_])) < edge_tolerace_in_pixels:
+                            is_on_edge = True
+        return is_on_edge, is_no_face
+
 def approach_event_presence_transform(comp_data):
 
     lock_event_width_in_frames = 30
@@ -15,6 +48,25 @@ def approach_event_presence_transform(comp_data):
     system_context = np.array(comp_data['System_Context_gt'])
     wake_events = np.array(comp_data['Is_Wake_event_gt'])
     lock_events = np.array(comp_data['Is_Lock_event_gt'])
+    frame_id = np.array(comp_data['frame_id'])
+
+    try:
+        fps_original_video = int(comp_data['fps_original_video'][0])
+        fps_golden = int(comp_data['fps_golden'][0])
+    except:
+        try:
+            fps_original_video = int(comp_data['fps_original_video_gt'][0])
+            fps_golden = int(comp_data['fps_golden_gt'][0])
+        except:
+            fps_original_video = 30
+            fps_golden = 30
+
+
+    fps_ratio = fps_golden / fps_original_video
+
+    lock_event_width_in_frames = int(lock_event_width_in_frames * fps_ratio)
+    Wake_event_width_in_frames = int(Wake_event_width_in_frames * fps_ratio)
+
    
     last_valid_frame = len(wake_events)
     for frame_index, w in enumerate(wake_events):
@@ -26,6 +78,7 @@ def approach_event_presence_transform(comp_data):
     lock_events = lock_events[:last_valid_frame]
     presence_pred = presence_pred[:last_valid_frame]
     system_context = system_context[:last_valid_frame]
+    frame_id = frame_id[:last_valid_frame]
 
 
     wake_events = [1*eval(w) for w in list(wake_events)]
@@ -166,29 +219,68 @@ def approach_event_presence_transform(comp_data):
                 Wake_FN += 1
                 Wake_FN_start_end_frame.append([gt_event[0], gt_event[1]])
     events = []
+    res_edge_x = comp_data['frames_size_detection_gt'][0][0]
+    res_edge_y = comp_data['frames_size_detection_gt'][0][1]
+    user_status = np.array(comp_data['User_Status_gt'])
+    try:
+        bb_left = np.array(comp_data['Left_gt'])
+        bb_top = np.array(comp_data['Top_gt'])
+        bb_width = np.array(comp_data['Width_gt'])
+        bb_height = np.array(comp_data['Height_gt'])
+    except:
+        nan_array = np.array(len(comp_data) * [None])
+        bb_left = nan_array
+        bb_top = nan_array
+        bb_width = nan_array
+        bb_height = nan_array
+    for ind in range(len(bb_left)):
+        if type(bb_left[ind]) is list:
+            if len(bb_left[ind]) == 0:
+                bb_left[ind] = None
+                bb_top[ind] = None
+                bb_width[ind] = None
+                bb_height[ind] = None
     for event in range(Wake_TP):
+        frames_range = range(Wake_TP_start_end_frame[event][0], Wake_TP_start_end_frame[event][1])
+        is_on_edge, is_no_face = check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left[frames_range], bb_top[frames_range], bb_width[frames_range], bb_height[frames_range])
+        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range] else False
         new_event = comp_data.iloc[Wake_TP_start_end_frame[event][0]].to_dict()
         new_event['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
-        new_event['end_frame'] = Wake_TP_start_end_frame[event][1]
-        new_event['frame_id']  = Wake_TP_start_end_frame[event][0] #start_frame
+        new_event['end_frame'] = frame_id[Wake_TP_start_end_frame[event][1]]
+        new_event['frame_id']  = frame_id[Wake_TP_start_end_frame[event][0]] #start_frame
         new_event['detection'] = True
         new_event['state'] = 1
+        new_event['is_pop_up'] = is_pop_up
+        new_event['is_on_edge'] = is_on_edge
+        new_event['is_no_face'] = is_no_face
         events.append(new_event)
     for event in range(Wake_FP):
+        frames_range = range(Wake_FP_start_end_frame[event][0], Wake_FP_start_end_frame[event][1])
+        is_on_edge, is_no_face = check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left[frames_range], bb_top[frames_range], bb_width[frames_range], bb_height[frames_range])
+        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range] else False
         new_event = comp_data.iloc[Wake_FP_start_end_frame[event][0]].to_dict()
         new_event['detection_gt'] = False #setting event GT to True at all time. Only TP and FN are possible
-        new_event['end_frame'] = Wake_FP_start_end_frame[event][1]
-        new_event['frame_id']  = Wake_FP_start_end_frame[event][0] #start_frame
+        new_event['end_frame'] = frame_id[Wake_FP_start_end_frame[event][1]]
+        new_event['frame_id']  = frame_id[Wake_FP_start_end_frame[event][0]] #start_frame
         new_event['detection'] = True
         new_event['state'] = 0
+        new_event['is_pop_up'] = is_pop_up
+        new_event['is_on_edge'] = is_on_edge
+        new_event['is_no_face'] = is_no_face
         events.append(new_event)
     for event in range(Wake_FN):
+        frames_range = range(Wake_FN_start_end_frame[event][0], Wake_FN_start_end_frame[event][1])
+        is_on_edge, is_no_face = check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left[frames_range], bb_top[frames_range], bb_width[frames_range], bb_height[frames_range])
+        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range] else False
         new_event = comp_data.iloc[Wake_FN_start_end_frame[event][0]].to_dict()
         new_event['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
-        new_event['end_frame'] = Wake_FN_start_end_frame[event][1]
-        new_event['frame_id']  = Wake_FN_start_end_frame[event][0] #start_frame
+        new_event['end_frame'] = frame_id[Wake_FN_start_end_frame[event][1]]
+        new_event['frame_id']  = frame_id[Wake_FN_start_end_frame[event][0]] #start_frame
         new_event['detection'] = False
         new_event['state'] = 1
+        new_event['is_pop_up'] = is_pop_up
+        new_event['is_on_edge'] = is_on_edge
+        new_event['is_no_face'] = is_no_face
         events.append(new_event)
 
     if is_plot:
@@ -196,10 +288,10 @@ def approach_event_presence_transform(comp_data):
         if not os.path.exists(path_to_Save):
             os.makedirs(path_to_Save)
         plt.figure()
-        plt.plot(wake_events)
-        plt.plot(wake_signal)
-        plt.plot(lock_events)
-        plt.plot(lock_signal)
+        plt.plot(frame_id, wake_events)
+        plt.plot(frame_id, wake_signal)
+        plt.plot(frame_id, lock_events)
+        plt.plot(frame_id, lock_signal)
         plt.legend(['gt wake events', 'predictions wake events', 'gt lock events', 'predictions lock events'])
         plt.title(['Wake TP: ' + str(Wake_TP), 'Wake FP: ' + str(Wake_FP), 'Wake FN: ' + str(Wake_FN)])
         fig_name = os.path.basename(comp_data.video[0])[:-len('.mp4')] + ".png"
