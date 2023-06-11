@@ -12,6 +12,7 @@ __pycache__*
 
 **/__pycache__/*
 **/.idea/*
+reports/*
 
 
 
@@ -26,3 +27,4 @@ Report*.html
 
 
 
+node_modules/**

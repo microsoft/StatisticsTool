@@ -1,6 +1,6 @@
 import os, sys
 from azure.storage.blob import BlobServiceClient
-
+from colorama import Fore, Back, Style
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 
 from utils.LocalStorageFileCache import  GetFileCache
@@ -110,13 +110,13 @@ def get_blob_from_cache_or_download(blob):
 def save_blob_to_cache(blob_path):
     file_path = GetFileCache().create_or_get_cached_file_full_path(blob_path)
     
-    print (f'Start download blob {blob_path} to local path {file_path}')
+    print (f'{Fore.YELLOW}Start download blob{Fore.RESET} {blob_path} to local path {file_path}')
     
     blob_data = container_client().get_blob_client(blob_path).download_blob().readall()
     with open(file_path, "wb") as file:
         file.write(blob_data)
     
-    print (f'Finished download blob {blob_path} to local path {file_path}')
+    print (f'{Fore.YELLOW}Finished download{Fore.RESET}')
     
     return file_path
 

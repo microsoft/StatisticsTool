@@ -1,161 +1,302 @@
 import pandas as pd
 import numpy as np
+import os
 
-from user_defined_functions.transform_functions.calc_flicker_metrics import calc_flicker_metrics
-from user_defined_functions.transform_functions.determine_approach_success_mask import  determine_approach_success_mask
+import matplotlib.pyplot as plt
+
+def check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left, bb_top, bb_width, bb_height):
+        # nan_frames = (np.isnan(bb_left) | (bb_left == None))
+        nan_frames = len(bb_left) * [False]
+        for f in range(len(bb_left)):
+            if type(bb_left[f]) is not list:
+                try:
+                    if np.isnan(bb_left[f]) or bb_left[f] is None:
+                        nan_frames[f] = True
+                except:
+                    if list(bb_left)[f] is None:
+                        nan_frames[f] = True
+        is_on_edge = False
+        is_no_face = False
+        if np.sum(nan_frames) == len(nan_frames):
+            is_no_face = True
+        edge_tolerace_in_pixels = 10
+        for frame in range(len(bb_left)):
+            if nan_frames[frame]:
+                continue
+            else:
+                if type(bb_left[frame]) is not list:
+                    if bb_left[frame] < edge_tolerace_in_pixels or (res_edge_x - (bb_left[frame] + bb_width[frame])) < edge_tolerace_in_pixels:
+                        is_on_edge = True
+                    if bb_top[frame] < edge_tolerace_in_pixels or (res_edge_y - (bb_top[frame] + bb_height[frame])) < edge_tolerace_in_pixels:
+                        is_on_edge = True
+                else:
+                    for b_ in range(len(bb_left[frame])):
+                        if bb_left[frame][b_] < edge_tolerace_in_pixels or (res_edge_x - (bb_left[frame][b_] + bb_width[frame][b_])) < edge_tolerace_in_pixels:
+                            is_on_edge = True
+                        if bb_top[frame][b_] < edge_tolerace_in_pixels or (res_edge_y - (bb_top[frame][b_] + bb_height[frame][b_])) < edge_tolerace_in_pixels:
+                            is_on_edge = True
+        return is_on_edge, is_no_face
 
 def approach_event_presence_transform(comp_data):
-    # Inits
-    early_wake_flag  = False
-    early_wake_flag2 = False
 
-    # Program
-    approach_success_mask, multi_seq, pop_up_indication, pop_up_indication2, pop_up_reason_ind, pop_up_reason_ind2 = determine_approach_success_mask(comp_data)
+    lock_event_width_in_frames = 30
+    Wake_event_width_in_frames = 60
+    max_delta_of_late_detection = 60
+    is_plot = True
 
-    user_move_type = comp_data['User_Status_gt']
-    presence_pred = comp_data['detection']
-    presence_pred_at_approach = presence_pred[user_move_type=='Approach_PC']
-    approach_ind = np.where(user_move_type=='Approach_PC')[0]
-    mask_true_ind = np.where(approach_success_mask==True)[0]
-    presence_pred_at_range = presence_pred[mask_true_ind]
+    presence_pred = np.array(comp_data['detection'])
+    system_context = np.array(comp_data['System_Context_gt'])
+    wake_events = np.array(comp_data['Is_Wake_event_gt'])
+    lock_events = np.array(comp_data['Is_Lock_event_gt'])
+    frame_id = np.array(comp_data['frame_id'])
 
-    if len(approach_ind)==0: # No approach sequence exists
-        print(np.unique(user_move_type))
-        return pd.DataFrame()
-
-    if multi_seq == True:
-        seperator_app = np.where((np.diff(approach_ind)==1)==False)
-        approach_ind2 = approach_ind[(seperator_app[0][0]+1):]
-        approach_ind  = approach_ind[0:(seperator_app[0][0]+1)]
-        presence_pred_at_approach2 = presence_pred_at_approach[(seperator_app[0][0]+1):]
-        presence_pred_at_approach  = presence_pred_at_approach[0:(seperator_app[0][0]+1)]
-
-        seperator_mask = np.where((np.diff(mask_true_ind)==1)==False)
-        mask_true_ind2 = mask_true_ind[(seperator_mask[0][0]+1):]
-        mask_true_ind  = mask_true_ind[0:(seperator_mask[0][0]+1)]
-        presence_pred_at_range2 = presence_pred_at_range[(seperator_mask[0][0]+1):]
-        presence_pred_at_range  = presence_pred_at_range[0:(seperator_mask[0][0]+1)]
-
-    # Check valid range
-    if sum(presence_pred_at_range)==0:
-        temp_success_flag = False
-        presence_true_prct_at_range = 0
-    else:
-        temp_success_flag = True
-        presence_true_prct_at_range = sum(presence_pred_at_range)/len(presence_pred_at_range)
-
-    if multi_seq == True:
-        if sum(presence_pred_at_range2)==0:
-            temp_success_flag2 = False
-            presence_true_prct_at_range2 = 0
-        else:
-            temp_success_flag2 = True
-            presence_true_prct_at_range2 = sum(presence_pred_at_range2)/len(presence_pred_at_range2)    
+    try:
+        fps_original_video = int(comp_data['fps_original_video'][0])
+        fps_golden = int(comp_data['fps_golden'][0])
+    except:
+        try:
+            fps_original_video = int(comp_data['fps_original_video_gt'][0])
+            fps_golden = int(comp_data['fps_golden_gt'][0])
+        except:
+            fps_original_video = 30
+            fps_golden = 30
 
 
-    # Detect first true duration from last approach frame
-    first_presence_in_app = np.where(presence_pred_at_approach==True)[0]
-    if len(first_presence_in_app) > 0:
-        first_presence_in_app = first_presence_in_app[0]
-        duration_from_app_end = len(presence_pred_at_approach) - first_presence_in_app
-    else:
-        first_presence_in_app = np.nan
-        duration_from_app_end = -60
+    fps_ratio = fps_golden / fps_original_video
+
+    lock_event_width_in_frames = int(lock_event_width_in_frames * fps_ratio)
+    Wake_event_width_in_frames = int(Wake_event_width_in_frames * fps_ratio)
+
+   
+    last_valid_frame = len(wake_events)
+    for frame_index, w in enumerate(wake_events):
+        if type(w) != str:
+            last_valid_frame = frame_index
+            break
+
+    wake_events = wake_events[:last_valid_frame]
+    lock_events = lock_events[:last_valid_frame]
+    presence_pred = presence_pred[:last_valid_frame]
+    system_context = system_context[:last_valid_frame]
+    frame_id = frame_id[:last_valid_frame]
+
+
+    wake_events = [1*eval(w) for w in list(wake_events)]
+    lock_events = [1*eval(l) for l in list(lock_events)]
+    presence_pred = [1*p for p in presence_pred]
+    system_context = [1 if sys == 'Scan_for_lock' else 0 for sys in system_context]
+
+
+    wake_pred_start_end = []
+    wake_gt_start_end = []
+    lock_pred_start_end = []
+    lock_signal = np.zeros(len(presence_pred))
+    wake_signal = np.zeros(len(presence_pred))
+    wake_gt = 0 if wake_events[0] == 0 else 1
+    for frame in range(1, len(presence_pred)):
+        if presence_pred[frame-1] and not presence_pred[frame]:
+            if frame < (len(lock_signal) - lock_event_width_in_frames):
+                if np.sum(presence_pred[frame: frame + lock_event_width_in_frames]) == 0:
+                    lock_signal[frame: frame + lock_event_width_in_frames] = 1
+                    lock_pred_start_end.append([frame, frame + lock_event_width_in_frames])
+                else:
+                    last_ind_before_next_wake = np.where(np.array(presence_pred[frame: frame + lock_event_width_in_frames]) == 1)[0][0]
+                    lock_signal[frame: frame + lock_event_width_in_frames - last_ind_before_next_wake - 2] = 1
+                    lock_pred_start_end.append([frame, frame + lock_event_width_in_frames - last_ind_before_next_wake - 2])
+            else:
+                if np.sum(presence_pred[frame:]) == 0:
+                    lock_signal[frame: ] = 1
+                    lock_pred_start_end.append([frame, len(presence_pred) - 1])
+                else:
+                    last_ind_before_next_wake = np.where(np.array(presence_pred[frame:]) == 1)[0][0]
+                    lock_signal[frame: last_ind_before_next_wake - 2] = 1
+                    lock_pred_start_end.append([frame, last_ind_before_next_wake - 2])
+        if presence_pred[frame] and not presence_pred[frame - 1]:
+            if frame >= int(Wake_event_width_in_frames / 2) and frame < (len(wake_signal) - int(Wake_event_width_in_frames / 2)):
+                if np.sum(presence_pred[frame - int(Wake_event_width_in_frames): frame]) == 0:
+                    wake_signal[frame - int(Wake_event_width_in_frames / 2) : frame + int(Wake_event_width_in_frames / 2)] = 1
+                    wake_pred_start_end.append([frame - int(Wake_event_width_in_frames / 2), frame + int(Wake_event_width_in_frames / 2)])
+                else:
+                    wake_signal[frame  : frame + int(Wake_event_width_in_frames / 2)] = 1
+                    wake_pred_start_end.append([frame , frame + int(Wake_event_width_in_frames / 2)])
+            else:
+                if frame < int(Wake_event_width_in_frames / 2):
+                    wake_signal[: frame + int(Wake_event_width_in_frames / 2)] = 1
+                    wake_pred_start_end.append([0, frame + int(Wake_event_width_in_frames / 2)])
+                else:
+                    wake_signal[frame - int(Wake_event_width_in_frames / 2) :] = 1
+                    wake_pred_start_end.append([frame - int(Wake_event_width_in_frames / 2), len(presence_pred) - 1])
+        if not wake_gt and wake_events[frame]:
+            wake_gt_start_end.append([frame, -1])
+            wake_gt = 1
+        if wake_gt and not wake_events[frame]:
+            if len(wake_gt_start_end) > 0:
+                wake_gt_start_end[len(wake_gt_start_end) - 1][1] = frame - 1
+            else:
+                wake_gt_start_end.append([0, frame - 1])
+            wake_gt = 0
+        
+
+
+    Wake_TP = 0
+    Wake_FP = 0
+    Wake_FN = 0
+
+    Wake_TP_start_end_frame = []
+    Wake_FP_start_end_frame = []
+    Wake_FN_start_end_frame = []
     
-    if multi_seq == True:
-        first_presence_in_app2 = np.where(presence_pred_at_approach2==True)[0]
-        if len(first_presence_in_app2) > 0:
-            first_presence_in_app2 = first_presence_in_app2[0]
-            duration_from_app_end2 = len(presence_pred_at_approach2) - first_presence_in_app2
+    for pred_event in wake_pred_start_end:
+        is_found_overlap_event = False
+        distance = []
+        for gt_event in wake_gt_start_end:
+            overlap = np.intersect1d(range(pred_event[0], pred_event[1]), range(gt_event[0], gt_event[1]))
+            distance.append([pred_event[0] - gt_event[1], gt_event[0] - pred_event[1]])
+            if len(overlap) > 0:
+                is_found_overlap_event = True
+                start_ = gt_event[0]
+                end_ = gt_event[1]
+                break
+        if is_found_overlap_event:
+            continue
         else:
-            first_presence_in_app2 = np.nan
-            duration_from_app_end2 = -60        
+            if system_context[pred_event[0]] == 0:
+                # fp = True
+                # fn = False
 
-    # Check for early Wakes (FP)
-    first_range_frame_within_app = np.where(approach_ind==mask_true_ind[0])
-    if first_presence_in_app < first_range_frame_within_app[0][0]:
-        early_wake_flag = True
-    
-    if multi_seq == True:
-        first_range_frame_within_app2 = np.where(approach_ind2==mask_true_ind2[0])
-        if first_presence_in_app2 < first_range_frame_within_app2[0][0]:
-            early_wake_flag2 = True
+                Wake_FP += 1
+                Wake_FP_start_end_frame.append([pred_event[0], pred_event[1]])
+            # if len(distance) > 0:
+            #     global_minimum = 1e6
+            #     fp = False
+            #     fn = False
+            #     start_ = -1
+            #     end_ = -1
+            #     for dist in distance:
+            #         if dist[0] > 0:
+            #             dist_ = dist[0]
+            #             if dist_ < global_minimum:
+            #                 global_minimum = dist_
+            #                 # if dist_ < max_delta_of_late_detection:
+            #                 #     fn = True
+            #                 #     fp = False
+            #                 # else:
+            #                 #     fn = False
+            #                 #     fp = True
+            #                 fn = True
+            #                 fp = False
+            #         else:
+            #             dist_ = dist[1]
+            #             if dist_ < global_minimum:
+            #                 global_minimum = dist_
+            #                 fn = False
+            #                 fp = True
+                
+            # if fp:
+            #     Wake_FP += 1
+            #     Wake_FP_start_end_frame.append([pred_event[0], pred_event[1]])
+            # if fn:
+            #     Wake_FN += 1
+            #     Wake_FN_start_end_frame.append([pred_event[0], pred_event[1]])
+            # else:
+            #     Wake_FP += 1
+            #     Wake_FP_start_end_frame.append([pred_event[0], pred_event[1]])
 
-    # Calc flicker metrics
-    if len(presence_pred_at_approach)>0:
-        seq_num, avg_seq_len, med_seq_len = calc_flicker_metrics(np.array(presence_pred_at_approach))
-    else:
-        seq_num = avg_seq_len = med_seq_len = 0
-
-    if multi_seq == True:
-        if len(presence_pred_at_approach2)>0:
-            seq_num2, avg_seq_len2, med_seq_len2 = calc_flicker_metrics(np.array(presence_pred_at_approach2))
+    for gt_event in wake_gt_start_end:
+        is_found_overlap_event = False
+        distance = []
+        for pred_event in wake_pred_start_end:
+            overlap = np.intersect1d(range(pred_event[0], pred_event[1]), range(gt_event[0], gt_event[1]))
+            distance.append([pred_event[0] - gt_event[1], gt_event[0] - pred_event[1]])
+            if len(overlap) > 0:
+                is_found_overlap_event = True
+                break
+        if is_found_overlap_event:
+            Wake_TP += 1
+            Wake_TP_start_end_frame.append([gt_event[0], gt_event[1]])
         else:
-            seq_num2 = avg_seq_len2 = med_seq_len2 = 0        
-
-
-    # Arrange new_event output format
-    new_event = comp_data.iloc[approach_ind[0]].to_dict()
-    new_event['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
-    new_event['end_frame'] = approach_ind[-1]
-    new_event['frame_id']  = approach_ind[0] #start_frame
-    new_event['Presence approach flicker sequence num'] = seq_num
-    new_event['Presence approach flicker sequence mean length'] = avg_seq_len
-    new_event['Presence approach flicker sequence median length'] = med_seq_len
-
-    if multi_seq == True:
-        new_event2 = comp_data.iloc[approach_ind2[0]].to_dict()
-        new_event2['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
-        new_event2['end_frame'] = approach_ind2[-1]
-        new_event2['frame_id']  = approach_ind2[0] #start_frame
-        new_event2['Presence approach flicker sequence num'] = seq_num2
-        new_event2['Presence approach flicker sequence mean length'] = avg_seq_len2
-        new_event2['Presence approach flicker sequence median length'] = med_seq_len2       
-    
-
-    # Determine output state (FP, TP, FN)
-    if temp_success_flag == True:
+            if np.sum(presence_pred[gt_event[0] : gt_event[1]]) == 0:
+                Wake_FN += 1
+                Wake_FN_start_end_frame.append([gt_event[0], gt_event[1]])
+    events = []
+    res_edge_x = comp_data['frames_size_detection_gt'][0][0]
+    res_edge_y = comp_data['frames_size_detection_gt'][0][1]
+    user_status = np.array(comp_data['User_Status_gt'])
+    try:
+        bb_left = np.array(comp_data['Left_gt'])
+        bb_top = np.array(comp_data['Top_gt'])
+        bb_width = np.array(comp_data['Width_gt'])
+        bb_height = np.array(comp_data['Height_gt'])
+    except:
+        nan_array = np.array(len(comp_data) * [None])
+        bb_left = nan_array
+        bb_top = nan_array
+        bb_width = nan_array
+        bb_height = nan_array
+    for ind in range(len(bb_left)):
+        if type(bb_left[ind]) is list:
+            if len(bb_left[ind]) == 0:
+                bb_left[ind] = None
+                bb_top[ind] = None
+                bb_width[ind] = None
+                bb_height[ind] = None
+    for event in range(Wake_TP):
+        frames_range = range(Wake_TP_start_end_frame[event][0], Wake_TP_start_end_frame[event][1])
+        is_on_edge, is_no_face = check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left[frames_range], bb_top[frames_range], bb_width[frames_range], bb_height[frames_range])
+        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range] else False
+        new_event = comp_data.iloc[Wake_TP_start_end_frame[event][0]].to_dict()
+        new_event['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
+        new_event['end_frame'] = frame_id[Wake_TP_start_end_frame[event][1]]
+        new_event['frame_id']  = frame_id[Wake_TP_start_end_frame[event][0]] #start_frame
         new_event['detection'] = True
         new_event['state'] = 1
-    else: # Late wake (FN)
-        new_event['detection'] = False
-        new_event['state'] = 0
-    if early_wake_flag == True: # Early wake (FP)
-        new_event['detection_gt'] = False
+        new_event['is_pop_up'] = is_pop_up
+        new_event['is_on_edge'] = is_on_edge
+        new_event['is_no_face'] = is_no_face
+        events.append(new_event)
+    for event in range(Wake_FP):
+        frames_range = range(Wake_FP_start_end_frame[event][0], Wake_FP_start_end_frame[event][1])
+        is_on_edge, is_no_face = check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left[frames_range], bb_top[frames_range], bb_width[frames_range], bb_height[frames_range])
+        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range] else False
+        new_event = comp_data.iloc[Wake_FP_start_end_frame[event][0]].to_dict()
+        new_event['detection_gt'] = False #setting event GT to True at all time. Only TP and FN are possible
+        new_event['end_frame'] = frame_id[Wake_FP_start_end_frame[event][1]]
+        new_event['frame_id']  = frame_id[Wake_FP_start_end_frame[event][0]] #start_frame
         new_event['detection'] = True
         new_event['state'] = 0
+        new_event['is_pop_up'] = is_pop_up
+        new_event['is_on_edge'] = is_on_edge
+        new_event['is_no_face'] = is_no_face
+        events.append(new_event)
+    for event in range(Wake_FN):
+        frames_range = range(Wake_FN_start_end_frame[event][0], Wake_FN_start_end_frame[event][1])
+        is_on_edge, is_no_face = check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left[frames_range], bb_top[frames_range], bb_width[frames_range], bb_height[frames_range])
+        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range] else False
+        new_event = comp_data.iloc[Wake_FN_start_end_frame[event][0]].to_dict()
+        new_event['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
+        new_event['end_frame'] = frame_id[Wake_FN_start_end_frame[event][1]]
+        new_event['frame_id']  = frame_id[Wake_FN_start_end_frame[event][0]] #start_frame
+        new_event['detection'] = False
+        new_event['state'] = 1
+        new_event['is_pop_up'] = is_pop_up
+        new_event['is_on_edge'] = is_on_edge
+        new_event['is_no_face'] = is_no_face
+        events.append(new_event)
 
-    if multi_seq == True:
-        if temp_success_flag2 == True:
-            new_event2['detection'] = True
-            new_event2['state'] = 1
-        else: # Late wake (FN)
-            new_event2['detection'] = False
-            new_event2['state'] = 0
-        if early_wake_flag2 == True: # Early wake (FP)
-            new_event2['detection_gt'] = False
-            new_event2['detection'] = True
-            new_event2['state'] = 0        
+    if is_plot:
+        path_to_Save = r'C:\Work\statistic_tool_debug_work\Wake_approach_analysis'
+        if not os.path.exists(path_to_Save):
+            os.makedirs(path_to_Save)
+        plt.figure()
+        plt.plot(frame_id, wake_events)
+        plt.plot(frame_id, wake_signal)
+        plt.plot(frame_id, lock_events)
+        plt.plot(frame_id, lock_signal)
+        plt.legend(['gt wake events', 'predictions wake events', 'gt lock events', 'predictions lock events'])
+        plt.title(['Wake TP: ' + str(Wake_TP), 'Wake FP: ' + str(Wake_FP), 'Wake FN: ' + str(Wake_FN)])
+        fig_name = os.path.basename(comp_data.video[0])[:-len('.mp4')] + ".png"
+        plt.savefig(os.path.join(path_to_Save, fig_name))
+        plt.close()
 
-
-    # Add statistics about the event
-    new_event['Approach pop up indication'] = pop_up_indication
-    new_event['Presence seq duration prior to approach event end'] = duration_from_app_end
-    new_event['Approach event presence detected percent'] = presence_true_prct_at_range
-    new_event['Approach event number in clip'] = 1
-    new_event['Approach event pop up reason index'] = pop_up_reason_ind
-
-    if multi_seq == True:
-        new_event2['Approach pop up indication'] = pop_up_indication2
-        new_event2['Presence seq duration prior to approach event end'] = duration_from_app_end2
-        new_event2['Approach event presence detected percent'] = presence_true_prct_at_range2   
-        new_event2['Approach event number in clip'] = 2
-        new_event2['Approach event pop up reason index'] = pop_up_reason_ind2
-
-
-    events = []
-    events.append(new_event)
-    if multi_seq == True:
-        events.append(new_event2)
     transform_data = pd.DataFrame.from_records(events)
     return transform_data

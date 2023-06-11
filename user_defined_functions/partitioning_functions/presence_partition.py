@@ -34,6 +34,26 @@ def presence_partition(dataframe, from_file=False):
     desired_masks = {}
 
     # Per clip annotations
+    if 'Is_leave_at_end_of_film' in dataframe.columns:
+        in_end_of_film = np.array(dataframe['Is_leave_at_end_of_film'])
+        not_in_end_of_film = np.logical_not(in_end_of_film)
+        clip_is_leave_at_end_of_film_dict = {'possible partitions': ['True','False'], 'masks': [in_end_of_film, not_in_end_of_film]}
+        desired_masks.update({"Per event: Is leave event at end of film": clip_is_leave_at_end_of_film_dict})
+    if 'General_User_Wheelchair_gt' in dataframe.columns:
+        is_wheelchair = np.array(dataframe['General_User_Wheelchair_gt'].values.astype(bool))
+        not_is_wheelchair = np.logical_not(is_wheelchair)
+        clip_is_wheelchair_dict = {'possible partitions': ['True','False'], 'masks': [is_wheelchair, not_is_wheelchair]}
+        desired_masks.update({"Per clip: Is user sits on wheelchair": clip_is_wheelchair_dict})
+    if 'is_pop_up' in dataframe.columns:
+        is_pop_up = np.array(dataframe['is_pop_up'].values.astype(bool))
+        not_is_pop_up = np.logical_not(is_pop_up)
+        is_pop_up_dict = {'possible partitions': ['True','False'], 'masks': [is_pop_up, not_is_pop_up]}
+        desired_masks.update({"Per event: Is popup": is_pop_up_dict})
+    if 'is_user_working' in dataframe.columns:
+        is_user_working = np.array(dataframe['is_user_working'].values.astype(bool))
+        not_is_user_working = np.logical_not(is_user_working)
+        is_user_working_dict = {'possible partitions': ['True','False'], 'masks': [is_user_working, not_is_user_working]}
+        desired_masks.update({"Per event: Is user working": is_user_working_dict})
     if "User_Gender_gt" in dataframe.columns:
         clip_user_gender = dataframe['User_Gender_gt'].values.astype(object)
         clip_user_gender_mask_male   = np.full(np.shape(clip_user_gender), False)
@@ -270,6 +290,29 @@ def presence_partition(dataframe, from_file=False):
         presence_dict = {'possible partitions': ['no presence', 'has presence'], 'masks': [np.logical_not(presence_mask), presence_mask]}
         desired_masks.update({"Per frame: Presence": presence_dict})
 
+    if 'Activity_ROI_gt' in dataframe.columns:
+        Activity_roi = dataframe['Activity_ROI_gt'].values.astype(object)
+        activity_roi_true = np.full(np.shape(Activity_roi), False)
+        activity_roi_true[Activity_roi=='True'] = True
+        activity_roi_False = np.logical_not(activity_roi_true)
+        Activity_roi_dict = {'possible partitions': ['True','False'], 'masks': [activity_roi_true, activity_roi_False]}
+        desired_masks.update({"Per frame: is Activity": Activity_roi_dict})
+
+    if 'Presence_ROI_gt' in dataframe.columns:
+        presence_roi = dataframe['Presence_ROI_gt'].values.astype(object)
+        presence_roi_true = np.full(np.shape(presence_roi), False)
+        presence_roi_true[presence_roi=='True'] = True
+        presence_roi_False = np.logical_not(presence_roi_true)
+        presence_roi_dict = {'possible partitions': ['True','False'], 'masks': [presence_roi_true, presence_roi_False]}
+        desired_masks.update({"Per frame: is Presence": presence_roi_dict})
+    if 'is_on_edge' in dataframe.columns:
+        is_on_edge = np.array(dataframe['is_on_edge'].values.astype(bool))
+        is_on_edge_dict = {'possible partitions': ['True','False'], 'masks': [is_on_edge, np.logical_not(is_on_edge)]}
+        desired_masks.update({"Per frame: is BB on the edge": is_on_edge_dict})
+    if 'is_no_face' in dataframe.columns:
+        is_no_face = np.array(dataframe['is_no_face'].values.astype(bool))
+        is_no_face_dict = {'possible partitions': ['True','False'], 'masks': [is_no_face, np.logical_not(is_no_face)]}
+        desired_masks.update({"Per frame: is No Face BB in the wake event": is_no_face_dict})
 
     if "User_Status_gt" in dataframe.columns:
         # NoUser/Approach_PC/PassBy_PC/Sitting_Down/OnPC_Working/OnPC_Idle/OnPC_Other/Standing_Up/Leaving_PC/Unrelated_PC/Unknown
@@ -293,6 +336,7 @@ def presence_partition(dataframe, from_file=False):
         user_stat_mask_stand_up    = np.full(np.shape(user_status), False)
         user_stat_mask_leave_pc    = np.full(np.shape(user_status), False)
         user_stat_mask_unrelate_pc = np.full(np.shape(user_status), False)
+        user_stat_mask_popup_approach_pc = np.full(np.shape(user_status), False)
         user_stat_mask_other = np.full(np.shape(user_status), True)
         user_stat_mask_no_user[user_status=='NoUser']           = True
         if enable_approach_split[0] == False:
@@ -309,6 +353,7 @@ def presence_partition(dataframe, from_file=False):
         user_stat_mask_stand_up[user_status=='Standing_Up']     = True
         user_stat_mask_leave_pc[user_status=='Leaving_PC']      = True 
         user_stat_mask_unrelate_pc[user_status=='Unrelated_PC'] = True 
+        user_stat_mask_popup_approach_pc[user_status=='Popup_Approach_PC'] = True 
 
         user_stat_mask_other[user_status=='NoUser']       = False
         if enable_approach_split[0] == False:
@@ -325,8 +370,9 @@ def presence_partition(dataframe, from_file=False):
         user_stat_mask_other[user_status=='Standing_Up']  = False
         user_stat_mask_other[user_status=='Leaving_PC']   = False 
         user_stat_mask_other[user_status=='Unrelated_PC'] = False 
+        user_stat_mask_other[user_status=='Popup_Approach_PC'] = False 
         if enable_approach_split[0] == False:
-            user_stat_dict = {'possible partitions': ['No user','Unrelated PC','Pass By PC','Approach PC','Leaving PC','Sitting Down','Standing Up','On PC Working','On PC Idle','On PC Other','Other'], 'masks': [user_stat_mask_no_user,user_stat_mask_unrelate_pc,user_stat_mask_passby_pc,user_stat_mask_app_pc,user_stat_mask_leave_pc,user_stat_mask_sit_down,user_stat_mask_stand_up,user_stat_mask_onPC_work,user_stat_mask_onPC_idle,user_stat_mask_onPC_other,user_stat_mask_other]}
+            user_stat_dict = {'possible partitions': ['No user','Unrelated PC','Pass By PC','Approach PC','Popup Approach PC', 'Leaving PC','Sitting Down','Standing Up','On PC Working','On PC Idle','On PC Other','Other'], 'masks': [user_stat_mask_no_user,user_stat_mask_unrelate_pc,user_stat_mask_passby_pc,user_stat_mask_app_pc,user_stat_mask_popup_approach_pc, user_stat_mask_leave_pc,user_stat_mask_sit_down,user_stat_mask_stand_up,user_stat_mask_onPC_work,user_stat_mask_onPC_idle,user_stat_mask_onPC_other,user_stat_mask_other]}
         else:
             user_stat_dict = {'possible partitions': ['No user','Unrelated PC','Pass By PC','Approach PC ROI','Approach PC Transition','Approach PC out of ROI','Leaving PC','Sitting Down','Standing Up','On PC Working','On PC Idle','On PC Other','Other'], 'masks': [user_stat_mask_no_user,user_stat_mask_unrelate_pc,user_stat_mask_passby_pc,user_stat_mask_app_pc_roi,user_stat_mask_app_pc_trans,user_stat_mask_app_pc_oo_roi,user_stat_mask_leave_pc,user_stat_mask_sit_down,user_stat_mask_stand_up,user_stat_mask_onPC_work,user_stat_mask_onPC_idle,user_stat_mask_onPC_other,user_stat_mask_other]}
         desired_masks.update({"Per frame: User status": user_stat_dict})
