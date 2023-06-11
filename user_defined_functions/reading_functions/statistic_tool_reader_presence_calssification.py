@@ -90,12 +90,12 @@ def statistic_tool_reader_presence_calssification(path):
 
                 if prev_user_status=='Approach_PC' and curr_user_status!='Approach_PC':
                     # Mark frames from approach start to last 3 second before last approach frame with presence_time_mask = False
-                    last_ind_to_mask = max(first_approach_ind,ind-sec_num_to_mask)
+                    last_ind_to_mask = int(max(first_approach_ind,ind-sec_num_to_mask))
                     presence_time_mask[first_approach_ind:last_ind_to_mask] = False
                     approach_duration = ind - first_approach_ind
                     #print(-approach_duration+1)
                     approach_index_from_end[first_approach_ind:ind] = np.arange(-approach_duration+1,1)
-                    approach_index_from_end[ind-1:ind+(min(post_app_frame_num,len(approach_index_from_end)-ind))-1] = np.arange(0,(min(post_app_frame_num,len(approach_index_from_end)-ind)))
+                    approach_index_from_end[ind-1:ind+(int(min(post_app_frame_num,len(approach_index_from_end)-ind)))-1] = np.arange(0,(int(min(post_app_frame_num,len(approach_index_from_end)-ind))))
                     #if first_approach_ind!=last_ind_to_mask:
                     #    print('found')
                     
