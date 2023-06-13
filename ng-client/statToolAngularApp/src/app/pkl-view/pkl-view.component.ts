@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import {  Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 import { Utils } from '../utils';
@@ -13,8 +13,8 @@ export class PklViewComponent implements OnInit  {
 
   @ViewChild('iframe') iframe: ElementRef|null = null;
   
-  url = '/Reporter_new';
-  //subscribeGetSegment = new Subscription;
+  url = '/get_report_table';
+  
   selectedRows = '';
   @Input() set selectedRowsSet(rows:string[]){
     //filter only the existing rows
@@ -47,28 +47,43 @@ export class PklViewComponent implements OnInit  {
   loadCounter = 0;
 
   subscribeUniqueChange = new Subscription;
+  subscribeReportChanged = new Subscription;
 
   height:string = '';
 
-  constructor(private httpClient:HttpClient,
-              public statToolService:StatisticsToolService) {
-    this.url = '/Reporter_new?calc_unique=' + statToolService.calculateUnique;
- }
+  constructor(public statToolService:StatisticsToolService) {
+    this.url = '/get_report_table?calc_unique=' + statToolService.calculateUnique + "&main_path=" + this.statToolService.getSelectedMainReport() + "&ref_path=" + this.statToolService.getSelectedRefReport();
+  }
+
+  setUrl(){
+    this.url = '/get_report_table?cols=' + this.selectedColumns 
+      + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
+      + "&main_path=" + this.statToolService.getSelectedMainReport() + "&ref_path=" + this.statToolService.getSelectedRefReport();
+  }
 
   ngOnInit(): void {
+                  
     this.fixSelectedString();
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    this.setUrl();
     this.loadCounter = 1;
 
     this.subscribeUniqueChange = this.statToolService.uniqueValueChanged.subscribe(res => {
       this.loadCounter = 1;
-      this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+      this.setUrl();
+    })
+
+    this.subscribeReportChanged = this.statToolService.reportSelected.subscribe(res => {
+      this.fixSelectedString();
+      this.loadCounter = 1;
+      this.setUrl();
     })
   }
 
-   ngOnDestroy(){
+  ngOnDestroy(){
     if (this.subscribeUniqueChange != null)
       this.subscribeUniqueChange.unsubscribe();
+    if (this.subscribeReportChanged != null)
+      this.subscribeReportChanged.unsubscribe();
   }
 
   onColumnAdded(item:{'item_id':string,'item_text':string}){
@@ -81,7 +96,7 @@ export class PklViewComponent implements OnInit  {
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.loadCounter = 1;
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    this.setUrl();
   }
 
   onAllColumnsAdded(items:{'item_id':string,'item_text':string}[]){
@@ -93,7 +108,7 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.loadCounter = 1;
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    this.setUrl();
   }
   
   onColumnRemoved(item:{'item_id':string,'item_text':string}){
@@ -109,7 +124,7 @@ export class PklViewComponent implements OnInit  {
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.loadCounter = 1;
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    this.setUrl();
   }
 
   onAllColumnsRemoved(event:any){
@@ -118,7 +133,7 @@ export class PklViewComponent implements OnInit  {
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.loadCounter = 1;
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    this.setUrl();
   }
 
   onRowAdded(item:{'item_id':string,'item_text':string}){
@@ -131,7 +146,7 @@ export class PklViewComponent implements OnInit  {
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.loadCounter = 1;
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    this.setUrl();
   }
 
   onAllRowsAdded(items:{'item_id':string,'item_text':string}[]){
@@ -143,7 +158,7 @@ export class PklViewComponent implements OnInit  {
     this.fixSelectedString();
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.loadCounter = 1;
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    this.setUrl();
   }
   
   onRowRemoved(item:{'item_id':string,'item_text':string}){
@@ -159,7 +174,7 @@ export class PklViewComponent implements OnInit  {
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.loadCounter = 1;
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    this.setUrl();
   }
 
   onAllRowsRemoved(event:any){
@@ -168,7 +183,7 @@ export class PklViewComponent implements OnInit  {
 
     this.statToolService.updateSegments(this.id,this.name,this.selectedColumns,this.selectedRows);
     this.loadCounter = 1;
-    this.url = '/Reporter_new?cols=' + this.selectedColumns + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique;
+    this.setUrl();
   }
 
   fixSelectedString(){
@@ -188,7 +203,6 @@ export class PklViewComponent implements OnInit  {
         await Utils.sleep(100);
         let h = this.iframe.nativeElement.contentWindow.document.body.scrollHeight;
         if (h > 100){
-          //console.log('frame:::',this.id,h);
           h += 100;
           this.height = h.toString() + 'px';
           this.statToolService.viewHeights.set(this.id,this.height);  

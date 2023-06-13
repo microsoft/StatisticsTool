@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from dash import html
 
-from classes_and_utils.GUI_utils import calc_unique_detections, get_link_for_update_list, REF_EXP, MAIN_EXP
 
 class UniqueHelper:
 
@@ -12,27 +11,9 @@ class UniqueHelper:
         self.exp.main_ref_dict, self.exp.ref_main_dict = UniqueHelper.match_main_ref_predictions(self.exp,self.ref_exp)
         self.main_ref_dict = self.exp.main_ref_dict
         self.ref_main_dict = self.exp.ref_main_dict
+        self.cells_data = {}
+        self.cells_data_ref = {}
 
-
-    def generate_unique_html_dash_element(self,column_keys,row_keys, stat_functions,exp_name, cell_name):
-        '''
-            stat_func: TP,TN,FN
-        '''        
-        unique_array,unique_array_ref,tup = self.calc_unique_detections(column_keys,row_keys,stat_functions)
-        link_unique = get_link_for_update_list(cell_name=cell_name, 
-                                                stat=stat_functions, 
-                                                is_ref = exp_name==REF_EXP,
-                                                is_unique = True)
-        num = 0
-        if exp_name == MAIN_EXP:
-            num = len(unique_array)
-        else:
-            num = len(unique_array_ref)
-
-        txt_unique = "(unique: " + str(num) + ")"
-        #unique = html.A(txt_unique ,href=link_unique, target="example-list-div")
-        #return unique, unique_array,unique_array_ref
-        return txt_unique,link_unique
 
     def calc_unique_detections(self,column_keys,row_keys,stat_functions):
 
@@ -122,6 +103,43 @@ class UniqueHelper:
             tup = stat_func    
         return unique_array,unique_array_ref,tup
 
+    def get_ids(self, cell_key, state, is_ref):
+        ids = []
+        cells = self.cells_data if not is_ref else self.cells_data_ref
+        for x in cells[cell_key][state]:
+            ids.append(x)
+        ids = np.array(ids)
+
+        return ids
+
+    def calc_cell_data(self, cell_name, segmentations):
+          #todo - hagai
+        dict = {'None':'None'}
+        lst = []
+        lst.append(dict)
+        cols = []
+        rows = lst
+        if segmentations == []:
+            cols = lst
+        else:
+            cols = segmentations
+
+        uniqueTP, uniqueTP_ref, _ = self.calc_unique_detections(cols,rows,'TP')
+        uniqueFP, uniqueFP_ref, _ = self.calc_unique_detections(cols,rows,'FP')
+        uniqueFN, uniqueFN_ref, _  = self.calc_unique_detections(cols,rows,'FN')
+               
+
+        self.cells_data_ref[cell_name] = {
+            'TP':uniqueTP_ref,
+            'FP':uniqueFP_ref,
+            'FN':uniqueFN_ref
+        }
+
+        self.cells_data[cell_name] = {
+            'TP':uniqueTP,
+            'FP':uniqueFP,
+            'FN':uniqueFN
+        }
 
     @staticmethod       
     def match_frame_predictions(predictions, ref_predictions, exp):

@@ -1,11 +1,14 @@
 [
     {
         "File Reading Function": "statistic_tool_reader_activity_calssification",
-        "Overlap Function": "Classification_True_False_activity",
-        "Threshold": "0.5",
+        "Overlap Function": "Classification_True_False",
+        "Threshold": "t",
         "Evaluation Function": "activity_evaluation",
+        "Image Width": "1",
+        "Image Height": "1",
         "Statistics Functions": "precision_recall",
         "Partitioning Functions": "activity_partition",
-        "Transformation Function": "approach_event_transform"
+        "Transformation Function": "approach_event_presence_transform",
+        "Log Names to Evaluate": ""
     }
 ]

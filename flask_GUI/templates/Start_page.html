@@ -58,6 +58,7 @@ input[type=button]:hover {
                     <br>
 
               <h1 style="font-family: Arial, Helvetica, sans-serif;">Welcome to Statistics-Tool </h1>
+              <a href="{{wiki_page}}" target="_blank" rel="noopener noreferrer">Statistics-Tool Wiki..</a>
         </div>
 
                     <br>
@@ -73,178 +74,49 @@ input[type=button]:hover {
     </div>
     
     <div class="col-md-12" style="text-align: center;margin-top: 40px;">
-      <form id = "report_form" 
-            action="/Reporter" 
-            method="post" 
-            enctype="multipart/form-data">
-          
+      <form id = "report_form" action="/Report_Viewer" target="_blank" method="post" enctype="multipart/form-data">
         <table class="table" style="margin: auto;width: 40% !important; "> 
-          <thead>
-            <tr>
-              <th scope="col"></th>
-              <th scope="col">Type</th>
-              <th scope="col">Selected Report</th>
-            </tr>
-          </thead>
           <tbody>
             <tr>
-              <td><b>Report File</b></td>
+              <td><b>Main</b></td>
               <td>
-                <select class="form-select" aria-label="Default select example" id="report_file_type" onchange="onFileTypeChanged('report_file_type')">
-                  <option selected value="1">Choose PKL file</option>
-                  <option value="2">Enter PKL file path</option>
-                </select>
-              </td>
-              <!--<td><input type="file" name="myFile" id="myFile"  onchange="alertFilename()" accept=".pkl" ></td>-->
-              <td>
-                <div class="mb-3" style="margin-bottom: 0px !important;">
-                  <input class="form-control" type="file" name="choose_report_file" id="choose_report_file"  onchange="onReportFileSelected()" accept=".pkl"/>
-                </div>
                 <div class="form-group">
-                  <input type="text" class="form-control" id="report_file_path" value="">
+                  <input type="text" class="form-control" id="report_file_path"  name = "report_file_path" placeholder="Enter directory or report path">
                 </div>
               </td>
               
             </tr>
             <tr>
-              <td><b>Reference Report</b></td>
+              <td><b>Reference</b></td>
               <td>
-                <select class="form-select" aria-label="Default select example"  id="reference_file_type" onchange="onFileTypeChanged('reference_file_type')">
-                  <option selected value="1">Choose PKL file</option>
-                  <option value="2">Enter PKL file path</option>
-                </select>
-              </td>
-
-              <!--<td><input type="file" name="myFile2" id="myFile2" accept=".pkl" ></td>-->
-              <td>
-                <div class="mb-3" style="margin-bottom: 0px !important;">
-                  <input class="form-control" type="file"  name="choose_reference_file" id="choose_reference_file" accept=".pkl">
-                </div>
                 <div class="form-group">  
-                  <input type="text" class="form-control" id="reference_file_path" value="">
+                  <input type="text" class="form-control" id="reference_file_path" name = "reference_file_path" placeholder="Enter directory or report path">
                 </div>
 
               </td>
             </tr>
           </tbody>
         </table>
-        <!--
-        <div class="col-md-12" style="margin-top: 40px;">
-          <input type = "submit" id="submit_orig" value = "Load Original Report" 
-                  disabled="true" formaction="/Reporter_orig">
-        </div>-->
-        <div class="col-md-12" style="margin-top:20px" >
-          <!--<input type = "submit" id="submit_new" value = "Load New Report" 
-                disabled="true" formaction="/Reporter_new">-->
-              <input type = "submit" id="submit_new" value = "Load Report" 
-                disabled="true" formaction="/Save_Report_Request">
+         <div class="col-md-12" style="margin-top:20px" >
+              <input type = "submit" 
+                     id="submit" 
+                     value = "Load Report" 
+                     disabled="true" 
+                     >
         </div>
-        <div id="alert" class="alert alert-danger" style="margin-top:20px;">
-        </div>
+       
       </form>
 
        
     </div>
 
     <script>
-      window.onload = function  () {      
-        $('#report_file_path').hide();
-        $('#reference_file_path').hide();
-      } 
-      
-      $(document).ready(function(e){
-          $("#alert").hide();
+    
+    
+    $("#report_file_path").on('change keydown paste input', function(){
+        $('#submit').prop('disabled', false); 
+    });
 
-          var session = '{{ session|tojson }}';
-          var json = JSON.parse(session)
-          if (json.error_message != null && json.error_message != '') {
-            //var msg = '{{ message}}';
-            var msg = json.error_message;
-            
-            if (msg != ''){
-              $("#alert").text(msg.toLocaleUpperCase())
-              $("#alert").show();
-              setTimeout(function () {
-                // Closing the alert
-                $('#alert').alert('close');
-                $('#alert').hide();
-                }, 5000);
-            }
-          }
-          
-          $('#report_form').submit(function(event) {
-              
-              if ($('#report_file_type').find(":selected").val() == "2"){
-                var filename = $('#report_file_path').val();
-                var inputReportFileInfo = '<input type="hidden" name=' + "'report_file_path'" + " value='" + filename + "'/>";
-                $(this).append(inputReportFileInfo);
-              }
 
-              if ($('#reference_file_type').find(":selected").val() == "2"){
-                var filename = $('#reference_file_path').val();
-                var inputReferenceFileInfo = '<input type="hidden" name=' + "'reference_file_path'" + " value='" + filename + "'/>";
-                $(this).append(inputReferenceFileInfo);
-              }
-
-              return true;
-          });
-      });
-
-      $("#report_file_path").on('change keydown paste input', function(){
-        var filename = $('#report_file_path').val();
-        if (isPKLFileName(filename)){
-          $('#submit_orig').prop('disabled', false); 
-          $('#submit_new').prop('disabled', false); 
-        }
-        else {
-          $('#submit_orig').prop('disabled', true); 
-          $('#submit_new').prop('disabled', true); 
-        }
-      });
-
-      function onReportFileSelected(){
-        $('#submit_orig').prop('disabled', false); 
-        $('#submit_new').prop('disabled', false); 
-      }
-
-      function isPKLFileName(filename){
-        if (String(filename).toLocaleLowerCase().endsWith(".pkl"))
-          return true;
-        return false;
-      }
-
-      function onFileTypeChanged(id){
-          if (id == 'report_file_type') 
-          {
-              if ($('#report_file_type').find(":selected").val() == "1"){
-                $('#submit_orig').prop('disabled', true); 
-                $('#submit_new').prop('disabled', true); 
-                $('#choose_report_file').show();
-                $('#report_file_path').hide();
-              } else {
-                $('#choose_report_file').hide();
-                $('#report_file_path').show();
-                var filename = $('#report_file_path').val();
-                if (isPKLFileName(filename)){
-                  $('#submit_orig').prop('disabled', false); 
-                  $('#submit_new').prop('disabled', false); 
-                }
-                else{ 
-                  $('#submit_orig').prop('disabled', true); 
-                  $('#submit_new').prop('disabled', true); 
-                }
-              }
-              
-          } else {
-              if ($('#reference_file_type').find(":selected").val() == "1"){
-                $('#choose_reference_file').show();
-                $('#reference_file_path').hide();
-              } else {
-                $('#choose_reference_file').hide();
-                $('#reference_file_path').show();
-              }
-          }
-        }
-      
   </script>
 </div>

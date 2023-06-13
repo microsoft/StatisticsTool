@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "configurations": [
 
+
          {
             "name": "Python: Statistic Tool",
             "type": "python",
@@ -24,6 +25,13 @@
             "type": "python",
             "request": "launch",
             "module": "tests.test_templates_files_helper",
+            "justMyCode": true
+        },
+        {
+            "name": "Test Configuration Results",
+            "type": "python",
+            "request": "launch",
+            "module": "tests.test_configuration_results",
             "justMyCode": true
         },
     ]
