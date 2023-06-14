@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { ApplicationRef, Component, ElementRef, OnInit } from '@angular/core';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 import {Location} from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+
 
 @Component({
   selector: 'template-segmentations',
@@ -16,38 +17,52 @@ export class TemplateSegmentationsComponent implements OnInit {
   templateNameCreated = '';
   backImgSrc = 'assets/back-icon-blue.svg';
   saveImgSrc = 'assets/save-icon-blue.svg';
+  addGridImgSrc = 'assets/grid-add-blue.svg';
 
-  constructor(private httpClient:HttpClient,
+  subscribeSegmentsReady = new Subscription;
+
+  constructor(
               public statService:StatisticsToolService,
-              private location:Location,
-              private router:Router) {
+              private location:Location) {
   }
 
   ngOnInit(): void {
-    let sub = this.statService.segmentationsFetched.subscribe(res => {
-      this.statService.addNewTemplate();
-      sub.unsubscribe();
+
+    this.subscribeSegmentsReady = this.statService.segmentationsFetched.subscribe(selectedReport => {
+      this.statService.addDefaultTemplate();
+      this.statService.selectedReport = selectedReport;
+      this.statService.reportSelected.next(true);
     })
-  }
+  } 
 
   ngOnDestroy(){
+    if (this.subscribeSegmentsReady != null)
+      this.subscribeSegmentsReady.unsubscribe();
+  }
+
+  getViewHeight(index:number){
+    
+    var isViewPanelOpen = this.statService.currentTemplate.SegmentationsClicked[index];
+
+    if (isViewPanelOpen)
+      return this.statService.viewHeights.get(index);
+    else
+      return '0px';  
   }
 
   onTemplateSelected(event:any){
     let tempalteId = event.target.value;
-    if (tempalteId == 0){ //new temmplate
-      this.isNewTemplateMode = true;
-      //this.statService.templates = [];
-      if (this.statService.templates.length == 0)
-        this.statService.addNewTemplate();
-      return;
-    }
+    
     this.isNewTemplateMode = false;
     this.templateNameCreated = '';
     let t = this.statService.templateNameOptions.find(x => x.key == +tempalteId);
     if (t != undefined){
       this.statService.onTemplateSelected(t.value);
     }
+  }
+
+  onReportSelected(event:any){
+    this.statService.init('',event.target.value);
   }
 
   getTemplateName(){
@@ -77,16 +92,10 @@ export class TemplateSegmentationsComponent implements OnInit {
   }
 
   saveTemplate(){
-    if (this.isNewTemplateMode)
-      this.statService.saveTemplate(true,this.templateNameCreated);
-    else
-      this.statService.saveTemplate(false);
+    this.statService.openSaveTemplateDialog();
   }
 
   slideUniqueChange(event:any){
-    //console.log('slideUniqueChange',event.checked)
-    //this.statService.calculateUnique = event.checked;
-    //this.statService.uniqueValueChanged.next(event.checked);
     this.statService.uniqueValueChanged.next(this.statService.calculateUnique);
   }
 
@@ -98,10 +107,7 @@ export class TemplateSegmentationsComponent implements OnInit {
     for(let x=0;x < this.statService.currentTemplate.SegmentationsClicked.length;x++){
       if (x == i){
         this.statService.currentTemplate.SegmentationsClicked[x] = !this.statService.currentTemplate.SegmentationsClicked[x];
-      }
-      //else
-        //this.statService.currentTemplate.SegmentationsClicked[x] = false;
-        //console.log('clicked - false',i,this.statService.currentTemplate.SegmentationsClicked[x]);
+       }
       }
     }
 
@@ -113,11 +119,12 @@ export class TemplateSegmentationsComponent implements OnInit {
         return ''; 
     }
 
-    getHeight(i:number){
-      if (this.statService.currentTemplate.SegmentationsClicked[i] == true)
-        return '100vh';
-      else
-        return '0px';
+    agentHas(keyword:string) {
+      return navigator.userAgent.toLowerCase().search(keyword.toLowerCase()) > -1;
+    }
+
+    isFireFox(){
+      return this.agentHas("Firefox") || this.agentHas("FxiOS") || this.agentHas("Focus");
     }
 
     getTitle(i:number){
@@ -134,15 +141,6 @@ export class TemplateSegmentationsComponent implements OnInit {
       window.location.href = 'http://127.0.0.1:5000/';
     }
 
-    getDisabledClass(){
-      if (this.isNewTemplateMode){
-        if (this.templateNameCreated.length == 0)
-          return 'disabledImg';
-      }
-
-      return '';
-    }
-
     localDataStoreChange(event:any){
       this.statService.saveLocalDataStoreInfoInStorage();
     }
@@ -153,5 +151,25 @@ export class TemplateSegmentationsComponent implements OnInit {
       } else {
         return 'disableLocalDataStore';
       }
+    }
+
+    getSelectedMainReportTooltip(){
+      if (this.statService.reportlistItems && this.statService.selectedReport in this.statService.reportlistItems)
+        return this.statService.reportlistItems[this.statService.selectedReport].value;
+      else
+        return ''
+    }
+
+    getSelectedTemplateTooltip(){
+      if (this.statService.templateNameOptions && this.statService.selectedTamplate in this.statService.templateNameOptions)
+        return this.statService.templateNameOptions[this.statService.selectedTamplate].value;
+      else
+        return ''
+    }
+
+    disableUnique(){
+      if (this.statService.getSelectedRefReport() == '')
+        return true;
+      return false;
     }
  }

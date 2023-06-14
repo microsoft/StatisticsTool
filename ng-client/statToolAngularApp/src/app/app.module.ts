@@ -25,7 +25,8 @@ import { DrawerContentComponent } from './drawer-content/drawer-content.componen
 import {MatExpansionModule} from '@angular/material/expansion';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
-import '@angular/localize/init'
+import '@angular/localize/init';
+import { SaveTemplateDialogComponent } from './save-template-dialog/save-template-dialog.component';
 
 @NgModule({
   declarations: [
@@ -37,6 +38,7 @@ import '@angular/localize/init'
     TemplateSegmentsHeaderComponent,
     DrawerComponent,
     DrawerContentComponent,
+    SaveTemplateDialogComponent,
   ],
   imports: [
     NgMultiSelectDropDownModule.forRoot(),

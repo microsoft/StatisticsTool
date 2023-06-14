@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def refine_annotations(dataframe):
+def refine_annotations_old(dataframe):
     """
     clean & encode multiple categories 
     """
@@ -78,6 +78,47 @@ def refine_annotations(dataframe):
     return dataframe
 
 
+
+def refine_annotations(dataframe):
+    """
+    clean & encode multiple categories 
+    """
+
+    df_keys = list(dataframe.keys())
+
+    # "Enviroment"
+    annot_to_clean = 'Enviroment[header]'
+    remapped_annot = annot_to_clean
+    if annot_to_clean in df_keys:
+        mapping = {value: value for value in dataframe[annot_to_clean].unique()}
+        mapping.update({'Indoor ': 'Indoor'})
+        # perform mapping to new categories, notice: old categories that are not found in the mapping dict are converted to NaN
+        dataframe[remapped_annot] = dataframe[annot_to_clean].map(
+            mapping).fillna('NA')
+        
+    # "Location"
+    annot_to_clean = 'Location[header]'
+    remapped_annot = annot_to_clean
+    if annot_to_clean in df_keys:
+        mapping = {value: value for value in dataframe[annot_to_clean].unique()}
+        mapping.update({'Reception ': 'Reception'})
+        # perform mapping to new categories, notice: old categories that are not found in the mapping dict are converted to NaN
+        dataframe[remapped_annot] = dataframe[annot_to_clean].map(
+            mapping).fillna('NA')
+
+    # "Background_People_COMPRESSED"
+    annot_to_clean = 'Background_People[sequence]'
+    remapped_annot = annot_to_clean.replace('[sequence]', '_COMPRESSED[sequence]')
+    if annot_to_clean in df_keys:
+        mapping = {value: value for value in dataframe[annot_to_clean].unique()}
+        mapping.update({'Empty': 'FALSE', 'One': 'TRUE', 'Few': 'TRUE', 'Crowded': 'TRUE', 'Several': 'TRUE'})
+        # perform mapping to new categories, notice: old categories that are not found in the mapping dict are converted to NaN
+        dataframe[remapped_annot] = dataframe[annot_to_clean].map(
+            mapping).fillna('NA')
+
+    return dataframe
+
+
 def object_size_with_annot_store(dataframe, from_file=False):
     annot_headers = ['Enviroment', 'Location', 'User_Movement_Type',
                      'User_Physical_Status', 'Light', 'location', 'background people', 'background']
@@ -115,8 +156,8 @@ def object_size_with_annot_store(dataframe, from_file=False):
 
     if 0: # old code
         # annotation store
-        # ----------------
-        dataframe = refine_annotations(dataframe)
+        # ----------------``
+        dataframe = refine_annotations_old(dataframe)
 
         dummy_counter = 0
         desired_masks_annot_store = {}
@@ -143,6 +184,72 @@ def object_size_with_annot_store(dataframe, from_file=False):
             desired_masks_annot_store[annot_header] = curr_desired_mask
 
         desired_masks.update(desired_masks_annot_store)
+
+    # refine annotations
+    # ------------------
+    dataframe = refine_annotations(dataframe)
+
+    # header annotations (clip level)
+    # -------------------------------
+    annot_headers = [annot for annot in dataframe.keys() if '[header]' in annot]
+    dummy_counter = 0
+    desired_masks_annot_store = {}
+    for annot_header in annot_headers:
+        print(annot_header)
+        annot = dataframe[annot_header]
+        annot_header = annot_header.replace('[header]', '')
+        annot = annot.fillna('NA')
+        annot = annot.astype(str)
+        current_annotation_categories = list(annot.unique())
+        # this is a patch to correct mixed numeric/string annotation
+        if annot_header in ['User_Movement_Type', 'User_Physical_Status', 'Light', 'location', 'background people', 'background']:
+            current_annotation_categories = list(
+                set([str(i) for i in current_annotation_categories]))
+            annot = annot.astype(str)
+        # next steps of tool fails in case of single category --> add fake empty annotation, for example: "NOT_Indoor"
+        if len(current_annotation_categories) == 1:
+            current_annotation_categories.append(
+                'NOT_' + current_annotation_categories[0])
+        masks = []
+        for cat in current_annotation_categories:
+            dummy_counter += 1
+            masks.append(np.array(annot == cat))
+        curr_desired_mask = {'possible partitions': [str(
+            val) + '_[' + str(annot_header) + ']' for val in current_annotation_categories], 'masks': masks}        
+        desired_masks_annot_store[annot_header] = curr_desired_mask
+
+    desired_masks.update(desired_masks_annot_store)    
+
+    # sequence annotations
+    # --------------------
+    dummy_counter = 0
+    desired_masks_annot_store = {}
+    annot_headers = [annot for annot in dataframe.keys() if '[sequence]' in annot]
+    for annot_header in annot_headers:
+        print(annot_header)
+        annot = dataframe[annot_header]
+        annot_header = annot_header.replace('[sequence]', '')
+        annot = annot.fillna('NA')
+        annot = annot.astype(str)
+        current_annotation_categories = list(annot.unique())
+        # this is a patch to correct mixed numeric/string annotation
+        if annot_header in ['User_Movement_Type', 'User_Physical_Status', 'Light', 'location', 'background people', 'background']:
+            current_annotation_categories = list(
+                set([str(i) for i in current_annotation_categories]))
+            annot = annot.astype(str)
+        # next steps of tool fails in case of single category --> add fake empty annotation, for example: "NOT_Indoor"
+        if len(current_annotation_categories) == 1:
+            current_annotation_categories.append(
+                'NOT_' + current_annotation_categories[0])
+        masks = []
+        for cat in current_annotation_categories:
+            dummy_counter += 1
+            masks.append(np.array(annot == cat))
+        curr_desired_mask = {'possible partitions': [str(
+            val) + '_[' + str(annot_header) + ']' for val in current_annotation_categories], 'masks': masks}
+        desired_masks_annot_store[annot_header] = curr_desired_mask
+
+    desired_masks.update(desired_masks_annot_store)
 
     # person on edges
     # ---------------
@@ -215,26 +322,27 @@ def object_size_with_annot_store(dataframe, from_file=False):
 
         desired_masks.update(desired_masks_clip_duration)
 
-    # iou
-    # ---
-    bins = [-1, 0, 0.25, 0.5, 0.75, 1.1]
-    labels = ['0', '0-0.25', '0.25-0.5', '0.5-0.75', '0.75-1']
+    if 1:
+        # iou
+        # ---
+        bins = [-1, 0, 0.25, 0.5, 0.75, 1.1]
+        labels = ['0', '0-0.25', '0.25-0.5', '0.5-0.75', '0.75-1']
 
-    dataframe['iou_binned'] = pd.cut(
-        dataframe['iou'], bins=bins, labels=labels)
-    dataframe['iou_binned'] = dataframe['iou_binned'].values.add_categories(
-        'missing iou')
-    dataframe['iou_binned'].fillna('missing iou', inplace=True)
-    labels = labels + ['missing iou']
-    masks = []
-    for label in labels:
-        curr_mask = (dataframe['iou_binned'] == label)
-        masks.append(curr_mask)
+        dataframe['iou_binned'] = pd.cut(
+            dataframe['iou'], bins=bins, labels=labels)
+        dataframe['iou_binned'] = dataframe['iou_binned'].values.add_categories(
+            'missing iou')
+        dataframe['iou_binned'].fillna('missing iou', inplace=True)
+        labels = labels + ['missing iou']
+        masks = []
+        for label in labels:
+            curr_mask = (dataframe['iou_binned'] == label)
+            masks.append(curr_mask)
 
-    iou = {'possible partitions': labels, 'masks': masks}
-    desired_masks_iou = {'iou': iou}
+        iou = {'possible partitions': labels, 'masks': masks}
+        desired_masks_iou = {'iou': iou}
 
-    desired_masks.update(desired_masks_iou)
+        desired_masks.update(desired_masks_iou)
 
     # empty/non-empty
     # ---------------

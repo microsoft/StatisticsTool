@@ -55,7 +55,7 @@ export class DrawerComponent implements OnInit {
   show = false;
 
   clickDrawer(){
-    this.statToolSvc.showDrawer = false;//!this.statToolSvc.showDrawer;
+    this.statToolSvc.showDrawer = false;
     this.changeState();
   }
 }

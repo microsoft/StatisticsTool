@@ -238,6 +238,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
                 #set gt_file path to be as full path in data store
                 if os.path.exists(gt_local_path) == False:
                     folder = os.path.split(video_name)[0]
+                    folder = os.path.normpath(folder)
                     gt_local_path = os.path.join(gt_dir, folder, video_folder_name+'.json')
                 #if not exists set gt_file to be as algo_logs file format
                 if os.path.exists(gt_local_path) == False:
@@ -269,14 +270,19 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
             print(f"Failed to compare log {pred}, continuing with next log...")
             print(ex)
             continue
-
-        output_file =  os.path.join(output_dir, video_name + '.json')
+        
+        video_folder = video_name
+        if video_folder.startswith('/'):
+            video_folder = video_folder[1:]
+        video_folder = video_folder.replace(':',os.path.sep)
+        output_file =  os.path.join(output_dir, video_folder + '.json')
+        output_file = os.path.normpath(output_file)
         V.save_data(output_file)
         output_files.append(output_file)
         succeded.append(pred)
 
         print(f"Finished comparing predictions for video {video_name}")
-        print(f"#Succeeded: {len(succeded)}; #Skipped_reading: {len(skipped_reading_fnc)}; #Skipped_not_json: {len(skipped_not_json)}; #Failed: {len(failed)}; #Not_in_lognames: {len(skipped_not_in_lognames)} #Total Files: {len(pred_path_list)}\n\n")
+        print(f"\n\n#Succeeded: {len(succeded)}; #Skipped_reading: {len(skipped_reading_fnc)}; #Skipped_not_json: {len(skipped_not_json)}; #Failed: {len(failed)}; #Not_in_lognames: {len(skipped_not_in_lognames)} #Total Files: {len(pred_path_list)}\n\n")
 
     print("\nFinished all Predictions!\n")
     print ("Failed Predictions: ")
@@ -286,12 +292,13 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
    
     #TODO: Indeed need to save this information, but not as a jump file header.
     #Jump file header should be created only when exporting it (on UI)
-    sheldon_pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
-    sheldon_gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
-    # sheldon_video_dir = get_local_or_blob_full_path(path, StoreType.Data)
-    sheldon_video_dir = '' #TODO:ADD Blob link
+    pred_dir = get_local_or_blob_full_path(pred_dir, StoreType.Predictions)
+    gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
+    video_dir = '' #TODO:ADD Blob link
+    
+    user_text = f"Processed successfully: {len(succeded)} files\n Reading function skipped: {len(skipped_reading_fnc)} files\n Not .json files: {len(skipped_not_json)}\n Failed with an error: {len(failed)} files\n Filtered out by log name: {len(skipped_not_in_lognames)}\n"
 
-    sheldon_header_data = create_sheldon_list_header(primary_path=sheldon_pred_dir, primary_name=pred_file_name, secondary_path=sheldon_gt_dir, secondary_name=gt_file_name, video_path=sheldon_video_dir)
-    return output_files, sheldon_header_data
+    sheldon_header_data = create_sheldon_list_header(primary_path=pred_dir, primary_name=pred_file_name, secondary_path=gt_dir, secondary_name=gt_file_name, video_path=video_dir)
+    return output_files, sheldon_header_data, user_text
 
 

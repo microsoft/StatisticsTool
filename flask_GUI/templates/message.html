@@ -1,2 +1,13 @@
-<a target="_parent"  href="/Save_Report_Request?use_cached_report=true" style="   position: absolute;left: 6px; top: 15px;"> Go To Reporter   </a>
-<a target="_parent"  href="/Save_Report_Request?use_cached_report=true" style="   position: absolute;left: 6px; top: 15px;"> Go To Reporter   </a>
+
+<div style="border: 0px solid black; padding: 10px; font-size: 16px;">
+    
+    {% for line in text %}
+        <p>{{line}}</p>
+    {%endfor%}
+    <br>
+    {% if link == 'None': %}
+        <p style="color: red; font-size: 20px;">No report was Created</p>
+    {%else:%}
+        <a target="_parent"  href={{link}} style=" font-size: 20px; color: blue; "> Go To Reporter   </a>
+    {%endif%}
+</div>

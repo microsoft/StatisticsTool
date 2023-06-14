@@ -25,7 +25,7 @@ css['table-div'] = \
     'position':'relative',\
     'width' :'100%', 
     'height':'100%',
-    'line-height':'20px',
+   # 'line-height':'20px',
     'font-size':'14px'
 # 'object-fit': 'contain',
 }
@@ -84,4 +84,27 @@ css['smallCell']=\
 css['oddrow']=\
 {
     'backgroud-color':'blue',
+}
+
+css['table-row']=\
+{
+    'line-height':'20px'
+}
+
+css['table_row_blue']=\
+{
+    'background-color':'#e4f0f5',
+    'line-height':'20px'
+}
+
+css['table_row_green']=\
+{
+    'background-color':'#d3f0e0',
+    'line-height':'20px'
+}
+
+css['table_row_white']=\
+{
+    'background-color':'white',
+    'line-height':'20px'
 }

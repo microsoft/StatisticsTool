@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl,ReactiveFormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 
@@ -19,7 +18,7 @@ export class SegmentationsComponent implements OnInit{
     arr.forEach(a => {
       this.selected.push({'item_id':a,'item_text':a})
     })
-    console.log('foo','items:',JSON.stringify(arr),'selected:',JSON.stringify(this.selected));
+    
   }
   
   @Input() name = '';

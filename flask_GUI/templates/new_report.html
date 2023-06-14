@@ -1,7 +1,12 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-  function myFunction1() {
+  function calculateReport() {
         var form = document.getElementById('myform');
+        var iframe = document.getElementById("message_iframe")
+        iframe.contentWindow.document.open(); 
+        iframe.contentWindow.document.write("calculating...");         
+        iframe.contentWindow.document.close()
+
         var x = document.getElementById("myDIV");
         form.onsubmit = function() {
         form.target = 'message_iframe';
@@ -63,7 +68,8 @@ input[type=submit]:hover {
 
         <div class="header" style="text-align: center; font-family: Arial, Helvetica, sans-serif;">
             <div class="col-12">
-                  <h1 style="color: #3e8e41;"> <B>Statistics-Tool</B> </h1>
+                  <h1 style="color: #3e4a8e;"> <B>Statistics-Tool</B> </h1>
+                    <a href="{{wiki_page}}" target="_blank" rel="noopener noreferrer">Statistics-Tool Wiki..</a>
                 <hr>
             </div>
         </div>
@@ -120,7 +126,7 @@ input[type=submit]:hover {
             </tr>
 
             <tr>
-                <td><input type="submit" name="calculate" value="Run" onclick="myFunction1()"></td>
+                <td><input type="submit" name="calculate" value="Run" onclick="calculateReport()"></td>
             </tr>
 
             </table>
@@ -130,7 +136,7 @@ input[type=submit]:hover {
     </div>
 
     <div id="second" name="second" class="col-4">
-        <iframe name="add_config_iframe" id="add_config_iframe" frameborder="0" 
+        <iframe  name="add_config_iframe" id="add_config_iframe" frameborder="0" 
                 style="position:absolute; 
                     top: 200px; 
                     left: 790px;
@@ -147,7 +153,7 @@ input[type=submit]:hover {
 
 
 <div  id="myDIV" style="display:none;">
-    <iframe name="message_iframe" frameborder="0" srcdoc="<p>Calculating...</p>" style=" position:relative; top: -120px; left: 170px;" height="500" width="500" > </iframe>
+    <iframe id="message_iframe" name="message_iframe" frameborder="0" srcdoc="<p>Calculating...</p>" style=" position:relative; top: -120px; left: 170px;" height="500" width="500" > </iframe>
 </div>
 
 

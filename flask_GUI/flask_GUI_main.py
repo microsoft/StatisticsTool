@@ -1,62 +1,73 @@
+#region - inports
 import mimetypes
+import urllib.parse
+import traceback
 import os, sys
-from requests import Session
+import re
+from classes_and_utils.UpdateListManager import UpdateListManager
+from classes_and_utils.configuration.ConfigurationHelper import ConfigurationHelper
+from classes_and_utils.configuration.ConfigurationManager import ConfigurationManager
+from flask_GUI.dash_apps.results_table import Results_table
+
+#from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
 current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
 sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
-from dash.dependencies import Input, Output, State
-from dash import Dash, html
 
-# from pyfladesk import init_gui
 from classes_and_utils.GUI_utils import *
 from classes_and_utils.TemplatesFilesHelper import *
-from flask import Flask, jsonify, render_template, request,redirect, url_for,session, send_from_directory
-from flask_GUI.rendering_functions import show_stats_render
-from flask_GUI.dash_apps.results_table import Results_table
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
+#endregion
 
-### init Flask server ###
-#########################
+#region - init Flask server 
 server = Flask(__name__)
 server.secret_key = 'any random string'
-results_table = Results_table(server)
-
+configuration_manager = ConfigurationManager()
 
 # getting the options for each type of necessary function
 file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
 
+#endregion - init Flask server
 
-#### Route for homepage ####
+#region - Homepage Route
 @server.route('/', methods=['GET', 'POST'])
 def homepage():
-    return render_template('start_page.html')
+    return render_template('start_page.html', exp_ext = EXPERIMENT_EXTENTION, wiki_page = WIKI_URL)
+#endregion 
 
-#### The next functions are for *report creation* ==> ####
+#region - Functions for REPORT CREATION
+
 @server.route('/create_new_report', methods=['GET', 'POST'])
 def new_report_func():
-    possible_configs = manage_new_report_page(request, current_file_directory)
-    return render_template('new_report.html', possible_configs=possible_configs)
-
+    possible_configs = manage_new_report_page(request)
+    return render_template('new_report.html', possible_configs=possible_configs, wiki_page = WIKI_URL)
 
 @server.route('/calculating_page', methods=['GET', 'POST'])
 def calculating():
     # extract the user specified directories and names
-    config_file_name, prd_dir, GT_dir, output_dir, single_video_hash_saving_dir, config_dict = unpack_calc_request(request, current_file_directory)
+    config_file_name, prd_dir, GT_dir, output_dir = unpack_calc_request(request)
+    
     # making sure save_stats_dir is empty and opening the appropriate folders
-    empty, save_stats_dir = folder_func(output_dir)
+    empty, save_stats_dir = folder_func(output_dir, os.path.basename(config_file_name))
     if empty == 'FileNotFound':
         return render_template('Not_found.html')
     # if the output folder is not empty a message is sent
     elif not empty:
         return render_template('Not_empty.html')
-    global exp
+    
     # calculate the intermediate results for all the videos then combine them
-    exp = manage_video_analysis(config_file_name, prd_dir, single_video_hash_saving_dir, save_stats_dir, config_dict, gt_dir=GT_dir)
-    if exp is None:
-        return "No logs to compare"
-    if exp == 'TypeError':
-        return render_template('Bad_format.html')
-    return render_template('message.html')
+    exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir=GT_dir)
+   
+    configuration_manager.add_experiment(report_file_name,exp)
+
+    if exp == 'TypeError' or exp is None or report_file_name is None:
+        link = 'None'
+    else:
+        link = "/Report_Viewer?use_cached_report=true&main=" +  urllib.parse.quote(report_file_name)
+
+    results_text = results_text.split('\n')
+    return render_template('message.html', link=link, text=results_text)
 
 @server.route('/add_config', methods=['GET', 'POST'])
 def new_task_func():
@@ -65,117 +76,100 @@ def new_task_func():
 @server.route('/Help', methods=['GET', 'POST'])
 def show_help():
     return render_template('help.html')
-#### <<== The above functions are for *report creation* ####
 
-#### The next functions are for *report view and analysis* ==> ####
+@server.route('/show', methods=['GET', 'POST'])
+def show_config():
+    config_name = request.args.get('Configuration')
+    path_to_wanted_config = os.path.join(get_configs_folder(), config_name)
+    config_file = loading_json(path_to_wanted_config)
+    config_dict = config_file[0]
+    return render_template('show_config.html', config_dict=config_dict, config_name=config_name)
+#endregion - Functions for REPORT CREATION
 
-@server.route('/Reporter_orig', methods=['GET', 'POST'])
-def Report_orig():
-    use_cached_report = request.args.get('use_cached_report')
-    session['error_message'] = ''
-    global report_type
-    report_type = 'ORIG'
-    return Report(use_cached_report)
+#region - Functions for REPORT VIEW
+@server.route('/Report_Viewer', methods=['GET', 'POST'])
+def Report_Viewer():
 
-@server.route('/Save_Report_Request', methods=['GET', 'POST'])
-def Save_Report_Request():
-    global report_type
-    report_type = 'NEW'
-    use_cached_report = request.args.get('use_cached_report')
-    extract_data_request(request,use_cached_report)
-    session['error_message'] = ''
-    return render_template('index.html')
+    try:
+        main, ref = ConfigurationHelper.get_request_experiments_info(request)
+        
+        main_added_experiments = configuration_manager.add(main)
+        ref_added_experiments  = configuration_manager.add(ref)
+        js_pairs = ConfigurationHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+        return redirect(f'static/index.html?reports={js_pairs}')
+    
+    except Exception as ex:
+        print (f"error: {ex}. Traceback: ")
+        for a in traceback.format_tb(ex.__traceback__): print(a)
+        print (f"exception message: {ex}.")
 
-def extract_data_request(request,use_cached_report):
-    global exp
-    global comp_exp
+        return f'Failed to load report for request {request.values}'
 
-    comp_exp = []
-    if not use_cached_report:
-        exp,result,err_msg = load_experiment(request,False)
-
-        if exp == None and result == False and err_msg != '':
-            #return render_template("start_page.html",message=err_msg)
-            session['error_message'] = err_msg
-            return redirect(url_for("homepage"))
-        cexp,_,_ = load_experiment(request,True)
-        if cexp != None:
-            comp_exp.append(cexp)
 @server.route('/static/<file_name>')
-def send_file(file_name):
+def send_static_file(file_name):
     mime = mimetypes.guess_type(file_name, strict=False)[0]
     sp= os.path.splitext(file_name)
     if len(sp)>1 and sp[1]=='.js':
         mime = 'text/javascript'
     return send_from_directory('static', file_name,mimetype=mime)
+
 @server.route('/favicon.ico')
 def favicon():
     return send_from_directory('static','favicon.ico',mimetype='image/x-icon')
-def Create_Report():
-    global exp
-    global comp_exp
-
-    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
-
-    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations)
-    return results_table.get_webpage()
-    '''dashApp = Dash(__name__,server=server,url_base_pathname='/dash2/')# serve_locally = False)
-    dashApp.layout = results_table.get_layout()
-    @dashApp.callback(
-        Output('table-div', 'children'),
-        Input('cols_seg', 'value'),
-        Input('rows_seg', 'value')
-    )
-    def update_output(cols_input ,rows_input):
-        table_div = results_table.table.get_table(cols_input, rows_input)
-        return table_div
-
-    return dashApp.index()'''
+   
 @server.route('/get_segmentations', methods=['POST'])    
 def get_segmentations():
-    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+    main_path = request.json['main_path']
+    
+    segmentations = configuration_manager.get_item_segmentations(main_path)
+    
     result = []
     for k, v in segmentations.items():
         result.append({'name':k,'values':v})
     return jsonify(result)
 
-@server.route('/Reporter_new_wrapper', methods=['POST'])
-def Reporter_new_wrapper():
-    wp = Create_Report()
-    return jsonify(wp), 201
+'''
+    returns the report table that generated by Dash
+'''
+@server.route('/get_report_table', methods=['GET', 'POST'])
+def get_report_table():
+    
+    main_path = request.args.get('main_path')
+    ref_path = request.args.get('ref_path')
 
-@server.route('/Reporter_new', methods=['GET', 'POST'])
-def Create_Report():
-    global exp
-    global comp_exp
+    if configuration_manager.get_experiment(main_path) == None:
+        return None
 
-    calc_unique = True if request.args.get('calc_unique') == 'true' else False
+    main = configuration_manager.get_experiment(main_path)
+    ref = configuration_manager.get_experiment(ref_path) if ref_path != '' else None
 
-    columns = [] 
-    rows = [] 
-    argCols = request.args.get('cols')
-    argRows = request.args.get('rows')
-    if argCols != None and len(argCols) > 0:
-        if argCols[-1] == ',':
-            argCols = argCols[:-1]
-        columns  = list(argCols.split(',') )
-       
-    if argRows != None and len(argRows) > 0:
-        if argRows[-1] == ',':
-            argRows = argRows[:-1]
-        rows = list(argRows.split(','))
-    segmentations = {seg_category:v['possible partitions'] for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
+    calc_unique = True if ref and request.args.get('calc_unique') == 'true' else False
+    
 
-    results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations,calc_unique)
-    results_table.dash_app.layout = results_table.get_layout_new(columns,rows)
-    wp = results_table.get_webpage()
+    columns = ConfigurationHelper.parse_segmentations_csv(request.args.get('cols'))
+    rows    = ConfigurationHelper.parse_segmentations_csv(request.args.get('rows'))
+    
+    res_table = configuration_manager.get_results_table(main_path,ref_path)
+    if res_table == None:
+        res_table = Results_table(server)
+        segmentations = configuration_manager.get_item_segmentations(main_path)
+        res_table.set_data(main,ref, main_path, ref_path, segmentations,calc_unique)
+        res_table = configuration_manager.add_results_table(main_path,ref_path,res_table)
+    else:
+        if ref is not None:
+            res_table.set_unique(calc_unique)
+
+    wp = res_table.get_webpage(columns,rows)
 
     return wp
 
 @server.route('/get_all_templates', methods=['POST'])
 def get_all_templates():
+    main = request.json['main_path']
+    ref = request.json['ref_path']
+   
     helper = TemplatesFilesHelper()
-    content = helper.get_all_templates_content()
+    content = helper.get_all_templates_content(main,ref)
     return jsonify(content)
 
 @server.route('/get_template_content', methods=['POST'])
@@ -190,186 +184,67 @@ def save_template():
     data = request.json
     name = data['name']
     content = data['content']
+    main_path = data['main_path']
+    ref_path = data['ref_path']
     helper = TemplatesFilesHelper()
-    result = helper.save_template(name,content)
+    if not name:
+        return 
+    helper.save_template(name,content,main_path)
+    result = helper.get_all_templates_content(main_path, ref_path)
     return jsonify(result)
     
-
-@server.route('/Reporter_new_old', methods=['GET', 'POST'])
-def Report_new():
-    use_cached_report = request.args.get('use_cached_report')
-    
-    session['error_message'] = ''
-    global report_type
-    report_type = 'NEW'
-    return Report(use_cached_report)
-
-def Report(use_cached_report):
-    # request to load a report
-    global exp
-    global comp_exp
-    comp_exp = []
-
-    if not use_cached_report:
-        exp,result,err_msg = load_experiment(request,False)
-
-        if exp == None and result == False and err_msg != '':
-            #return render_template("start_page.html",message=err_msg)
-            session['error_message'] = err_msg
-            return redirect(url_for("homepage"))
-        cexp,_,_ = load_experiment(request,True)
-        if cexp != None:
-            comp_exp.append(cexp)
-
-    # make a list of optional partitions which their bolean masks are available
-    # list_of_seg_opt = ['N/A'] + [seg for seg in exp.masks.keys() if seg != 'total_stats']
-    # partitions_names = ['Primary', 'Secondary', 'Tertiary']
-    # return render_template('Reporter_page.html', opt=list_of_seg_opt, num_part=min(len(list_of_seg_opt)-1, 3), partitions_names=partitions_names, calc_unique_opt=len(comp_exp)>0)
-    if report_type == 'NEW':
-        segmentations = {seg_category:v['possible partitions'] 
-        for seg_category, v in exp.masks.items() if seg_category != 'total_stats'}
-
-        results_table.set_data({'main':exp, 'ref':comp_exp}, segmentations,calc_unique)
-        return results_table.get_webpage()
-    elif report_type == 'ORIG':
-        # This is the deprecated reporter (before moving to Dash)
-            # make a list of optional partitions which their bolean masks are available
-        list_of_seg_opt = ['N/A'] + [seg for seg in exp.masks.keys() if seg != 'total_stats']
-        partitions_names = ['Primary', 'Secondary', 'Tertiary']
-
-    return render_template('Reporter_page.html', opt=list_of_seg_opt, num_part=min(len(list_of_seg_opt)-1, 3), partitions_names=partitions_names, calc_unique_opt=len(comp_exp)>0) #### TODO: check after merge
-
-
-
-def save_pkl_file(pckl_file,is_reference):
-        path_to_save = os.path.join(current_file_directory.replace('flask_GUI_main.py', 'static'),
-                                    'reports',
-                                    ("comp_" + pckl_file.filename) if is_reference else pckl_file.filename)
-        # save the pickle file of the report (the instance of the ParallelExperiment class as a pickle file)
-        if not os.path.exists(os.path.dirname(path_to_save)):
-            os.makedirs(os.path.dirname(path_to_save))
-        if os.path.exists(path_to_save):
-            os.remove(path_to_save)
-        pckl_file.save(path_to_save)
-        return path_to_save
-
-
-
-def load_experiment(request,is_reference):
-    
-    key_file_path = 'reference_file_path' if is_reference else 'report_file_path'
-    key_choose_file = 'choose_reference_file' if is_reference else 'choose_report_file'
-    ret_exp = None
-    
-    if key_file_path in request.values and request.values[key_file_path] != '':
-        #check if file exist
-        report_filename = request.values[key_file_path]
-        if os.path.exists(report_filename):
-            ret_exp = load_object(report_filename)
-
-            return ret_exp,True,''
-        else:
-            #to do - if file not exist
-            #return render_template("start_page.html")
-            return None,False,"FILE " + report_filename.split(os.sep)[-1] + " NOT FOUND"
-            
-
-    if request.files and request.files[key_choose_file].filename != '':
-        pckl_file = request.files[key_choose_file]
-        
-        report_filename = save_pkl_file(pckl_file,False)
-        ret_exp = load_object(report_filename)
-
-        return ret_exp,True,''
-    
-    return ret_exp, True, ''
-
-
 #########################################################
-#hagai-callback
-
-@results_table.dash_app.callback(
-    Output('table-div', 'children'),
-    Input('cols_seg', 'value'),
-    Input('rows_seg', 'value'))
-def update_results_table(cols_input ,rows_input):
-    table_div = results_table.table.get_table(cols_input, rows_input)
-
-    return table_div
-
-
-@server.route('/stats_pivot', methods=['GET', 'POST'])
-def statistics_reporter_dash():
-    return results_table.get_webpage()
-
-@server.route('/stats_original', methods=['GET', 'POST'])
-def show_stats():
-    return show_stats_render(request, exp, comp_exp)			
-
-#########################################################
-
-global LM
-LM = None
-def get_list_manager():
-    global LM
-    if LM == None:
-        LM = UpdateListManager()
-    return LM
 
 @server.route('/update_list', methods=['GET', 'POST'])
 def show_list():
-    listManager = get_list_manager()
+    main_path = request.args.get('main_path')
+    ref_path  = request.args.get('ref_path')
+    list_ref_report  = 'ref' in request.args
+    cell_name = request.args.get('cell_name') if "cell_name" in request.args else None
+    stat = request.args.get('stat') if "stat" in request.args else None  #This is a string contain 'TP' / 'FP' / 'FN
+    show_unique = 'unique' in request.args
 
-    # global comp_index, unique, state, cell_name, save_path, per_video_example_hash
-    listManager.manage_list_request(request, exp, comp_exp, report_type)
+    results_table = configuration_manager.get_results_table(main_path, ref_path)
+    per_video_example_hash, saved_file = UpdateListManager.manage_list_request(results_table, main_path, cell_name, stat, show_unique, list_ref_report, 'sheldon' in request.args)
 
+    unique_flag = '' if show_unique is False else 'unique'
     return render_template('examples_list.html', 
-                            state=listManager.state, 
-                            cell_name=listManager.cell_name,
-                            save_path=listManager.saved_list,
-                            per_video_example_hash=listManager.per_video_example_hash,
-                            saved_sheldon=listManager.saved_sheldon,
-                            comp_index=listManager.comp_index,
-                            unique = listManager.show_unique)
-
-    # return render_template('examples_list.html', state=state, cl_and_choice=cl_and_choice, mytup=mytup, save_path=save_path, per_video_example_hash=per_video_example_hash,saved_sheldon=saved_sheldon, comp_index=comp_index, unique = unique)
-
-@server.route('/update_list_2', methods=['GET', 'POST'])
-def show_list2():
-    return render_template('index.html')
-
-@server.route('/is_file_exists',methods=['GET', 'POST'])
-def is_file_exists():
-    file_path = request.json['file_path']
-    if os.path.exists(file_path):
-        return {
-            'exists': True
-        }
-    else:
-        return {
-            'exists': False
-        }
+                            state=stat, 
+                            cell_name=cell_name,
+                            per_video_example_hash = per_video_example_hash,
+                            saved_sheldon = saved_file,
+                            comp_index = 0 if ref_path else -1,
+                            unique = unique_flag,
+                            main_path = main_path,
+                            ref_path = ref_path
+    )
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():
-    data, save_path = manage_image_request(request, exp, comp_exp)
-    return render_template('example_image.html', data=data, save_path=save_path)
+    main_path = request.args.get('main_path')
+    ref_path = request.args.get('ref_path')
+    comp_index=eval(request.args.get('comp_index'))
+    
+    local_path = None    
+    if request.args.get('local_path'):
+        local_path = request.args.get('local_path')
+    
+    example_name = request.args.get('example_name')
 
-@server.route('/show', methods=['GET', 'POST'])
-def show_config():
-    config_name = request.args.get('Configuration')
-    path_to_wanted_config = current_file_directory.replace(os.path.join('flask_GUI', 'flask_GUI_main.py'), os.path.join('configs', config_name))
-    config_file = loading_json(path_to_wanted_config)
-    config_dict = config_file[0]
-    return render_template('show_config.html', config_dict=config_dict, config_name=config_name)
+    main_exp = configuration_manager.get_experiment(main_path)
+    ref_exp = configuration_manager.get_experiment(ref_path)
 
-def open_browser():
-      #webbrowser.open_new("http://127.0.0.1:5000")
-      pass
+    main_dir,_ = os.path.split(main_path)
+    
+    detection_text_list, data, save_path = manage_image_request(request,main_exp, ref_exp,main_dir, comp_index>-1, local_path, example_name)
+    
+    example_name = example_name.replace('\\','/')
+    return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list, example_name = example_name, main_path=main_path, ref_path=ref_path, comp_index = comp_index)
 
+#endregion - Functions for REPORT CREATION
+
+#region - run server
 if __name__=='__main__':
     server.debug = False
-
-    # Timer(1, open_browser).start()
     server.run()
-    open_browser()
+#endregion 

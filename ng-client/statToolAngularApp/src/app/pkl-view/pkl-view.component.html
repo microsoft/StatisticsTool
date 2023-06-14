@@ -20,25 +20,25 @@
                         </td>
                         <td style="width:38%">
                             <segmentations 
-                                style="width:95%;background-color: white;"
-                                name="Select Rows" 
-                                [selectItems]="selectedRows"
-                                (segmentAdded)="onRowAdded($event)"
-                                (segmentRemoved)="onRowRemoved($event)"
-                                (allSegmentsAdded)="onAllRowsAdded($event)"
-                                (allSegmentsRemoved)="onAllRowsRemoved($event)">
-                            </segmentations>
-                        </td>
-                        <td style="width:38%">
-                            <segmentations 
                                 style="width:95%;background-color: white;margin-top: 2px;"
-                                name="Selct Columns" 
+                                name="Horizontal Segmentation" 
                                 [selectItems]="selectedColumns"
                                 (segmentAdded)="onColumnAdded($event)"
                                 (segmentRemoved)="onColumnRemoved($event)"
                                 (allSegmentsAdded)="onAllColumnsAdded($event)"
                                 (allSegmentsRemoved)="onAllColumnsRemoved($event)">
                                 >
+                            </segmentations>
+                        </td>
+                        <td style="width:38%">
+                            <segmentations 
+                                style="width:95%;background-color: white;"
+                                name="Vertical Segmentation" 
+                                [selectItems]="selectedRows"
+                                (segmentAdded)="onRowAdded($event)"
+                                (segmentRemoved)="onRowRemoved($event)"
+                                (allSegmentsAdded)="onAllRowsAdded($event)"
+                                (allSegmentsRemoved)="onAllRowsRemoved($event)">
                             </segmentations>
                         </td>
                         <td style="text-align: right;"> 
@@ -49,9 +49,11 @@
                 </table>
             </div>
         </div>
-    <iframe (load)="onlaod()" 
-            style="display:block; width:100%; height:92vh;margin-top: 3px;border:none"
-            [src]="url | safe">
+    <iframe (load)="onIframeLoad()" 
+            #iframe
+            style="display:block; width:100%; margin-top: 3px;border:none"
+            [src]="url | safe"
+            [ngStyle]="{'height': height}">
     </iframe>
     <div *ngIf="statToolService.showFileNotFoundError()" 
         style="position: sticky;bottom: 200px;z-index: 99999999;">
