@@ -213,7 +213,7 @@ def show_list():
                             cell_name=cell_name,
                             per_video_example_hash = per_video_example_hash,
                             saved_sheldon = saved_file,
-                            comp_index = 0 if ref_path else -1,
+                            comp_index = 0 if list_ref_report else -1,
                             unique = unique_flag,
                             main_path = main_path,
                             ref_path = ref_path
