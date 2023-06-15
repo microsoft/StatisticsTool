@@ -38,13 +38,14 @@ def check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left, bb_to
         return is_on_edge, is_no_face
 
 def leave_event_presence_transform(comp_data):
-    lock_event_width_in_frames = 150
+    lock_event_width_in_frames = 210
     Wake_event_width_in_frames = 60
     max_delta_of_late_detection = 60
     is_plot = True
 
     user_move_type = comp_data['User_Status_gt']
     presence_pred = np.array(comp_data['detection'])
+    dimmed_pred = np.array(comp_data['transition'])
     system_context = comp_data['System_Context_gt']
     wake_events = np.array(comp_data['Is_Wake_event_gt'])
     lock_events = np.array(comp_data['Is_Lock_event_gt'])
@@ -267,6 +268,8 @@ def leave_event_presence_transform(comp_data):
         new_event['is_no_face'] = is_no_face
         new_event['is_user_working'] = is_user_working
         new_event['Is_leave_at_end_of_film'] = True if frame_id[Lock_FN_start_end_frame[event][1]] >= frame_id[-1] else False
+        if np.sum(dimmed_pred[Lock_FN_start_end_frame[event][0]:Lock_FN_start_end_frame[event][1]]) > 0 and new_event['Is_leave_at_end_of_film']:
+            new_event['detection'] = True
         events.append(new_event)
 
     if is_plot:

@@ -173,16 +173,20 @@ def statistic_tool_reader_presence_e2e_analysis(path):
                  continue
             if 'System State' in line['message']:
                 if (line['message']['System State']=="SCREEN_ON") or (line['message']['System State']=="SCREEN_DIMMED_PERSON_OUT_OF_RANGE") or (line['message']['System State']=="SCREEN_DIMMED_NO_PERSON"):
-                    data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
+                    if (line['message']['System State']=="SCREEN_DIMMED_PERSON_OUT_OF_RANGE") or (line['message']['System State']=="SCREEN_DIMMED_NO_PERSON"):
+                        data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0, 'transition':True}}]}
+                    else:
+                        data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0, 'transition':False}}]}
+
                 else:
-                    data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
+                    data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0, 'transition':False}}]}
             else:
                 if 'System_Context' in line['message']:
                     gt_file = True
                     if line['message']['System_Context'] == 'Scan_for_lock':
-                        data={'frame_id':frame_id, 'predictions': [{'detection':True, 'prediction':{'classification':1.0}}]}
+                        data={'frame_id':frame_id, 'predictions': [{'detection':True,'prediction':{'classification':1.0, 'transition':False}}]}
                     else:
-                        data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0}}]}
+                        data={'frame_id':frame_id, 'predictions': [{'detection':False, 'prediction':{'classification':0.0, 'transition':False}}]}
                 else:
                     continue
                 # if enable_approach_split==False:
