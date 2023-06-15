@@ -242,8 +242,9 @@ def approach_event_presence_transform(comp_data):
                 bb_height[ind] = None
     for event in range(Wake_TP):
         frames_range = range(Wake_TP_start_end_frame[event][0], Wake_TP_start_end_frame[event][1])
+        frames_range_extended = range(int(max(Wake_TP_start_end_frame[event][0] - 100, 0)), int(min(Wake_TP_start_end_frame[event][1] + 100, len(frame_id))))
         is_on_edge, is_no_face = check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left[frames_range], bb_top[frames_range], bb_width[frames_range], bb_height[frames_range])
-        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range] else False
+        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range_extended] else False
         new_event = comp_data.iloc[Wake_TP_start_end_frame[event][0]].to_dict()
         new_event['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
         new_event['end_frame'] = frame_id[Wake_TP_start_end_frame[event][1]]
@@ -256,8 +257,9 @@ def approach_event_presence_transform(comp_data):
         events.append(new_event)
     for event in range(Wake_FP):
         frames_range = range(Wake_FP_start_end_frame[event][0], Wake_FP_start_end_frame[event][1])
+        frames_range_extended = range(int(max(Wake_FP_start_end_frame[event][0] - 100, 0)), int(min(Wake_FP_start_end_frame[event][1] + 100, len(frame_id))))
         is_on_edge, is_no_face = check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left[frames_range], bb_top[frames_range], bb_width[frames_range], bb_height[frames_range])
-        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range] else False
+        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range_extended] else False
         new_event = comp_data.iloc[Wake_FP_start_end_frame[event][0]].to_dict()
         new_event['detection_gt'] = False #setting event GT to True at all time. Only TP and FN are possible
         new_event['end_frame'] = frame_id[Wake_FP_start_end_frame[event][1]]
@@ -270,8 +272,9 @@ def approach_event_presence_transform(comp_data):
         events.append(new_event)
     for event in range(Wake_FN):
         frames_range = range(Wake_FN_start_end_frame[event][0], Wake_FN_start_end_frame[event][1])
+        frames_range_extended = range(int(max(Wake_FN_start_end_frame[event][0] - 100, 0)), int(min(Wake_FN_start_end_frame[event][1] + 100, len(frame_id))))
         is_on_edge, is_no_face = check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left[frames_range], bb_top[frames_range], bb_width[frames_range], bb_height[frames_range])
-        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range] else False
+        is_pop_up = True if 'Popup_Approach_PC' in user_status[frames_range_extended] else False
         new_event = comp_data.iloc[Wake_FN_start_end_frame[event][0]].to_dict()
         new_event['detection_gt'] = True #setting event GT to True at all time. Only TP and FN are possible
         new_event['end_frame'] = frame_id[Wake_FN_start_end_frame[event][1]]
