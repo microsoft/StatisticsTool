@@ -84,7 +84,7 @@ export class StatisticsToolService implements OnInit {
     let main  = this.reportlistItems.find(x => x.key == selectedReport)!;
     let ref   = this.mainRefPairs.find(x => x.main == main.value);
 
-    let url = '/get_all_templates';
+    let url = '/viewer/get_all_templates';
     this.httpClient.post<{'content':IContent,'name':string}[]>
       (url,{
         'main_path':main.value,
@@ -127,7 +127,7 @@ export class StatisticsToolService implements OnInit {
 
     this.optionalSegmentations = new Map<string,string[]>();
     this.httpClient.post<{'name':string,'values':string[]}[]>
-      ('/get_segmentations',
+      ('/viewer/get_segmentations',
         {
           'main_path': main.value
         }
@@ -223,7 +223,7 @@ export class StatisticsToolService implements OnInit {
       req.segmentations.push(seg);
     })
     
-    this.httpClient.post<any>('/save_template',{
+    this.httpClient.post<any>('/viewer/save_template',{
       'name':templateName,
       'content':JSON.stringify(req),
       'main_path': this.getSelectedMainReport(),

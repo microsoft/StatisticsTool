@@ -1,7 +1,11 @@
 
+import json
 import math
+import pickle
 import pandas as pd, os
 import numpy as np
+
+from app_config.constants import Constants
 
 
 # Irit's totos:
@@ -172,6 +176,33 @@ class ParallelExperiment:
          
         return video
 
+
+    def save_experiment(self, out_folder, config_file_name, config_folder):
+        """
+        Saves an object using pickle in a certain path
+        :param obj: any python object (in this project we use it to save an instance of  class ParallelExperiment)
+        :param filename: full path to the saved object
+        """
+        report_name = os.path.splitext(config_file_name)[0]
+        report_file_name = report_name + Constants.EXPERIMENT_EXTENSION
+        report_output_file = os.path.join(out_folder, report_file_name)
+
+        with open(report_output_file, 'wb') as output:  # Overwrites any existing file.
+            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
+
+        metadata = {}  
+
+        config_file_path = os.path.join(config_folder, config_file_name)
+        if os.path.exists(config_file_path):
+            with open(config_file_path) as conf:
+                metadata = json.load(conf)[0]
+        
+        metadata.update(self.sheldon_header_data)
+        output_file = os.path.join(out_folder,report_name+Constants.METADATA_EXTENTION)
+        with open(output_file, 'w') as f:
+            json.dump(metadata, f)
+
+        return report_output_file
 
 def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, sheldon_header_data, overlap_function, evaluation_function):
     """

@@ -1,9 +1,9 @@
-import sys, os, json
+import os, json
 from glob import glob
 from pathlib import Path
 from jsonschema import validate
-import jsonschema
-from classes_and_utils.consts import Constants
+from app_config.constants import Constants
+
 
 
 schema = {

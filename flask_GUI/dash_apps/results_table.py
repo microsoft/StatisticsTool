@@ -1,3 +1,4 @@
+import json
 import sys, os
 current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
@@ -5,14 +6,16 @@ sys.path.append(os.path.join(os.path.join(os.path.join(current_file_directory, '
 
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
-import pandas as pd
 import flask_GUI.dash_apps.my_pivot_table as pt
-from classes_and_utils.GUI_utils import *
+
 from flask_GUI.dash_apps.results_table_css import css
-from flask_GUI.constants import COLOR_GRADIENT_RED_BLUE, COLOR_GRADIENT_RED_WHITE_BLUE
+from app_config.color_scheme import COLOR_GRADIENT_RED_BLUE, COLOR_GRADIENT_RED_WHITE_BLUE
 import math
 from classes_and_utils.unique_helper import UniqueHelper
 import uuid
+
+MAIN_EXP = 'main'
+REF_EXP = 'ref'
 
 def get_color_from_gradient(x, gradient):
     if x<0 or x>1:
@@ -129,7 +132,7 @@ class Results_table():
     def get_link_for_update_list(self,cell_name:str, stat:str, is_ref:bool = False, is_unique:bool = False)-> str:
         unique_flag = "&unique" if is_unique else ""
         ref_flag = "&ref" if is_ref else ""
-        link = f"/update_list?cell_name={cell_name}&stat={stat}&main_path={self.main_path}&ref_path={self.ref_path}"+ref_flag+unique_flag
+        link = f"/example_list/update_list?cell_name={cell_name}&stat={stat}&main_path={self.main_path}&ref_path={self.ref_path}"+ref_flag+unique_flag
         return link
 
 

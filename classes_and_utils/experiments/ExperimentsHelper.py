@@ -1,36 +1,10 @@
-import os,json,urllib.parse
-from classes_and_utils.consts import Constants
-class ConfigurationHelper:
+import os,json
+class ExperimentsHelper:
 
     '''
         input:   request
         retruns: main object ,is main object a directory or experiment,ref object, is ref object a directory or experiment
     '''    
-    @staticmethod
-    def get_request_experiments_info(request):
-
-        #"create report" case
-        if request.args.get('use_cached_report') == 'true':
-            main_path = request.args.get('main')
-            main_path = urllib.parse.unquote_plus(main_path)
-            
-            return main_path, None
-
-        main = None
-        ref = None
-        
-        if request.files and request.files[Constants.MAIN_REPORT_CHOOSEFILE].filename != '':
-            main = request.files[Constants.MAIN_REPORT_CHOOSEFILE]
-        else:
-            main = request.values and request.values[Constants.MAIN_REPORT_FILE_PATH]
-
-        if request.files and request.files[Constants.REF_REPORT_CHOOSE_FILE].filename != '':
-            ref = request.files[Constants.REF_REPORT_CHOOSE_FILE]
-        else:
-            if Constants.REF_REPORT_FILE_PATH in request.values.keys():
-                ref = request.values and request.values[Constants.REF_REPORT_FILE_PATH]            
-
-        return main, ref  
     
     @staticmethod
     def build_main_ref_pairs(main_experiments,ref_experiments):

@@ -1,10 +1,10 @@
 from glob import glob
+import pickle
 import uuid,os
-from flask_GUI.dash_apps.results_table import Results_table
-from classes_and_utils.GUI_utils import *
-from classes_and_utils.consts import Constants
+from app_config.constants import Constants
 
-class ConfigurationManager:
+
+class ExperimentsManager:
 
     '''
       experiments: a Map that holds PKLs
@@ -44,25 +44,19 @@ class ConfigurationManager:
     def add_experiments_in_folder(self,folder):
         total = []
         if folder and os.path.isdir(folder) == False:
-            experiment = load_object(folder)
+            experiment = ExperimentsManager.load_object(folder)
             exp_key = self.add_experiment(folder,experiment)
             total.append(exp_key)
         else:        
         
             files = glob(folder + '/**/*' + Constants.EXPERIMENT_EXTENSION, recursive=True)
             for v in files:
-                experiment = load_object(v)
+                experiment = ExperimentsManager.load_object(v)
                 exp_key = self.add_experiment(v,experiment)
                 total.append(exp_key)
         
         return total
 
-    def add_experiment_object(self,experiment_object):
-        key = str(uuid.uuid4()) + "/" + "Upload" + "/" + experiment_object.filename
-        experiment_object = load_object(experiment_object)
-        self.add_experiment(key,experiment_object)
-        return key
-    
     def norm_exp_name(self, name):
         norm_name = name.replace('\\','/')
         return norm_name
@@ -83,4 +77,28 @@ class ConfigurationManager:
         result = []
         for k, v in segmentations.items():
             result.append({'name':k,'values':v})
-        return segmentations    
+        return segmentations   
+
+    @staticmethod
+    def load_object(file):
+        """
+        Loads a pickle file from a path
+        :param filename: the path from which the function loads the pickle file
+        :return: the loaded file
+        """
+        ret_exp = None
+        ## Load  pickle
+        if type(file).__name__ == 'str':
+            with open(file, 'rb') as input:
+                ret_exp = pickle.load(input)
+        elif type(file).__name__ == 'FileStorage':
+            ret_exp = pickle.load(file.stream)
+        else:
+            raise TypeError("Unable to load pickle")
+        
+        ## Update values
+        ret_exp.main_ref_dict=None
+        ret_exp.ref_main_dict=None
+
+        return ret_exp
+    

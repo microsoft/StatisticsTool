@@ -20,7 +20,7 @@
 
   function showConfiguration(){
     
-    var url = 'show?codice=${item.key.codice}&Configuration='+document.getElementById('Configuration').value;
+    var url = 'new_report/show_config?codice=${item.key.codice}&Configuration='+document.getElementById('Configuration').value;
     $.get(url, function(responseText) {
         $("#add_config_iframe").contents().find("body").html(''); 
         $('#add_config_iframe').attr("srcdoc", responseText);
@@ -107,7 +107,7 @@ input[type=submit]:hover {
                 <td><a style="cursor: pointer;text-decoration: underline;"
                         onclick="showConfiguration();"> Show </a></td>
                 <td> / </td>
-                <td><a href="/add_config" action="/add_config" target="add_config_iframe"> Add </a></td>
+                <td><a href="/new_report/add_config" action="/new_report/add_config" target="add_config_iframe"> Add </a></td>
 
             </tr>
 
