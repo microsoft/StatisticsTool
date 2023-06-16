@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import render_template, request
 import urllib.parse
 from app_config.constants import Constants
-from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config
+from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs
 from app_config.constants import UserDefinedConstants
 
 from flask_GUI.flask_server import server
@@ -55,13 +55,14 @@ def calculating():
 
 @server.route('/new_report/add_config', methods=['GET', 'POST'])
 def new_task_func():
+    file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
     return render_template('new_task_config.html', 
-                           file_reading_funcs=UserDefinedConstants.file_reading_funcs, 
-                           Evaluation_funcs=UserDefinedConstants.Evaluation_funcs, 
-                           overlap_funcs=UserDefinedConstants.overlap_funcs, 
-                           partition_funcs=UserDefinedConstants.partition_funcs, 
-                           statistics_funcs=UserDefinedConstants.statistics_funcs,
-                           transformation_funcs=UserDefinedConstants.transformation_funcs)
+                           file_reading_funcs=file_reading_funcs, 
+                           Evaluation_funcs=Evaluation_funcs, 
+                           overlap_funcs=overlap_funcs, 
+                           partition_funcs=partition_funcs, 
+                           statistics_funcs=statistics_funcs,
+                           transformation_funcs=transformation_funcs)
 
 
 def unpack_calc_request(request):

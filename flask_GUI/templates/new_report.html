@@ -20,7 +20,7 @@
 
   function showConfiguration(){
     
-    var url = 'new_report/show_config?codice=${item.key.codice}&Configuration='+document.getElementById('Configuration').value;
+    var url = '/new_report/show_config?codice=${item.key.codice}&Configuration='+document.getElementById('Configuration').value;
     $.get(url, function(responseText) {
         $("#add_config_iframe").contents().find("body").html(''); 
         $('#add_config_iframe').attr("srcdoc", responseText);
