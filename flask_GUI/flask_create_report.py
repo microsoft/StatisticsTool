@@ -27,9 +27,12 @@ def new_report_func():
 @server.route('/new_report/calculating_page', methods=['GET', 'POST'])
 def calculating():
     # extract the user specified directories and names
-    config_file_names, prd_dir, GT_dir, output_dir = unpack_calc_request(request)
+    suite_name, config_file_names, prd_dir, GT_dir, output_dir = unpack_calc_request(request)
     
-    if config_file_names.endswith('.suite.json'):
+    report_dir = ''
+    if suite_name:
+        output_dir = os.path.join(output_dir,suite_name)
+        print("suite output folder: "+output_dir)
         config_names_list = config_file_names.split(',')
     else:
         config_names_list = [config_file_names]
@@ -37,20 +40,24 @@ def calculating():
     for config_file_name in config_names_list:
     # making sure save_stats_dir is empty and opening the appropriate folders
         try:
-            output_dir=os.path.join(output_dir,f'{os.path.splitext(config_file_name)[0]}-{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}')
-            os.makedirs(output_dir)
+            report_dir=os.path.join(output_dir,f'{os.path.splitext(config_file_name)[0]}-{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}')
+            print("report output folder: " + report_dir)
+            os.makedirs(report_dir)
         except:
             return render_template('Not_found.html')
         
         # calculate the intermediate results for all the videos then combine them
-        exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, output_dir, gt_dir=GT_dir)
+        exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)
+
+    result_dir = output_dir if suite_name else report_dir #if run only one report so the link should go to the report folder else to suite folder
 
     if exp == 'TypeError' or exp is None or report_file_name is None:
         link = 'None'
     else:
-        link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(report_file_name)
+        link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(result_dir)
 
     results_text = results_text.split('\n')
+    results_text.append(f"Output {'suite' if suite_name else 'report'} folder: {result_dir}.")
     return render_template('message.html', link=link, text=results_text)
 
 @server.route('/new_report/add_config', methods=['GET', 'POST'])
@@ -73,13 +80,14 @@ def unpack_calc_request(request):
     :return: parameters needed for a new report
     """
     # receiving the wanted configuration file name from the form
-    config_file_name = request.form.get('Configuration')
+    config_file_names = request.form.get('Configurations')
+    suite_name = request.form.get('Suite Name')
     # receiving the wanted directories names from the form
     prd_dir = request.form.get('Predictions Directory')
     GT_dir = request.form.get('Ground Truth Directory')
     output_dir = request.form.get('Reporter Output Directory')
     
-    return config_file_name, prd_dir, GT_dir, output_dir
+    return suite_name,config_file_names, prd_dir, GT_dir, output_dir
 
 
 def unpack_new_config(request):
