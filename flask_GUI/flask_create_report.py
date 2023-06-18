@@ -10,6 +10,7 @@ from flask_GUI.flask_server import server
 from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.utils import loading_json, save_json
 from classes_and_utils.VideoEvaluation import compare_predictions_directory
+from pathlib import PurePosixPath
 
 @server.route('/new_report/show_config', methods=['GET', 'POST'])
 def show_config():
@@ -29,13 +30,13 @@ def calculating():
     # extract the user specified directories and names
     suite_name, config_file_names, prd_dir, GT_dir, output_dir = unpack_calc_request(request)
     
-    report_dir = ''
-    if suite_name:
-        output_dir = os.path.join(output_dir,suite_name)
-        print("suite output folder: "+output_dir)
-        config_names_list = config_file_names.split(',')
-    else:
-        config_names_list = [config_file_names]
+    config_names_list = config_file_names.split(',')
+    if not suite_name:
+        suite_name = "run"
+    output_dir = os.path.join(output_dir,suite_name+'-'+datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
+    
+    print("suite output folder: "+output_dir)
+        
 
     for config_file_name in config_names_list:
     # making sure save_stats_dir is empty and opening the appropriate folders
@@ -48,16 +49,16 @@ def calculating():
         
         # calculate the intermediate results for all the videos then combine them
         exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)
-
-    result_dir = output_dir if suite_name else report_dir #if run only one report so the link should go to the report folder else to suite folder
+    
+    output_path = output_dir.replace('\\','/')
 
     if exp == 'TypeError' or exp is None or report_file_name is None:
         link = 'None'
     else:
-        link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(result_dir)
+        link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(output_path)
 
     results_text = results_text.split('\n')
-    results_text.append(f"Output {'suite' if suite_name else 'report'} folder: {result_dir}.")
+    results_text.append(f"Output folder: {output_path}.")
     return render_template('message.html', link=link, text=results_text)
 
 @server.route('/new_report/add_config', methods=['GET', 'POST'])
