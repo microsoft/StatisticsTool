@@ -25,6 +25,7 @@ export class SafePipe implements PipeTransform {
 export class AppComponent implements OnInit {
 
   showFiller = false;
+  isNewReport = false;
 
   @Input() config_key = '';
 
@@ -65,8 +66,14 @@ export class AppComponent implements OnInit {
   ngOnInit(){
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart){
-        let reportsPairs = new URLSearchParams(window.location.search).get('reports')?.toString();
-        this.statToolSvc.init(reportsPairs);
+        let reports = new URLSearchParams(window.location.search).get('reports');
+        if (reports == null){
+          this.isNewReport = true;    
+        } else {
+          this.isNewReport = false;
+          let reportsPairs = new URLSearchParams(window.location.search).get('reports')?.toString();
+          this.statToolSvc.init(reportsPairs);
+        }
       }
     })
   }

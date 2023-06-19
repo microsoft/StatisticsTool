@@ -1,6 +1,6 @@
 
 from datetime import datetime
-from flask import render_template, request
+from flask import render_template, request,redirect
 import urllib.parse
 from app_config.constants import Constants
 from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs
@@ -23,6 +23,10 @@ def show_config():
 def new_report_func():
     possible_configs = manage_new_report_page(request)
     return render_template('new_report.html', possible_configs=possible_configs, wiki_page = Constants.WIKI_URL)
+
+@server.route('/new_report/nav_new_report', methods=['GET', 'POST'])
+def nav_report_func():
+    return redirect(f'/static/index.html?new_report=true')
 
 @server.route('/new_report/calculating_page', methods=['GET', 'POST'])
 def calculating():
