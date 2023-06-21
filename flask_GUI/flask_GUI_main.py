@@ -3,11 +3,7 @@ import mimetypes
 import urllib.parse
 import traceback
 import os, sys
-import re
-from classes_and_utils.UpdateListManager import UpdateListManager
-from classes_and_utils.configuration.ConfigurationHelper import ConfigurationHelper
-from classes_and_utils.configuration.ConfigurationManager import ConfigurationManager
-from flask_GUI.dash_apps.results_table import Results_table
+
 
 #from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
@@ -15,6 +11,10 @@ current_file_directory = os.path.realpath(__file__)
 # adding the statistics_tool folder to path
 sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
 
+from classes_and_utils.UpdateListManager import UpdateListManager
+from classes_and_utils.configuration.ConfigurationHelper import ConfigurationHelper
+from classes_and_utils.configuration.ConfigurationManager import ConfigurationManager
+from flask_GUI.dash_apps.results_table import Results_table
 from classes_and_utils.GUI_utils import *
 from classes_and_utils.TemplatesFilesHelper import *
 from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
@@ -59,12 +59,13 @@ def calculating():
     # calculate the intermediate results for all the videos then combine them
     exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir=GT_dir)
    
-    configuration_manager.add_experiment(report_file_name,exp)
 
     if exp == 'TypeError' or exp is None or report_file_name is None:
         link = 'None'
     else:
         link = "/Report_Viewer?use_cached_report=true&main=" +  urllib.parse.quote(report_file_name)
+        configuration_manager.add_experiment(report_file_name,exp)
+
 
     results_text = results_text.split('\n')
     return render_template('message.html', link=link, text=results_text)
