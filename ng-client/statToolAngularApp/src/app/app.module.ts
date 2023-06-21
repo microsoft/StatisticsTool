@@ -28,6 +28,7 @@ import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
 import '@angular/localize/init';
 import { SaveTemplateDialogComponent } from './save-template-dialog/save-template-dialog.component';
 import { NewReportComponent } from './new-report/new-report.component';
+import { SaveSuiteDialogComponent } from './save-suite-dialog/save-suite-dialog.component';
 
 
 @NgModule({
@@ -41,7 +42,8 @@ import { NewReportComponent } from './new-report/new-report.component';
     DrawerComponent,
     DrawerContentComponent,
     SaveTemplateDialogComponent,
-    NewReportComponent
+    NewReportComponent,
+    SaveSuiteDialogComponent
   ],
   imports: [
     NgMultiSelectDropDownModule.forRoot(),

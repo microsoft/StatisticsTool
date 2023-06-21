@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import {Location} from '@angular/common';
+import { NewReportService } from '../services/new-report.service';
 
 @Component({
   selector: 'new-report',
@@ -8,7 +9,8 @@ import {Location} from '@angular/common';
 })
 export class NewReportComponent {
 
-  constructor(private location:Location){
+  constructor(private location:Location,
+              public newReportService:NewReportService){
 
   }
 

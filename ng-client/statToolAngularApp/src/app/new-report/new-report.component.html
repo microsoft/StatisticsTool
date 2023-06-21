@@ -6,7 +6,7 @@
                 color:#182a69;
                 background-color: #E4F0F5;
                 position: sticky;
-                z-index: 99999;
+                z-index:0;
                 top:0px">
         <div class="template-selection" style="margin-left: 10px;padding-top: 8px;">
             <div style="display: flex;width:100%;height: 40px;">
@@ -27,6 +27,72 @@
 
         <div style="display: flex;">
 
+            <div class="form-container">
+                <div class="form-header">
+                    Crate New Report 
+                </div>
+                <div class="form-content">
+                    <div class="main-div">
+                        <div class="input-label">
+                            <label for="reports_suites" style="font-weight: bold">Reports Suites:</label>
+                          </div>
+                          <div class="select-input">
+                            <select class="form-select form-select-sm" id="reports_suites"
+                                    [(ngModel)]="newReportService.selectedSuite"
+                                    (change)="newReportService.onSuiteSelected($event)"
+                                    >
+                                    <option *ngFor="let suite of newReportService.suites"
+                                                    value="{{suite}}"
+                                            >{{suite}}
+                                    </option>
+                            </select>
+                          </div>
+                        
+                        <div class="combined-section">
+                            <div class="scrollable-div" style="border-bottom:1px solid lightgray;background: white;">
+                                <div class="scrollable-content">
+                                    <ng-container *ngFor="let config of newReportService.configs">
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                    type="checkbox" 
+                                                    [checked]="newReportService.isConfigSelected(config)"
+                                                    (change)="newReportService.configSelectionChanged($event,config)"
+                                            />
+                                            <label class="form-check-label" (click)="newReportService.showConfig(config)" 
+                                                    style="cursor: pointer;
+                                                            color: blue;
+                                                            text-decoration: underline;">{{config}}</label>
+                                            </div>
+                                    </ng-container>
+                                </div>
+                            </div>
+                            <div class="link-button">
+                                <a href="#">Save Suite</a>
+                            </div>
+                        </div>
+                        <div class="text-inputs">
+                            <div class="input-sm">
+                                <label for="predictions_directory" style="width:50%;font-weight: bold">Predictions Directory:</label>
+                                <input type="text" class="form-control input-sm" id="predictions_directory" placeholder="Local directory or blob folder" name="predictions_directory">
+                            </div>
+                            <div class="input-sm">
+                                <label for="ground_truth_directory" style="width:50%;font-weight: bold">Ground Truth Directory:</label>
+                                <input type="text" class="form-control input-sm" id="ground_truth_directory" placeholder="Leave blank if GT is from annotation store" 
+                                        name="ground_truth_directory">
+                            </div>
+                            <div class="input-sm">
+                                <label for="reporter_output_directory" style="width:50%;font-weight: bold;">Reporter Output Directory:</label>
+                                <input type="text" class="form-control input-sm" id="reporter_output_directory" placeholder="" name="reporter_output_directory">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-footer">
+                    <button type="button"  style="margin-bottom: 5px;"
+                             class="btn btn btn-primary btn-mdcd">Create Report</button>
+                </div>
+              </div>
+            <!--
             <div style="height: 65vh;width:40%">
                 <div style="width:99.8%;margin-top: 5px;margin-left: 2px;">
                     <div style="margin: 10px;
@@ -57,49 +123,43 @@
                                                                 width: 98%;
                                                                 margin-left: 5px;">
                                     <label for="reports suites" style="font-weight: bold;width: 53%;">Reports Suites:</label>
-                                        <select class="form-select form-select-sm" id="reports suites">
-                                            <option>Suite 1</option>
-                                            <option>Suite 2</option>
-                                            <option>Suite 3</option>
-                                            <option>Suite 4</option>
+                                        <select class="form-select form-select-sm" id="reports suites"
+                                                [(ngModel)]="newReportService.selectedSuite"
+                                                (change)="newReportService.onSuiteSelected($event)"
+                                                >
+                                                <option *ngFor="let suite of newReportService.suites"
+                                                                value="{{suite}}"
+                                                        >{{suite}}
+                                                </option>
                                         </select>
                                 </div>
                                 <div style="margin-top: 2px;
-                                border: 1px solid lightgray;
-                                height: 40vh;
-                                width: 65.8%;
-                                margin-left: 32.5%;">
+                                        border: 1px solid lightgray;
+                                        height: 40vh;
+                                        width: 65.8%;
+                                        margin-left: 32.5%;">
                                     <div style="padding: 3px;height: 34vh;overflow-y: scroll;border-bottom:1px solid lightgray;background: white;">
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
-                                        <input type="checkbox" /> This is checkbox <br />
+                                        <ng-container *ngFor="let config of newReportService.configs">
+                                            <div class="form-check">
+                                                <input class="form-check-input" 
+                                                       type="checkbox" 
+                                                       [checked]="newReportService.isConfigSelected(config)"
+                                                       (change)="newReportService.configSelectionChanged($event,config)"
+                                                />
+                                                <label class="form-check-label" (click)="newReportService.showConfig(config)" 
+                                                        style="cursor: pointer;
+                                                                color: blue;
+                                                                text-decoration: underline;">{{config}}</label>
+                                              </div>
+                                        </ng-container>
                                     </div>
                                     <div>
-                                        <button type="button" style="margin-top: 10px;margin-left: 10px;" class="btn btn-primary btn-sm">Save Suite</button>
+                                        <button type="button" style="margin-top: 10px;margin-left: 10px;" class="btn btn-primary btn-sm" (click)="newReportService.openSaveSuiteDialog()">Save Suite</button>
                                       </div>
                                 </div>
                             </div>
                             <div style="padding: 2px;">
 
-                                <!--<h5>Directories</h5>-->
-                            
                                 <div class="form-group" style="width:98%;margin-top:5px;margin-left: 10px;display: flex;">
                                 <label for="predictions_directory" style="width:50%;font-weight: bold">Predictions Directory:</label>
                                 <input type="text" class="form-control input-sm" id="predictions_directory" placeholder="Local directory or blob folder" name="predictions_directory">
@@ -116,18 +176,6 @@
                                 <input type="text" class="form-control input-sm" id="reporter_output_directory" placeholder="" name="reporter_output_directory">
                                 </div>
                             </div>   
-                            <!--<div >
-                                <div class="form-group" style="width:100%;display: flex;margin-top:24px">
-                                    <label for="reports suites" style="font-weight: bold;width: 32%;margin-top:3px">Reports Suites:</label>
-                                        <select class="form-control" id="reports suites">
-                                            <option>Suite 1</option>
-                                            <option>Suite 2</option>
-                                            <option>Suite 3</option>
-                                            <option>Suite 4</option>
-                                        </select>
-                                </div>        
-                            </div>-->
-
                         </div>
                         <div style="height: 50px;
                                     bottom: 0px;
@@ -139,22 +187,15 @@
                                     style="margin-top:8px;margin-bottom: 3px;margin-left: 5px;" class="btn btn btn-primary btn-mdcd">Create Report</button>
                         </div>
                     </div>
-                    <!--
-                    <div >
-                        <configurations style="display: block;height: 48vh;"></configurations>
-                        <directories style="width: 99.3%;display: block;"></directories>
-                    </div>
-                -->
                 </div>
-            </div>
+            </div>-->
 
             <div style="height: 60.7vh;border:1px solid lightgray;border-radius: 3px;width:30%;margin-top: 29px;position: absolute;right: 120px;">
                 CONFIGURATION CONTENT
             </div>
         </div>
         
-        <!--<hr style="margin-left:10px;margin-right: 5px;width:40%;margin-top: 70px;">-->
-        <div style="width:40%;height:20vh;margin-top: 70px;border:1px dashed lightgray;background: white;margin-left: 10px;">
+        <div style="width:40%;height:15vh;margin-top: 10px;border:1px dashed lightgray;background: white;margin-left: 20px;">
             RESULTS                    
         </div>
     </div>

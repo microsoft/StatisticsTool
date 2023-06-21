@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import render_template, request,redirect
 import urllib.parse
 from app_config.constants import Constants
-from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs
+from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs,get_suites_folder
 from app_config.constants import UserDefinedConstants
 
 from flask_GUI.flask_server import server
@@ -26,7 +26,37 @@ def new_report_func():
 
 @server.route('/new_report/nav_new_report', methods=['GET', 'POST'])
 def nav_report_func():
-    return redirect(f'/static/index.html?new_report=true')
+    possible_configs = manage_new_report_page(request)
+    possible_suites = get_possible_suites()
+    js_possible_configs = json.dumps(possible_configs)
+    js_possible_suites = json.dumps(possible_suites)
+    return redirect(f'/static/index.html?new_report=true&possible_configs={js_possible_configs}&possible_suites={js_possible_suites}')
+
+@server.route('/new_report/get_suite', methods=['GET'])
+def get_suite():
+    suite_name = request.args.get('suite')
+    configs = get_suite_configurations(suite_name)
+    return json.dumps(configs)
+
+@server.route('/new_report/save_suite', methods=['GET','POST'])
+def save_suite():
+    suite_name = request.json['suite']
+    configs = request.json['configurations']
+    data = {
+        'configurations': configs
+    }
+    json_object = json.dumps(data)
+    
+    folder = get_suites_folder()
+    file_name = suite_name
+    if os.path.splitext(file_name)[1] != ".json":
+        file_name += ".json"
+    path = os.path.join(folder,file_name)
+    with open(path, "w") as js:
+        js.write(json_object)
+
+    return json.dumps(get_possible_suites())
+        
 
 @server.route('/new_report/calculating_page', methods=['GET', 'POST'])
 def calculating():
@@ -132,6 +162,13 @@ def manage_new_report_page(request):
     possible_configs = os.listdir(configs_folder)
     return possible_configs
 
+def get_possible_suites():
+    suites_folder = get_suites_folder()
+    if not os.path.exists(suites_folder):
+        os.makedirs(suites_folder)
+    possible_suites = os.listdir(suites_folder)
+    return possible_suites
+
 def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = None):
     """
 
@@ -169,4 +206,18 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     configs_folder = get_configs_folder()
     report_file_name = exp.save_experiment(folder_name, config_file_name, configs_folder)
     return exp, user_text, report_file_name
+
+def get_suite_configurations(suite_name):
+
+    if os.path.splitext(suite_name)[1] != ".json":
+        suite_name += ".json"
+
+    configurations = []
+    suites_folder = get_suites_folder()
+    with open(os.path.join(suites_folder,suite_name)) as f:
+        data = json.load(f)
+        for config in data['configurations']:
+            configurations.append(config)
+   
+    return configurations
 

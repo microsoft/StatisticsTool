@@ -100,6 +100,7 @@ export class StatisticsToolService implements OnInit {
 
       this.readLocalDataStoreInfoFromStorage();
   }
+  
 
   processReportsPairs(reportPairs:string){
     if (reportPairs == '')

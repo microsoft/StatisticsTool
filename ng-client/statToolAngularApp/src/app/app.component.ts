@@ -3,6 +3,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { NavigationStart, Router } from '@angular/router';
 import { StatisticsToolService } from './services/statistics-tool.service';
+import { NewReportService } from './services/new-report.service';
 
 @Pipe({
   name: 'safe'
@@ -60,6 +61,7 @@ export class AppComponent implements OnInit {
 
   constructor(private router : Router,
               public statToolSvc:StatisticsToolService,
+              private newReportService:NewReportService,
               public eltRef: ElementRef) {
   }
 
@@ -68,7 +70,11 @@ export class AppComponent implements OnInit {
       if (event instanceof NavigationStart){
         let reports = new URLSearchParams(window.location.search).get('reports');
         if (reports == null){
-          this.isNewReport = true;    
+          this.isNewReport = true;
+          let configs = new URLSearchParams(window.location.search).get('possible_configs');
+          let suites = new URLSearchParams(window.location.search).get('possible_suites');
+          this.newReportService.init(configs!,suites!);
+
         } else {
           this.isNewReport = false;
           let reportsPairs = new URLSearchParams(window.location.search).get('reports')?.toString();

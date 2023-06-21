@@ -36,7 +36,7 @@ def Report_Viewer():
 
         main_added_experiments = experiments_manager.add(main)
         ref_added_experiments  = experiments_manager.add(ref)
-        js_pairs = ExperimentsHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+        js_pairs = ExperimentsHelper.build_dmain_ref_pairs(main_added_experiments,ref_added_experiments)
         return redirect(f'/static/index.html?reports={js_pairs}')
     
     except Exception as ex:

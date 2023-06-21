@@ -14,7 +14,8 @@ class Constants:
     WIKI_URL =  "https://www.deviceswiki.com/wiki/Statistics_Tool"
     METADATA_EXTENTION = '.metadata.json'
     INTERMEDIATE_RESULTS_DIR="intermediate resutls"
-    CONFIG_FILE_NAME = "configs"
+    CONFIG_FOLDER_NAME = "configs"
+    SUITES_FOLDER_NAME = "suites"
 
 class UserDefinedConstants:
     READING_FUNCTIONS = 'reading_functions'

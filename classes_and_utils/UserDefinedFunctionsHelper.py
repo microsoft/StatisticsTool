@@ -7,7 +7,11 @@ from classes_and_utils.utils import loading_json
 
 
 def get_configs_folder():
-    folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), Constants.CONFIG_FILE_NAME)
+    folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), Constants.CONFIG_FOLDER_NAME)
+    return folder
+
+def get_suites_folder():
+    folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), Constants.SUITES_FOLDER_NAME)
     return folder
 
 '''

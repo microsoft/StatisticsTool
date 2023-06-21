@@ -1,0 +1,110 @@
+
+  
+  .form-container {
+    height: 70vh;
+    width: 40%;
+    margin-left: 20px;
+    margin-top: 10px;
+    padding: 0px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid lightgray;
+    background: #fafafa;
+  }
+  
+  .form-header {
+    text-align: center;
+    margin-bottom: 0px;
+    background-color: #E4F0F5;
+    border-bottom: 1px solid lightgray;
+    color: #182a69;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  
+  .form-content {
+    flex-grow: 1;
+    display: flex;
+    align-items: stretch;
+    padding:5px;
+  }
+  
+  .main-div {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  
+  .combined-section {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 20;
+  }
+  
+  .scrollable-div {
+    flex-grow: 1;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    height: 25vh;
+  }
+
+  .scrollable-content {
+    overflow-y: auto;
+  }
+  
+  .link-button {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 10px;
+  }
+  
+  .link-button a {
+    padding: 5px;
+  }
+
+  .text-inputs {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    overflow-y: auto;
+    padding-right: 10px;
+  }
+  
+  .text-boxes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .form-footer {
+    text-align: center;
+    margin-top: 0px;
+  }
+  
+  .input-label {
+    display: flex;
+    justify-content: left;
+  }
+  
+  .select-input {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  
+.input-sm {
+    display: flex;
+    flex-direction: column;
+    width: 99.5%;
+  }
+  
+  .input-sm label {
+    margin-bottom: 5px;
+  }
+  
+  .input-sm input {
+    padding: 5px;
+  }
