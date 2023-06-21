@@ -10,7 +10,6 @@ from flask_GUI.flask_server import server
 from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.utils import loading_json, save_json
 from classes_and_utils.VideoEvaluation import compare_predictions_directory
-from pathlib import PurePosixPath
 
 @server.route('/new_report/show_config', methods=['GET', 'POST'])
 def show_config():
