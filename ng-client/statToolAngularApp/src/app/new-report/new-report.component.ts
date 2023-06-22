@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import {Location} from '@angular/common';
-import { NewReportService } from '../services/new-report.service';
+import { NewReportService, SELECTE_SUITE } from '../services/new-report.service';
 
 @Component({
   selector: 'new-report',
@@ -26,5 +26,12 @@ export class NewReportComponent {
     }
     window.location.href = 'http://127.0.0.1:5000/';
   }
+
+  isSelectSuiteValid(){
+    if (this.newReportService.selectedSuite != SELECTE_SUITE)
+      return true;
+    return false;
+  }
+
 
 }

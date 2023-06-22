@@ -28,6 +28,10 @@ export class NewReportService {
     logName = '';
     treshold = '';
 
+    predictionsDirectory = '';
+    groundTruthDirectory = '';
+    reporterOutputDirectory = '';
+
     constructor(private http:HttpClient,private modalService: NgbModal){
 
         let url = '/new_report/get_all_user_defined_functions';
