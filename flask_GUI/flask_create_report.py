@@ -3,13 +3,14 @@ from datetime import datetime
 from flask import render_template, request,redirect
 import urllib.parse
 from app_config.constants import Constants
-from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs,get_suites_folder
+from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs,get_suites_folder,get_users_defined_functions
 from app_config.constants import UserDefinedConstants
 
 from flask_GUI.flask_server import server
 from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.utils import loading_json, save_json
 from classes_and_utils.VideoEvaluation import compare_predictions_directory
+
 
 @server.route('/new_report/show_config', methods=['GET', 'POST'])
 def show_config():
@@ -56,7 +57,19 @@ def save_suite():
         js.write(json_object)
 
     return json.dumps(get_possible_suites())
-        
+
+@server.route('/new_report/get_all_user_defined_functions', methods=['GET'])
+def get_user_defined_functions_list():
+    
+    functions = dict()
+    functions[UserDefinedConstants.READING_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.READING_FUNCTIONS)
+    functions[UserDefinedConstants.EVALUATION_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.EVALUATION_FUNCTIONS)
+    functions[UserDefinedConstants.OVERLAP_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.OVERLAP_FUNCTIONS)
+    functions[UserDefinedConstants.PARTITIONING_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.PARTITIONING_FUNCTIONS)
+    functions[UserDefinedConstants.STATISTICS_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.STATISTICS_FUNCTIONS)
+    functions[UserDefinedConstants.TRANSFORM_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS)
+   
+    return json.dumps(functions)
 
 @server.route('/new_report/calculating_page', methods=['GET', 'POST'])
 def calculating():

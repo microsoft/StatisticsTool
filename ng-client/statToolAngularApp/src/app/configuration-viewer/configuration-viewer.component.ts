@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NewReportService } from '../services/new-report.service';
 
 @Component({
   selector: 'configuration-viewer',
@@ -7,9 +8,12 @@ import { Component } from '@angular/core';
 })
 export class ConfigurationViewerComponent {
  
+  constructor(public newReportService:NewReportService) {
+  }
+
   title = 'New Configuration'
 
   close(){
-    
+
   }
 }

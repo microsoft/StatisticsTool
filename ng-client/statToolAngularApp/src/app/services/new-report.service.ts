@@ -10,9 +10,50 @@ export const SELECTE_SUITE = '--- Select Suite ---';
   })
 
 export class NewReportService {
+    reading_functions:string[] = [];
+    evaluation_functions:string[] = [];
+    overlap_functions:string[] = [];
+    partitioning_functions:string[] = [];
+    statistics_functions:string[] = [];
+    transform_functions:string[] = [];
+    
+    selectedReadingFunction = '';
+    selectedOverlapFunction = '';
+    selectedTransformFunction = '';
+    selectedPartitioningFunction = '';
+    selectedStatisticsFunction = '';
+    selectedEvaluationFunction = '';
+
+    configName = '';
+    logName = '';
+    treshold = '';
 
     constructor(private http:HttpClient,private modalService: NgbModal){
 
+        let url = '/new_report/get_all_user_defined_functions';
+        this.http.get<string[]>(url).subscribe(functions => {
+            
+            let map:any;
+            map = functions;
+            this.reading_functions = map.reading_functions;
+            this.reading_functions.sort((a,b) =>  (a > b ? 1 : -1));
+
+            this.evaluation_functions = map.evaluation_functions;
+            this.evaluation_functions.sort((a,b) =>  (a > b ? 1 : -1));
+
+            this.overlap_functions = map.overlap_functions;
+            this.overlap_functions.sort((a,b) =>  (a > b ? 1 : -1));
+
+            this.partitioning_functions = map.partitioning_functions;
+            this.partitioning_functions.sort((a,b) =>  (a > b ? 1 : -1));
+            
+            this.statistics_functions = map.statistics_functions;
+            this.statistics_functions.sort((a,b) =>  (a > b ? 1 : -1));
+
+            this.transform_functions = map.transform_functions;
+            this.transform_functions.sort((a,b) =>  (a > b ? 1 : -1));
+            
+        })
     }
 
     configs:string[]  = [];
