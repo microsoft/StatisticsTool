@@ -108,3 +108,9 @@
   .input-sm input {
     padding: 5px;
   }
+
+  .separator {
+    margin: 0 5px;
+    color: #999;
+    line-height: 2em;
+  }

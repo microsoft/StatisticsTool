@@ -1,0 +1,131 @@
+<div class="configuration-container">
+    <div class="configuration-header">
+        <div class="closeButton">X</div>
+        <div class="titleText">{{title}} </div>
+    </div>
+    <div class="configuration-content">
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="config_name" style="font-weight: bold">Configuration Name:</label>
+                <input type="text" class="form-control form-control-sm" id="config_name" 
+                       placeholder="" name="config_name" style="min-height: 0px !important;">
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="log_name" style="font-weight: bold">Log Names to Evaluate:</label>
+                <input type="text" class="form-control form-control-sm" id="log_name" 
+                        placeholder="" name="log_name" style="min-height: 0px !important;">
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="file_reading_function" style="font-weight: bold">File Reading Function:</label>
+                    <select class="form-select form-select-sm" id="file_reading_function" style="padding-right: 10px;"
+                                    >
+                                    <!--<option *ngFor="let suite of newReportService.suites"
+                                                    value="{{suite}}"
+                                            >{{suite}}
+                                    </option>-->
+                    </select>
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="over_lap_function" style="font-weight: bold">Overlap Function:</label>
+                    <select class="form-select form-select-sm" id="over_lap_function" style="padding-right: 10px;"
+                                    >
+                                    <!--<option *ngFor="let suite of newReportService.suites"
+                                                    value="{{suite}}"
+                                            >{{suite}}
+                                    </option>-->
+                    </select>
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="transform_function" style="font-weight: bold">Transform Function:</label>
+                    <select class="form-select form-select-sm" id="transform_function" style="padding-right: 10px;"
+                                    >
+                                    <!--<option *ngFor="let suite of newReportService.suites"
+                                                    value="{{suite}}"
+                                            >{{suite}}
+                                    </option>-->
+                    </select>
+              </div>
+            </div>
+        </div>
+        
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="treshold" style="font-weight: bold">Treshold:</label>
+                <input type="text" class="form-control form-control-sm" id="treshold" 
+                        placeholder="" name="treshold" style="min-height: 0px !important;">
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="evaluate_function" style="font-weight: bold">Evaluate Function:</label>
+                    <select class="form-select form-select-sm" id="evaluate_function" style="padding-right: 10px;"
+                                    >
+                                    <!--<option *ngFor="let suite of newReportService.suites"
+                                                    value="{{suite}}"
+                                            >{{suite}}
+                                    </option>-->
+                    </select>
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="statistics_function" style="font-weight: bold">Statistics Function:</label>
+                    <select class="form-select form-select-sm" id="statistics_function" style="padding-right: 10px;"
+                                    >
+                                    <!--<option *ngFor="let suite of newReportService.suites"
+                                                    value="{{suite}}"
+                                            >{{suite}}
+                                    </option>-->
+                    </select>
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="partitioning_function" style="font-weight: bold">Partitioning Function:</label>
+                    <select class="form-select form-select-sm" id="partitioning_function" style="padding-right: 10px;"
+                                    >
+                                    <!--<option *ngFor="let suite of newReportService.suites"
+                                                    value="{{suite}}"
+                                            >{{suite}}
+                                    </option>-->
+                    </select>
+              </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-footer">
+        <button type="button" style="margin-bottom: 5px;"
+                 class="btn btn btn-primary btn-mdcd">Save</button>
+    </div>
+</div>
