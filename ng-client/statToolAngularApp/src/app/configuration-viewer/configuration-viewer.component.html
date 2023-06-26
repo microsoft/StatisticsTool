@@ -27,11 +27,8 @@
                 <label for="log_name" style="font-weight: bold">Log Names to Evaluate:</label>
                 <input type="text" class="form-control form-control-sm" id="log_name" 
                         [(ngModel)]="newReportService.logName"
-                        placeholder="" name="log_name" style="min-height: 0px !important;" minlength="3" required #logNameInput="ngModel"
-                        [ngClass]="{
-                            'is-invalid': logNameInput.invalid && logNameInput.touched,
-                            'is-valid': logNameInput.valid && logNameInput.touched
-                        }">
+                        placeholder="" name="log_name" style="min-height: 0px !important;" 
+                        >
               </div>
             </div>
         </div>
@@ -171,6 +168,8 @@
     </div>
     <div class="form-footer">
         <button type="button" style="margin-bottom: 5px;"
-                 class="btn btn btn-primary btn-mdcd">Save</button>
+                 class="btn btn btn-primary btn-mdcd" 
+                 [disabled]="disableSaveButton()"
+                 (click)="newReportService.saveConfig()">Save</button>
     </div>
 </div>

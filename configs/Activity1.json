@@ -1,0 +1,12 @@
+[
+    {
+        "File Reading Function": "statistic_tool_reader_activity_calssification",
+        "Overlap Function": "Classification_True_False_activity",
+        "Transformation Function": "None",
+        "Partitioning Functions": "activity_partition",
+        "Statistics Functions": "precision_recall",
+        "Evaluation Function": "activity_evaluation",
+        "Log Names to Evaluate": "",
+        "Threshold": "0.1"
+    }
+]

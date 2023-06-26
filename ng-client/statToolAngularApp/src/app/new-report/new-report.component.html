@@ -25,7 +25,7 @@
             </div>
         </div>
 
-        <div style="display: flex;">
+        <div style="display: flex;justify-content: space-between">
 
             <div class="form-container">
                 <div class="form-header">
@@ -72,7 +72,7 @@
                                 </div>
                             </div>
                             <div class="link-button" style="display:flex">
-                                <a href="#">Save Suite</a>  <span class="separator">|</span> <a href="#">Add Configuration</a>
+                                <a class="link-a-cls" (click)="newReportService.openSaveSuiteDialog()">Save Suite</a>  <span class="separator">|</span> <a class="link-a-cls" (click)="newReportService.clearConfigViewer()">Add Configuration</a>
                             </div>
                         </div>
                         <div class="text-inputs">
@@ -116,16 +116,13 @@
                 </div>
                 <div class="form-footer">
                     <button type="button"  style="margin-bottom: 5px;"
-                             class="btn btn btn-primary btn-mdcd">Create Report</button>
+                             class="btn btn btn-primary btn-mdcd"
+                             [disabled]="disableCreateReportButton()">Create Report</button>
                 </div>
             </div>
             <div style="width:30%;margin-top: 20px;position: absolute;right: 20px;"  cdkDrag>
                 <configuration-viewer></configuration-viewer>
             </div>
-            <!--<div style="height: 60.7vh;border:1px solid lightgray;border-radius: 3px;width:30%;margin-top: 29px;position: absolute;right: 120px;">
-                CONFIGURATION CONTENT
-            </div>-->
-
         </div>
         
         <div style="width:40%;height:15vh;margin-top: 10px;border:1px dashed lightgray;background: white;margin-left: 20px;">

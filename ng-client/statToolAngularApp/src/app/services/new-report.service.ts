@@ -56,7 +56,10 @@ export class NewReportService {
 
             this.transform_functions = map.transform_functions;
             this.transform_functions.sort((a,b) =>  (a > b ? 1 : -1));
-            
+            let trans:string[] = [];
+            trans.push('None');
+            trans.concat(this.transform_functions)
+            this.transform_functions = trans;
         })
     }
 
@@ -66,12 +69,15 @@ export class NewReportService {
     selectedSuite = '';
 
     init(configs:string,suites:string){
-        
-        this.configs = JSON.parse(configs);
-        this.configs.sort((a,b) =>  (a > b ? 1 : -1));
+        this.parseConfigs(configs);
         this.initSuitesList(JSON.parse(suites));    
         this.selectedSuite = SELECTE_SUITE;
         this.initSelectedConfigs();    
+    }
+
+    parseConfigs(configs:string){
+        this.configs = JSON.parse(configs);
+        this.configs.sort((a,b) =>  (a > b ? 1 : -1));
     }
 
     initSelectedConfigs(){
@@ -149,11 +155,66 @@ export class NewReportService {
         });    
       }
     
-      closeSaveSuiteDialog(){
+    closeSaveSuiteDialog(){
         this.modalService.dismissAll();
-      }
- 
-      showConfig(config:string){
-        alert(config)
-      }
+    }
+      
+    clearConfigViewer(){
+        this.selectedReadingFunction = '';
+        this.selectedOverlapFunction = '';
+        this.selectedTransformFunction = '';
+        this.selectedPartitioningFunction = '';
+        this.selectedStatisticsFunction = '';
+        this.selectedEvaluationFunction = '';
+    
+        this.configName = '';
+        this.logName = '';
+        this.treshold = '';
+    }  
+
+    showConfig(configName:string){
+        
+        //get the confing from server
+        let params = { 'config':configName };
+        let url = '/new_report/get_configuration';
+        this.http.get<any>(url,{params}).subscribe(config => {
+            //clear the config viewer  
+            this.clearConfigViewer();
+            //show the new config in the viewer
+            this.selectedReadingFunction = config['File Reading Function'];
+            this.selectedOverlapFunction = config['Overlap Function'];
+            this.selectedTransformFunction = config['Transformation Function'];
+            this.selectedPartitioningFunction = config['Partitioning Functions'];
+            this.selectedStatisticsFunction = config['Statistics Functions'];
+            this.selectedEvaluationFunction = config['Evaluation Function'];
+        
+            this.configName = configName;
+            this.logName = '';
+            this.treshold = config['Threshold'];
+        })
+    }
+
+    saveConfig(){
+        const dictionary: { [key: string]: any } = {};
+
+        dictionary['File Reading Function'] = this.selectedReadingFunction;
+        dictionary['Overlap Function'] = this.selectedOverlapFunction;
+        dictionary['Transformation Function'] = this.selectedTransformFunction;
+        dictionary['Partitioning Functions'] = this.selectedPartitioningFunction;
+        dictionary['Statistics Functions'] = this.selectedStatisticsFunction;
+        dictionary['Evaluation Function'] = this.selectedEvaluationFunction;
+        dictionary['configName'] = this.configName;
+        dictionary['Log Names to Evaluate'] = this.logName;
+        dictionary['Threshold'] = this.treshold;
+
+        const url = '/new_report/save_configuration'; 
+
+        this.http.post(url, dictionary).subscribe(response => {
+            let configs:any;
+            configs = response;
+            ///this.parseConfigs(configs);
+            this.configs = configs;
+            this.configs.sort((a,b) =>  (a > b ? 1 : -1));
+        })
+    }
 }

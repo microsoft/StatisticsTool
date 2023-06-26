@@ -10,7 +10,7 @@ import { NewReportService, SELECTE_SUITE } from '../services/new-report.service'
 export class NewReportComponent {
 
   constructor(private location:Location,
-              public newReportService:NewReportService){
+              public  newReportService:NewReportService){
 
   }
 
@@ -33,5 +33,10 @@ export class NewReportComponent {
     return false;
   }
 
-
+  disableCreateReportButton(){
+    return (this.newReportService.groundTruthDirectory.length < 3) || 
+           (this.newReportService.predictionsDirectory.length < 3) || 
+           (this.newReportService.reporterOutputDirectory.length < 3) || 
+           (this.newReportService.selectedSuite == SELECTE_SUITE)             
+  }
 }

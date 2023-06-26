@@ -114,3 +114,14 @@
     color: #999;
     line-height: 2em;
   }
+
+  .link-a-cls{
+    color: #0d6efd;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .link-a-cls:hover {
+    color: #0a58ca;
+  }
+

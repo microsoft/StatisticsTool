@@ -16,4 +16,16 @@ export class ConfigurationViewerComponent {
   close(){
 
   }
+
+  disableSaveButton(){
+
+    return (this.newReportService.selectedReadingFunction == '') || 
+            (this.newReportService.selectedOverlapFunction == '') || 
+            (this.newReportService.selectedTransformFunction == '') ||             
+            (this.newReportService.selectedPartitioningFunction == '') ||             
+            (this.newReportService.selectedStatisticsFunction == '') ||
+            (this.newReportService.selectedEvaluationFunction == '') ||             
+            (this.newReportService.configName == '') ||             
+            (this.newReportService.treshold == '')      
+ }
 }

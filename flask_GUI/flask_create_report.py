@@ -71,6 +71,31 @@ def get_user_defined_functions_list():
    
     return json.dumps(functions)
 
+@server.route('/new_report/get_configuration',methods=['GET'])
+def get_config():
+    config_name = request.args.get('config')
+    config_path = os.path.join(get_configs_folder(), config_name)
+    config_file = loading_json(config_path)
+    config_dict = config_file[0]
+    return json.dumps(config_dict)
+
+@server.route('/new_report/save_configuration',methods=['POST'])
+def save_configuration():
+    config_name = request.json['configName']
+    if os.path.splitext(config_name)[1] != ".json":
+        config_name += ".json"
+    dic = request.json
+    del dic['configName']
+    configs_folder = get_configs_folder()
+    path_to_save = os.path.join(configs_folder, config_name)
+    save_json(path_to_save, [dic])
+
+    configs_folder = get_configs_folder()
+    possible_configs = os.listdir(configs_folder)
+
+    return  json.dumps(possible_configs)
+    
+
 @server.route('/new_report/calculating_page', methods=['GET', 'POST'])
 def calculating():
     # extract the user specified directories and names
@@ -118,7 +143,6 @@ def new_task_func():
                            statistics_funcs=statistics_funcs,
                            transformation_funcs=transformation_funcs)
 
-
 def unpack_calc_request(request):
     """
     Accepts request from new_report.html and unpack the parameters for a new report as variables
@@ -135,7 +159,6 @@ def unpack_calc_request(request):
     output_dir = request.form.get('Reporter Output Directory')
     
     return suite_name,config_file_names, prd_dir, GT_dir, output_dir
-
 
 def unpack_new_config(request):
     """
