@@ -2,14 +2,29 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { SaveSuiteDialogComponent } from "../save-suite-dialog/save-suite-dialog.component";
+import { config } from "rxjs";
 
 export const SELECTE_SUITE = '--- Select Suite ---';
+
+export class NewReportResult {
+    ok = true;
+    errorMessage = '';
+    link = '';
+    messages:{'key':string,'value':string}[] = [];
+}
 
 @Injectable({
     providedIn: 'root'
   })
 
 export class NewReportService {
+    
+    configs:string[]  = [];
+    suites:string []  = [];
+    configsSelections = new Map<string,boolean>();
+    selectedSuite = '';
+
+
     reading_functions:string[] = [];
     evaluation_functions:string[] = [];
     overlap_functions:string[] = [];
@@ -31,6 +46,10 @@ export class NewReportService {
     predictionsDirectory = '';
     groundTruthDirectory = '';
     reporterOutputDirectory = '';
+
+    newReportResult = new NewReportResult();
+
+    creatingReport = false;
 
     constructor(private http:HttpClient,private modalService: NgbModal){
 
@@ -61,12 +80,12 @@ export class NewReportService {
             trans.concat(this.transform_functions)
             this.transform_functions = trans;
         })
+
+        this.predictionsDirectory = localStorage.getItem('predictions_directory') != null ? localStorage.getItem('predictions_directory')! : '';
+        this.groundTruthDirectory = localStorage.getItem('ground_truth_directory') != null ? this.groundTruthDirectory = localStorage.getItem('ground_truth_directory')! : '';
+        this.reporterOutputDirectory = localStorage.getItem('reporter_output_directory') != null ? localStorage.getItem('reporter_output_directory')! : '';
     }
 
-    configs:string[]  = [];
-    suites:string []  = [];
-    configsSelections = new Map<string,boolean>();
-    selectedSuite = '';
 
     init(configs:string,suites:string){
         this.parseConfigs(configs);
@@ -136,9 +155,16 @@ export class NewReportService {
                 configs.push(c);
         })
 
+        let strConfigs = '';
+        for (let i=0;i<configs.length;i++){
+            if (strConfigs.length > 0)
+                strConfigs += ","
+            strConfigs += configs[i]
+        }
+
         this.http.post<any>('/new_report/save_suite',{
             'suite':suiteName,
-            'configurations':JSON.stringify(configs)
+            'configurations':strConfigs
         }).subscribe(res => {
             
             this.initSuitesList(res)
@@ -216,5 +242,70 @@ export class NewReportService {
             this.configs = configs;
             this.configs.sort((a,b) =>  (a > b ? 1 : -1));
         })
+    }
+
+    createReport(){
+        this.creatingReport = true;
+        this.newReportResult = new NewReportResult();
+        this.newReportResult.link = '';
+        this.newReportResult.messages = [];
+        this.newReportResult.errorMessage = '';
+        this.newReportResult.ok = false;
+
+        localStorage.setItem('predictions_directory',this.predictionsDirectory);
+        localStorage.setItem('ground_truth_directory',this.groundTruthDirectory);
+        localStorage.setItem('reporter_output_directory',this.reporterOutputDirectory);
+
+        let params = { 
+            'Configurations':this.getSuiteConfigurations(this.selectedSuite),
+            'Suite Name':this.selectedSuite,
+            'Predictions Directory': this.predictionsDirectory,
+            'Ground Truth Directory': this.groundTruthDirectory,
+            'Reporter Output Directory':this.reporterOutputDirectory
+        };
+
+        let url = '/new_report/calculating_page';
+        this.http.get<any>(url,{params}).subscribe(res => {
+            this.creatingReport = false;
+
+            let result:any;
+            result = res;
+            let link = result.link;
+            let messages = <string[]>result.messages;
+            this.newReportResult.errorMessage = result.errorMessage;
+            this.newReportResult.ok = result.ok;
+
+            if (result.ok == true){
+                this.newReportResult.link = (link != 'None' && link != undefined && link != null) ? link : '';
+                messages.forEach(x => {
+                    if (x != ''){
+                        let parts= x.split(": ");
+                        this.newReportResult.messages.push({'key':parts[0],'value':parts[1]});
+                    }
+                })
+            } else {
+                
+            }
+        })
+    }
+
+    getSuiteConfigurations(suiteName:string){
+        let configs:string[] = [];
+        for (let [key,value] of this.configsSelections){
+            if (value){
+                configs.push(key)
+            }
+        }
+
+        return configs.join(",");
+    }
+
+    showResults(){
+        if (this.newReportResult.messages.length > 0)
+            return true;
+        if (this.newReportResult.errorMessage.length > 0)
+            return true;
+
+        return false;
     }
 }

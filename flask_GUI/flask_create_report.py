@@ -1,4 +1,4 @@
-
+import csv
 from datetime import datetime
 from flask import render_template, request,redirect
 import urllib.parse
@@ -44,7 +44,7 @@ def save_suite():
     suite_name = request.json['suite']
     configs = request.json['configurations']
     data = {
-        'configurations': configs
+        'configurations': list(csv.reader([configs]))[0]
     }
     json_object = json.dumps(data)
     
@@ -98,6 +98,7 @@ def save_configuration():
 
 @server.route('/new_report/calculating_page', methods=['GET', 'POST'])
 def calculating():
+    
     # extract the user specified directories and names
     suite_name, config_file_names, prd_dir, GT_dir, output_dir = unpack_calc_request(request)
     
@@ -107,19 +108,22 @@ def calculating():
     output_dir = os.path.join(output_dir,suite_name+'-'+datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
     
     print("suite output folder: "+output_dir)
-        
-
+    result = dict()
+    
     for config_file_name in config_names_list:
     # making sure save_stats_dir is empty and opening the appropriate folders
         try:
             report_dir=os.path.join(output_dir,f'{os.path.splitext(config_file_name)[0]}-{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}')
             print("report output folder: " + report_dir)
             os.makedirs(report_dir)
-        except:
-            return render_template('Not_found.html')
-        
-        # calculate the intermediate results for all the videos then combine them
-        exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)
+            # calculate the intermediate results for all the videos then combine them
+            exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)   
+        except Exception as e:
+            result['ok'] = False
+            result['link'] = ''
+            result['messages'] = ''
+            result['errorMessage'] = f'An error occurred while executing the {config_file_name} configuration file' 
+            return  json.dumps(result)
     
     output_path = output_dir.replace('\\','/')
 
@@ -130,7 +134,13 @@ def calculating():
 
     results_text = results_text.split('\n')
     results_text.append(f"Output folder: {output_path}.")
-    return render_template('message.html', link=link, text=results_text)
+    
+    result['ok'] = True
+    result['link'] = link
+    result['messages'] = results_text
+    result['errorMessage'] = ''
+    return json.dumps(result)
+
 
 @server.route('/new_report/add_config', methods=['GET', 'POST'])
 def new_task_func():
@@ -151,13 +161,13 @@ def unpack_calc_request(request):
     :return: parameters needed for a new report
     """
     # receiving the wanted configuration file name from the form
-    config_file_names = request.form.get('Configurations')
-    suite_name = request.form.get('Suite Name')
+    config_file_names = request.values['Configurations']
+    suite_name = request.values['Suite Name']
     # receiving the wanted directories names from the form
-    prd_dir = request.form.get('Predictions Directory')
-    GT_dir = request.form.get('Ground Truth Directory')
-    output_dir = request.form.get('Reporter Output Directory')
-    
+    prd_dir = request.values['Predictions Directory']
+    GT_dir = request.values['Ground Truth Directory']
+    output_dir = request.values['Reporter Output Directory']
+        
     return suite_name,config_file_names, prd_dir, GT_dir, output_dir
 
 def unpack_new_config(request):

@@ -31,6 +31,7 @@ import { SaveTemplateDialogComponent } from './save-template-dialog/save-templat
 import { NewReportComponent } from './new-report/new-report.component';
 import { SaveSuiteDialogComponent } from './save-suite-dialog/save-suite-dialog.component';
 import { ConfigurationViewerComponent } from './configuration-viewer/configuration-viewer.component';
+import { NewReportResultComponent } from './new-report/new-report-result/new-report-result.component';
 
 
 @NgModule({
@@ -46,7 +47,8 @@ import { ConfigurationViewerComponent } from './configuration-viewer/configurati
     SaveTemplateDialogComponent,
     NewReportComponent,
     SaveSuiteDialogComponent,
-    ConfigurationViewerComponent
+    ConfigurationViewerComponent,
+    NewReportResultComponent
   ],
   imports: [
     NgMultiSelectDropDownModule.forRoot(),

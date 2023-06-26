@@ -1,3 +1,6 @@
+<div class="centered-image" *ngIf="newReportService.creatingReport" style="z-index:999999">
+    <img src="assets/spinner-90-ring-with-bg.svg" style="width:40px;height:40x" />
+  </div>
 <div style="height:100%">
     <div style="width:100%;
                 height:50px;
@@ -25,8 +28,8 @@
             </div>
         </div>
 
-        <div style="display: flex;justify-content: space-between">
-
+        <div style="display: flex;justify-content: space-between;position: relative;">
+            <div class="overlay" [class.show]="newReportService.creatingReport"></div>
             <div class="form-container">
                 <div class="form-header">
                     Crate New Report 
@@ -35,8 +38,8 @@
                     <div class="main-div">
                         <div class="input-label">
                             <label for="reports_suites" style="font-weight: bold">Reports Suites:</label>
-                          </div>
-                          <div class="select-input">
+                        </div>
+                        <div class="select-input">
                             <select class="form-select form-select-sm" id="reports_suites"
                                     [(ngModel)]="newReportService.selectedSuite"
                                     (change)="newReportService.onSuiteSelected($event)"
@@ -51,13 +54,13 @@
                                             >{{suite}}
                                     </option>
                             </select>
-                          </div>
+                        </div>
                         
                         <div class="combined-section">
                             <div class="scrollable-div" style="border-bottom:1px solid lightgray;background: white;">
                                 <div class="scrollable-content">
                                     <ng-container *ngFor="let config of newReportService.configs">
-                                        <div class="form-check">
+                                        <div class="form-check" style="margin-left:4px">
                                             <input class="form-check-input" 
                                                     type="checkbox" 
                                                     [checked]="newReportService.isConfigSelected(config)"
@@ -79,14 +82,14 @@
                             <div class="input-sm">
                                 <label for="predictions_directory" style="width:50%;font-weight: bold">Predictions Directory:</label>
                                 <input type="text" class="form-control input-sm" id="predictions_directory" 
-                                       placeholder="Local directory or blob folder" name="predictions_directory"
-                                       minlength="3" required #predictionsDirectoryInput="ngModel"
-                                       [(ngModel)]="newReportService.predictionsDirectory"
+                                    placeholder="Local directory or blob folder" name="predictions_directory"
+                                    minlength="3" required #predictionsDirectoryInput="ngModel"
+                                    [(ngModel)]="newReportService.predictionsDirectory"
                                         [ngClass]="{
                                             'is-invalid': predictionsDirectoryInput.invalid && predictionsDirectoryInput.touched,
                                             'is-valid': predictionsDirectoryInput.valid && predictionsDirectoryInput.touched
                                         }"
-                                       >
+                                    >
                             </div>
                             <div class="input-sm">
                                 <label for="ground_truth_directory" style="width:50%;font-weight: bold">Ground Truth Directory:</label>
@@ -102,22 +105,23 @@
                             <div class="input-sm">
                                 <label for="reporter_output_directory" style="width:50%;font-weight: bold;">Reporter Output Directory:</label>
                                 <input type="text" class="form-control input-sm" id="reporter_output_directory" 
-                                       placeholder="" name="reporter_output_directory"
-                                       minlength="3" required #reporterOutputDirectoryInput="ngModel"
+                                    placeholder="" name="reporter_output_directory"
+                                    minlength="3" required #reporterOutputDirectoryInput="ngModel"
                                         [(ngModel)]="newReportService.reporterOutputDirectory"
                                         [ngClass]="{
                                             'is-invalid': reporterOutputDirectoryInput.invalid && reporterOutputDirectoryInput.touched,
                                             'is-valid': reporterOutputDirectoryInput.valid && reporterOutputDirectoryInput.touched}"
                                         
-                                       >
+                                    >
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="form-footer">
                     <button type="button"  style="margin-bottom: 5px;"
-                             class="btn btn btn-primary btn-mdcd"
-                             [disabled]="disableCreateReportButton()">Create Report</button>
+                            class="btn btn btn-primary btn-mdcd"
+                            (click)="newReportService.createReport()"
+                            [disabled]="disableCreateReportButton()">Create Report</button>
                 </div>
             </div>
             <div style="width:30%;margin-top: 20px;position: absolute;right: 20px;"  cdkDrag>
@@ -125,8 +129,8 @@
             </div>
         </div>
         
-        <div style="width:40%;height:15vh;margin-top: 10px;border:1px dashed lightgray;background: white;margin-left: 20px;">
-            RESULTS                    
+        <div style="width:40%;margin-top: 10px;margin-left: 20px;max-height: 15vh;">
+            <new-report-result></new-report-result>                    
         </div>
     </div>
 </div>
