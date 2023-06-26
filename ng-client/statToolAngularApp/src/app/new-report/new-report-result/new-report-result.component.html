@@ -5,9 +5,30 @@
     </div>
     <ng-container *ngIf="newReportService.newReportResult.ok == true">
         <div class="key-value-pairs">
-            <ng-container *ngFor="let item of newReportService.newReportResult.messages">
-                <p><strong>{{item.key}}:</strong> {{item.value}}</p>
-            </ng-container>
+            <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Config</th>
+                      <th>Num Success Files</th>
+                      <th>Reading Function Skipped</th>
+                      <th>Not Json</th>
+                      <th>Num Failed</th>
+                      <th>Filtered out by log name</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let file of newReportService.newReportResult.files;let i = index">
+                      <td>{{ file }}</td>
+                      <td>{{ newReportService.newReportResult.num_success_files[i] }}</td>
+                      <td>{{ newReportService.newReportResult.reading_function_skipped[i] }}</td>
+                      <td>{{ newReportService.newReportResult.not_json_files[i] }}</td>
+                      <td>{{ newReportService.newReportResult.failed_with_error[i] }}</td>
+                      <td>{{ newReportService.newReportResult.skipped_not_in_lognames[i] }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
         </div>
     </ng-container>
     <ng-container *ngIf="!(newReportService.newReportResult.ok == true)">
@@ -15,5 +36,4 @@
             <p><strong>{{ newReportService.newReportResult.errorMessage }}</strong></p>
         </div>
     </ng-container>
-    <div class="feedback"> {{ newReportService.newReportResult.ok == true ? 'Execution completed successfully.' : 'Execution failed.' }}</div>
 </div>

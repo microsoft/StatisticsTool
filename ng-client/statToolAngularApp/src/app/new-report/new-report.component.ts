@@ -36,7 +36,6 @@ export class NewReportComponent {
   disableCreateReportButton(){
     return (this.newReportService.groundTruthDirectory.length < 3) || 
            (this.newReportService.predictionsDirectory.length < 3) || 
-           (this.newReportService.reporterOutputDirectory.length < 3) || 
-           (this.newReportService.selectedSuite == SELECTE_SUITE)             
+           (this.newReportService.reporterOutputDirectory.length < 3)            
   }
 }

@@ -14,7 +14,7 @@ export class ConfigurationViewerComponent {
   title = 'New Configuration'
 
   close(){
-
+    this.newReportService.showConfigViewer = false;
   }
 
   disableSaveButton(){
@@ -27,5 +27,11 @@ export class ConfigurationViewerComponent {
             (this.newReportService.selectedEvaluationFunction == '') ||             
             (this.newReportService.configName == '') ||             
             (this.newReportService.treshold == '')      
+ }
+
+ getTitle(){
+    if (this.newReportService.configName != '')
+      return this.newReportService.configName;
+    return 'New Configuration';
  }
 }
