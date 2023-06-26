@@ -265,7 +265,7 @@ export class NewReportService {
 
         let params = { 
             'Configurations':this.getSuiteConfigurations(this.selectedSuite),
-            'Suite Name':this.selectedSuite,
+            'Suite Name':this.selectedSuite == SELECTE_SUITE ? '' : this.selectedSuite,
             'Predictions Directory': this.predictionsDirectory,
             'Ground Truth Directory': this.groundTruthDirectory,
             'Reporter Output Directory':this.reporterOutputDirectory
