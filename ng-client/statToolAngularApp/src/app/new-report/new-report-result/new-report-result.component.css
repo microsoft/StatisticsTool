@@ -1,0 +1,40 @@
+.results {
+    background-color: #f5f5f5;
+    padding: 20px;
+  }
+  
+  h3 {
+    margin-top: 0;
+  }
+  
+  .status {
+    background-color: green;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  
+  .navigation {
+    margin-bottom: 10px;
+  }
+  
+  .link {
+    color: blue;
+    text-decoration: none;
+  }
+  
+  .key-value-pairs p {
+    margin: 5px 0;
+  }
+  
+  .feedback {
+    margin-top: 20px;
+  }
+
+  .error-message {
+    margin: 5px 0;
+    color:red;
+    font-weight: bolder;
+  }

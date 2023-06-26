@@ -20,6 +20,7 @@ import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {MatIconModule} from '@angular/material/icon';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatToolbarModule} from '@angular/material/toolbar';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { DrawerComponent } from './drawer/drawer.component';
 import { DrawerContentComponent } from './drawer-content/drawer-content.component';
 import {MatExpansionModule} from '@angular/material/expansion';
@@ -27,6 +28,11 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
 import '@angular/localize/init';
 import { SaveTemplateDialogComponent } from './save-template-dialog/save-template-dialog.component';
+import { NewReportComponent } from './new-report/new-report.component';
+import { SaveSuiteDialogComponent } from './save-suite-dialog/save-suite-dialog.component';
+import { ConfigurationViewerComponent } from './configuration-viewer/configuration-viewer.component';
+import { NewReportResultComponent } from './new-report/new-report-result/new-report-result.component';
+
 
 @NgModule({
   declarations: [
@@ -39,6 +45,10 @@ import { SaveTemplateDialogComponent } from './save-template-dialog/save-templat
     DrawerComponent,
     DrawerContentComponent,
     SaveTemplateDialogComponent,
+    NewReportComponent,
+    SaveSuiteDialogComponent,
+    ConfigurationViewerComponent,
+    NewReportResultComponent
   ],
   imports: [
     NgMultiSelectDropDownModule.forRoot(),
@@ -58,7 +68,8 @@ import { SaveTemplateDialogComponent } from './save-template-dialog/save-templat
     MatToolbarModule,
     MatExpansionModule,
     NgbModule,
-    NgbAlertModule
+    NgbAlertModule,
+    DragDropModule
   ],
   providers: [StatisticsToolService],
   bootstrap: [AppComponent]

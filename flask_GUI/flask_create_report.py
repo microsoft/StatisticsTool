@@ -1,15 +1,16 @@
-
+import csv
 from datetime import datetime
-from flask import render_template, request
+from flask import render_template, request,redirect
 import urllib.parse
 from app_config.constants import Constants
-from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs
+from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs,get_suites_folder,get_users_defined_functions
 from app_config.constants import UserDefinedConstants
 
 from flask_GUI.flask_server import server
 from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.utils import loading_json, save_json
 from classes_and_utils.VideoEvaluation import compare_predictions_directory
+
 
 @server.route('/new_report/show_config', methods=['GET', 'POST'])
 def show_config():
@@ -24,8 +25,80 @@ def new_report_func():
     possible_configs = manage_new_report_page(request)
     return render_template('new_report.html', possible_configs=possible_configs, wiki_page = Constants.WIKI_URL)
 
+@server.route('/new_report/nav_new_report', methods=['GET', 'POST'])
+def nav_report_func():
+    possible_configs = manage_new_report_page(request)
+    possible_suites = get_possible_suites()
+    js_possible_configs = json.dumps(possible_configs)
+    js_possible_suites = json.dumps(possible_suites)
+    return redirect(f'/static/index.html?new_report=true&possible_configs={js_possible_configs}&possible_suites={js_possible_suites}')
+
+@server.route('/new_report/get_suite', methods=['GET'])
+def get_suite():
+    suite_name = request.args.get('suite')
+    configs = get_suite_configurations(suite_name)
+    return json.dumps(configs)
+
+@server.route('/new_report/save_suite', methods=['GET','POST'])
+def save_suite():
+    suite_name = request.json['suite']
+    configs = request.json['configurations']
+    data = {
+        'configurations': list(csv.reader([configs]))[0]
+    }
+    json_object = json.dumps(data)
+    
+    folder = get_suites_folder()
+    file_name = suite_name
+    if os.path.splitext(file_name)[1] != ".json":
+        file_name += ".json"
+    path = os.path.join(folder,file_name)
+    with open(path, "w") as js:
+        js.write(json_object)
+
+    return json.dumps(get_possible_suites())
+
+@server.route('/new_report/get_all_user_defined_functions', methods=['GET'])
+def get_user_defined_functions_list():
+    
+    functions = dict()
+    functions[UserDefinedConstants.READING_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.READING_FUNCTIONS)
+    functions[UserDefinedConstants.EVALUATION_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.EVALUATION_FUNCTIONS)
+    functions[UserDefinedConstants.OVERLAP_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.OVERLAP_FUNCTIONS)
+    functions[UserDefinedConstants.PARTITIONING_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.PARTITIONING_FUNCTIONS)
+    functions[UserDefinedConstants.STATISTICS_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.STATISTICS_FUNCTIONS)
+    functions[UserDefinedConstants.TRANSFORM_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS)
+   
+    return json.dumps(functions)
+
+@server.route('/new_report/get_configuration',methods=['GET'])
+def get_config():
+    config_name = request.args.get('config')
+    config_path = os.path.join(get_configs_folder(), config_name)
+    config_file = loading_json(config_path)
+    config_dict = config_file[0]
+    return json.dumps(config_dict)
+
+@server.route('/new_report/save_configuration',methods=['POST'])
+def save_configuration():
+    config_name = request.json['configName']
+    if os.path.splitext(config_name)[1] != ".json":
+        config_name += ".json"
+    dic = request.json
+    del dic['configName']
+    configs_folder = get_configs_folder()
+    path_to_save = os.path.join(configs_folder, config_name)
+    save_json(path_to_save, [dic])
+
+    configs_folder = get_configs_folder()
+    possible_configs = os.listdir(configs_folder)
+
+    return  json.dumps(possible_configs)
+    
+
 @server.route('/new_report/calculating_page', methods=['GET', 'POST'])
 def calculating():
+    
     # extract the user specified directories and names
     suite_name, config_file_names, prd_dir, GT_dir, output_dir = unpack_calc_request(request)
     
@@ -35,19 +108,22 @@ def calculating():
     output_dir = os.path.join(output_dir,suite_name+'-'+datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
     
     print("suite output folder: "+output_dir)
-        
-
+    result = dict()
+    
     for config_file_name in config_names_list:
     # making sure save_stats_dir is empty and opening the appropriate folders
         try:
             report_dir=os.path.join(output_dir,f'{os.path.splitext(config_file_name)[0]}-{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}')
             print("report output folder: " + report_dir)
             os.makedirs(report_dir)
-        except:
-            return render_template('Not_found.html')
-        
-        # calculate the intermediate results for all the videos then combine them
-        exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)
+            # calculate the intermediate results for all the videos then combine them
+            exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)   
+        except Exception as e:
+            result['ok'] = False
+            result['link'] = ''
+            result['messages'] = ''
+            result['errorMessage'] = f'An error occurred while executing the {config_file_name} configuration file' 
+            return  json.dumps(result)
     
     output_path = output_dir.replace('\\','/')
 
@@ -58,7 +134,13 @@ def calculating():
 
     results_text = results_text.split('\n')
     results_text.append(f"Output folder: {output_path}.")
-    return render_template('message.html', link=link, text=results_text)
+    
+    result['ok'] = True
+    result['link'] = link
+    result['messages'] = results_text
+    result['errorMessage'] = ''
+    return json.dumps(result)
+
 
 @server.route('/new_report/add_config', methods=['GET', 'POST'])
 def new_task_func():
@@ -71,7 +153,6 @@ def new_task_func():
                            statistics_funcs=statistics_funcs,
                            transformation_funcs=transformation_funcs)
 
-
 def unpack_calc_request(request):
     """
     Accepts request from new_report.html and unpack the parameters for a new report as variables
@@ -80,15 +161,14 @@ def unpack_calc_request(request):
     :return: parameters needed for a new report
     """
     # receiving the wanted configuration file name from the form
-    config_file_names = request.form.get('Configurations')
-    suite_name = request.form.get('Suite Name')
+    config_file_names = request.values['Configurations']
+    suite_name = request.values['Suite Name']
     # receiving the wanted directories names from the form
-    prd_dir = request.form.get('Predictions Directory')
-    GT_dir = request.form.get('Ground Truth Directory')
-    output_dir = request.form.get('Reporter Output Directory')
-    
+    prd_dir = request.values['Predictions Directory']
+    GT_dir = request.values['Ground Truth Directory']
+    output_dir = request.values['Reporter Output Directory']
+        
     return suite_name,config_file_names, prd_dir, GT_dir, output_dir
-
 
 def unpack_new_config(request):
     """
@@ -136,6 +216,13 @@ def manage_new_report_page(request):
     possible_configs = os.listdir(configs_folder)
     return possible_configs
 
+def get_possible_suites():
+    suites_folder = get_suites_folder()
+    if not os.path.exists(suites_folder):
+        os.makedirs(suites_folder)
+    possible_suites = os.listdir(suites_folder)
+    return possible_suites
+
 def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = None):
     """
 
@@ -173,4 +260,18 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     configs_folder = get_configs_folder()
     report_file_name = exp.save_experiment(folder_name, config_file_name, configs_folder)
     return exp, user_text, report_file_name
+
+def get_suite_configurations(suite_name):
+
+    if os.path.splitext(suite_name)[1] != ".json":
+        suite_name += ".json"
+
+    configurations = []
+    suites_folder = get_suites_folder()
+    with open(os.path.join(suites_folder,suite_name)) as f:
+        data = json.load(f)
+        for config in data['configurations']:
+            configurations.append(config)
+   
+    return configurations
 

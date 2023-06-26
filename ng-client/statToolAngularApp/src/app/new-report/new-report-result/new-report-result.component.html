@@ -1,0 +1,19 @@
+<div class="results" *ngIf="newReportService.showResults()">
+    <h3>Execution Results</h3>
+    <div class="navigation" *ngIf="newReportService.newReportResult.link != ''">
+      <a href="{{newReportService.newReportResult.link}}" class="link">Go To Reporter</a>
+    </div>
+    <ng-container *ngIf="newReportService.newReportResult.ok == true">
+        <div class="key-value-pairs">
+            <ng-container *ngFor="let item of newReportService.newReportResult.messages">
+                <p><strong>{{item.key}}:</strong> {{item.value}}</p>
+            </ng-container>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="!(newReportService.newReportResult.ok == true)">
+        <div class="error-message">
+            <p><strong>{{ newReportService.newReportResult.errorMessage }}</strong></p>
+        </div>
+    </ng-container>
+    <div class="feedback"> {{ newReportService.newReportResult.ok == true ? 'Execution completed successfully.' : 'Execution failed.' }}</div>
+</div>
