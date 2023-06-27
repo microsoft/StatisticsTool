@@ -28,7 +28,7 @@
             </div>
         </div>
 
-        <div style="display: flex;justify-content: space-between;position: relative;">
+        <div style="display: flex;position: relative;margin-right: 20px;">
             <div class="overlay" [class.show]="newReportService.creatingReport"></div>
             <div class="form-container">
                 <div class="form-header">
@@ -43,11 +43,6 @@
                             <select class="form-select form-select-sm" id="reports_suites"
                                     [(ngModel)]="newReportService.selectedSuite"
                                     (change)="newReportService.onSuiteSelected($event)"
-                                    required #suiteSelect="ngModel"
-                                    [ngClass]="{
-                                        'is-invalid': (suiteSelect.invalid && suiteSelect.touched) || (suiteSelect.touched && !isSelectSuiteValid()),
-                                        'is-valid': suiteSelect.valid && suiteSelect.touched && isSelectSuiteValid()
-                                    }"
                                     >
                                     <option *ngFor="let suite of newReportService.suites"
                                                     value="{{suite}}"
@@ -59,6 +54,7 @@
                         <div class="combined-section">
                             <div class="scrollable-div" style="border-bottom:1px solid lightgray;background: white;">
                                 <div class="scrollable-content">
+                                    <a style="margin-left: 28px;color:#28a745;text-decoration: underline;cursor: pointer;" (click)="newReportService.clearConfigViewer()">Add new configuration</a>
                                     <ng-container *ngFor="let config of newReportService.configs">
                                         <div class="form-check" style="margin-left:4px">
                                             <input class="form-check-input" 
@@ -75,7 +71,8 @@
                                 </div>
                             </div>
                             <div class="link-button" style="display:flex">
-                                <a class="link-a-cls" (click)="newReportService.openSaveSuiteDialog()">Save Suite</a>  <span class="separator">|</span> <a class="link-a-cls" (click)="newReportService.clearConfigViewer()">Add Configuration</a>
+                                <a class="link-a-cls" (click)="newReportService.openSaveSuiteDialog()">Save Suite</a>  
+                                <!--<span class="separator">|</span> <a class="link-a-cls" (click)="newReportService.clearConfigViewer()">Add New Configuration</a>-->
                             </div>
                         </div>
                         <div class="text-inputs">
@@ -124,7 +121,7 @@
                             [disabled]="disableCreateReportButton()">Create Report</button>
                 </div>
             </div>
-            <div style="width:30%;margin-top: 20px;position: absolute;right: 20px;"  cdkDrag>
+            <div style="width:30%;margin-top: 10px;">
                 <configuration-viewer></configuration-viewer>
             </div>
         </div>

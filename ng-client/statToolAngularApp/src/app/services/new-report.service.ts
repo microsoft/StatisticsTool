@@ -10,7 +10,12 @@ export class NewReportResult {
     ok = true;
     errorMessage = '';
     link = '';
-    messages:{'key':string,'value':string}[] = [];
+    files:string[] = [];
+    num_success_files:string[] = [];
+    reading_function_skipped:string[] = [];
+    not_json_files:string[] = [];
+    failed_with_error:string[] = [];
+    skipped_not_in_lognames:string[] = [];
 }
 
 @Injectable({
@@ -19,6 +24,8 @@ export class NewReportResult {
 
 export class NewReportService {
     
+    showConfigViewer = true;
+
     configs:string[]  = [];
     suites:string []  = [];
     configsSelections = new Map<string,boolean>();
@@ -199,7 +206,7 @@ export class NewReportService {
     }  
 
     showConfig(configName:string){
-        
+        this.showConfigViewer = true;    
         //get the confing from server
         let params = { 'config':configName };
         let url = '/new_report/get_configuration';
@@ -248,7 +255,7 @@ export class NewReportService {
         this.creatingReport = true;
         this.newReportResult = new NewReportResult();
         this.newReportResult.link = '';
-        this.newReportResult.messages = [];
+        
         this.newReportResult.errorMessage = '';
         this.newReportResult.ok = false;
 
@@ -258,7 +265,7 @@ export class NewReportService {
 
         let params = { 
             'Configurations':this.getSuiteConfigurations(this.selectedSuite),
-            'Suite Name':this.selectedSuite,
+            'Suite Name':this.selectedSuite == SELECTE_SUITE ? '' : this.selectedSuite,
             'Predictions Directory': this.predictionsDirectory,
             'Ground Truth Directory': this.groundTruthDirectory,
             'Reporter Output Directory':this.reporterOutputDirectory
@@ -267,25 +274,19 @@ export class NewReportService {
         let url = '/new_report/calculating_page';
         this.http.get<any>(url,{params}).subscribe(res => {
             this.creatingReport = false;
-
-            let result:any;
-            result = res;
-            let link = result.link;
-            let messages = <string[]>result.messages;
-            this.newReportResult.errorMessage = result.errorMessage;
-            this.newReportResult.ok = result.ok;
-
-            if (result.ok == true){
-                this.newReportResult.link = (link != 'None' && link != undefined && link != null) ? link : '';
-                messages.forEach(x => {
-                    if (x != ''){
-                        let parts= x.split(": ");
-                        this.newReportResult.messages.push({'key':parts[0],'value':parts[1]});
-                    }
-                })
-            } else {
-                
-            }
+            this.newReportResult.ok = res.ok;
+            if (res.link != 'None' && res.link != undefined && res.link != null)
+                this.newReportResult.link = res.link;
+            else
+                this.newReportResult.link = '';
+            this.newReportResult.errorMessage = res.errorMessage;
+            this.newReportResult.files = res.files;
+            this.newReportResult.failed_with_error = res.failed_with_error;
+            this.newReportResult.not_json_files= res.not_json_files;
+            this.newReportResult.num_success_files = res.num_success_files;
+            this.newReportResult.reading_function_skipped = res.reading_function_skipped;
+            this.newReportResult.skipped_not_in_lognames = res.skipped_not_in_lognames;
+            
         })
     }
 
@@ -301,7 +302,7 @@ export class NewReportService {
     }
 
     showResults(){
-        if (this.newReportResult.messages.length > 0)
+        if (this.newReportResult.files.length > 0)
             return true;
         if (this.newReportResult.errorMessage.length > 0)
             return true;

@@ -1,7 +1,7 @@
-<div class="configuration-container">
+<div class="configuration-container" *ngIf="newReportService.showConfigViewer">
     <div class="configuration-header">
-        <div class="closeButton">X</div>
-        <div class="titleText">{{title}} </div>
+        <div class="closeButton" (click)="close()">X</div>
+        <div class="titleText">{{getTitle()}} </div>
     </div>
     <div class="configuration-content">
         <div class="row" style="width:100%">
@@ -9,7 +9,7 @@
               <div class="form-group">
                 <label for="config_name" style="font-weight: bold">Configuration Name:</label>
                 <input type="text" class="form-control form-control-sm" id="config_name" 
-                       placeholder="" name="config_name" style="min-height: 0px !important;" 
+                       placeholder="" name="config_name" style="min-height: 0px !important;width:100%;padding-right: 10px;" 
                        minlength="3" required #nameInput="ngModel"
                        [(ngModel)]="newReportService.configName"
                        [ngClass]="{
@@ -97,7 +97,7 @@
                 <label for="treshold" style="font-weight: bold">Treshold:</label>
                 <input type="text" class="form-control form-control-sm" id="treshold" 
                         [(ngModel)]="newReportService.treshold"
-                        placeholder="" name="treshold" style="min-height: 0px !important;" minlength="1" required #treshholdInput="ngModel"
+                        placeholder="" name="treshold" style="min-height: 0px !important;width:100%;padding-right: 10px" minlength="1" required #treshholdInput="ngModel"
                         [ngClass]="{
                             'is-invalid': treshholdInput.invalid && treshholdInput.touched,
                             'is-valid': treshholdInput.valid && treshholdInput.touched

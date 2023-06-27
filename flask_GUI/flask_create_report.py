@@ -101,6 +101,7 @@ def calculating():
     
     # extract the user specified directories and names
     suite_name, config_file_names, prd_dir, GT_dir, output_dir = unpack_calc_request(request)
+    all_process_result = []
     
     config_names_list = config_file_names.split(',')
     if not suite_name:
@@ -110,6 +111,7 @@ def calculating():
     print("suite output folder: "+output_dir)
     result = dict()
     
+    output_path = output_dir.replace('\\','/')
     for config_file_name in config_names_list:
     # making sure save_stats_dir is empty and opening the appropriate folders
         try:
@@ -117,27 +119,43 @@ def calculating():
             print("report output folder: " + report_dir)
             os.makedirs(report_dir)
             # calculate the intermediate results for all the videos then combine them
-            exp, results_text, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)   
+            exp, process_result, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)   
+            process_result['output_path'] = output_path
+            all_process_result.append(process_result)
         except Exception as e:
             result['ok'] = False
             result['link'] = ''
             result['messages'] = ''
             result['errorMessage'] = f'An error occurred while executing the {config_file_name} configuration file' 
             return  json.dumps(result)
-    
-    output_path = output_dir.replace('\\','/')
 
     if exp == 'TypeError' or exp is None or report_file_name is None:
         link = 'None'
     else:
         link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(output_path)
 
-    results_text = results_text.split('\n')
-    results_text.append(f"Output folder: {output_path}.")
-    
+
+    num_success_files = []
+    reading_function_skipped = []
+    not_json_files = []
+    failed_with_error = []
+    skipped_not_in_lognames = []
+    for res in all_process_result:
+        num_success_files.append(res['num_success_files'])
+        reading_function_skipped.append(res['reading_function_skipped'])
+        not_json_files.append(res['not_json_files'])
+        failed_with_error.append(res['failed_with_error'])
+        skipped_not_in_lognames.append(res['skipped_not_in_lognames'])
+
     result['ok'] = True
     result['link'] = link
-    result['messages'] = results_text
+    result['files'] = config_names_list
+    result['num_success_files'] = num_success_files
+    result['reading_function_skipped'] = reading_function_skipped
+    result['not_json_files'] = not_json_files
+    result['failed_with_error'] = failed_with_error
+    result['skipped_not_in_lognames'] = skipped_not_in_lognames
+    result['messages'] = None
     result['errorMessage'] = ''
     return json.dumps(result)
 
@@ -244,11 +262,11 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
         os.makedirs(intermediate_dir)
         
     # extract all the intermediate results from the raw prediction-label files
-    compared_videos, sheldon_header_data, user_text = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
+    compared_videos, sheldon_header_data, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
                                                                  readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
-        return None, user_text, None
+        return None, process_result, None
 
     # combine the intermediate results for further statistics and example extraction
     exp = experiment_from_video_evaluation_files(statistic_funcs=statistics_funcs,
@@ -259,7 +277,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     folder_name = save_stats_dir
     configs_folder = get_configs_folder()
     report_file_name = exp.save_experiment(folder_name, config_file_name, configs_folder)
-    return exp, user_text, report_file_name
+    return exp, process_result, report_file_name
 
 def get_suite_configurations(suite_name):
 
