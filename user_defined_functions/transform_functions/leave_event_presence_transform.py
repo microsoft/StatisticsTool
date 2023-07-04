@@ -41,7 +41,7 @@ def leave_event_presence_transform(comp_data):
     lock_event_width_in_frames = 210
     Wake_event_width_in_frames = 60
     max_delta_of_late_detection = 60
-    is_plot = True
+    is_plot = False
 
     user_move_type = comp_data['User_Status_gt']
     presence_pred = np.array(comp_data['detection'])
