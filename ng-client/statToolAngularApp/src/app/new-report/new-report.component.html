@@ -28,7 +28,7 @@
             </div>
         </div>
 
-        <div style="display: flex;position: relative;margin-right: 20px;">
+        <div style="display: flex;position: relative;margin-right: 20px;" autocomplete="on">
             <div class="overlay" [class.show]="newReportService.creatingReport"></div>
             <div class="form-container">
                 <div class="form-header">
@@ -36,19 +36,27 @@
                 </div>
                 <div class="form-content">
                     <div class="main-div">
-                        <div class="input-label">
-                            <label for="reports_suites" style="font-weight: bold">Reports Suites:</label>
-                        </div>
-                        <div class="select-input">
-                            <select class="form-select form-select-sm" id="reports_suites"
-                                    [(ngModel)]="newReportService.selectedSuite"
-                                    (change)="newReportService.onSuiteSelected($event)"
-                                    >
-                                    <option *ngFor="let suite of newReportService.suites"
-                                                    value="{{suite}}"
-                                            >{{suite}}
-                                    </option>
-                            </select>
+                        <div class="input-label" style="display: flex;align-items: center;margin-top: 3px;">
+                            <label for="reports_suites" style="font-weight: bold;margin-right: 5px;">Reports Suites:</label>
+                            <div class="select-input" style="flex-grow: 1;">
+                                <select class="form-select form-select-sm" id="reports_suites"
+                                        [(ngModel)]="newReportService.selectedSuite"
+                                        (change)="newReportService.onSuiteSelected($event)"
+                                        >
+                                        <option *ngFor="let suite of newReportService.suites"
+                                                        value="{{suite}}"
+                                                >{{suite}}
+                                        </option>
+                                </select>
+                            </div>
+                            <div class="link-button" style="
+                                        right: 5px !important;
+                                        position: relative;
+                                        margin-right: 3px;
+                                        margin-left: 10px;
+                                        margin-top: 4px;">
+                                <a class="link-a-cls" (click)="newReportService.openSaveSuiteDialog()">Save Suite</a>  
+                            </div>
                         </div>
                         
                         <div class="combined-section">
@@ -70,17 +78,19 @@
                                     </ng-container>
                                 </div>
                             </div>
-                            <div class="link-button" style="display:flex">
+                            <!--<div class="link-button" style="display:flex">
                                 <a class="link-a-cls" (click)="newReportService.openSaveSuiteDialog()">Save Suite</a>  
-                                <!--<span class="separator">|</span> <a class="link-a-cls" (click)="newReportService.clearConfigViewer()">Add New Configuration</a>-->
-                            </div>
+                            </div>-->
                         </div>
-                        <div class="text-inputs">
+                        <div class="text-inputs dropdown-wrapper">
                             <div class="input-sm">
-                                <label for="predictions_directory" style="width:50%;font-weight: bold">Predictions Directory:</label>
+                                <label for="predictions_directory" style="width:30%;font-weight: bold">Predictions Directory:</label>
                                 <input type="text" class="form-control input-sm" id="predictions_directory" 
+                                
+                                    [ngbTypeahead]="searchPredictionsDirectory"
+                                    [resultFormatter]="formatter"
                                     placeholder="Local directory or blob folder" name="predictions_directory"
-                                    minlength="3" required #predictionsDirectoryInput="ngModel"
+                                    minlength="0" required #predictionsDirectoryInput="ngModel"
                                     [(ngModel)]="newReportService.predictionsDirectory"
                                         [ngClass]="{
                                             'is-invalid': predictionsDirectoryInput.invalid && predictionsDirectoryInput.touched,
@@ -89,10 +99,13 @@
                                     >
                             </div>
                             <div class="input-sm">
-                                <label for="ground_truth_directory" style="width:50%;font-weight: bold">Ground Truth Directory:</label>
+                                <label for="ground_truth_directory" style="width:30%;font-weight: bold">Ground Truth Directory:</label>
                                 <input type="text" class="form-control input-sm" id="ground_truth_directory" placeholder="Leave blank if GT is from annotation store" 
+                                        autocomplete="new-ground_truth_directory"   
+                                        [ngbTypeahead]="searchGTDirectroy"
+                                        [resultFormatter]="formatter"
                                         name="ground_truth_directory"
-                                        minlength="3" required #groundTruthDirectoryInput="ngModel"
+                                        minlength="0" required #groundTruthDirectoryInput="ngModel"
                                         [(ngModel)]="newReportService.groundTruthDirectory"
                                         [ngClass]="{
                                             'is-invalid': groundTruthDirectoryInput.invalid && groundTruthDirectoryInput.touched,
@@ -100,10 +113,13 @@
                                         }">
                             </div>
                             <div class="input-sm">
-                                <label for="reporter_output_directory" style="width:50%;font-weight: bold;">Reporter Output Directory:</label>
-                                <input type="text" class="form-control input-sm" id="reporter_output_directory" 
-                                    placeholder="" name="reporter_output_directory"
-                                    minlength="3" required #reporterOutputDirectoryInput="ngModel"
+                                <label for="output_directory" style="width:30%;font-weight: bold;">Output Directory:</label>
+                                <input type="text" class="form-control input-sm" id="output_directory" 
+                                    autocomplete="off"
+                                    [ngbTypeahead]="searchOutputDirectroy"
+                                    [resultFormatter]="formatter"
+                                    placeholder="" name="output_directory"
+                                    minlength="0" required #reporterOutputDirectoryInput="ngModel"
                                         [(ngModel)]="newReportService.reporterOutputDirectory"
                                         [ngClass]="{
                                             'is-invalid': reporterOutputDirectoryInput.invalid && reporterOutputDirectoryInput.touched,

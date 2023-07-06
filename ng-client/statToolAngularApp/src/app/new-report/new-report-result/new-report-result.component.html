@@ -1,8 +1,9 @@
 <div class="results" *ngIf="newReportService.showResults()">
-    <h3>Execution Results</h3>
+    <h5>Execution Results</h5>
     <div class="navigation" *ngIf="newReportService.newReportResult.link != ''">
-      <a href="{{newReportService.newReportResult.link}}" class="link">Go To Reporter</a>
+      <a href="{{newReportService.newReportResult.link}}" class="link">Open Report</a>
     </div>
+    <div>
     <ng-container *ngIf="newReportService.newReportResult.ok == true">
         <div class="key-value-pairs">
             <div class="table-responsive">
@@ -10,11 +11,11 @@
                   <thead>
                     <tr>
                       <th>Config</th>
-                      <th>Num Success Files</th>
-                      <th>Reading Function Skipped</th>
+                      <th># Success</th>
+                      <th># Skipped</th>
                       <th>Not Json</th>
-                      <th>Num Failed</th>
-                      <th>Filtered out by log name</th>
+                      <th># Failed</th>
+                      <th>Filtered</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -36,4 +37,5 @@
             <p><strong>{{ newReportService.newReportResult.errorMessage }}</strong></p>
         </div>
     </ng-container>
+    </div>
 </div>

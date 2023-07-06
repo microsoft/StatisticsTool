@@ -1,21 +1,74 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {Location} from '@angular/common';
 import { NewReportService, SELECTE_SUITE } from '../services/new-report.service';
+import { Observable, OperatorFunction, debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { LocalStorgeHelper } from '../services/localStorageHelper';
 
 @Component({
   selector: 'new-report',
   templateUrl: './new-report.component.html',
   styleUrls: ['./new-report.component.css']
 })
-export class NewReportComponent {
+export class NewReportComponent implements OnInit, OnDestroy {
 
   constructor(private location:Location,
               public  newReportService:NewReportService){
 
   }
+  
+  ngOnInit(): void {
+  }
+  
+  ngOnDestroy(): void {
+  }
 
   backImgSrc = 'assets/back-icon-blue.svg';
-  
+  formatter = (result: string) => result.toUpperCase();
+
+  searchPredictionsDirectory: OperatorFunction<string, readonly string[]> = (
+    text$: Observable<string>
+  ) =>
+    text$.pipe(
+      debounceTime(200),
+      distinctUntilChanged(),
+      map((term) =>
+        term === ''
+          ? this.newReportService.last_prediction_directory.slice(0,10)
+          : this.newReportService.last_prediction_directory
+              .filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)
+              .slice(0, 10)
+      )
+    );
+
+    searchGTDirectroy: OperatorFunction<string, readonly string[]> = (
+      text$: Observable<string>
+    ) =>
+      text$.pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        map((term) =>
+          term === ''
+            ? this.newReportService.last_ground_truth_directory
+            : this.newReportService.last_ground_truth_directory
+                .filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)
+                .slice(0, 10)
+        )
+      );  
+
+      searchOutputDirectroy: OperatorFunction<string, readonly string[]> = (
+        text$: Observable<string>
+      ) =>
+        text$.pipe(
+          debounceTime(200),
+          distinctUntilChanged(),
+          map((term) =>
+            term === ''
+              ? this.newReportService.last_output_directory
+              : this.newReportService.last_output_directory
+                  .filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)
+                  .slice(0, 10)
+          )
+        );  
 
   back(){
     let path = this.location.path();

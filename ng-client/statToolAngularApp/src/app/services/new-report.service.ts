@@ -3,6 +3,7 @@ import { Injectable } from "@angular/core";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { SaveSuiteDialogComponent } from "../save-suite-dialog/save-suite-dialog.component";
 import { config } from "rxjs";
+import { GROUND_TRUTH_DIRECTORY, LocalStorgeHelper, OUTPUT_DIRECTORY, PREDICTION_DIRECTORY } from "./localStorageHelper";
 
 export const SELECTE_SUITE = '--- Select Suite ---';
 
@@ -58,6 +59,10 @@ export class NewReportService {
 
     creatingReport = false;
 
+    last_prediction_directory   :string[] = [];
+    last_ground_truth_directory :string[] = [];
+    last_output_directory       :string[] = [];
+
     constructor(private http:HttpClient,private modalService: NgbModal){
 
         let url = '/new_report/get_all_user_defined_functions';
@@ -84,15 +89,23 @@ export class NewReportService {
             this.transform_functions.sort((a,b) =>  (a > b ? 1 : -1));
             let trans:string[] = [];
             trans.push('None');
-            trans.concat(this.transform_functions)
+            trans = trans.concat(this.transform_functions)
             this.transform_functions = trans;
+
+            this.initDataFromLocalStorage();
         })
 
-        this.predictionsDirectory = localStorage.getItem('predictions_directory') != null ? localStorage.getItem('predictions_directory')! : '';
-        this.groundTruthDirectory = localStorage.getItem('ground_truth_directory') != null ? this.groundTruthDirectory = localStorage.getItem('ground_truth_directory')! : '';
-        this.reporterOutputDirectory = localStorage.getItem('reporter_output_directory') != null ? localStorage.getItem('reporter_output_directory')! : '';
+        //this.predictionsDirectory = .getItem('predictions_directory') != null ? localStorage.getItem('predictions_directory')! : '';
+        //this.groundTruthDirectory = localStorage.getItem('ground_truth_directory') != null ? this.groundTruthDirectory = localStorage.getItem('ground_truth_directory')! : '';
+        //this.reporterOutputDirectory = localStorage.getItem('reporter_output_directory') != null ? localStorage.getItem('reporter_output_directory')! : '';
     }
 
+    initDataFromLocalStorage(){
+        LocalStorgeHelper.loadAll();
+        this.last_prediction_directory      = LocalStorgeHelper.getList(PREDICTION_DIRECTORY)!;
+        this.last_ground_truth_directory    = LocalStorgeHelper.getList(GROUND_TRUTH_DIRECTORY)!;
+        this.last_output_directory          = LocalStorgeHelper.getList(OUTPUT_DIRECTORY)!;
+    }
 
     init(configs:string,suites:string){
         this.parseConfigs(configs);
@@ -217,17 +230,20 @@ export class NewReportService {
             this.selectedReadingFunction = config['File Reading Function'];
             this.selectedOverlapFunction = config['Overlap Function'];
             this.selectedTransformFunction = config['Transformation Function'];
+            if (this.selectedTransformFunction == '' || this.selectedTransformFunction == null || this.selectedTransformFunction == undefined)
+                this.selectedTransformFunction = 'None';
             this.selectedPartitioningFunction = config['Partitioning Functions'];
             this.selectedStatisticsFunction = config['Statistics Functions'];
             this.selectedEvaluationFunction = config['Evaluation Function'];
         
             this.configName = configName;
-            this.logName = '';
+            this.logName = config['Log Names to Evaluate'];
             this.treshold = config['Threshold'];
         })
     }
 
     saveConfig(){
+        this.newReportResult = new NewReportResult();
         const dictionary: { [key: string]: any } = {};
 
         dictionary['File Reading Function'] = this.selectedReadingFunction;
@@ -251,6 +267,14 @@ export class NewReportService {
         })
     }
 
+    saveDataInLocalStorage(){
+        LocalStorgeHelper.addToList(PREDICTION_DIRECTORY,this.predictionsDirectory);
+        LocalStorgeHelper.addToList(GROUND_TRUTH_DIRECTORY,this.groundTruthDirectory);
+        LocalStorgeHelper.addToList(OUTPUT_DIRECTORY,this.reporterOutputDirectory);
+        LocalStorgeHelper.saveInLocaStorage();
+        this.initDataFromLocalStorage();
+    }
+
     createReport(){
         this.creatingReport = true;
         this.newReportResult = new NewReportResult();
@@ -259,9 +283,10 @@ export class NewReportService {
         this.newReportResult.errorMessage = '';
         this.newReportResult.ok = false;
 
-        localStorage.setItem('predictions_directory',this.predictionsDirectory);
-        localStorage.setItem('ground_truth_directory',this.groundTruthDirectory);
-        localStorage.setItem('reporter_output_directory',this.reporterOutputDirectory);
+        this.saveDataInLocalStorage();
+        //localStorage.setItem('predictions_directory',this.predictionsDirectory);
+        //localStorage.setItem('ground_truth_directory',this.groundTruthDirectory);
+        //localStorage.setItem('reporter_output_directory',this.reporterOutputDirectory);
 
         let params = { 
             'Configurations':this.getSuiteConfigurations(this.selectedSuite),
@@ -273,6 +298,7 @@ export class NewReportService {
 
         let url = '/new_report/calculating_page';
         this.http.get<any>(url,{params}).subscribe(res => {
+            
             this.creatingReport = false;
             this.newReportResult.ok = res.ok;
             if (res.link != 'None' && res.link != undefined && res.link != null)
@@ -286,7 +312,6 @@ export class NewReportService {
             this.newReportResult.num_success_files = res.num_success_files;
             this.newReportResult.reading_function_skipped = res.reading_function_skipped;
             this.newReportResult.skipped_not_in_lognames = res.skipped_not_in_lognames;
-            
         })
     }
 
@@ -302,9 +327,9 @@ export class NewReportService {
     }
 
     showResults(){
-        if (this.newReportResult.files.length > 0)
+        if (this.newReportResult.ok && this.newReportResult.files.length > 0)
             return true;
-        if (this.newReportResult.errorMessage.length > 0)
+        if (!this.newReportResult.ok && this.newReportResult.errorMessage != '')
             return true;
 
         return false;
