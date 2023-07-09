@@ -2,10 +2,10 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { SaveSuiteDialogComponent } from "../save-suite-dialog/save-suite-dialog.component";
-import { config } from "rxjs";
 import { GROUND_TRUTH_DIRECTORY, LocalStorgeHelper, OUTPUT_DIRECTORY, PREDICTION_DIRECTORY } from "./localStorageHelper";
 
 export const SELECTE_SUITE = '--- Select Suite ---';
+export const NONE_GT_READING_CUNCTION = 'none';
 
 export class NewReportResult {
     ok = true;
@@ -32,15 +32,16 @@ export class NewReportService {
     configsSelections = new Map<string,boolean>();
     selectedSuite = '';
 
-
-    reading_functions:string[] = [];
-    evaluation_functions:string[] = [];
-    overlap_functions:string[] = [];
-    partitioning_functions:string[] = [];
-    statistics_functions:string[] = [];
-    transform_functions:string[] = [];
+    prediction_reading_functions       :string[] = [];
+    gt_reading_functions            :string[] = [];
+    evaluation_functions            :string[] = [];
+    overlap_functions               :string[] = [];
+    partitioning_functions          :string[] = [];
+    statistics_functions            :string[] = [];
+    transform_functions             :string[] = [];
     
-    selectedReadingFunction = '';
+    selectedPredictionReadingFunction = '';
+    selectedGTReadingFunction = '';
     selectedOverlapFunction = '';
     selectedTransformFunction = '';
     selectedPartitioningFunction = '';
@@ -70,8 +71,12 @@ export class NewReportService {
             
             let map:any;
             map = functions;
-            this.reading_functions = map.reading_functions;
-            this.reading_functions.sort((a,b) =>  (a > b ? 1 : -1));
+            this.prediction_reading_functions = map.reading_functions;
+            this.prediction_reading_functions.sort((a,b) =>  (a > b ? 1 : -1));
+
+            this.gt_reading_functions = [];
+            this.gt_reading_functions.push(NONE_GT_READING_CUNCTION);
+            this.gt_reading_functions = this.gt_reading_functions.concat(this.prediction_reading_functions);
 
             this.evaluation_functions = map.evaluation_functions;
             this.evaluation_functions.sort((a,b) =>  (a > b ? 1 : -1));
@@ -94,10 +99,6 @@ export class NewReportService {
 
             this.initDataFromLocalStorage();
         })
-
-        //this.predictionsDirectory = .getItem('predictions_directory') != null ? localStorage.getItem('predictions_directory')! : '';
-        //this.groundTruthDirectory = localStorage.getItem('ground_truth_directory') != null ? this.groundTruthDirectory = localStorage.getItem('ground_truth_directory')! : '';
-        //this.reporterOutputDirectory = localStorage.getItem('reporter_output_directory') != null ? localStorage.getItem('reporter_output_directory')! : '';
     }
 
     initDataFromLocalStorage(){
@@ -206,7 +207,8 @@ export class NewReportService {
     }
       
     clearConfigViewer(){
-        this.selectedReadingFunction = '';
+        this.selectedPredictionReadingFunction = '';
+        this.selectedGTReadingFunction = '';
         this.selectedOverlapFunction = '';
         this.selectedTransformFunction = '';
         this.selectedPartitioningFunction = '';
@@ -227,7 +229,9 @@ export class NewReportService {
             //clear the config viewer  
             this.clearConfigViewer();
             //show the new config in the viewer
-            this.selectedReadingFunction = config['File Reading Function'];
+            this.selectedPredictionReadingFunction = config['Prediction Reading Function']; 
+            this.selectedGTReadingFunction = config['GT Reading Function'];
+
             this.selectedOverlapFunction = config['Overlap Function'];
             this.selectedTransformFunction = config['Transformation Function'];
             if (this.selectedTransformFunction == '' || this.selectedTransformFunction == null || this.selectedTransformFunction == undefined)
@@ -246,7 +250,8 @@ export class NewReportService {
         this.newReportResult = new NewReportResult();
         const dictionary: { [key: string]: any } = {};
 
-        dictionary['File Reading Function'] = this.selectedReadingFunction;
+        dictionary['Prediction Reading Function'] = this.selectedPredictionReadingFunction;
+        dictionary['GT Reading Function'] = this.selectedGTReadingFunction;
         dictionary['Overlap Function'] = this.selectedOverlapFunction;
         dictionary['Transformation Function'] = this.selectedTransformFunction;
         dictionary['Partitioning Functions'] = this.selectedPartitioningFunction;
@@ -284,9 +289,6 @@ export class NewReportService {
         this.newReportResult.ok = false;
 
         this.saveDataInLocalStorage();
-        //localStorage.setItem('predictions_directory',this.predictionsDirectory);
-        //localStorage.setItem('ground_truth_directory',this.groundTruthDirectory);
-        //localStorage.setItem('reporter_output_directory',this.reporterOutputDirectory);
 
         let params = { 
             'Configurations':this.getSuiteConfigurations(this.selectedSuite),

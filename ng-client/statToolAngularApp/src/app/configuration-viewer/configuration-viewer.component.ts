@@ -19,7 +19,7 @@ export class ConfigurationViewerComponent {
 
   disableSaveButton(){
 
-    return (this.newReportService.selectedReadingFunction == '') || 
+    return (this.newReportService.selectedPredictionReadingFunction == '') || 
             (this.newReportService.selectedOverlapFunction == '') || 
             (this.newReportService.selectedTransformFunction == '') ||             
             (this.newReportService.selectedPartitioningFunction == '') ||             

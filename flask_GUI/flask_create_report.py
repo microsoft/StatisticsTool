@@ -77,6 +77,14 @@ def get_config():
     config_path = os.path.join(get_configs_folder(), config_name)
     config_file = loading_json(config_path)
     config_dict = config_file[0]
+    
+    if 'File Reading Function' in config_dict.keys():
+        config_dict['Prediction Reading Function'] = config_dict['File Reading Function']
+        config_dict.pop('File Reading Function')
+
+    if 'GT Reading Function' not in config_dict.keys():
+        config_dict['GT Reading Function'] = 'none'
+
     return json.dumps(config_dict)
 
 @server.route('/new_report/save_configuration',methods=['POST'])
@@ -255,7 +263,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, log_names_to_evaluate = load_config(config_file_name)
+    prediction_reading_func,gt_reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, log_names_to_evaluate = load_config(config_file_name)
     
     intermediate_dir = os.path.join(save_stats_dir,Constants.INTERMEDIATE_RESULTS_DIR)
     if not os.path.exists(intermediate_dir):
@@ -263,7 +271,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
         
     # extract all the intermediate results from the raw prediction-label files
     compared_videos, sheldon_header_data, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
-                                                                 readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
+                                                                 predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
    
     if len(compared_videos) == 0:
         return None, process_result, None

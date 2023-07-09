@@ -68,7 +68,17 @@ def load_config(config_file_name):
     transform_func_name = 'None'
     if 'Transformation Function' in config_dict:
         transform_func_name = config_dict['Transformation Function']
-    reading_func_name = config_dict["File Reading Function"]
+
+    if "File Reading Function" in config_dict.keys():
+        prediction_reading_func_name = config_dict["File Reading Function"]    
+    else:
+        prediction_reading_func_name = config_dict["Prediction Reading Function"]    
+
+    if "GT Reading Function" in config_dict.keys():
+        gt_reading_func_name = config_dict["GT Reading Function"]    
+    else:                    
+        gt_reading_func_name = ''
+
     overlap_func_name = config_dict["Overlap Function"]
     evaluation_func_name = config_dict["Evaluation Function"]
     threshold = config_dict["Threshold"]
@@ -85,8 +95,11 @@ def load_config(config_file_name):
     statistics_func_name = config_dict["Statistics Functions"]
     partitioning_func_name = config_dict["Partitioning Functions"]
 
-
-    reading_func = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS,reading_func_name)
+    prediction_reading_func = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS,prediction_reading_func_name)
+    if gt_reading_func_name != '':
+        gt_reading_func_name = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS,gt_reading_func_name)
+    else:
+        gt_reading_func_name = prediction_reading_func
     overlap_func = get_userdefined_function(UserDefinedConstants.OVERLAP_FUNCTIONS,overlap_func_name)
     evaluation_func = get_userdefined_function(UserDefinedConstants.EVALUATION_FUNCTIONS,evaluation_func_name)
     statistics_func = get_userdefined_function(UserDefinedConstants.STATISTICS_FUNCTIONS,statistics_func_name)
@@ -94,4 +107,4 @@ def load_config(config_file_name):
     transform_func = None
     if transform_func_name != 'None':
         transform_func = get_userdefined_function(UserDefinedConstants.TRANSFORM_FUNCTIONS,transform_func_name)
-    return reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate
+    return prediction_reading_func,gt_reading_func_name, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate
