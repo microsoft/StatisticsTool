@@ -1,6 +1,7 @@
 .configuration-container {
     width: 100%;
-    height: 60vh;
+    
+    min-height: 580px;
     padding: 0px;
     display: flex;
     flex-direction: column;

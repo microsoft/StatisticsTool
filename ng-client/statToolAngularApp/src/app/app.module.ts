@@ -25,6 +25,7 @@ import { DrawerComponent } from './drawer/drawer.component';
 import { DrawerContentComponent } from './drawer-content/drawer-content.component';
 import {MatExpansionModule} from '@angular/material/expansion';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
 import '@angular/localize/init';
 import { SaveTemplateDialogComponent } from './save-template-dialog/save-template-dialog.component';
@@ -68,6 +69,7 @@ import { NewReportResultComponent } from './new-report/new-report-result/new-rep
     MatToolbarModule,
     MatExpansionModule,
     NgbModule,
+    NgbTypeaheadModule,
     NgbAlertModule,
     DragDropModule
   ],

@@ -2,6 +2,7 @@
   
   .form-container {
     height: 70vh;
+    min-height: 580px;
     width: 40%;
     margin-left: 20px;
     margin-top: 10px;
@@ -47,7 +48,7 @@
     overflow-y: auto;
     border: 1px solid #ccc;
     padding: 10px;
-    height: 25vh;
+    height: 35vh;
   }
 
   .scrollable-content {
@@ -65,12 +66,13 @@
   }
 
   .text-inputs {
+    margin-top: 15px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     gap: 0px;
     overflow-y: auto;
-    padding-right: 10px;
+    
   }
   
   .text-boxes {
@@ -92,16 +94,16 @@
   .select-input {
     display: flex;
     justify-content: center;
-    margin-bottom: 10px;
+    
   }
 
   
 .input-sm {
     display: flex;
-    flex-direction: column;
+    
     width: 99.0%;
-    margin-left: 2px;
-    margin-right: 2px;
+    margin:2px;
+
   }
   
   .input-sm label {
@@ -150,3 +152,12 @@
     display: block;
   }
 
+  .dropdown-wrapper {
+    .dropdown-menu {
+      width: 30%;
+    }
+
+    .dropdown-item.active {
+      width: 94.5%;
+    }
+  }
