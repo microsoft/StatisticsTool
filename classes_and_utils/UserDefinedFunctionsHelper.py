@@ -78,6 +78,9 @@ def load_config(config_file_name):
         gt_reading_func_name = config_dict["GT Reading Function"]    
     else:                    
         gt_reading_func_name = ''
+    
+    if gt_reading_func_name == 'none':
+        gt_reading_func_name = prediction_reading_func_name
 
     overlap_func_name = config_dict["Overlap Function"]
     evaluation_func_name = config_dict["Evaluation Function"]

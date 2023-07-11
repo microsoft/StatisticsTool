@@ -208,7 +208,7 @@ export class NewReportService {
       
     clearConfigViewer(){
         this.selectedPredictionReadingFunction = '';
-        this.selectedGTReadingFunction = '';
+        this.selectedGTReadingFunction = 'none';
         this.selectedOverlapFunction = '';
         this.selectedTransformFunction = '';
         this.selectedPartitioningFunction = '';
