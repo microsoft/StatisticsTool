@@ -32,7 +32,7 @@ export class NewReportService {
     configsSelections = new Map<string,boolean>();
     selectedSuite = '';
 
-    prediction_reading_functions       :string[] = [];
+    prediction_reading_functions    :string[] = [];
     gt_reading_functions            :string[] = [];
     evaluation_functions            :string[] = [];
     overlap_functions               :string[] = [];
@@ -335,5 +335,16 @@ export class NewReportService {
             return true;
 
         return false;
+    }
+
+    getNumConfigsSelected(){
+        //this.configsSelections
+        let count = 0;
+        for (const isSelected of this.configsSelections.values()) {
+            if (isSelected) {
+            count++;
+            }
+        }
+        return count;
     }
 }

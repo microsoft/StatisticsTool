@@ -37,5 +37,10 @@
             <p><strong>{{ newReportService.newReportResult.errorMessage }}</strong></p>
         </div>
     </ng-container>
+    <ng-container *ngIf="newReportService.newReportResult.link == ''">
+      <div class="error-message">
+          <p><strong>Report Creation Failed.</strong></p>
+      </div>
+    </ng-container>
     </div>
 </div>
