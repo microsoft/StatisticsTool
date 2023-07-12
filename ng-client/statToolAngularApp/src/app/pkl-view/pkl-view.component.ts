@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 import { Utils } from '../utils';
@@ -9,9 +9,9 @@ import { Utils } from '../utils';
   templateUrl: './pkl-view.component.html',
   styleUrls: ['./pkl-view.component.css']
 })
-export class PklViewComponent implements OnInit  {
+export class PklViewComponent implements OnInit, AfterViewInit {
 
-  @ViewChild('iframe') iframe: ElementRef|null = null;
+  @ViewChild('iframe',{ static: false }) iframe: ElementRef|null = null;
   
   url = '/viewer/get_report_table';
   
@@ -52,7 +52,11 @@ export class PklViewComponent implements OnInit  {
   height:string = '';
 
   constructor(public statToolService:StatisticsToolService) {
-    this.url = '/viewer/get_report_table?calc_unique=' + statToolService.calculateUnique + "&main_path=" + this.statToolService.getSelectedMainReport() + "&ref_path=" + this.statToolService.getSelectedRefReport();
+    //this.url = '/viewer/get_report_table?calc_unique=' + statToolService.calculateUnique + "&main_path=" + this.statToolService.getSelectedMainReport() + "&ref_path=" + this.statToolService.getSelectedRefReport();
+  }
+  ngAfterViewInit(): void {
+    const uniqueRef = 'iframe_' + Math.random().toString(36).substring(2, 11);
+    this.iframe!.nativeElement.setAttribute('data-ref', uniqueRef);
   }
 
   setUrl(){
@@ -191,7 +195,6 @@ export class PklViewComponent implements OnInit  {
       this.selectedColumns = this.selectedColumns.slice(0,-1);
     if (this.selectedRows.slice(-1) == ",")  
       this.selectedRows = this.selectedRows.slice(0,-1);
-
   }
 
   async onIframeLoad(){
