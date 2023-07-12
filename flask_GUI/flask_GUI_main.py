@@ -7,6 +7,10 @@ from flask_GUI.flask_report_view import *
 from flask_GUI.flask_create_report import *
 from flask_GUI.flask_examples_list import *
 
+import sys, os
+
+current_file_directory = os.path.realpath(__file__)
+sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
 
 @server.route('/', methods=['GET', 'POST'])
 def homepage():
