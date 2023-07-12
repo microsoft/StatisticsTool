@@ -3,6 +3,11 @@
     <div class="navigation" *ngIf="newReportService.newReportResult.link != ''">
       <a href="{{newReportService.newReportResult.link}}" class="link">Open Report</a>
     </div>
+    <ng-container *ngIf="newReportService.newReportResult.link == ''">
+      <div class="error-message">
+          <p><strong>Report Creation Failed.</strong></p>
+      </div>
+    </ng-container>
     <div>
     <ng-container *ngIf="newReportService.newReportResult.ok == true">
         <div class="key-value-pairs">
@@ -37,10 +42,6 @@
             <p><strong>{{ newReportService.newReportResult.errorMessage }}</strong></p>
         </div>
     </ng-container>
-    <ng-container *ngIf="newReportService.newReportResult.link == ''">
-      <div class="error-message">
-          <p><strong>Report Creation Failed.</strong></p>
-      </div>
-    </ng-container>
+   
     </div>
 </div>
