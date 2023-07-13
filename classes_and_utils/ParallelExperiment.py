@@ -7,13 +7,12 @@ import numpy as np
 
 from app_config.constants import Constants
 
-
-# Irit's totos:
-# todo return number of processed files on GUI
-# todo automatically make sure every bounding box was processed (make sure we didn't forget any bounding box)
-
-# Ben's todo:
-# todo return number of prediction bounding boxes that didn't have a GT at all
+class ExperimentData:
+    def __init__(self, masks, ID_storage, segment_ID, segment_ID_new):
+        self.ID_storage = ID_storage
+        self.segment_ID = segment_ID
+        self.masks = masks
+        self.segment_ID_new = segment_ID_new
 
 class ParallelExperiment:
  
@@ -27,8 +26,8 @@ class ParallelExperiment:
         self.segmented_ID = {}
         self.segmented_ID_new = {}
         self.report_metadata = report_metadata
-        
     
+   
     def combine_from_text(self, compared_videos):
         self.comp_data = None
         datafrme_dict = []
@@ -188,7 +187,7 @@ class ParallelExperiment:
         report_output_file = os.path.join(out_folder, report_file_name)
 
         with open(report_output_file, 'wb') as output:  # Overwrites any existing file.
-            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
+            pickle.dump((self.masks, self.ID_storage, self.ID_storage, self.segmented_ID_new, self.report_metadata), output, pickle.HIGHEST_PROTOCOL)
 
         metadata = {}  
 
@@ -203,8 +202,14 @@ class ParallelExperiment:
             json.dump(metadata, f)
 
         return report_output_file
+    
+    @staticmethod
+    def experiment_from_file(file_path):
+        exp = ParallelExperiment()
+        
+    
 
-def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, report_metadata, overlap_function, evaluation_function):
+def experiment_from_video_evaluation_files(statistic_func, compared_videos, segmentation_func, threshold, report_metadata, overlap_function, evaluation_function):
     """
 
     param statistic_funcs: same as in ParallelExperiment
@@ -213,7 +218,7 @@ def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, seg
     :param threshold: the threshold to use (above the threshold a prediction is TP)
     :return:
     """
-    exp = ParallelExperiment(statistic_funcs=statistic_funcs, segmentation_funcs=segmentation_funcs, 
+    exp = ParallelExperiment(statistic_funcs=statistic_func, segmentation_funcs=segmentation_func, 
                             report_metadata=report_metadata, 
                             evaluation_function=evaluation_function, overlap_function=overlap_function)
                             

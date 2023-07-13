@@ -255,7 +255,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, log_names_to_evaluate = load_config(config_file_name)
+    reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate = load_config(config_file_name)
     
     intermediate_dir = os.path.join(save_stats_dir,Constants.INTERMEDIATE_RESULTS_DIR)
     if not os.path.exists(intermediate_dir):
@@ -269,8 +269,8 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
         return None, process_result, None
 
     # combine the intermediate results for further statistics and example extraction
-    exp = experiment_from_video_evaluation_files(statistic_funcs=statistics_funcs,
-                                compared_videos=compared_videos, segmentation_funcs=partitioning_func,
+    exp = experiment_from_video_evaluation_files(statistic_func=statistics_func,
+                                compared_videos=compared_videos, segmentation_func=partitioning_func,
                                 threshold=threshold, report_metadata=report_metadata, evaluation_function = evaluation_func, 
                                 overlap_function = overlap_func)
     
