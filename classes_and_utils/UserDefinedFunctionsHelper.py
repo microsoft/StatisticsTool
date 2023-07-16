@@ -79,9 +79,6 @@ def load_config(config_file_name):
     else:                    
         gt_reading_func_name = ''
     
-    if gt_reading_func_name == 'none':
-        gt_reading_func_name = prediction_reading_func_name
-
     overlap_func_name = config_dict["Overlap Function"]
     evaluation_func_name = config_dict["Evaluation Function"]
     threshold = config_dict["Threshold"]
@@ -99,10 +96,11 @@ def load_config(config_file_name):
     partitioning_func_name = config_dict["Partitioning Functions"]
 
     prediction_reading_func = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS,prediction_reading_func_name)
-    if gt_reading_func_name != '':
-        gt_reading_func_name = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS,gt_reading_func_name)
-    else:
+    if gt_reading_func_name == '' or gt_reading_func_name == 'none':
         gt_reading_func_name = prediction_reading_func
+    else:
+        gt_reading_func_name = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS,gt_reading_func_name)
+
     overlap_func = get_userdefined_function(UserDefinedConstants.OVERLAP_FUNCTIONS,overlap_func_name)
     evaluation_func = get_userdefined_function(UserDefinedConstants.EVALUATION_FUNCTIONS,evaluation_func_name)
     statistics_func = get_userdefined_function(UserDefinedConstants.STATISTICS_FUNCTIONS,statistics_func_name)
