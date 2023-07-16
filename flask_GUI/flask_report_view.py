@@ -79,17 +79,17 @@ def get_report_table():
     rows    = ExperimentsHelper.parse_segmentations_csv(request.args.get('rows'))
     
     res_table = experiments_manager.get_results_table(main_path,ref_path)
+
     if res_table == None:
         res_table = Results_table(server)
         segmentations = experiments_manager.get_item_segmentations(main_path)
-        res_table.set_data(main,ref, main_path, ref_path, segmentations,calc_unique)
+        res_table.set_data(main,ref, main_path, ref_path, segmentations, calc_unique)
         res_table = experiments_manager.add_results_table(main_path,ref_path,res_table)
     else:
         if ref is not None:
             res_table.set_unique(calc_unique)
-
-    wp = res_table.get_webpage(columns,rows)
-
+    
+    wp = res_table.get_webpage()
     return wp
 
 @server.route('/viewer/get_all_templates', methods=['POST'])

@@ -173,17 +173,8 @@ export class StatisticsToolService implements OnInit {
         
   }
 
-  async onTemplateSelected(templateName:string){
-    let currTemplate = this.templates.find(x => x.name == templateName)!;
-    let segments = currTemplate.Segmentations;
-    currTemplate.Segmentations = [];
-    this.currentTemplate = currTemplate;
-    
-    for(const s of segments){
-      this.currentTemplate.Segmentations.push(s)
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-        
+  onTemplateSelected(templateName:string){
+    this.currentTemplate = this.templates.find(x => x.name == templateName)!;
     let find = this.templateNameOptions.find(x => x.value == templateName);
     this.selectedTamplate = find!.key;
   }
@@ -216,6 +207,7 @@ export class StatisticsToolService implements OnInit {
   }
 
   addSegmentations(){
+    //this.currentTemplate.wasChanged = true;
     this.currentTemplate.Segmentations.push(new SegmentationItem());
     this.currentTemplate.SegmentationsClicked.push(true);
   }

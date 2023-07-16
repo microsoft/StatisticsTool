@@ -95,8 +95,7 @@ export class NewReportComponent implements OnInit, OnDestroy {
   }
 
   disableCreateReportButton(){
-    return (this.newReportService.groundTruthDirectory.length < 3) || 
-           (this.newReportService.predictionsDirectory.length < 3) || 
+    return (this.newReportService.predictionsDirectory.length < 3) || 
            (this.newReportService.reporterOutputDirectory.length < 3) ||
            (this.newReportService.getNumConfigsSelected() == 0)            
   }

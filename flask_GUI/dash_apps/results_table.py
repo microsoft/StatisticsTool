@@ -1,18 +1,24 @@
+from base64 import urlsafe_b64decode
 import json
 import sys, os
-current_file_directory = os.path.realpath(__file__)
+from urllib.parse import parse_qsl, urlparse
+
+from dash import Dash, dcc, html, Input, Output, callback
+import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output
+import math
+import uuid
+
 # adding the statistics_tool folder to path
+current_file_directory = os.path.realpath(__file__)
 sys.path.append(os.path.join(os.path.join(os.path.join(current_file_directory, '..'), '..'), '..'))
 
-from dash import Dash, html, dcc
-import dash_bootstrap_components as dbc
+from classes_and_utils.experiments.ExperimentsHelper import ExperimentsHelper
 import flask_GUI.dash_apps.my_pivot_table as pt
-
 from flask_GUI.dash_apps.results_table_css import css
 from app_config.color_scheme import COLOR_GRADIENT_RED_BLUE, COLOR_GRADIENT_RED_WHITE_BLUE
-import math
 from classes_and_utils.unique_helper import UniqueHelper
-import uuid
+
 
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
@@ -47,23 +53,42 @@ def get_text_color_by_stat(main, gradient):
         ret_val = 'black'
     return ret_val
 
-
 class Results_table():
     
     def __init__(self, server):
-
-        self.dash_app = Dash(
-            __name__,
-            server=server,
-            url_base_pathname='/dash/' + str(uuid.uuid4()) + "/",
-            external_stylesheets=[dbc.themes.COSMO],suppress_callback_exceptions=True)
-
-        self.table = None
-        self.dash_app.layout = self.get_whole_page_layout()
+        
         self.unique_helper = None
         self.main_exp = None
         self.ref_exp = None
-       
+            
+        self.dash_app = Dash(
+            __name__,
+            server=server,
+            url_base_pathname=f'/dash/{str(uuid.uuid4())}/' ,
+            external_stylesheets=[dbc.themes.COSMO],suppress_callback_exceptions=True)
+        self.dash_app.layout = html.Div([
+                                    dcc.Location(id='url', refresh=False),
+                                    html.Div(id='page-layout')
+                                ])
+
+        def parse_state(url):
+            parse_result = urlparse(url)
+            query_string = dict(parse_qsl(parse_result.query))
+        
+            return query_string
+
+
+        @self.dash_app.callback(Output('page-layout', 'children'),
+                    inputs=[Input('url', 'href')])
+        def page_load(href):
+            if not href:
+                return []
+            query_string = parse_state(href)
+
+            columns = ExperimentsHelper.parse_segmentations_csv(query_string['cols']) if 'cols' in query_string else []
+            rows    = ExperimentsHelper.parse_segmentations_csv(query_string['rows']) if 'rows' in query_string else []
+            return self.get_table_div_layout(columns,rows)
+
     def get_main_exp(self):
         return self.main_exp
     
@@ -75,7 +100,7 @@ class Results_table():
         if calc_unique and self.unique_helper == None:
             self.unique_helper = UniqueHelper(self.main_exp,self.ref_exp)
 
-    def set_data(self, main_exp, ref_exp, main_path, ref_path, segmentations,calc_unique = False):
+    def set_data(self, main_exp, ref_exp, main_path, ref_path, segmentations, calc_unique = False):
         self.main_exp = main_exp
         self.ref_exp = ref_exp
         self.main_path = main_path
@@ -85,11 +110,9 @@ class Results_table():
             self.unique_helper = UniqueHelper(main_exp,ref_exp)
        
         self.calc_unique = calc_unique
-        self.table = pt.PivotTable(segmentations, main_exp,ref_exp, cell_function=self.get_cell_exp)
-        self.segmentation_categories = list(segmentations.keys())
-
-    def get_webpage(self,columns,rows):
-        self.dash_app.layout = self.get_table_div_layout(columns,rows)
+        self.segmentations = segmentations       
+    
+    def get_webpage(self):
         return self.dash_app.index()
     
     def make_title(self,column_keys, row_keys):
@@ -135,7 +158,6 @@ class Results_table():
         link = f"/example_list/update_list?cell_name={cell_name}&stat={stat}&main_path={self.main_path}&ref_path={self.ref_path}"+ref_flag+unique_flag
         return link
 
-
     def generate_unique_html_dash_element(self,column_keys,row_keys, stat_functions,exp_name, cell_name):
         '''
             stat_func: TP,TN,FN
@@ -154,7 +176,6 @@ class Results_table():
         txt_unique = "(unique: " + str(num) + ")"
         
         return txt_unique,link_unique
-
        
     def get_cell_exp(self, column_keys, row_keys,row_index):  
         '''
@@ -247,41 +268,13 @@ class Results_table():
         to_show = html.Td(cell_content,style={'padding':'0px'})
 
         return to_show    
-    
-    def get_whole_page_layout(self):
-        Title_div = html.Div([dbc.Alert("Reporter Page", className="m-1"), html.H6("init_value", id='init')], style=css['title'])
-
-        cols_segmentation_dropdown = html.Div(
-                                        dcc.Dropdown([], [],
-                                        id='cols_seg', multi=True),
-                                        style={'width':'50%'})
-        rows_segmentation_dropdown = html.Div(
-                                        dcc.Dropdown([], [],
-                                        id='rows_seg', multi=True),
-                                        style={'width':'50%'})
-
-        table_buttons_div = html.Div([cols_segmentation_dropdown,\
-                                      rows_segmentation_dropdown,\
-                                      html.H5('Loading Table',id='table-div',style=css['table-div'])], \
-                                      style=css['table-buttons-div'], 
-                                      id='table-buttons-div')
-
-        example_list_div = html.Iframe([dbc.Alert('Example_list', color="secondary")],\
-                                        name='example-list-div', 
-                                        style=css['example-list-div'])
-
-        image_div = html.Iframe([html.H1('Image div')], 
-                                name='iframe-image', 
-                                id='image-div', 
-                                style=css['image-div'])
-
-        whole_page = html.Div([Title_div, image_div, table_buttons_div, example_list_div], style=css['whole-reporter'])
-        return  whole_page
-    
+ 
     def get_table_div_layout(self,columns,rows):
 
-        t = self.table.get_report_table(columns,rows)
+        table = pt.PivotTable(self.segmentations, self.main_exp,self.ref_exp, cell_function=self.get_cell_exp)
+        
+        t = table.get_report_table(columns,rows)
         table_buttons_div = html.Div(id='table-div',children=t,style=css['table-div'])
 
-        whole_page = html.Div([table_buttons_div], style=css['whole-reporter'])
+        whole_page = html.Div(children=[table_buttons_div], style=css['whole-reporter'],id='report_id')
         return  whole_page    

@@ -106,12 +106,9 @@
                                         [ngbTypeahead]="searchGTDirectroy"
                                         [resultFormatter]="formatter"
                                         name="ground_truth_directory"
-                                        minlength="0" required #groundTruthDirectoryInput="ngModel"
+                                        minlength="0"
                                         [(ngModel)]="newReportService.groundTruthDirectory"
-                                        [ngClass]="{
-                                            'is-invalid': groundTruthDirectoryInput.invalid && groundTruthDirectoryInput.touched,
-                                            'is-valid': groundTruthDirectoryInput.valid && groundTruthDirectoryInput.touched
-                                        }">
+                                        >
                             </div>
                             <div class="input-sm">
                                 <label for="output_directory" style="width:30%;font-weight: bold;">Output Directory:</label>
