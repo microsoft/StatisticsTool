@@ -25,6 +25,14 @@ export class NewReportComponent implements OnInit, OnDestroy {
   backImgSrc = 'assets/back-icon-blue.svg';
   formatter = (result: string) => result.toUpperCase();
 
+  public onFocus(e: Event): void {
+    e.stopPropagation();
+    setTimeout(() => {
+      const inputEvent: Event = new Event('input');
+      e.target!.dispatchEvent(inputEvent);
+    }, 0);
+  }
+
   searchPredictionsDirectory: OperatorFunction<string, readonly string[]> = (
     text$: Observable<string>
   ) =>
@@ -87,8 +95,8 @@ export class NewReportComponent implements OnInit, OnDestroy {
   }
 
   disableCreateReportButton(){
-    return (this.newReportService.groundTruthDirectory.length < 3) || 
-           (this.newReportService.predictionsDirectory.length < 3) || 
-           (this.newReportService.reporterOutputDirectory.length < 3)            
+    return (this.newReportService.predictionsDirectory.length < 3) || 
+           (this.newReportService.reporterOutputDirectory.length < 3) ||
+           (this.newReportService.getNumConfigsSelected() == 0)            
   }
 }

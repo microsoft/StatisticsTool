@@ -1,14 +1,13 @@
 [
     {
-        "File Reading Function": "statistic_tool_reader_face_detection",
+        "Prediction Reading Function": "statistic_tool_reader_face_detection",
+        "GT Reading Function": "none",
         "Overlap Function": "Dice",
-        "Threshold": "0.1",
-        "Evaluation Function": "min_distance_evaluation",
-        "Image Width": "1280",
-        "Image Height": "720",
-        "Statistics Functions": "precision_recall",
+        "Transformation Function": "None",
         "Partitioning Functions": "face_partition",
-        "Log Names to Evaluate": "FaceDetectionOutput.json"
-
+        "Statistics Functions": "precision_recall",
+        "Evaluation Function": "min_distance_evaluation",
+        "Log Names to Evaluate": "FaceDetectionOutput.json",
+        "Threshold": "0.1"
     }
 ]

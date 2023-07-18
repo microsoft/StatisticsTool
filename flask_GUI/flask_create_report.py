@@ -1,6 +1,6 @@
 import csv
 from datetime import datetime
-from flask import render_template, request,redirect
+from flask import request,redirect
 import urllib.parse
 from app_config.constants import Constants
 from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs,get_suites_folder,get_users_defined_functions
@@ -11,19 +11,6 @@ from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.utils import loading_json, save_json
 from classes_and_utils.VideoEvaluation import compare_predictions_directory
 
-
-@server.route('/new_report/show_config', methods=['GET', 'POST'])
-def show_config():
-    config_name = request.args.get('Configuration')
-    path_to_wanted_config = os.path.join(get_configs_folder(), config_name)
-    config_file = loading_json(path_to_wanted_config)
-    config_dict = config_file[0]
-    return render_template('show_config.html', config_dict=config_dict, config_name=config_name)
-
-@server.route('/new_report/create_new_report', methods=['GET', 'POST'])
-def new_report_func():
-    possible_configs = manage_new_report_page(request)
-    return render_template('new_report.html', possible_configs=possible_configs, wiki_page = Constants.WIKI_URL)
 
 @server.route('/new_report/nav_new_report', methods=['GET', 'POST'])
 def nav_report_func():
@@ -77,6 +64,14 @@ def get_config():
     config_path = os.path.join(get_configs_folder(), config_name)
     config_file = loading_json(config_path)
     config_dict = config_file[0]
+    
+    if 'File Reading Function' in config_dict.keys():
+        config_dict['Prediction Reading Function'] = config_dict['File Reading Function']
+        config_dict.pop('File Reading Function')
+
+    if 'GT Reading Function' not in config_dict.keys():
+        config_dict['GT Reading Function'] = 'none'
+
     return json.dumps(config_dict)
 
 @server.route('/new_report/save_configuration',methods=['POST'])
@@ -159,18 +154,6 @@ def calculating():
     result['errorMessage'] = ''
     return json.dumps(result)
 
-
-@server.route('/new_report/add_config', methods=['GET', 'POST'])
-def new_task_func():
-    file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
-    return render_template('new_task_config.html', 
-                           file_reading_funcs=file_reading_funcs, 
-                           Evaluation_funcs=Evaluation_funcs, 
-                           overlap_funcs=overlap_funcs, 
-                           partition_funcs=partition_funcs, 
-                           statistics_funcs=statistics_funcs,
-                           transformation_funcs=transformation_funcs)
-
 def unpack_calc_request(request):
     """
     Accepts request from new_report.html and unpack the parameters for a new report as variables
@@ -211,14 +194,7 @@ def unpack_new_config(request):
     return new_config, new_config_name
 
 def manage_new_report_page(request):
-    """
-    Accepts request from multiple pages and show the available configuration files
-    adds a new configuration file if request came from new_task_config.html
-
-    :param request: request that was sent to '/create_new_report' route
-    :param current_file_directory: full path to flask_GUI_main.py
-    :return: list of available configuration files
-    """
+  
     configs_folder = get_configs_folder()
     # if a new config is added in the GUI
     if "add_config" in request.url:
@@ -255,16 +231,17 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     """
 
     # extract the functions specified in the configuration file
-    reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, log_names_to_evaluate = load_config(config_file_name)
+    prediction_reading_func,gt_reading_func, overlap_func, evaluation_func, statistics_funcs, partitioning_func, transform_func, threshold, log_names_to_evaluate = load_config(config_file_name)
     
     intermediate_dir = os.path.join(save_stats_dir,Constants.INTERMEDIATE_RESULTS_DIR)
     if not os.path.exists(intermediate_dir):
         os.makedirs(intermediate_dir)
         
     # extract all the intermediate results from the raw prediction-label files
+
     compared_videos, report_metadata, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
-                                                                 readerFunction=reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
-   
+                                                                  predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
+ 
     if len(compared_videos) == 0:
         return None, process_result, None
 
