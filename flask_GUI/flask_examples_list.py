@@ -18,14 +18,14 @@ def show_list():
     show_unique = 'unique' in request.args
 
     results_table = experiments_manager.get_results_table(main_path, ref_path)
-    per_video_example_hash, saved_file = UpdateListManager.manage_list_request(results_table, main_path, cell_name, stat, show_unique, list_ref_report, 'sheldon' in request.args)
+    per_video_example_hash, saved_file = UpdateListManager.manage_list_request(results_table, main_path, cell_name, stat, show_unique, list_ref_report, 'save_json' in request.args)
 
     unique_flag = '' if show_unique is False else 'unique'
     return render_template('examples_list.html', 
                             state=stat, 
                             cell_name=cell_name,
                             per_video_example_hash = per_video_example_hash,
-                            saved_sheldon = saved_file,
+                            saved_json = saved_file,
                             comp_index = 0 if list_ref_report else -1,
                             unique = unique_flag,
                             main_path = main_path,

@@ -17,7 +17,7 @@ from app_config.constants import Constants
 
 class ParallelExperiment:
  
-    def __init__(self, statistic_funcs, segmentation_funcs,sheldon_header_data, overlap_function, evaluation_function):
+    def __init__(self, statistic_funcs, segmentation_funcs,report_metadata, overlap_function, evaluation_function):
         self.statistic_funcs = statistic_funcs
         self.evaluation_function = evaluation_function
         self.overlap_function = overlap_function
@@ -26,7 +26,7 @@ class ParallelExperiment:
         self.ID_storage = {}
         self.segmented_ID = {}
         self.segmented_ID_new = {}
-        self.sheldon_header_data = sheldon_header_data
+        self.report_metadata = report_metadata
         
     
     def combine_from_text(self, compared_videos):
@@ -197,14 +197,14 @@ class ParallelExperiment:
             with open(config_file_path) as conf:
                 metadata = json.load(conf)[0]
         
-        metadata.update(self.sheldon_header_data)
+        metadata.update(self.report_metadata)
         output_file = os.path.join(out_folder,report_name+Constants.METADATA_EXTENTION)
         with open(output_file, 'w') as f:
             json.dump(metadata, f)
 
         return report_output_file
 
-def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, sheldon_header_data, overlap_function, evaluation_function):
+def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, report_metadata, overlap_function, evaluation_function):
     """
 
     param statistic_funcs: same as in ParallelExperiment
@@ -214,7 +214,7 @@ def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, seg
     :return:
     """
     exp = ParallelExperiment(statistic_funcs=statistic_funcs, segmentation_funcs=segmentation_funcs, 
-                            sheldon_header_data=sheldon_header_data, 
+                            report_metadata=report_metadata, 
                             evaluation_function=evaluation_function, overlap_function=overlap_function)
                             
     exp.combine_from_text(compared_videos)

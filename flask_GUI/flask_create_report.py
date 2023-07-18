@@ -238,16 +238,17 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
         os.makedirs(intermediate_dir)
         
     # extract all the intermediate results from the raw prediction-label files
-    compared_videos, sheldon_header_data, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
-                                                                 predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
-   
+
+    compared_videos, report_metadata, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
+                                                                  predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
+ 
     if len(compared_videos) == 0:
         return None, process_result, None
 
     # combine the intermediate results for further statistics and example extraction
     exp = experiment_from_video_evaluation_files(statistic_funcs=statistics_funcs,
                                 compared_videos=compared_videos, segmentation_funcs=partitioning_func,
-                                threshold=threshold, sheldon_header_data=sheldon_header_data, evaluation_function = evaluation_func, 
+                                threshold=threshold, report_metadata=report_metadata, evaluation_function = evaluation_func, 
                                 overlap_function = overlap_func)
     
     folder_name = save_stats_dir

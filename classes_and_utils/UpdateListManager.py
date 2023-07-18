@@ -2,7 +2,7 @@ import numpy as np
 import os
 from classes_and_utils.utils import save_json
 
-from utils.sheldon_export_header import *
+from utils.report_metadata import *
 
 class UpdateListManager():
     
@@ -52,7 +52,7 @@ class UpdateListManager():
 
 
     @staticmethod
-    def manage_list_request(results_table, main_path, cell_name, stat, show_unique, show_ref_report, save_sheldon_file):
+    def manage_list_request(results_table, main_path, cell_name, stat, show_unique, show_ref_report, save_json_file):
         """
         Accepts a the requests to /update_list route and returns all the parameter needed to show and save the list of examples asked by the user
         :param request: request from either table.html (link writen in macros.html) or in examples_list.html
@@ -64,15 +64,15 @@ class UpdateListManager():
         exp = results_table.get_ref_exp() if show_ref_report else results_table.get_main_exp()
         # masks = exp.masks
 
-        saved_sheldon = ''
+        saved_json = ''
 
         list_of_examples = results_table.get_ids(cell_name, stat, show_ref_report = show_ref_report, unique=show_unique)
 
         per_video_example_hash = UpdateListManager.create_collapsing_list(list_of_examples)
 
-        if save_sheldon_file:
-            saved_sheldon = UpdateListManager.export_list_to_sheldon(per_video_example_hash, 
-                                        exp.sheldon_header_data, 
+        if save_json_file:
+            saved_json = UpdateListManager.export_list_to_json(per_video_example_hash, 
+                                        exp.report_metadata, 
                                         main_path, 
                                         cell_name,
                                         stat, 
@@ -86,49 +86,49 @@ class UpdateListManager():
         # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see
 
         
-        return per_video_example_hash, saved_sheldon
+        return per_video_example_hash, saved_json
 
     @staticmethod
-    def export_list_to_sheldon(images_list, sheldon_header_data, report_path, cell_name, states, is_unique, show_ref_report):
+    def export_list_to_json(images_list, report_metadata, report_path, cell_name, states, is_unique, show_ref_report):
         segmentation_list = cell_name.split("*") if cell_name !="*" else ['All']
-        sheldon_list = []
+        json_list = []
         header = {}
 
         output_dir = os.path.dirname(report_path)
-        #TODO: Move sheldon header to here
+        #TODO: Move json header to here
         #Jump file header should be created only when exporting it (on UI)
-        new_sheldon_header = create_sheldon_list_header(\
-            sheldon_header_data[PRIMARY_LOG][LOGS_PATH],
-            sheldon_header_data[PRIMARY_LOG][LOG_FILE_NAME],
-            sheldon_header_data[SECONDARY_LOG][LOGS_PATH],
-            sheldon_header_data[SECONDARY_LOG][LOG_FILE_NAME],
+        new_json_header = create_report_metadata(\
+            report_metadata[PRIMARY_LOG][LOGS_PATH],
+            report_metadata[PRIMARY_LOG][LOG_FILE_NAME],
+            report_metadata[SECONDARY_LOG][LOGS_PATH],
+            report_metadata[SECONDARY_LOG][LOG_FILE_NAME],
              '') 
 
 
-        header['header']=new_sheldon_header
+        header['header']=new_json_header
         header['header']['segmentation']= segmentation_list
         if is_unique:
             header['header']['segmentation'].append('unique')
 
 
-        sheldon_list.append(json.dumps(header))
+        json_list.append(json.dumps(header))
         for file in list(images_list.keys()):
             for event_key, actual_event in images_list[file].items():
-                sheldon_link={}
-                sheldon_link['keys']={}
-                sheldon_link['keys']['type']='debug'
-                sheldon_link['message']={}
-                sheldon_link['message']['IsChecked']='False'
+                json_link={}
+                json_link['keys']={}
+                json_link['keys']['type']='debug'
+                json_link['message']={}
+                json_link['message']['IsChecked']='False'
 
                 vid_name = actual_event['frames'][0][0].replace(".mp4","")
-                sheldon_link['message']['Video Location']=vid_name
-                sheldon_link['message']['Frame Number']= actual_event['frames'][0][2]
-                sheldon_link['message']['end_frame'] = actual_event['end_frame']
+                json_link['message']['Video Location']=vid_name
+                json_link['message']['Frame Number']= actual_event['frames'][0][2]
+                json_link['message']['end_frame'] = actual_event['end_frame']
 
-                # sheldon_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid_name, header['header'][PRIMARY_LOG][LOGS_PATH])
-                # sheldon_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid_name, header['header'][SECONDARY_LOG][LOGS_PATH])
+                # json_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid_name, header['header'][PRIMARY_LOG][LOGS_PATH])
+                # json_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid_name, header['header'][SECONDARY_LOG][LOGS_PATH])
 
-                sheldon_list.append(json.dumps(sheldon_link))
+                json_list.append(json.dumps(json_link))
         
         name = ''
 
@@ -146,7 +146,7 @@ class UpdateListManager():
 
     
         with open(saved_file, 'w') as f:
-            for event in sheldon_list:
+            for event in json_list:
                 f.write(event+'\n')
             
         return saved_file
