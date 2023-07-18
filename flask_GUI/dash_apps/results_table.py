@@ -2,6 +2,7 @@ from base64 import urlsafe_b64decode
 import json
 import sys, os
 from urllib.parse import parse_qsl, urlparse
+from threading import Lock
 
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
@@ -55,22 +56,27 @@ def get_text_color_by_stat(main, gradient):
 
 class Results_table():
     
-    def __init__(self, server):
+    def __init__(self, server, main_exp,ref_exp, main_path, ref_path, segmentations):
         
         self.unique_helper = None
-        self.main_exp = None
-        self.ref_exp = None
-            
+        self.main_exp = main_exp
+        self.ref_exp = ref_exp
+        self.main_path = main_path
+        self.ref_path = ref_path
+        self.segmentations = segmentations 
+        
+        self.unique_lock = Lock()
         self.dash_app = Dash(
             __name__,
             server=server,
             url_base_pathname=f'/dash/{str(uuid.uuid4())}/' ,
             external_stylesheets=[dbc.themes.COSMO],suppress_callback_exceptions=True)
+        
         self.dash_app.layout = html.Div([
                                     dcc.Location(id='url', refresh=False),
                                     html.Div(id='page-layout')
                                 ])
-
+        
         @self.dash_app.callback(Output('page-layout', 'children'),
                     inputs=[Input('url', 'href')])
         def page_load(href):
@@ -82,7 +88,10 @@ class Results_table():
 
             columns = ExperimentsHelper.parse_segmentations_csv(query_string['cols']) if 'cols' in query_string else []
             rows    = ExperimentsHelper.parse_segmentations_csv(query_string['rows']) if 'rows' in query_string else []
-            return self.get_table_div_layout(columns,rows)
+            unique = query_string['calc_unique']!='false' if 'calc_unique' in query_string else False
+            layout = self.get_table_div_layout(columns,rows, unique)
+            return layout
+        
 
     def get_main_exp(self):
         return self.main_exp
@@ -91,22 +100,12 @@ class Results_table():
         return self.ref_exp
     
     def set_unique(self,calc_unique):
-        self.calc_unique = calc_unique
-        if calc_unique and self.unique_helper == None:
-            self.unique_helper = UniqueHelper(self.main_exp,self.ref_exp)
-
-    def set_data(self, main_exp, ref_exp, main_path, ref_path, segmentations, calc_unique = False):
-        self.main_exp = main_exp
-        self.ref_exp = ref_exp
-        self.main_path = main_path
-        self.ref_path = ref_path
         
-        if main_exp is not None and calc_unique and self.unique_helper is None:
-            self.unique_helper = UniqueHelper(main_exp,ref_exp)
-       
-        self.calc_unique = calc_unique
-        self.segmentations = segmentations       
-    
+        if self.ref_exp is not None and calc_unique and self.unique_helper is None:
+            with self.unique_lock:
+                if self.unique_helper is None:
+                    self.unique_helper = UniqueHelper(self.main_exp,self.ref_exp)
+  
     def get_webpage(self):
         return self.dash_app.index()
     
@@ -153,11 +152,11 @@ class Results_table():
         link = f"/example_list/update_list?cell_name={cell_name}&stat={stat}&main_path={self.main_path}&ref_path={self.ref_path}"+ref_flag+unique_flag
         return link
 
-    def generate_unique_html_dash_element(self,column_keys,row_keys, stat_functions,exp_name, cell_name):
+    def generate_unique_html_dash_element(self, exp_name, cell_name, stat_functions, segmentations):
         '''
             stat_func: TP,TN,FN
         '''        
-        unique_array,unique_array_ref,_ = self.unique_helper.calc_unique_detections(column_keys,row_keys,stat_functions)
+        unique_array,unique_array_ref = self.unique_helper.get_cell_stat_data(cell_name, stat=stat_functions, segmentations=segmentations)
         link_unique = self.get_link_for_update_list(cell_name=cell_name, 
                                                 stat=stat_functions, 
                                                 is_ref = exp_name==REF_EXP,
@@ -172,7 +171,7 @@ class Results_table():
         
         return txt_unique,link_unique
        
-    def get_cell_exp(self, column_keys, row_keys,row_index):  
+    def get_cell_exp(self, column_keys, row_keys,row_index, show_unique):  
         '''
         The function that return a single cell
         '''     
@@ -184,15 +183,12 @@ class Results_table():
         if self.ref_exp is not None:
             exp_data[REF_EXP] = self.ref_exp.get_cell_data(cell_name, segmentations) 
         
-        if self.unique_helper:
-            self.unique_helper.calc_cell_data(cell_name, segmentations=segmentations)
-
         all_metrics = []
         if self.ref_exp is not None:
             TDs = []
             TDs.append(html.Td(''))
             TDs.append(html.Td('MAIN', style={'color':'black','font-weight':'bold','white-space':'nowrap'}))
-            if self.calc_unique == True and self.unique_helper != None:
+            if show_unique == True and self.unique_helper != None:
                 TDs.append(html.Td(''))
             TDs.append(html.Td('REF', style={'color':'black','font-weight':'bold','white-space':'nowrap'}))
             all_metrics.append(html.Tr(TDs,style=css['table-row']))
@@ -235,16 +231,17 @@ class Results_table():
                    
                 TDs.append(html.Td(curr_metric,style=style))
 
-                if self.calc_unique == True and k in ["TP", "FP", "FN"]:
+               
+                if show_unique == True and k in ["TP", "FP", "FN"]:
                     if self.unique_helper != None:
-                        txt_unique, link_unique = self.generate_unique_html_dash_element(column_keys,row_keys,k,exp_name, exp_data[exp_name]['cell_name'])
+                        txt_unique, link_unique = self.generate_unique_html_dash_element(exp_name, exp_data[exp_name]['cell_name'], k, segmentations)
                         js = json.dumps({'action':'update_list','value': link_unique})
                         msg = "javascript:window.parent.postMessage({});".format(js)
                         a_unique = html.A(txt_unique,href=msg, target="")
 
                         TDs.append(html.Td(a_unique,style={'white-space': 'nowrap'}))
                 else:
-                    if self.calc_unique == True and self.unique_helper != None:
+                    if show_unique == True and self.unique_helper != None:
                         TDs.append(html.Td('',style={'white-space': 'nowrap'}))
             
             if idx % 2 == 0:
@@ -264,11 +261,11 @@ class Results_table():
 
         return to_show    
  
-    def get_table_div_layout(self,columns,rows):
+    def get_table_div_layout(self,columns,rows, unique):
 
         table = pt.PivotTable(self.segmentations, self.main_exp,self.ref_exp, cell_function=self.get_cell_exp)
         
-        t = table.get_report_table(columns,rows)
+        t = table.get_report_table(columns,rows, unique)
         table_buttons_div = html.Div(id='table-div',children=t,style=css['table-div'])
 
         whole_page = html.Div(children=[table_buttons_div], style=css['whole-reporter'],id='report_id')

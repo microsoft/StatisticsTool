@@ -112,7 +112,17 @@ class UniqueHelper:
 
         return ids
 
+    def get_cell_stat_data(self, cell_name, stat, segmentations):
+        if cell_name not in self.cells_data or cell_name not in self.cells_data_ref:
+            self.calc_cell_data(cell_name, segmentations)
+
+        return self.cells_data[cell_name][stat], self.cells_data_ref[cell_name][stat]
+
     def calc_cell_data(self, cell_name, segmentations):
+        
+        if cell_name in self.cells_data and cell_name in self.cells_data_ref:
+            return
+        
           #todo - hagai
         dict = {'None':'None'}
         lst = []
