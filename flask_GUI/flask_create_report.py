@@ -240,7 +240,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     # extract all the intermediate results from the raw prediction-label files
 
     compared_videos, report_metadata, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
-                                                                  predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
+                                                                  predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
  
     if len(compared_videos) == 0:
         return None, process_result, None

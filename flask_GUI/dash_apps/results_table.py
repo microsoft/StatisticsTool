@@ -71,19 +71,14 @@ class Results_table():
                                     html.Div(id='page-layout')
                                 ])
 
-        def parse_state(url):
-            parse_result = urlparse(url)
-            query_string = dict(parse_qsl(parse_result.query))
-        
-            return query_string
-
-
         @self.dash_app.callback(Output('page-layout', 'children'),
                     inputs=[Input('url', 'href')])
         def page_load(href):
             if not href:
                 return []
-            query_string = parse_state(href)
+            
+            parse_result = urlparse(href)
+            query_string = dict(parse_qsl(parse_result.query))
 
             columns = ExperimentsHelper.parse_segmentations_csv(query_string['cols']) if 'cols' in query_string else []
             rows    = ExperimentsHelper.parse_segmentations_csv(query_string['rows']) if 'rows' in query_string else []
