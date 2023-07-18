@@ -32,6 +32,5 @@ export class SaveTemplateDialogComponent {
 
   disableSaveButton(){
     return false;
-    return this.templateName == '';
   }
 } 

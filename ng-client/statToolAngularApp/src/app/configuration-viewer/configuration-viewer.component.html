@@ -1,0 +1,195 @@
+<div class="configuration-container" *ngIf="newReportService.showConfigViewer">
+    <div class="configuration-header">
+        <div class="closeButton" (click)="close()">X</div>
+        <div class="titleText">{{getTitle()}} </div>
+    </div>
+    <div class="configuration-content">
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="config_name" style="font-weight: bold">Configuration Name:</label>
+                <input type="text" class="form-control form-control-sm" id="config_name" 
+                       placeholder="" name="config_name" style="min-height: 0px !important;width:100%;padding-right: 10px;" 
+                       minlength="3" required #nameInput="ngModel"
+                       [(ngModel)]="newReportService.configName"
+                       [ngClass]="{
+                        'is-invalid': nameInput.invalid && nameInput.touched,
+                        'is-valid': nameInput.valid && nameInput.touched
+                      }"
+                       >
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="log_name" style="font-weight: bold">Log Names to Evaluate:</label>
+                <input type="text" class="form-control form-control-sm" id="log_name" 
+                        [(ngModel)]="newReportService.logName"
+                        placeholder="" name="log_name" style="min-height: 0px !important;" 
+                        >
+              </div>
+            </div>
+        </div>
+        <!-- Prediction Reading Function-->
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="prediction_reading_function" style="font-weight: bold">Prediction Reading Function:</label>
+                    <select class="form-select form-select-sm" id="prediction_reading_function" style="padding-right: 10px;width:100%"
+                        [(ngModel)]="newReportService.selectedPredictionReadingFunction" required #predictionReadingFunctionSelect="ngModel"
+                            [ngClass]="{
+                                'is-invalid': predictionReadingFunctionSelect.invalid && predictionReadingFunctionSelect.touched,
+                                'is-valid': predictionReadingFunctionSelect.valid && predictionReadingFunctionSelect.touched
+                            }"
+                        >
+                        <option *ngFor="let func of newReportService.prediction_reading_functions"
+                                        value="{{func}}"
+                                >{{func}}
+                        </option>
+                    </select>
+              </div>
+            </div>
+        </div>
+        <!-- GT Reading Function-->
+        <div class="row" style="width:100%">
+          <div class="col">
+            <div class="form-group">
+              <label for="gt_reading_function" style="font-weight: bold">GT Reading Function (leave None for Prediction function):</label>
+                  <select class="form-select form-select-sm" id="gt_reading_function" style="padding-right: 10px;width:100%"
+                      [(ngModel)]="newReportService.selectedGTReadingFunction" required #gtReadingFunctionSelect="ngModel"
+                          [ngClass]="{
+                              'is-invalid': gtReadingFunctionSelect.invalid && gtReadingFunctionSelect.touched,
+                              'is-valid': gtReadingFunctionSelect.valid && gtReadingFunctionSelect.touched
+                          }"
+                      >
+                      <option *ngFor="let func of newReportService.gt_reading_functions"
+                                      value="{{func}}"
+                              >{{func}}
+                      </option>
+                  </select>
+            </div>
+          </div>
+      </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="overlap_function" style="font-weight: bold">Overlap Function:</label>
+                    <select class="form-select form-select-sm" id="overlap_function" style="padding-right: 10px;width:100%"
+                        [(ngModel)]="newReportService.selectedOverlapFunction"  required #overlapFunctionSelect="ngModel"
+                        [ngClass]="{
+                            'is-invalid': overlapFunctionSelect.invalid && overlapFunctionSelect.touched,
+                            'is-valid': overlapFunctionSelect.valid && overlapFunctionSelect.touched
+                        }">
+                        <option *ngFor="let func of newReportService.overlap_functions"
+                                        value="{{func}}"
+                                >{{func}}
+                        </option>
+                    </select>
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="transform_functions" style="font-weight: bold">Transform Function:</label>
+                    <select class="form-select form-select-sm" id="transform_functions" style="padding-right: 10px;width:100%"
+                        [(ngModel)]="newReportService.selectedTransformFunction"  required #transformFunctionSelect="ngModel"
+                        [ngClass]="{
+                            'is-invalid': transformFunctionSelect.invalid && transformFunctionSelect.touched,
+                            'is-valid': transformFunctionSelect.valid && transformFunctionSelect.touched
+                        }">
+                    <option *ngFor="let func of newReportService.transform_functions"
+                                    value="{{func}}"
+                            >{{func}}
+                    </option>
+                </select>
+              </div>
+            </div>
+        </div>
+        
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="treshold" style="font-weight: bold">Treshold:</label>
+                <input type="text" class="form-control form-control-sm" id="treshold" 
+                        [(ngModel)]="newReportService.treshold"
+                        placeholder="" name="treshold" style="min-height: 0px !important;width:100%;padding-right: 10px" minlength="1" required #treshholdInput="ngModel"
+                        [ngClass]="{
+                            'is-invalid': treshholdInput.invalid && treshholdInput.touched,
+                            'is-valid': treshholdInput.valid && treshholdInput.touched
+                        }">
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="evaluate_function" style="font-weight: bold">Evaluate Function:</label>
+                    <select class="form-select form-select-sm" id="evaluate_function" style="padding-right: 10px;width:100%"
+                        [(ngModel)]="newReportService.selectedEvaluationFunction" required #evaluateFunctionSelect="ngModel"
+                        [ngClass]="{
+                            'is-invalid': evaluateFunctionSelect.invalid && evaluateFunctionSelect.touched,
+                            'is-valid': evaluateFunctionSelect.valid && evaluateFunctionSelect.touched
+                        }"
+                        >
+                        <option *ngFor="let func of newReportService.evaluation_functions"
+                                        value="{{func}}"
+                                >{{func}}
+                        </option>
+                    </select>
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="statistics_function" style="font-weight: bold">Statistics Function:</label>
+                    <select class="form-select form-select-sm" id="statistics_function" style="padding-right: 10px;width:100%"
+                        [(ngModel)]="newReportService.selectedStatisticsFunction" required #statFunctionSelect="ngModel"
+                        [ngClass]="{
+                            'is-invalid': statFunctionSelect.invalid && statFunctionSelect.touched,
+                            'is-valid': statFunctionSelect.valid && statFunctionSelect.touched
+                        }"
+                        >
+                        <option *ngFor="let func of newReportService.statistics_functions"
+                                        value="{{func}}"
+                                >{{func}}
+                        </option>
+                    </select>
+              </div>
+            </div>
+        </div>
+
+        <div class="row" style="width:100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="partitioning_function" style="font-weight: bold">Partitioning Function:</label>
+                    <select class="form-select form-select-sm" id="partitioning_function" style="padding-right: 10px;width:100%"
+                        [(ngModel)]="newReportService.selectedPartitioningFunction" required #partitFunctionSelect="ngModel"
+                        [ngClass]="{
+                            'is-invalid': partitFunctionSelect.invalid && partitFunctionSelect.touched,
+                            'is-valid': partitFunctionSelect.valid && partitFunctionSelect.touched
+                        }"
+                        > 
+                        <option *ngFor="let func of newReportService.partitioning_functions"
+                                        value="{{func}}"
+                                >{{func}}
+                        </option>
+                </select>
+              </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-footer">
+        <button type="button" style="margin-bottom: 5px;"
+                 class="btn btn btn-primary btn-mdcd" 
+                 [disabled]="disableSaveButton()"
+                 (click)="newReportService.saveConfig()">Save</button>
+    </div>
+</div>

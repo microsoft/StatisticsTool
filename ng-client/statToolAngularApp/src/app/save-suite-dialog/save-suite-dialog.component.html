@@ -1,0 +1,23 @@
+<div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Save Suite</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+</div>
+<div class="modal-body">
+    <form>
+        <div class="mb-3">
+            <label for="name">Suite Name</label>
+            <div class="input-group">
+                <input
+                    id="suiteName"
+                    class="form-control"
+                    placeholder="Suite Name"
+                    [(ngModel)]="suiteName"
+                    name = "suiteName"
+                />
+            </div>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="save()" >Save</button>
+</div>

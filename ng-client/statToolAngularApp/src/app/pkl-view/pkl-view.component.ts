@@ -13,7 +13,7 @@ export class PklViewComponent implements OnInit  {
 
   @ViewChild('iframe') iframe: ElementRef|null = null;
   
-  url = '/get_report_table';
+  url = '/viewer/get_report_table';
   
   selectedRows = '';
   @Input() set selectedRowsSet(rows:string[]){
@@ -52,11 +52,11 @@ export class PklViewComponent implements OnInit  {
   height:string = '';
 
   constructor(public statToolService:StatisticsToolService) {
-    this.url = '/get_report_table?calc_unique=' + statToolService.calculateUnique + "&main_path=" + this.statToolService.getSelectedMainReport() + "&ref_path=" + this.statToolService.getSelectedRefReport();
+    this.url = '/viewer/get_report_table?calc_unique=' + statToolService.calculateUnique + "&main_path=" + this.statToolService.getSelectedMainReport() + "&ref_path=" + this.statToolService.getSelectedRefReport();
   }
 
   setUrl(){
-    this.url = '/get_report_table?cols=' + this.selectedColumns 
+    this.url = '/viewer/get_report_table?cols=' + this.selectedColumns 
       + "&rows=" + this.selectedRows + "&calc_unique=" + this.statToolService.calculateUnique
       + "&main_path=" + this.statToolService.getSelectedMainReport() + "&ref_path=" + this.statToolService.getSelectedRefReport();
   }

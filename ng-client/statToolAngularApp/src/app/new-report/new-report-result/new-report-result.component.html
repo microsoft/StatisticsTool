@@ -1,0 +1,47 @@
+<div class="results" *ngIf="newReportService.showResults()">
+    <h5>Execution Results</h5>
+    <div class="navigation" *ngIf="newReportService.newReportResult.link != ''">
+      <a href="{{newReportService.newReportResult.link}}" class="link">Open Report</a>
+    </div>
+    <ng-container *ngIf="newReportService.newReportResult.link == ''">
+      <div class="error-message">
+          <p><strong>Report Creation Failed.</strong></p>
+      </div>
+    </ng-container>
+    <div>
+    <ng-container *ngIf="newReportService.newReportResult.ok == true">
+        <div class="key-value-pairs">
+            <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Config</th>
+                      <th># Success</th>
+                      <th># Skipped</th>
+                      <th>Not Json</th>
+                      <th># Failed</th>
+                      <th>Filtered</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let file of newReportService.newReportResult.files;let i = index">
+                      <td>{{ file }}</td>
+                      <td>{{ newReportService.newReportResult.num_success_files[i] }}</td>
+                      <td>{{ newReportService.newReportResult.reading_function_skipped[i] }}</td>
+                      <td>{{ newReportService.newReportResult.not_json_files[i] }}</td>
+                      <td>{{ newReportService.newReportResult.failed_with_error[i] }}</td>
+                      <td>{{ newReportService.newReportResult.skipped_not_in_lognames[i] }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="!(newReportService.newReportResult.ok == true)">
+        <div class="error-message">
+            <p><strong>{{ newReportService.newReportResult.errorMessage }}</strong></p>
+        </div>
+    </ng-container>
+   
+    </div>
+</div>

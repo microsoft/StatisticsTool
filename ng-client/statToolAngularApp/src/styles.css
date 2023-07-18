@@ -87,3 +87,12 @@ span.dropdown-btn {
     border-radius: 50%;
   }
 
+  .is-valid {
+    border-color: #28a745;
+    width: 95%;
+  }
+  
+  .is-invalid {
+    border-color: #dc3545;
+    width: 95%;
+  }

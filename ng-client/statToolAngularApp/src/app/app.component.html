@@ -1,2 +1,7 @@
-<drawer></drawer>
-<template-segmentations></template-segmentations>
+<div *ngIf = "!isNewReport">
+    <drawer></drawer>
+    <template-segmentations></template-segmentations>
+</div>
+<div *ngIf = "isNewReport">
+    <new-report></new-report>
+</div>

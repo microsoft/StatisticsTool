@@ -1,7 +1,11 @@
 
+import json
 import math
+import pickle
 import pandas as pd, os
 import numpy as np
+
+from app_config.constants import Constants
 
 
 # Irit's totos:
@@ -13,7 +17,7 @@ import numpy as np
 
 class ParallelExperiment:
  
-    def __init__(self, statistic_funcs, segmentation_funcs,sheldon_header_data, overlap_function, evaluation_function):
+    def __init__(self, statistic_funcs, segmentation_funcs,report_metadata, overlap_function, evaluation_function):
         self.statistic_funcs = statistic_funcs
         self.evaluation_function = evaluation_function
         self.overlap_function = overlap_function
@@ -22,7 +26,7 @@ class ParallelExperiment:
         self.ID_storage = {}
         self.segmented_ID = {}
         self.segmented_ID_new = {}
-        self.sheldon_header_data = sheldon_header_data
+        self.report_metadata = report_metadata
         
     
     def combine_from_text(self, compared_videos):
@@ -173,7 +177,34 @@ class ParallelExperiment:
         return video
 
 
-def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, sheldon_header_data, overlap_function, evaluation_function):
+    def save_experiment(self, out_folder, config_file_name, config_folder):
+        """
+        Saves an object using pickle in a certain path
+        :param obj: any python object (in this project we use it to save an instance of  class ParallelExperiment)
+        :param filename: full path to the saved object
+        """
+        report_name = os.path.splitext(config_file_name)[0]
+        report_file_name = report_name + Constants.EXPERIMENT_EXTENSION
+        report_output_file = os.path.join(out_folder, report_file_name)
+
+        with open(report_output_file, 'wb') as output:  # Overwrites any existing file.
+            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
+
+        metadata = {}  
+
+        config_file_path = os.path.join(config_folder, config_file_name)
+        if os.path.exists(config_file_path):
+            with open(config_file_path) as conf:
+                metadata = json.load(conf)[0]
+        
+        metadata.update(self.report_metadata)
+        output_file = os.path.join(out_folder,report_name+Constants.METADATA_EXTENTION)
+        with open(output_file, 'w') as f:
+            json.dump(metadata, f)
+
+        return report_output_file
+
+def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, segmentation_funcs, threshold, report_metadata, overlap_function, evaluation_function):
     """
 
     param statistic_funcs: same as in ParallelExperiment
@@ -183,7 +214,7 @@ def experiment_from_video_evaluation_files(statistic_funcs, compared_videos, seg
     :return:
     """
     exp = ParallelExperiment(statistic_funcs=statistic_funcs, segmentation_funcs=segmentation_funcs, 
-                            sheldon_header_data=sheldon_header_data, 
+                            report_metadata=report_metadata, 
                             evaluation_function=evaluation_function, overlap_function=overlap_function)
                             
     exp.combine_from_text(compared_videos)

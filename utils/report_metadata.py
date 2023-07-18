@@ -8,7 +8,7 @@ VIDEO_INFO = 'video_location'
 VIDEO_BASE_PATH = 'video_path'
 VIDEO_SUFFIX = 'video_suffix'
 
-def create_sheldon_list_header(primary_path, primary_name, secondary_path, secondary_name, video_path) -> dict:
+def create_report_metadata(primary_path, primary_name, secondary_path, secondary_name, video_path) -> dict:
     header = {}
     header[PRIMARY_LOG] = {}
     header[SECONDARY_LOG] = {}

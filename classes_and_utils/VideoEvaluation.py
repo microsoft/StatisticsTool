@@ -5,7 +5,7 @@ from classes_and_utils.file_storage_handler import get_local_or_blob_full_path, 
 from utils.LogsParser import parse_video_name_from_pred_file
 from utils.AzureStorageHelper import StoreType, read_gt_file_from_blob
 from classes_and_utils.file_storage_handler import get_local_or_blob_file
-from utils.sheldon_export_header import create_sheldon_list_header
+from utils.report_metadata import create_report_metadata
 
 class VideoEvaluation:
     """
@@ -33,9 +33,10 @@ class VideoEvaluation:
            a list that contains each frames bounding boxes data and overlap matrix (first object is the image folder name)
     """
 
-    def __init__(self, overlap_function, readerFunction, evaluation_func, transform_func):
+    def __init__(self, overlap_function, predictionReaderFunction,gtReaderFunction, evaluation_func, transform_func):
         self.overlap_function = overlap_function
-        self.readerFunction = readerFunction
+        self.predictionReaderFunction = predictionReaderFunction
+        self.gtReaderFunction = gtReaderFunction
         self.evaluation_func = evaluation_func
         self.transform_func = transform_func
         self.comp_data = []
@@ -43,13 +44,13 @@ class VideoEvaluation:
 
     def load_data(self, pred_file, gt_file):
 
-        pred_data = self.readerFunction(pred_file)
+        pred_data = self.predictionReaderFunction(pred_file)
        
         if pred_data is None: #The user defined reader function doesn't recognize this file
             print (f"reader function could't parse {pred_file} log")
             return None
             
-        gt_data = self.readerFunction(gt_file)
+        gt_data = self.gtReaderFunction(gt_file)
         
         if gt_data is None:
             print (f"failed to parse or no data for gt file: {gt_file}")
@@ -170,7 +171,7 @@ class VideoEvaluation:
 
    
 
-def compare_predictions_directory(pred_dir, output_dir, overlap_function, readerFunction, transform_func, evaluation_func, gt_dir = None, log_names_to_evaluate = None):
+def compare_predictions_directory(pred_dir, output_dir, overlap_function, predictionReaderFunction,gtReaderFunction,transform_func, evaluation_func, gt_dir = None, log_names_to_evaluate = None):
     """
 
     :param GT_path_list:  a list of paths to GT files (matching to the preditions and images lists)
@@ -181,7 +182,6 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     :param evaluation_func: same as in VideoEvaluation
     :return: dictionary tahts maps each video file location to it's annotations (pred and GT) file location
     """
-    sheldon_header_data = {}
     
     pred_path_list = list_files_in_results_path(pred_dir)
     
@@ -254,14 +254,14 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
                 print(f"GT file: {gt_local_path} not found for prediction: {pred}, continue with next prediction log..")
                 continue
 
-            V = VideoEvaluation(overlap_function=overlap_function, readerFunction=readerFunction, evaluation_func=evaluation_func, transform_func = transform_func)
+            V = VideoEvaluation(overlap_function=overlap_function, predictionReaderFunction=predictionReaderFunction,gtReaderFunction=gtReaderFunction ,evaluation_func=evaluation_func, transform_func = transform_func)
             res = V.compute_dataframe(pred_file, gt_local_path, video_name)
             if not res:
                 print (f"Reading function didn't read file: {pred} and gt:{gt_local_path}")
                 skipped_reading_fnc.append(pred)
                 continue
             
-            #if succeded - save prediction log file name to use in sheldon header
+            #if succeded - save prediction log file name for report metadata
             pred_file_name = os.path.basename(pred)
 
             print(f"Starting comparing files for video {video_name}: {pred} and {gt_local_path}")
@@ -296,9 +296,14 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
     gt_dir = get_local_or_blob_full_path(gt_dir, StoreType.Annotation)
     video_dir = '' #TODO:ADD Blob link
     
-    user_text = f"Processed successfully: {len(succeded)} files\n Reading function skipped: {len(skipped_reading_fnc)} files\n Not .json files: {len(skipped_not_json)}\n Failed with an error: {len(failed)} files\n Filtered out by log name: {len(skipped_not_in_lognames)}\n"
+    process_result = dict()
+    process_result['num_success_files'] = len(succeded)
+    process_result['reading_function_skipped'] = len(skipped_reading_fnc)
+    process_result['not_json_files'] = len(skipped_not_json)
+    process_result['failed_with_error'] = len(failed)
+    process_result['skipped_not_in_lognames'] = len(skipped_not_in_lognames)
 
-    sheldon_header_data = create_sheldon_list_header(primary_path=pred_dir, primary_name=pred_file_name, secondary_path=gt_dir, secondary_name=gt_file_name, video_path=video_dir)
-    return output_files, sheldon_header_data, user_text
+    report_metadata = create_report_metadata(primary_path=pred_dir, primary_name=pred_file_name, secondary_path=gt_dir, secondary_name=gt_file_name, video_path=video_dir)
+    return output_files, report_metadata,process_result
 
 
