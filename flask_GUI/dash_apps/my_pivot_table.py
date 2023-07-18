@@ -11,7 +11,7 @@ from flask_GUI.dash_apps.results_table_css import css
 
 sys.path.append('../classes_and_utils')
 
-def default_get_cell(data, column_keys, row_keys,row_index):
+def default_get_cell(data, column_keys, row_keys,row_index, unique):
     return html.Td("{}\n{}".format(column_keys, row_keys), style={'border':'solid'})
 
 class   PivotTable():
@@ -22,7 +22,7 @@ class   PivotTable():
         self.main_exp = main_exp
         self.ref_exp = ref_exp
 
-    def get_row(self, rows_keys, columns_order, horizontal_span_size, all_rows_cats,idx, idx_hist):
+    def get_row(self, rows_keys, columns_order, horizontal_span_size, idx, idx_hist, show_unique):
         '''
         A function that returns single Dash-Html table row
         '''
@@ -42,7 +42,7 @@ class   PivotTable():
         ## The core of the table
         ## This for-loop goes over all columns of the row, and collect the cells
         for column_keys in columns_order:
-            single_row.append(self.get_cell(column_keys, rows_keys,idx))
+            single_row.append(self.get_cell(column_keys, rows_keys,idx, show_unique))
 
         single_row = [html.Tr(single_row)]
         return single_row
@@ -68,14 +68,14 @@ class   PivotTable():
                 yield from self.get_cols_of_cat(segments_categories, i+1, prev_segments_hist = segments_history) 
 
 
-    def get_rows_of_cat(self, rows_segmentation_categories, columns_order,horizontal_span_size,prev_segments_history = [], row_cat_idx=0, idx_hist=[]):
+    def get_rows_of_cat(self, rows_segmentation_categories, columns_order,horizontal_span_size, show_unique,prev_segments_history = [], row_cat_idx=0, idx_hist=[]):
         '''
         A recursive function that returns all rows of table
         '''
         if len(rows_segmentation_categories) == 0:
             segments_history = [{"None": "None"}]
             horizontal_span_size = [0]
-            return self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories,0,idx_hist = [0])
+            return self.get_row(segments_history, columns_order, horizontal_span_size,0,idx_hist = [0], show_unique=show_unique)
         
         list_all_TRs = []
 
@@ -85,10 +85,10 @@ class   PivotTable():
             segments_history = prev_segments_history + [{curr_segment_category: segment_name}]
             idx_hist_ = idx_hist + [idx]
             if len(rows_segmentation_categories) == row_cat_idx+1: ## Bringing a single row
-                TRs_curr_cat =  self.get_row(segments_history, columns_order, horizontal_span_size, rows_segmentation_categories,idx,idx_hist = idx_hist_)
+                TRs_curr_cat =  self.get_row(segments_history, columns_order, horizontal_span_size,idx,idx_hist = idx_hist_, show_unique=show_unique)
             
             else: ## Continue recoursy - bring all rows in this category
-                TRs_curr_cat = self.get_rows_of_cat(rows_segmentation_categories, columns_order, horizontal_span_size,prev_segments_history= segments_history, row_cat_idx = row_cat_idx+1, idx_hist = idx_hist_)
+                TRs_curr_cat = self.get_rows_of_cat(rows_segmentation_categories, columns_order, horizontal_span_size, show_unique,prev_segments_history= segments_history, row_cat_idx = row_cat_idx+1, idx_hist = idx_hist_)
 
             list_all_TRs.extend(TRs_curr_cat)
 
@@ -144,7 +144,7 @@ class   PivotTable():
         return cols_titles
 
 
-    def get_report_table(self, all_columns, all_rows):
+    def get_report_table(self, all_columns, all_rows, unique):
         '''
         The main function that builds the whole table
         '''
@@ -160,7 +160,7 @@ class   PivotTable():
         print(columns_order)
         lens_vector = [len(self.segmentations[cat]) for cat in all_rows]
         horizontal_span_size = self.get_lens_bellow(lens_vector)
-        table_rows = self.get_rows_of_cat(all_rows, columns_order,horizontal_span_size)
+        table_rows = self.get_rows_of_cat(all_rows, columns_order,horizontal_span_size, show_unique=unique)
 
         table_body = html.Tbody(table_rows)    
 

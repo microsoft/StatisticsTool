@@ -32,19 +32,19 @@
               </div>
             </div>
         </div>
-
+        <!-- Prediction Reading Function-->
         <div class="row" style="width:100%">
             <div class="col">
               <div class="form-group">
-                <label for="file_reading_function" style="font-weight: bold">File Reading Function:</label>
-                    <select class="form-select form-select-sm" id="file_reading_function" style="padding-right: 10px;width:100%"
-                        [(ngModel)]="newReportService.selectedReadingFunction" required #fileReadingFunctionSelect="ngModel"
+                <label for="prediction_reading_function" style="font-weight: bold">Prediction Reading Function:</label>
+                    <select class="form-select form-select-sm" id="prediction_reading_function" style="padding-right: 10px;width:100%"
+                        [(ngModel)]="newReportService.selectedPredictionReadingFunction" required #predictionReadingFunctionSelect="ngModel"
                             [ngClass]="{
-                                'is-invalid': fileReadingFunctionSelect.invalid && fileReadingFunctionSelect.touched,
-                                'is-valid': fileReadingFunctionSelect.valid && fileReadingFunctionSelect.touched
+                                'is-invalid': predictionReadingFunctionSelect.invalid && predictionReadingFunctionSelect.touched,
+                                'is-valid': predictionReadingFunctionSelect.valid && predictionReadingFunctionSelect.touched
                             }"
                         >
-                        <option *ngFor="let func of newReportService.reading_functions"
+                        <option *ngFor="let func of newReportService.prediction_reading_functions"
                                         value="{{func}}"
                                 >{{func}}
                         </option>
@@ -52,6 +52,26 @@
               </div>
             </div>
         </div>
+        <!-- GT Reading Function-->
+        <div class="row" style="width:100%">
+          <div class="col">
+            <div class="form-group">
+              <label for="gt_reading_function" style="font-weight: bold">GT Reading Function (leave None for Prediction function):</label>
+                  <select class="form-select form-select-sm" id="gt_reading_function" style="padding-right: 10px;width:100%"
+                      [(ngModel)]="newReportService.selectedGTReadingFunction" required #gtReadingFunctionSelect="ngModel"
+                          [ngClass]="{
+                              'is-invalid': gtReadingFunctionSelect.invalid && gtReadingFunctionSelect.touched,
+                              'is-valid': gtReadingFunctionSelect.valid && gtReadingFunctionSelect.touched
+                          }"
+                      >
+                      <option *ngFor="let func of newReportService.gt_reading_functions"
+                                      value="{{func}}"
+                              >{{func}}
+                      </option>
+                  </select>
+            </div>
+          </div>
+      </div>
 
         <div class="row" style="width:100%">
             <div class="col">

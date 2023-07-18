@@ -12,10 +12,11 @@ import sys, os
 current_file_directory = os.path.realpath(__file__)
 sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
 
+from flask import render_template, send_from_directory
+
 @server.route('/', methods=['GET', 'POST'])
 def homepage():
     return render_template('start_page.html', exp_ext = Constants.EXPERIMENT_EXTENSION, wiki_page = Constants.WIKI_URL)
-
 
 @server.route('/static/<file_name>')
 def send_static_file(file_name):

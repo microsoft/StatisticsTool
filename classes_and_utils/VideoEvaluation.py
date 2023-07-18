@@ -33,9 +33,10 @@ class VideoEvaluation:
            a list that contains each frames bounding boxes data and overlap matrix (first object is the image folder name)
     """
 
-    def __init__(self, overlap_function, readerFunction, evaluation_func, transform_func):
+    def __init__(self, overlap_function, predictionReaderFunction,gtReaderFunction, evaluation_func, transform_func):
         self.overlap_function = overlap_function
-        self.readerFunction = readerFunction
+        self.predictionReaderFunction = predictionReaderFunction
+        self.gtReaderFunction = gtReaderFunction
         self.evaluation_func = evaluation_func
         self.transform_func = transform_func
         self.comp_data = []
@@ -43,13 +44,13 @@ class VideoEvaluation:
 
     def load_data(self, pred_file, gt_file):
 
-        pred_data = self.readerFunction(pred_file)
+        pred_data = self.predictionReaderFunction(pred_file)
        
         if pred_data is None: #The user defined reader function doesn't recognize this file
             print (f"reader function could't parse {pred_file} log")
             return None
             
-        gt_data = self.readerFunction(gt_file)
+        gt_data = self.gtReaderFunction(gt_file)
         
         if gt_data is None:
             print (f"failed to parse or no data for gt file: {gt_file}")
@@ -170,7 +171,7 @@ class VideoEvaluation:
 
    
 
-def compare_predictions_directory(pred_dir, output_dir, overlap_function, readerFunction, transform_func, evaluation_func, gt_dir = None, log_names_to_evaluate = None):
+def compare_predictions_directory(pred_dir, output_dir, overlap_function, predictionReaderFunction,gtReaderFunction,transform_func, evaluation_func, gt_dir = None, log_names_to_evaluate = None):
     """
 
     :param GT_path_list:  a list of paths to GT files (matching to the preditions and images lists)
@@ -253,7 +254,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, reader
                 print(f"GT file: {gt_local_path} not found for prediction: {pred}, continue with next prediction log..")
                 continue
 
-            V = VideoEvaluation(overlap_function=overlap_function, readerFunction=readerFunction, evaluation_func=evaluation_func, transform_func = transform_func)
+            V = VideoEvaluation(overlap_function=overlap_function, predictionReaderFunction=predictionReaderFunction,gtReaderFunction=gtReaderFunction ,evaluation_func=evaluation_func, transform_func = transform_func)
             res = V.compute_dataframe(pred_file, gt_local_path, video_name)
             if not res:
                 print (f"Reading function didn't read file: {pred} and gt:{gt_local_path}")

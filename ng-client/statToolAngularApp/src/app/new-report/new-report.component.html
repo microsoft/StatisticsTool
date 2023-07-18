@@ -8,7 +8,7 @@
                 border-radius: 4px;
                 color:#182a69;
                 background-color: #E4F0F5;
-                position: sticky;
+                position: absolute;
                 z-index:0;
                 top:0px">
         <div class="template-selection" style="margin-left: 10px;padding-top: 8px;">
@@ -86,7 +86,7 @@
                             <div class="input-sm">
                                 <label for="predictions_directory" style="width:30%;font-weight: bold">Predictions Directory:</label>
                                 <input type="text" class="form-control input-sm" id="predictions_directory" 
-                                
+                                    (focus)="onFocus($event)" 
                                     [ngbTypeahead]="searchPredictionsDirectory"
                                     [resultFormatter]="formatter"
                                     placeholder="Local directory or blob folder" name="predictions_directory"
@@ -101,21 +101,20 @@
                             <div class="input-sm">
                                 <label for="ground_truth_directory" style="width:30%;font-weight: bold">Ground Truth Directory:</label>
                                 <input type="text" class="form-control input-sm" id="ground_truth_directory" placeholder="Leave blank if GT is from annotation store" 
-                                        autocomplete="new-ground_truth_directory"   
+                                        autocomplete="new-ground_truth_directory" 
+                                        (focus)="onFocus($event)"   
                                         [ngbTypeahead]="searchGTDirectroy"
                                         [resultFormatter]="formatter"
                                         name="ground_truth_directory"
-                                        minlength="0" required #groundTruthDirectoryInput="ngModel"
+                                        minlength="0"
                                         [(ngModel)]="newReportService.groundTruthDirectory"
-                                        [ngClass]="{
-                                            'is-invalid': groundTruthDirectoryInput.invalid && groundTruthDirectoryInput.touched,
-                                            'is-valid': groundTruthDirectoryInput.valid && groundTruthDirectoryInput.touched
-                                        }">
+                                        >
                             </div>
                             <div class="input-sm">
                                 <label for="output_directory" style="width:30%;font-weight: bold;">Output Directory:</label>
                                 <input type="text" class="form-control input-sm" id="output_directory" 
                                     autocomplete="off"
+                                    (focus)="onFocus($event)" 
                                     [ngbTypeahead]="searchOutputDirectroy"
                                     [resultFormatter]="formatter"
                                     placeholder="" name="output_directory"
@@ -142,7 +141,12 @@
             </div>
         </div>
         
-        <div style="width:40%;margin-top: 10px;margin-left: 20px;max-height: 15vh;">
+        <div style="width: 39.6%;
+                    margin-top: 10px;
+                    margin-left: 20px;
+                    max-height: 25vh;
+                    overflow-y: auto;
+                    overflow-x: hidden;">
             <new-report-result></new-report-result>                    
         </div>
     </div>
