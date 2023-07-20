@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import request,redirect
 import urllib.parse
 from app_config.constants import Constants
-from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, options_for_funcs,get_suites_folder,get_users_defined_functions
+from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, get_suites_folder,get_users_defined_functions
 from app_config.constants import UserDefinedConstants
 
 from flask_GUI.flask_server import server
@@ -239,21 +239,19 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
         
     # extract all the intermediate results from the raw prediction-label files
 
-    compared_videos, report_metadata, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
+    compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
                                                                   predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
  
     if len(compared_videos) == 0:
         return None, process_result, None
 
     # combine the intermediate results for further statistics and example extraction
-    exp = experiment_from_video_evaluation_files(statistic_func=statistics_func,
-                                compared_videos=compared_videos, segmentation_func=partitioning_func,
-                                threshold=threshold, report_metadata=report_metadata, evaluation_function = evaluation_func, 
-                                overlap_function = overlap_func)
+    exp = ParallelExperiment.experiment_from_evaluation_files(compared_videos, threshold, partitioning_func, clac_experiment_statistics = False)
     
     folder_name = save_stats_dir
     configs_folder = get_configs_folder()
-    report_file_name = exp.save_experiment(folder_name, config_file_name, configs_folder)
+    config_file_path = os.path.join(configs_folder, config_file_name)
+    report_file_name = exp.save_experiment(folder_name, config_file_path, report_run_info)
     return exp, process_result, report_file_name
 
 def get_suite_configurations(suite_name):

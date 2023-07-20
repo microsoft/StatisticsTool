@@ -2,6 +2,7 @@
 from threading import Lock
 import traceback
 import os, sys
+from classes_and_utils.experiments.ExperminetsManager import ExperimentsManager
 
 from flask_GUI.flask_server import server, experiments_manager
 
@@ -35,8 +36,8 @@ def Report_Viewer():
         if Constants.REF_REPORT_FILE_PATH in request.values.keys():
             ref = request.values and request.values[Constants.REF_REPORT_FILE_PATH]            
 
-        main_added_experiments = experiments_manager.add(main)
-        ref_added_experiments  = experiments_manager.add(ref)
+        main_added_experiments, ref_added_experiments  = experiments_manager.add_experiments_folders(main, ref)
+
         js_pairs = ExperimentsHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
         return redirect(f'/static/index.html?reports={js_pairs}')
     
@@ -84,8 +85,9 @@ def get_report_table():
             res_table = experiments_manager.get_results_table(main_path,ref_path)
             if res_table == None:
                 segmentations = experiments_manager.get_item_segmentations(main_path)
-                res_table = Results_table(server, main,ref, main_path, ref_path, segmentations)
-                res_table = experiments_manager.add_results_table(main_path,ref_path,res_table)
+                statistics_func, evaluation_func, overlap_func = ExperimentsManager.get_user_defined_functions(main_path)
+                res_table = Results_table(server, main,ref, main_path, ref_path, segmentations, statistics_func, evaluation_func, overlap_func)
+                experiments_manager.add_results_table(main_path,ref_path,res_table)
     
     res_table.set_unique(calc_unique)
     
