@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #from classes_and_utils.utils import empty_when_negative_x
 import pandas as pd
 from utils.LogsParser import is_golden_log, transform_bb_to_original_frame_size, get_fps
-def statistic_tool_reader_body_detection_manual_vs_auto_gt(path):
+def statistic_tool_reader_body_detection_manual_vs_auto_gt(path, **kwargs):
     with open(path,'r') as file:
         lines = file.readlines()
 

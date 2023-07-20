@@ -22,7 +22,7 @@ b. the overlap matrix columns corresponds to the index in the labels list (j'th 
 
 """
 
-def min_distance_evaluation(predictions_dict_list, overlap_mat):
+def min_distance_evaluation(predictions_dict_list, overlap_mat, **kwargs):
     for i in range(len(predictions_dict_list)):
         val = 0
         if len(overlap_mat) > i and len(overlap_mat[i]) > 0:

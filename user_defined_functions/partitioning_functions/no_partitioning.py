@@ -32,5 +32,5 @@ The high-level dictionary which contains at least one Partition Dictionary
 
 
 
-def no_partitioning(dataframe, from_file=False):
+def no_partitioning(dataframe, from_file=False, **kwargs):
     return {}

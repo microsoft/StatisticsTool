@@ -119,7 +119,7 @@ def refine_annotations(dataframe):
     return dataframe
 
 
-def object_size_with_annot_store(dataframe, from_file=False):
+def object_size_with_annot_store(dataframe, from_file=False, **kwargs):
     annot_headers = ['Enviroment', 'Location', 'User_Movement_Type',
                      'User_Physical_Status', 'Light', 'location', 'background people', 'background']
 

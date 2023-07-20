@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def size_horizontal_vertical_and_bbox_meta(dataframe, from_file=False, img_width=1920, img_height=1080):
+def size_horizontal_vertical_and_bbox_meta(dataframe, from_file=False, img_width=1920, img_height=1080, **kwargs):
     type_ = float if from_file else object
     prd_width = dataframe['width'].values.astype(type_)
     prd_height = dataframe['height'].values.astype(type_)

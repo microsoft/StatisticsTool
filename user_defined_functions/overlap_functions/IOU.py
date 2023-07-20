@@ -19,7 +19,7 @@ A numerical score
 
 """
 
-def IOU(pred_row, labels_row):
+def IOU(pred_row, labels_row, **kwargs):
     # adjust foramt
     if type(pred_row) == list:
         predictions = pred_row

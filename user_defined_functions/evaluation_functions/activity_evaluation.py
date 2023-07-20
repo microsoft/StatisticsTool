@@ -22,7 +22,7 @@ b. the overlap matrix columns corresponds to the index in the labels list (j'th 
 
 """
 
-def activity_evaluation(predictions_dict_list, overlap_mat):
+def activity_evaluation(predictions_dict_list, overlap_mat, **kwargs):
     for i in range(len(predictions_dict_list)):
         predictions_dict_list[i]['state'] = 0
 

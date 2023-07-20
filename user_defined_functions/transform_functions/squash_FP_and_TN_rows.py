@@ -98,7 +98,7 @@ def filter_dirty_labels(comp_data):
     return comp_data
 
 
-def squash_FP_and_TN_rows(comp_data):
+def squash_FP_and_TN_rows(comp_data, **kwargs):
     # [0] filter dirty labels
     comp_data = filter_dirty_labels(comp_data)
 

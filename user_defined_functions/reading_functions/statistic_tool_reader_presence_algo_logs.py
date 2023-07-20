@@ -7,7 +7,7 @@ from turtle import left
 import pandas as pd
 from utils.LogsParser import is_golden_log, transform_bb_to_original_frame_size, get_fps, get_emulation_matrix
 
-def statistic_tool_reader_presence_algo_logs(path):
+def statistic_tool_reader_presence_algo_logs(path, **kwargs):
     with open(path,'r') as file:
         lines = file.readlines()
 

@@ -37,7 +37,7 @@ def check_if_bb_is_on_the_edge_or_no_face(res_edge_x, res_edge_y, bb_left, bb_to
                             is_on_edge = True
         return is_on_edge, is_no_face
 
-def approach_event_presence_transform(comp_data):
+def approach_event_presence_transform(comp_data, **kwargs):
 
     lock_event_width_in_frames = 30
     Wake_event_width_in_frames = 60

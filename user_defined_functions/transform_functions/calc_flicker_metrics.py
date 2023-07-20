@@ -1,6 +1,6 @@
 import numpy as np
 
-def calc_flicker_metrics(bin_vec):
+def calc_flicker_metrics(bin_vec, **kwargs):
     seq_len_vec = []
     seq_num = 1
     curr_seq_len = 1
