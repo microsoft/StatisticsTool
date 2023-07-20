@@ -30,7 +30,7 @@ Returns:
 The high-level dictionary which contains at least one Partition Dictionary
 """
 
-def presence_partition(dataframe, from_file=False):
+def presence_partition(dataframe, from_file=False, **kwargs):
     desired_masks = {}
 
     # Per clip annotations

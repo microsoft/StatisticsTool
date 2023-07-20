@@ -3,7 +3,7 @@ import pandas as pd
 from user_defined_functions.overlap_functions.IOU import IOU
 
 
-def get_body_bb_iou(comp_data):
+def get_body_bb_iou(comp_data, **kwargs):
     # [1] calculate IOU for each index
     if ('x' in comp_data.keys()) and ('x_gt' in comp_data.keys()):
         boxes = comp_data.loc[:, ['x', 'y', 'width',

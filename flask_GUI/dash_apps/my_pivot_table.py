@@ -145,11 +145,6 @@ class   PivotTable():
 
 
     def get_report_table(self, all_columns, all_rows, unique):
-        '''
-        The main function that builds the whole table
-        '''
-        #hagai
-        #unique_stats, unique_stats_ref = self.get_unique(all_columns,all_rows)
 
         ## Table head ##
         titles_rows = self.get_cols_titles(all_columns, all_rows)

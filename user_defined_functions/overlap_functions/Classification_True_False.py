@@ -16,7 +16,7 @@ A numerical score
 
 """
 
-def Classification_True_False(pred_row, labels_row):
+def Classification_True_False(pred_row, labels_row, **kwargs):
     if pred_row['classification'] == labels_row['classification']:
         return 1.0
     return 0.0 

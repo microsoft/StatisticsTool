@@ -12,7 +12,7 @@ Returns a dictionary with the following form:
 {'Statistics Name': Statistics numerical score}
 """
 
-def TNR(TP, FP, FN, total_preds):
+def TNR(TP, FP, FN, total_preds, **kwargs):
     TN = total_preds - (TP + FP + FN)
     if TN == 0:
         tnr = -1

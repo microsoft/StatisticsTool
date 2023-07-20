@@ -7,7 +7,7 @@ from turtle import left
 import pandas as pd
 from utils.LogsParser import get_fps
 
-def statistic_tool_reader_presence_calssification(path):
+def statistic_tool_reader_presence_calssification(path, **kwargs):
     with open(path,'r') as file:
         lines = file.readlines()
         

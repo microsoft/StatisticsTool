@@ -32,7 +32,7 @@ Returns:
 The high-level dictionary which contains at least one Partition Dictionary
 """
 
-def size_horizontal_vertical_and_bb_area(dataframe, from_file=False, img_width=1920, img_height=1080):
+def size_horizontal_vertical_and_bb_area(dataframe, from_file=False, img_width=1920, img_height=1080, **kwargs):
 
     desired_masks = size_horizontal_vertical(dataframe, from_file=from_file, img_width=img_width, img_height=img_height)
     # return desired_masks

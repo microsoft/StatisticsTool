@@ -5,7 +5,7 @@ current_file_directory = os.path.realpath(__file__)
 sys.path.append(os.path.join(current_file_directory, '..'))
 from utils.utils_partition import bb_size_partition, score_partition, pred_bb_size_partition, inrange_partition
 
-def face_partition(dataframe, from_file=False, img_width=1280, img_height=720, use_pred=False):
+def face_partition(dataframe, from_file=False, img_width=1280, img_height=720, use_pred=False, **kwargs):
 
     if use_pred:
         bb_size = pred_bb_size_partition(dataframe, from_file=from_file, img_width=1920, bb_size_percent=(0.05, 0.1, 0.15, 0.2, 0.25, 0.30))
