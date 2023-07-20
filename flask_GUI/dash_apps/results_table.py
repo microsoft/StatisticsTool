@@ -27,7 +27,7 @@ REF_EXP = 'ref'
 
 def get_color_from_gradient(x, gradient):
     if x<0 or x>1:
-        print ("values must be between 0-1")
+        #print ("values must be between 0-1")
         return 'white'
     
     gradient_len = len(gradient)

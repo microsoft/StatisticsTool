@@ -42,7 +42,7 @@ class ExperimentsManager:
     def get_norm_experiments_paths(self,folder):
         
         files = []
-        if not os.path.exists(folder):
+        if not folder or not os.path.exists(folder):
             return []
         if os.path.isdir(folder) == False:
             files = [folder]
