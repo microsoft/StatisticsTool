@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def separate_FN_sequence_transform(comp_data):
+def separate_FN_sequence_transform(comp_data, **kwargs):
     sep_seq_param_len_between_adj      = 5
     sep_seq_param_len_for_single_count = 10
     key = 'detection'

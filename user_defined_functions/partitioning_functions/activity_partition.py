@@ -30,7 +30,7 @@ Returns:
 The high-level dictionary which contains at least one Partition Dictionary
 """
 
-def activity_partition(dataframe, from_file=False):
+def activity_partition(dataframe, from_file=False, **kwargs):
     multiple = dataframe['Multiple People_gt'].values.astype(object)
     relevant = dataframe['relevant_gt'].values.astype(object)
     static = dataframe['static_gt'].values.astype(object)

@@ -7,7 +7,7 @@ from turtle import left
 import pandas as pd
 
 
-def statistic_tool_reader_activity(path):
+def statistic_tool_reader_activity(path, **kwargs):
     if 'body_detection_log.json' in path:
         return None
 

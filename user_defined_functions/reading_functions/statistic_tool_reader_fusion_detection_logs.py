@@ -7,7 +7,7 @@ from turtle import left
 import pandas as pd
 from utils.LogsParser import is_golden_log, transform_bb_to_original_frame_size, get_fps
 
-def statistic_tool_reader_fusion_detection_logs(path, threshold_score=0.5):
+def statistic_tool_reader_fusion_detection_logs(path, threshold_score=0.5, **kwargs):
     with open(path,'r') as file:
         lines = file.readlines()
     

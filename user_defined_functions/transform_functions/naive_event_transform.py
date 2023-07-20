@@ -1,6 +1,6 @@
 import pandas as pd
 
-def naive_event_transform(comp_data):
+def naive_event_transform(comp_data, **kwargs):
     key = 'detection'
     in_event = False
     prediction = comp_data[key]

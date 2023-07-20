@@ -6,7 +6,7 @@ from turtle import left
 #from classes_and_utils.utils import empty_when_negative_x
 import pandas as pd
 
-def statistic_tool_reader_activity_calssification(path):
+def statistic_tool_reader_activity_calssification(path, **kwargs):
     with open(path,'r') as file:
         lines = file.readlines()
         

@@ -12,6 +12,6 @@ Returns a dictionary with the following form:
 {'Statistics Name': Statistics numerical score}
 """
 
-def presence_leave_flicker_seq_count(TP, FP, FN, total_preds):
+def presence_leave_flicker_seq_count(TP, FP, FN, total_preds, **kwargs):
     return {'Leave Flicker Count': total_preds}
 

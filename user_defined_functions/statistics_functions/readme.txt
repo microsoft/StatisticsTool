@@ -3,6 +3,7 @@ Statistics Function instructions:
 ------------------------------
 Input:
 Integers that indicate the number of TP, FP, FN, total_preds
+kwargs - Additional options and parameters that can be passed to the function.
 
 A Statistics function should:
 1. Calculate the statistics (if the denominator is 0 please return -1)

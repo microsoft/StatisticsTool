@@ -4,6 +4,7 @@ Reading Function instructions:
 
 Input:
 a. Accept as input a path to the data file (any type that the user preffered)
+b. kwargs - Additional options and parameters that can be passed to the function.
 
 A reading function should:
 1. Read the input file (The type of the file is defined by the user according to user prefference)
