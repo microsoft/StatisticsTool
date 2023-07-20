@@ -246,7 +246,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
         return None, process_result, None
 
     # combine the intermediate results for further statistics and example extraction
-    exp = ParallelExperiment.experiment_from_evaluation_files(compared_videos, threshold, partitioning_func, clac_experiment_statistics = False)
+    exp = ParallelExperiment.experiment_from_evaluation_files(compared_videos, threshold)
     
     folder_name = save_stats_dir
     configs_folder = get_configs_folder()

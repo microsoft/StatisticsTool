@@ -5,25 +5,25 @@ import pickle
 import pandas as pd, os
 import numpy as np
 
-from app_config.constants import Constants, UserDefinedConstants
-from classes_and_utils.UserDefinedFunctionsHelper import get_userdefined_function, load_config_dict
+from app_config.constants import Constants
+from classes_and_utils.UserDefinedFunctionsHelper import load_config_dict
 from utils.report_metadata import CONFIG_TOKEN, create_metadata
 
 
 class ParallelExperiment:
  
-    def __init__(self, comp_data, threshold, partitioning_func, calc_experiment = True):
+    def __init__(self, comp_data, threshold, partitioning_func = None):
         self.comp_data = comp_data
         self.segmentations_masks = {}
         self.detections_images_dict = {}
         self.cell_statistics_map = {}
     
-        if calc_experiment:
+        if partitioning_func:
             self.segmentations_masks, self.detections_images_dict = ParallelExperiment.calc_experiment(comp_data, threshold, partitioning_func)
        
     
     @staticmethod
-    def experiment_from_evaluation_files(compared_videos, threshold, partitioning_func, clac_experiment_statistics = True):
+    def experiment_from_evaluation_files(compared_videos, threshold):
         
         datafrme_dict = []
         for file_name in compared_videos:
@@ -35,7 +35,7 @@ class ParallelExperiment:
             # concatenate the dictionary of dataframes into a single dataframe
             comp_data = pd.concat(datafrme_dict).reset_index(drop=True)
         
-        exp = ParallelExperiment(comp_data, threshold, partitioning_func, clac_experiment_statistics)
+        exp = ParallelExperiment(comp_data, threshold)
         return exp
     
     @staticmethod
