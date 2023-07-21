@@ -1,1 +1,6 @@
 
+.dropdown-open .ng-dropdown-panel {
+    display: block !important;
+}
+
+  

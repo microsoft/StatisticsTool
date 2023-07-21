@@ -4,6 +4,11 @@ import { Subject } from 'rxjs';
 import { SaveTemplateDialogComponent } from '../save-template-dialog/save-template-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
+export enum States {
+  Close,
+  Opened,
+  Open,
+}
 
 export class SegmentationItem {
   name = '';
@@ -299,4 +304,7 @@ export class StatisticsToolService implements OnInit {
   getSelectedTemplateName(){
     return this.templateNameOptions[this.selectedTamplate].value;
   }
+
+  openHorizontalSegmentation  = States.Close;
+  openVerticalSegmentation    = States.Close;
 }

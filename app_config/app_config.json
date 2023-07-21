@@ -3,5 +3,6 @@
     "data_container_name": "dev-data",
     "annotation_store_blobs_prefix": "annotations/GT_logs/Latest/",
     "data_store_blobs_prefix": "raw_data/",
-    "predictions_blobs_prefix": "results/"
+    "predictions_blobs_prefix": "results/",
+    "externa_lib_path": "../statisticstool_external_library"
 }

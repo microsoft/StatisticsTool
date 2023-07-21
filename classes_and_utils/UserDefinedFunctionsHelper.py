@@ -1,18 +1,17 @@
-import os
+import os,importlib,sys
 from glob import glob
 from pathlib import Path
-
+from app_config.config import app_config
 from app_config.constants import Constants, UserDefinedConstants
 from classes_and_utils.utils import loading_json
 
-
 def get_configs_folder():
-    folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), Constants.CONFIG_FOLDER_NAME)
-    return folder
+    configs_folder = os.path.join(app_config.externa_lib_path, Constants.CONFIG_FOLDER_NAME)
+    return configs_folder
 
 def get_suites_folder():
-    folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), Constants.SUITES_FOLDER_NAME)
-    return folder
+    suites_folder = os.path.join(app_config.externa_lib_path, Constants.SUITES_FOLDER_NAME)
+    return suites_folder
 
 '''
     directoryName -  one of the followings:
@@ -24,15 +23,14 @@ def get_suites_folder():
     6. transform_functions
 '''
 def get_userdefined_function(func_type,func_name):
-    module_name = 'user_defined_functions' + "." + func_type + "." + func_name
-    module = __import__(module_name, fromlist='user_defined_functions')
-    reading_func = getattr(module,func_name)
-    return reading_func
-
+    sys.path.append(os.path.join(app_config.externa_lib_path,Constants.USER_DEFINED_FUNCTIONS,func_type))
+    module = importlib.import_module(func_name)
+    return getattr(module,func_name)
+    
 
 def get_users_defined_functions(directoryName):
     user_defined_functions = []
-    path = str(os.path.join(str(Path(os.path.dirname(os.path.realpath(__file__))).parent), 'user_defined_functions', directoryName,'*'))
+    path = os.path.join(app_config.externa_lib_path, Constants.USER_DEFINED_FUNCTIONS, directoryName,'*')
     files = glob(path)
     for fullname in files:
         filename = fullname.split(os.sep)[-1]
@@ -46,12 +44,13 @@ def options_for_funcs():
     Create lists of all the optional functions in the modules that the user needs to choose from
     :return: lists of all the optional functions
     """
-    file_reading_funcs = get_users_defined_functions('reading_functions')
-    Evaluation_funcs = get_users_defined_functions('evaluation_functions')
-    overlap_funcs = get_users_defined_functions('overlap_functions')
-    partition_funcs = get_users_defined_functions('partitioning_functions')
-    statistics_funcs = get_users_defined_functions('statistics_functions')
-    transformation_funcs = get_users_defined_functions('transform_functions')
+    
+    file_reading_funcs   = get_users_defined_functions(UserDefinedConstants.READING_FUNCTIONS)
+    Evaluation_funcs     = get_users_defined_functions(UserDefinedConstants.EVALUATION_FUNCTIONS)
+    overlap_funcs        = get_users_defined_functions(UserDefinedConstants.OVERLAP_FUNCTIONS)
+    partition_funcs      = get_users_defined_functions(UserDefinedConstants.PARTITIONING_FUNCTIONS)
+    statistics_funcs     = get_users_defined_functions(UserDefinedConstants.STATISTICS_FUNCTIONS)
+    transformation_funcs = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS)
     transformation_funcs.append('None')
     
     return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs

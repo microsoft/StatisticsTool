@@ -21,7 +21,8 @@
                         <td style="width:38%">
                             <segmentations 
                                 style="width:95%;background-color: white;margin-top: 2px;"
-                                name="Horizontal Segmentation" 
+                                name="Horizontal Segmentation"
+                                elementRef = "Horizontal_Segmentation"
                                 [selectItems]="selectedColumns"
                                 (segmentAdded)="onColumnAdded($event)"
                                 (segmentRemoved)="onColumnRemoved($event)"
@@ -34,6 +35,7 @@
                             <segmentations 
                                 style="width:95%;background-color: white;"
                                 name="Vertical Segmentation" 
+                                elementRef = "Vertical_Segmentation"
                                 [selectItems]="selectedRows"
                                 (segmentAdded)="onRowAdded($event)"
                                 (segmentRemoved)="onRowRemoved($event)"

@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 import { Utils } from '../utils';
+import { CommonService } from '../services/common.service';
 
 @Component({
   selector: 'pkl-view',
@@ -219,4 +220,5 @@ export class PklViewComponent implements OnInit  {
   removeView(){
     this.statToolService.removeView(this.id);
   }
+
 }
