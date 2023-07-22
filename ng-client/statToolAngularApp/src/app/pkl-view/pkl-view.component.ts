@@ -29,6 +29,7 @@ export class PklViewComponent implements OnInit  {
 
     this.selectedRows = tmp.join(',');
   }
+  @Input() viewguid = '';
   @Input() selectedColumns = '';
   @Input() set selectedColumnsSet(cols:string[]){
         //filter only the existing columns
@@ -218,7 +219,7 @@ export class PklViewComponent implements OnInit  {
   }
 
   removeView(){
-    this.statToolService.removeView(this.id);
+    this.statToolService.removeView(this.viewguid);
   }
 
 }

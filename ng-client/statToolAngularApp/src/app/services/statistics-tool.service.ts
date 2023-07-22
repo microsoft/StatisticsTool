@@ -14,6 +14,9 @@ export class SegmentationItem {
   name = '';
   columns:string[] = [];
   rows:string[] = [];
+  openHorizontalSegmentation  = States.Close;
+  openVerticalSegmentation    = States.Close;
+  viewguid = StatisticsToolService.generateGUID();
 }
 
 export class TemplateInfo {
@@ -121,7 +124,7 @@ export class StatisticsToolService implements OnInit {
   }
 
   getReportDesc(reportfileName:string){
-    let parts = reportfileName.split(/[\\/]/);;
+    let parts = reportfileName.split(/[\\/]/);
     let dir = parts[parts.length-2];
     let file = parts[parts.length-1];
     return dir + "/" + file;
@@ -244,15 +247,16 @@ export class StatisticsToolService implements OnInit {
     })
   }
 
-  removeView(viewId:number) {
+  removeView(viewGuid:string) {
+    
     let segments:SegmentationItem[] = [];
     for(let i = 0; i< this.currentTemplate.Segmentations.length;i++){
       let item = this.currentTemplate.Segmentations[i];
-      if (i != viewId){
+      if (item.viewguid != viewGuid){
         segments.push(item);
       } 
     }
-
+    
     this.currentTemplate.Segmentations = segments;
   }
 
@@ -305,6 +309,45 @@ export class StatisticsToolService implements OnInit {
     return this.templateNameOptions[this.selectedTamplate].value;
   }
 
-  openHorizontalSegmentation  = States.Close;
-  openVerticalSegmentation    = States.Close;
+  getView(guid:string){
+    for(let i=0;i<this.currentTemplate.Segmentations.length;i++){
+      let v = this.currentTemplate.Segmentations[i];
+      if (v.viewguid == guid)
+        return v;
+    }
+    
+    return null;
+  }
+
+  getDropdownState(viewGuid:string,segmentName:string){
+    let view = this.getView(viewGuid);
+    if (view == null)
+      return null;
+    if (segmentName == "Horizontal Segmentation"){
+      return view.openHorizontalSegmentation;
+    } else {
+      return view.openVerticalSegmentation;
+    }
+  }
+
+  setDropdownState(viewGuid:string,segmentName:string,state:States){
+    let view = this.getView(viewGuid);
+    if (view == null)
+      return;
+
+    if (segmentName == "Horizontal Segmentation"){
+      view.openHorizontalSegmentation = state;
+    } else {
+      view.openVerticalSegmentation = state;
+    }
+  }
+
+  static generateGUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
 }

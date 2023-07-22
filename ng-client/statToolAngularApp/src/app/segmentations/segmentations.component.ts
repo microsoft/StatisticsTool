@@ -27,9 +27,11 @@ export class SegmentationsComponent implements OnInit{
     })
     
   }
-  
+  @Input() viewId = 0;
   @Input() name = '';
   @Input() elementRef = '';
+  @Input() viewguid = '';
+
   dropdownList : {'item_id':string,'item_text':string}[] = [];
   selected     : {'item_id':string,'item_text':string}[] = [];
   
@@ -94,16 +96,11 @@ export class SegmentationsComponent implements OnInit{
     let name = this.dropdown?.nativeElement.parentElement.attributes['name'].value;
 
     if (!this.dropdown?.nativeElement.querySelectorAll('.dropdown-list')[0].hidden){
-      if (name == "Horizontal Segmentation")
-        this.statToolService.openHorizontalSegmentation = States.Opened;
-      else   
-        this.statToolService.openVerticalSegmentation = States.Opened;
+      this.statToolService.setDropdownState(this.viewguid,name,States.Opened);
       return;
     }
-    if (name == "Horizontal Segmentation")
-      this.statToolService.openHorizontalSegmentation = States.Close;
-    else 
-      this.statToolService.openVerticalSegmentation = States.Close;
+  
+    this.statToolService.setDropdownState(this.viewguid,name,States.Close);
   }
 
   ngOnDestroy(){
