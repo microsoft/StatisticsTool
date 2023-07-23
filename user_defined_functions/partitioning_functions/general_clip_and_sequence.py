@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def refine_annotations(dataframe):
+def refine_annotations(dataframe, **kwargs):
     """
     clean & encode multiple categories 
     """

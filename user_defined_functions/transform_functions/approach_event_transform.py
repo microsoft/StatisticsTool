@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def approach_event_transform(comp_data):
+def approach_event_transform(comp_data, **kwargs):
     minimal_active_seq_len = 3
     key = 'User_Movement_Type_gt'
     user_move_type = comp_data[key]

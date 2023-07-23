@@ -4,6 +4,7 @@ Evaluation Function instructions:
 
 Input:
 a. list of predictions and labels dictionaries to fill with 'state' and 'matching' keys.
+b. kwargs - Additional options and parameters that can be passed to the function.
 
 Output:
 fill each prediction with it's matching state and matching index in labels list:

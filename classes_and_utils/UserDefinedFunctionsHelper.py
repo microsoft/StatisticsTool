@@ -62,13 +62,16 @@ def options_for_funcs():
     
     return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs
 
-
-def load_config(config_file_name):
-    
-    # finding the wanted configuration file location and loading it
+def load_config_dict(config_file_name):
     config_path = os.path.join(get_configs_folder(), config_file_name)
     config_file = loading_json(config_path)
     config_dict = config_file[0]
+    
+    return config_dict
+
+def load_config(config_file_name):
+    
+    config_dict = load_config_dict(config_file_name)
     
     # extracting the configuration from the config file (which is a dictionary at this point)
     transform_func_name = 'None'

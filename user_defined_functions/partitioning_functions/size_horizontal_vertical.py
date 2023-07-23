@@ -1,6 +1,6 @@
 import numpy as np
 
-def size_horizontal_vertical(dataframe, from_file=False, img_width=1280, img_height=720):
+def size_horizontal_vertical(dataframe, from_file=False, img_width=1280, img_height=720, **kwargs):
     type_ = float if from_file else object
     prd_width = dataframe['width'].values.astype(type_)
     prd_height = dataframe['height'].values.astype(type_)

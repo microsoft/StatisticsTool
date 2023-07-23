@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def leave_event_transform(comp_data):
+def leave_event_transform(comp_data, **kwargs):
     key = 'User_Movement_Type_gt'
     user_move_type = comp_data[key]
     move_type_mask_leave = np.full(np.shape(user_move_type), False)

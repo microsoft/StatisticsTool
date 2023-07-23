@@ -62,8 +62,7 @@ class UpdateListManager():
         # get the names of requested states and partitions, a save boolean and a dictionary of {partition_class: selected_option} (example {"vehicles":"bus"})
         
         exp = results_table.get_ref_exp() if show_ref_report else results_table.get_main_exp()
-        # masks = exp.masks
-
+        
         saved_json = ''
 
         list_of_examples = results_table.get_ids(cell_name, stat, show_ref_report = show_ref_report, unique=show_unique)
@@ -97,7 +96,7 @@ class UpdateListManager():
         output_dir = os.path.dirname(report_path)
         #TODO: Move json header to here
         #Jump file header should be created only when exporting it (on UI)
-        new_json_header = create_report_metadata(\
+        new_json_header = create_run_info(\
             report_metadata[PRIMARY_LOG][LOGS_PATH],
             report_metadata[PRIMARY_LOG][LOG_FILE_NAME],
             report_metadata[SECONDARY_LOG][LOGS_PATH],

@@ -10,7 +10,7 @@ current_file_directory = os.path.realpath(__file__)
 sys.path.append(os.path.join(current_file_directory, '..'))
 from utils.LogsParser import *
 
-def statistic_tool_reader_face_detection(path):
+def statistic_tool_reader_face_detection(path, **kwargs):
     with open(path,'r') as file:
         lines = file.readlines()
         header = lines[0]

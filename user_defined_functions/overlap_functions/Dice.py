@@ -16,7 +16,7 @@ A numerical score
 
 """
 
-def Dice(pred_row, labels_row):
+def Dice(pred_row, labels_row, **kwargs):
     predictions = [pred_row['x'], pred_row['y'], pred_row['width'], pred_row['height']]
     labels = [labels_row['x'], labels_row['y'], labels_row['width'], labels_row['height']]
     # calculate (xmin, ymin, xmax, ymax) from the data available

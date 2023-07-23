@@ -12,6 +12,6 @@ Returns a dictionary with the following form:
 {'Statistics Name': Statistics numerical score}
 """
 
-def sep_FP_seq_count(total_preds):
+def sep_FP_seq_count(total_preds, **kwargs):
     return {'Separate FP Sequence Count': total_preds}
 

@@ -12,7 +12,7 @@ Returns a dictionary with the following form:
 {'Statistics Name': Statistics numerical score}
 """
 
-def precision_recall_f1(TP, FP, FN, total_preds):
+def precision_recall_f1(TP, FP, FN, total_preds, **kwargs):
     param = TP + FN
     if param == 0:
         recall = -1
