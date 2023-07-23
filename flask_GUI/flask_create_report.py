@@ -9,7 +9,7 @@ from app_config.constants import UserDefinedConstants
 from flask_GUI.flask_server import server
 from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.utils import loading_json, save_json
-from classes_and_utils.VideoEvaluation import compare_predictions_directory
+from classes_and_utils.experiments.ExperimentRunner import compare_predictions_directory
 
 
 @server.route('/new_report/nav_new_report', methods=['GET', 'POST'])
@@ -114,7 +114,7 @@ def calculating():
             print("report output folder: " + report_dir)
             os.makedirs(report_dir)
             # calculate the intermediate results for all the videos then combine them
-            exp, process_result, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)   
+            process_result, _ = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)   
             process_result['output_path'] = output_path
             all_process_result.append(process_result)
         except Exception as e:
@@ -124,11 +124,7 @@ def calculating():
             result['errorMessage'] = f'An error occurred while executing the {config_file_name} configuration file' 
             return  json.dumps(result)
 
-    if exp == 'TypeError' or exp is None or report_file_name is None:
-        link = 'None'
-    else:
-        link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(output_path)
-
+    link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(output_path)
 
     num_success_files = []
     reading_function_skipped = []
@@ -240,19 +236,19 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     # extract all the intermediate results from the raw prediction-label files
 
     compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
-                                                                  predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
+                                                                  predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, local_gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
  
     if len(compared_videos) == 0:
         return None, process_result, None
 
     # combine the intermediate results for further statistics and example extraction
-    exp = ParallelExperiment.experiment_from_evaluation_files(compared_videos, threshold)
+    comp_data = ParallelExperiment.combine_evaluation_files(compared_videos, threshold)
     
     folder_name = save_stats_dir
     configs_folder = get_configs_folder()
     config_file_path = os.path.join(configs_folder, config_file_name)
-    report_file_name = exp.save_experiment(folder_name, config_file_path, report_run_info)
-    return exp, process_result, report_file_name
+    report_file_name = ParallelExperiment.save_experiment(comp_data, folder_name, config_file_path, report_run_info)
+    return process_result, report_file_name
 
 def get_suite_configurations(suite_name):
 

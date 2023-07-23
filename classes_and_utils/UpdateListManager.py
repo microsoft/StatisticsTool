@@ -124,9 +124,6 @@ class UpdateListManager():
                 json_link['message']['Frame Number']= actual_event['frames'][0][2]
                 json_link['message']['end_frame'] = actual_event['end_frame']
 
-                # json_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid_name, header['header'][PRIMARY_LOG][LOGS_PATH])
-                # json_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid_name, header['header'][SECONDARY_LOG][LOGS_PATH])
-
                 json_list.append(json.dumps(json_link))
         
         name = ''

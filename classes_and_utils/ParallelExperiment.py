@@ -12,18 +12,102 @@ from utils.report_metadata import CONFIG_TOKEN, create_metadata
 
 class ParallelExperiment:
  
-    def __init__(self, comp_data, threshold, partitioning_func = None):
+    def __init__(self, comp_data, threshold, partitioning_func):
         self.comp_data = comp_data
         self.segmentations_masks = {}
         self.detections_images_dict = {}
         self.cell_statistics_map = {}
     
-        if partitioning_func:
-            self.segmentations_masks, self.detections_images_dict = ParallelExperiment.calc_experiment(comp_data, threshold, partitioning_func)
+        self.segmentations_masks, self.detections_images_dict = ParallelExperiment.calc_experiment(comp_data, threshold, partitioning_func)
        
+    def get_masks(self):
+        return self.segmentations_masks
     
+    def get_statistics_masks(self, segmentations):
+        cell_name = ParallelExperiment.cell_name_from_segmentations(segmentations)
+        
+        if cell_name not in self.cell_statistics_map:
+            len_ = len(self.segmentations_masks['total_stats']['TP'])
+            segmentation_mask = np.ones([len_], dtype=bool)
+            for curr_segmentation in segmentations:
+                assert(len(curr_segmentation)==1)
+                seg_cat, seg_value = list(curr_segmentation.keys())[0], list(curr_segmentation.values())[0]
+                seg_idx = self.segmentations_masks[seg_cat]['possible partitions'].index(seg_value)
+                segmentation_mask &= self.segmentations_masks[seg_cat]['masks'][seg_idx]
+        
+            TP_masks = self.segmentations_masks['total_stats']['TP'] & segmentation_mask
+            FP_masks = self.segmentations_masks['total_stats']['FP'] & segmentation_mask
+            FN_masks = self.segmentations_masks['total_stats']['FN'] & segmentation_mask
+
+            self.cell_statistics_map[cell_name] = tuple([TP_masks, FP_masks, FN_masks, np.sum(segmentation_mask)])
+        
+        return self.cell_statistics_map[cell_name]
+
+    def get_cell_data(self, segmentations, statistic_funcs):
+        TP_masks, FP_masks, FN_masks, total = self.get_statistics_masks(segmentations)
+
+        TP, FP, FN, total_examples = np.sum(TP_masks), np.sum(FP_masks), np.sum(FN_masks), np.sum(total)
+        TN = total_examples - (TP + FP + FN)
+
+        statistics_dict = statistic_funcs(TP, FP, FN, total_examples)
+        statistics_dict.update({'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN, 'TOTAL_EXAMPLES': total_examples})
+        
+        return statistics_dict
+
+    def get_ids(self, cell_key, state):
+        segmentations = ParallelExperiment.segmentations_from_name(cell_name=cell_key)
+        TP_masks, FP_masks, FN_masks, _ = self.get_statistics_masks(segmentations)
+        
+        if state == 'TP':
+            return self.detections_images_dict['prediction'][TP_masks]
+        elif state == 'FP':
+            return self.detections_images_dict['prediction'][FP_masks]
+        elif state == 'FN':
+            return self.detections_images_dict['label'][FN_masks]
+       
+    def get_detection_bounding_boxes(self, detection_index):
+        bb_obj = self.comp_data.loc[detection_index]
+
+        label_bbs = []
+        prd_bbs = []
+        matched = []
+        
+        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==bb_obj['frame_id']) & (self.comp_data['video']==bb_obj['video']))]
+
+        if 'x' in bb_obj and bb_obj['x'] is not None:  
+            matched.append([bb_obj['x'], bb_obj['y'], bb_obj['width'], bb_obj['height']])
+        pred_index = -1
+        label_index = -1
+        for ind in all_frmae_obj.index:
+            obj=all_frmae_obj.loc[ind]
+            if 'x_gt' in obj and not math.isnan(obj['x_gt']):
+                label_bbs.append([obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']])
+                if ind == detection_index:
+                    label_index = len(label_bbs)-1
+            if 'x' in obj  and not math.isnan(obj['x']):
+                prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
+                if ind == detection_index:
+                    pred_index = len(prd_bbs) -1            
+    
+
+        return prd_bbs, label_bbs, pred_index, label_index
+    
+    def get_detection_properties_text_list(self, detection_index):
+        data = self.comp_data.loc[detection_index]
+
+        detection_variables_text_list = [f"{key}: {data[key]}" for key in data.keys()]
+
+        return detection_variables_text_list
+    
+    def get_detection_video_frame(self, detection_index):
+        data = self.comp_data.loc[detection_index]
+        
+        video=data['video']
+         
+        return video
+     
     @staticmethod
-    def experiment_from_evaluation_files(compared_videos, threshold):
+    def combine_evaluation_files(compared_videos, threshold):
         
         datafrme_dict = []
         for file_name in compared_videos:
@@ -35,8 +119,7 @@ class ParallelExperiment:
             # concatenate the dictionary of dataframes into a single dataframe
             comp_data = pd.concat(datafrme_dict).reset_index(drop=True)
         
-        exp = ParallelExperiment(comp_data, threshold)
-        return exp
+        return comp_data
     
     @staticmethod
     def get_TP_FP_FN_masks(comp_data, threshold):
@@ -84,10 +167,7 @@ class ParallelExperiment:
         detections_images_dict['label'] = detections_images_dict['prediction']
 
         return segmentations_masks, detections_images_dict
-
-    def get_masks(self):
-        return self.segmentations_masks
-    
+  
     @staticmethod
     def cell_name_from_segmentations(segmentations):
         if len(segmentations) < 1:
@@ -122,102 +202,16 @@ class ParallelExperiment:
             result.append({k: v})
         
         return result
-     
-    def get_statistics_masks(self, segmentations):
-        cell_name = ParallelExperiment.cell_name_from_segmentations(segmentations)
-        
-        if cell_name not in self.cell_statistics_map:
-            len_ = len(self.segmentations_masks['total_stats']['TP'])
-            segmentation_mask = np.ones([len_], dtype=bool)
-            for curr_segmentation in segmentations:
-                assert(len(curr_segmentation)==1)
-                seg_cat, seg_value = list(curr_segmentation.keys())[0], list(curr_segmentation.values())[0]
-                seg_idx = self.segmentations_masks[seg_cat]['possible partitions'].index(seg_value)
-                segmentation_mask &= self.segmentations_masks[seg_cat]['masks'][seg_idx]
-        
-            TP_masks = self.segmentations_masks['total_stats']['TP'] & segmentation_mask
-            FP_masks = self.segmentations_masks['total_stats']['FP'] & segmentation_mask
-            FN_masks = self.segmentations_masks['total_stats']['FN'] & segmentation_mask
-
-            self.cell_statistics_map[cell_name] = tuple([TP_masks, FP_masks, FN_masks, np.sum(segmentation_mask)])
-        
-        return self.cell_statistics_map[cell_name]
-
-    def get_cell_data(self, segmentations, statistic_funcs):
-        TP_masks, FP_masks, FN_masks, total = self.get_statistics_masks(segmentations)
-
-        TP, FP, FN, total_examples = np.sum(TP_masks), np.sum(FP_masks), np.sum(FN_masks), np.sum(total)
-        TN = total_examples - (TP + FP + FN)
-
-        statistics_dict = statistic_funcs(TP, FP, FN, total_examples)
-        statistics_dict.update({'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN, 'TOTAL_EXAMPLES': total_examples})
-        
-        return statistics_dict
-
-    def get_ids(self, cell_key, state):
-        segmentations = ParallelExperiment.segmentations_from_name(cell_name=cell_key)
-        TP_masks, FP_masks, FN_masks, _ = self.get_statistics_masks(segmentations)
-        
-        if state == 'TP':
-            return self.detections_images_dict['prediction'][TP_masks]
-        elif state == 'FP':
-            return self.detections_images_dict['prediction'][FP_masks]
-        elif state == 'FN':
-            return self.detections_images_dict['label'][FN_masks]
-        
-
-       
-    def get_detection_bounding_boxes(self, detection_index):
-        bb_obj = self.comp_data.loc[detection_index]
-
-        label_bbs = []
-        prd_bbs = []
-        matched = []
-        
-        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==bb_obj['frame_id']) & (self.comp_data['video']==bb_obj['video']))]
-
-        if 'x' in bb_obj and bb_obj['x'] is not None:  
-            matched.append([bb_obj['x'], bb_obj['y'], bb_obj['width'], bb_obj['height']])
-        pred_index = -1
-        label_index = -1
-        for ind in all_frmae_obj.index:
-            obj=all_frmae_obj.loc[ind]
-            if 'x_gt' in obj and not math.isnan(obj['x_gt']):
-                label_bbs.append([obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']])
-                if ind == detection_index:
-                    label_index = len(label_bbs)-1
-            if 'x' in obj  and not math.isnan(obj['x']):
-                prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
-                if ind == detection_index:
-                    pred_index = len(prd_bbs) -1            
-    
-
-        return prd_bbs, label_bbs, pred_index, label_index
-    
-
-    def get_detection_properties_text_list(self, detection_index):
-        data = self.comp_data.loc[detection_index]
-
-        detection_variables_text_list = [f"{key}: {data[key]}" for key in data.keys()]
-
-        return detection_variables_text_list
-    
-    def get_detection_video_frame(self, detection_index):
-        data = self.comp_data.loc[detection_index]
-        
-        video=data['video']
-         
-        return video
-
-
-    def save_experiment(self, out_folder, config_name, report_run_info):
+ 
+    @staticmethod
+    def save_experiment(comp_data, out_folder, config_name, report_run_info):
 
         report_name = os.path.splitext(os.path.split(config_name)[-1])[0]
         report_file_name = report_name + Constants.EXPERIMENT_EXTENSION
         report_output_file = os.path.join(out_folder, report_file_name)
 
         with open(report_output_file, 'wb') as output:  # Overwrites any existing file.
-            pickle.dump(self.comp_data, output, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(comp_data, output, pickle.HIGHEST_PROTOCOL)
 
         config = load_config_dict(config_name)
         

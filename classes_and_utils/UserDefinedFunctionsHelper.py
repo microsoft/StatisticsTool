@@ -112,3 +112,4 @@ def load_config(config_file_name):
     if transform_func_name != 'None':
         transform_func = get_userdefined_function(UserDefinedConstants.TRANSFORM_FUNCTIONS,transform_func_name)
     return prediction_reading_func,gt_reading_func_name, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate
+

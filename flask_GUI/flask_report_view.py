@@ -85,7 +85,7 @@ def get_report_table():
             res_table = experiments_manager.get_results_table(main_path,ref_path)
             if res_table == None:
                 segmentations = experiments_manager.get_item_segmentations(main_path)
-                statistics_func, evaluation_func, overlap_func = ExperimentsManager.get_user_defined_functions(main_path)
+                statistics_func, evaluation_func, overlap_func = ExperimentsManager.get_experiment_udf(main_path)
                 res_table = Results_table(server, main,ref, main_path, ref_path, segmentations, statistics_func, evaluation_func, overlap_func)
                 experiments_manager.add_results_table(main_path,ref_path,res_table)
     

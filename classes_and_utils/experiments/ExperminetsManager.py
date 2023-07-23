@@ -92,8 +92,7 @@ class ExperimentsManager:
                 added_ref.append(ref)   
 
         return added_main, added_ref        
-
-        
+      
     def get_item_segmentations(self,main_path):
         
         experiment = self.get_experiment(main_path)
@@ -107,14 +106,13 @@ class ExperimentsManager:
         return segmentations   
 
     @staticmethod
-    def get_user_defined_functions(report_path):
+    def get_experiment_udf(report_path):
         metadata = ExperimentsManager.load_report_metadata(report_path)
         statistics_func = get_userdefined_function(UserDefinedConstants.STATISTICS_FUNCTIONS, func_name = metadata[CONFIG_TOKEN][STATISTICS_FUNC_TOKEN])
         overlap_func = get_userdefined_function(UserDefinedConstants.OVERLAP_FUNCTIONS, func_name = metadata[CONFIG_TOKEN][OVERLAP_FUNC_TOKEN])
         evaluation_func = get_userdefined_function(UserDefinedConstants.EVALUATION_FUNCTIONS, func_name = metadata[CONFIG_TOKEN][EVALUATION_FUNC_TOKEN])
 
         return statistics_func, evaluation_func, overlap_func
-
 
     @staticmethod
     def load_report_metadata(report_path):
