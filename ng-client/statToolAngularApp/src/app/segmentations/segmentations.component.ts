@@ -92,7 +92,7 @@ export class SegmentationsComponent implements OnInit{
     this.allSegmentsRemoved.emit([])
   }
 
-  onClick(){
+  onClick(event:any){
     let name = this.dropdown?.nativeElement.parentElement.attributes['name'].value;
 
     if (!this.dropdown?.nativeElement.querySelectorAll('.dropdown-list')[0].hidden){

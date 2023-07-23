@@ -5,12 +5,19 @@ from app_config.config import app_config
 from app_config.constants import Constants, UserDefinedConstants
 from classes_and_utils.utils import loading_json
 
+def get_external_lib_path():
+    ex_lib_path = os.environ.get('EXTERNAL_LIB_PATH')
+    if ex_lib_path != None and ex_lib_path != '':
+        return ex_lib_path
+    else:
+        return app_config.external_lib_path
+
 def get_configs_folder():
-    configs_folder = os.path.join(app_config.externa_lib_path, Constants.CONFIG_FOLDER_NAME)
+    configs_folder = os.path.join(get_external_lib_path(), Constants.CONFIG_FOLDER_NAME)
     return configs_folder
 
 def get_suites_folder():
-    suites_folder = os.path.join(app_config.externa_lib_path, Constants.SUITES_FOLDER_NAME)
+    suites_folder = os.path.join(get_external_lib_path(), Constants.SUITES_FOLDER_NAME)
     return suites_folder
 
 '''
@@ -23,14 +30,14 @@ def get_suites_folder():
     6. transform_functions
 '''
 def get_userdefined_function(func_type,func_name):
-    sys.path.append(os.path.join(app_config.externa_lib_path,Constants.USER_DEFINED_FUNCTIONS,func_type))
+    sys.path.append(os.path.join(get_external_lib_path(),Constants.USER_DEFINED_FUNCTIONS,func_type))
     module = importlib.import_module(func_name)
     return getattr(module,func_name)
     
 
 def get_users_defined_functions(directoryName):
     user_defined_functions = []
-    path = os.path.join(app_config.externa_lib_path, Constants.USER_DEFINED_FUNCTIONS, directoryName,'*')
+    path = os.path.join(get_external_lib_path(), Constants.USER_DEFINED_FUNCTIONS, directoryName,'*')
     files = glob(path)
     for fullname in files:
         filename = fullname.split(os.sep)[-1]

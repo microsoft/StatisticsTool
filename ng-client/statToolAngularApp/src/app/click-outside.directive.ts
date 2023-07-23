@@ -17,13 +17,20 @@ export class ClickOutsideDirective implements OnInit {
     this.commonSvc.onMouseClicked.subscribe(event => {
         let name = this.elementRef.nativeElement.parentNode.parentNode.attributes['name'].value;
         const dropdownPanel = this.elementRef.nativeElement.querySelector('.dropdown-list');  
+        //const caretIcon = this.elementRef.nativeElement.querySelector('.dropdown-multiselect__caret');
         
         if (this.statSvc.getDropdownState(this.viewguid,name) == States.Opened){
           this.statSvc.setDropdownState(this.viewguid,name,States.Open);
+          
           return;
         }
         if (this.statSvc.getDropdownState(this.viewguid,name) == States.Open){
           dropdownPanel.hidden = true;
+          /*if (caretIcon instanceof HTMLElement) {
+            caretIcon.classList.add('rotate-180');
+          }*/
+        } else {
+          /*caretIcon.classList.remove('rotate-180');*/
         }
     })
   }

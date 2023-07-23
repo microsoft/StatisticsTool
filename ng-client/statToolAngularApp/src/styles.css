@@ -108,3 +108,7 @@ span.dropdown-btn {
     margin-top: 10px;
     box-shadow: 0 1px 5px #959595;
 }
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
