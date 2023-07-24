@@ -107,6 +107,8 @@ span.dropdown-btn {
     background: #fff;
     margin-top: 10px;
     box-shadow: 0 1px 5px #959595;
+    overflow: scroll;
+    height: 250px;
 }
 
 .rotate-180 {
