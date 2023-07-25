@@ -33,6 +33,8 @@ import { NewReportComponent } from './new-report/new-report.component';
 import { SaveSuiteDialogComponent } from './save-suite-dialog/save-suite-dialog.component';
 import { ConfigurationViewerComponent } from './configuration-viewer/configuration-viewer.component';
 import { NewReportResultComponent } from './new-report/new-report-result/new-report-result.component';
+import { ClickOutsideDirective } from './click-outside.directive'; // Adjust the path to your directive
+import { CommonService } from './services/common.service';
 
 
 @NgModule({
@@ -49,7 +51,8 @@ import { NewReportResultComponent } from './new-report/new-report-result/new-rep
     NewReportComponent,
     SaveSuiteDialogComponent,
     ConfigurationViewerComponent,
-    NewReportResultComponent
+    NewReportResultComponent,
+    ClickOutsideDirective
   ],
   imports: [
     NgMultiSelectDropDownModule.forRoot(),
@@ -73,7 +76,7 @@ import { NewReportResultComponent } from './new-report/new-report-result/new-rep
     NgbAlertModule,
     DragDropModule
   ],
-  providers: [StatisticsToolService],
+  providers: [StatisticsToolService,CommonService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -239,15 +239,14 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
                                                                   predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, local_gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
  
     if len(compared_videos) == 0:
-        return None, process_result, None
+        return process_result, None
 
     # combine the intermediate results for further statistics and example extraction
     comp_data = ParallelExperiment.combine_evaluation_files(compared_videos, threshold)
     
     folder_name = save_stats_dir
-    configs_folder = get_configs_folder()
-    config_file_path = os.path.join(configs_folder, config_file_name)
-    report_file_name = ParallelExperiment.save_experiment(comp_data, folder_name, config_file_path, report_run_info)
+
+    report_file_name = ParallelExperiment.save_experiment(comp_data, folder_name, config_file_name, report_run_info)
     return process_result, report_file_name
 
 def get_suite_configurations(suite_name):
