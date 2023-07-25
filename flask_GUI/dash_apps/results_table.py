@@ -269,5 +269,7 @@ class Results_table():
         t = table.get_report_table(columns,rows, unique)
         table_buttons_div = html.Div(id='table-div',children=t,style=css['table-div'])
 
-        whole_page = html.Div(children=[table_buttons_div], style=css['whole-reporter'],id='report_id')
+        whole_page = html.Div([ html.Div(children=[table_buttons_div], style=css['whole-reporter'], id='report_id'),
+                                html.Script(src='/assets/app.js') 
+                            ])
         return  whole_page    

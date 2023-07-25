@@ -9,7 +9,7 @@ from flask_GUI.flask_server import server, experiments_manager
 from classes_and_utils.UserDefinedFunctionsHelper import options_for_funcs
 from classes_and_utils.experiments.ExperimentsHelper import ExperimentsHelper
 from flask_GUI.dash_apps.results_table import Results_table
-from app_config.constants import Constants
+from app_config.constants import Constants, UserDefinedConstants
 
 #from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
@@ -30,6 +30,7 @@ file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics
 def Report_Viewer():
 
     try:
+        #load_all_user_defined_functions()
         main = request.values and request.values[Constants.MAIN_REPORT_FILE_PATH]
 
         ref = None
@@ -45,8 +46,9 @@ def Report_Viewer():
         print (f"error: {ex}. Traceback: ")
         for a in traceback.format_tb(ex.__traceback__): print(a)
         print (f"exception message: {ex}.")
+        error_message = f"We encountered an error while attempting to load the report for the request {request.values}."
+        return render_template('error_page.html', error_message=error_message)
 
-        return f'Failed to load report for request {request.values}'
 
 @server.route('/viewer/get_segmentations', methods=['POST'])    
 def get_segmentations():

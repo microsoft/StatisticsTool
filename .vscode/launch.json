@@ -11,28 +11,10 @@
             "type": "python",
             "request": "launch",
             "module": "flask_GUI.flask_GUI_main",
-            "justMyCode": true
-        },
-        {
-            "name": "Test Unique Helper",
-            "type": "python",
-            "request": "launch",
-            "module": "tests.test_unique_helper",
-            "justMyCode": true
-        },
-        {
-            "name": "Test Templates Files Helper",
-            "type": "python",
-            "request": "launch",
-            "module": "tests.test_templates_files_helper",
-            "justMyCode": true
-        },
-        {
-            "name": "Test Configuration Results",
-            "type": "python",
-            "request": "launch",
-            "module": "tests.test_configuration_results",
-            "justMyCode": true
+            "justMyCode": true,
+            "env": {
+                "EXTERNAL_LIB_PATH": "./statisticstool_external_library"
+              }
         },
     ]
 }

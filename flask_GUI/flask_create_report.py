@@ -249,9 +249,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     exp = ParallelExperiment.experiment_from_evaluation_files(compared_videos, threshold)
     
     folder_name = save_stats_dir
-    configs_folder = get_configs_folder()
-    config_file_path = os.path.join(configs_folder, config_file_name)
-    report_file_name = exp.save_experiment(folder_name, config_file_path, report_run_info)
+    report_file_name = exp.save_experiment(folder_name, config_file_name, report_run_info)
     return exp, process_result, report_file_name
 
 def get_suite_configurations(suite_name):
