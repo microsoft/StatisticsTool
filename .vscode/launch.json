@@ -13,7 +13,7 @@
             "module": "flask_GUI.flask_GUI_main",
             "justMyCode": true,
             "env": {
-                "EXTERNAL_LIB_PATH": "../statisticstool_external_library"
+                "EXTERNAL_LIB_PATH": "./statisticstool_external_library"
               }
         },
     ]

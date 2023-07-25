@@ -46,18 +46,9 @@ def Report_Viewer():
         print (f"error: {ex}. Traceback: ")
         for a in traceback.format_tb(ex.__traceback__): print(a)
         print (f"exception message: {ex}.")
-        return generate_error_html(request)
+        error_message = f"We encountered an error while attempting to load the report for the request {request.values}."
+        return render_template('error_page.html', error_message=error_message)
 
-def generate_error_html(request):
-    html = "<html>"
-    html += "<div style='border: 2px solid #333; background-color: lightgray; padding: 10px; margin: 10px;'>"
-    html += "<p style='font-size:16px; color:red; font-weight:bold;'>"
-    html += f"We encountered an error while attempting to load the report for the request {request.values}."
-    html += "</p>"
-    html += "<p style='font-size:16px; color:red; font-weight:bold;'>For more details regarding the issue, please check the terminal console</p>"
-    html += "</div>"
-    html += "</html>"
-    return html        
 
 @server.route('/viewer/get_segmentations', methods=['POST'])    
 def get_segmentations():
