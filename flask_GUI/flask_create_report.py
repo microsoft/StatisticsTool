@@ -9,12 +9,13 @@ from app_config.constants import UserDefinedConstants
 from flask_GUI.flask_server import server
 from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.utils import loading_json, save_json
-from classes_and_utils.VideoEvaluation import compare_predictions_directory
+from classes_and_utils.experiments.ExperimentRunner import compare_predictions_directory
+from utils.report_metadata import *
 
 
 @server.route('/new_report/nav_new_report', methods=['GET', 'POST'])
 def nav_report_func():
-    possible_configs = manage_new_report_page(request)
+    possible_configs = manage_new_report_page()
     possible_suites = get_possible_suites()
     js_possible_configs = json.dumps(possible_configs)
     js_possible_suites = json.dumps(possible_suites)
@@ -61,16 +62,7 @@ def get_user_defined_functions_list():
 @server.route('/new_report/get_configuration',methods=['GET'])
 def get_config():
     config_name = request.args.get('config')
-    config_path = os.path.join(get_configs_folder(), config_name)
-    config_file = loading_json(config_path)
-    config_dict = config_file[0]
-    
-    if 'File Reading Function' in config_dict.keys():
-        config_dict['Prediction Reading Function'] = config_dict['File Reading Function']
-        config_dict.pop('File Reading Function')
-
-    if 'GT Reading Function' not in config_dict.keys():
-        config_dict['GT Reading Function'] = 'none'
+    config_dict = load_config_dict(config_name)
 
     return json.dumps(config_dict)
 
@@ -114,7 +106,7 @@ def calculating():
             print("report output folder: " + report_dir)
             os.makedirs(report_dir)
             # calculate the intermediate results for all the videos then combine them
-            exp, process_result, report_file_name = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)   
+            process_result, _ = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)   
             process_result['output_path'] = output_path
             all_process_result.append(process_result)
         except Exception as e:
@@ -124,11 +116,7 @@ def calculating():
             result['errorMessage'] = f'An error occurred while executing the {config_file_name} configuration file' 
             return  json.dumps(result)
 
-    if exp == 'TypeError' or exp is None or report_file_name is None:
-        link = 'None'
-    else:
-        link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(output_path)
-
+    link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(output_path)
 
     num_success_files = []
     reading_function_skipped = []
@@ -171,40 +159,11 @@ def unpack_calc_request(request):
         
     return suite_name,config_file_names, prd_dir, GT_dir, output_dir
 
-def unpack_new_config(request):
-    """
-    extracts the configurations names from the request and place them in a dictionary
-    :param request: request that was sent to '/create_new_report' route
-    :return: a dictionary with the selected configurations names
-    """
-    new_config_name = request.form.get('name')
-    threshold = request.form.get('Threshold')
-    reading_func_name = request.form.get('Reading_func')
-    transform_func_name = request.form.get('transform_func')
-    overlap_func_name = request.form.get('overlap_func')
-    evaluation_func_name = request.form.get("evaluation_func")
-    statistics_func_name = request.form.get('statistics_func')
-    partitioning_func_name = request.form.get('partitioning_func')
-    log_names_to_evaluate = request.form.get('log_names_to_evaluate')
-
-    new_config = [
-        {"File Reading Function": reading_func_name, "Overlap Function": overlap_func_name, "Threshold": threshold,
-         "Evaluation Function": evaluation_func_name, "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name,
-         "Transformation Function":transform_func_name, "Log Names to Evaluate":log_names_to_evaluate }]
-    return new_config, new_config_name
-
-def manage_new_report_page(request):
+def manage_new_report_page():
   
     configs_folder = get_configs_folder()
     # if a new config is added in the GUI
-    if "add_config" in request.url:
-        # unpack the fields in the request and concentrate it in a configuration dictionary
-        new_config, new_config_name = unpack_new_config(request)
-        path_to_save = os.path.join(configs_folder, new_config_name+'.json')
-        # save the dictionary in the config folder as a json file
-        save_json(path_to_save, new_config)
-    # check what are the available config files in the config folder
-   
+  
     if not os.path.exists(configs_folder):
         os.makedirs(configs_folder)
     possible_configs = os.listdir(configs_folder)
@@ -240,17 +199,18 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     # extract all the intermediate results from the raw prediction-label files
 
     compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, 
-                                                                  predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
+                                                                  predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, local_gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
  
     if len(compared_videos) == 0:
-        return None, process_result, None
+        return process_result, None
 
     # combine the intermediate results for further statistics and example extraction
-    exp = ParallelExperiment.experiment_from_evaluation_files(compared_videos, threshold)
+    comp_data = ParallelExperiment.combine_evaluation_files(compared_videos, threshold)
     
     folder_name = save_stats_dir
-    report_file_name = exp.save_experiment(folder_name, config_file_name, report_run_info)
-    return exp, process_result, report_file_name
+
+    report_file_name = ParallelExperiment.save_experiment(comp_data, folder_name, config_file_name, report_run_info)
+    return process_result, report_file_name
 
 def get_suite_configurations(suite_name):
 

@@ -1,5 +1,6 @@
 
 import os, sys
+import pathlib
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 import json
 from app_config.constants import Constants
@@ -67,13 +68,14 @@ def get_fps(header):
     else:
         return 30 #TODO: change to acceptable option, need to add fps to gtlog
     
-def parse_video_name_from_pred_file(file_path):
-    local_path = None
-    with open(file_path, "r") as file:
-        header = file.readline()
-        header = json.loads(header)
-        video_name = header[Constants.log_header_token][Constants.log_header_video_name_token]
-        if Constants.log_header_video_path_token in header[Constants.log_header_token] and header[Constants.log_header_token][Constants.log_header_video_path_token].startswith(Constants.blob_path_startwidth_token):
-            local_path = header[Constants.log_header_token][Constants.log_header_video_path_token]
-    return video_name, local_path
-   
+def get_video_name_from_pred_file(pred_file, pred_name, pred_dir):
+    try:
+        with open(pred_file, "r") as file:
+            header = file.readline()
+            header = json.loads(header)
+            video_name = header[Constants.log_header_token][Constants.log_header_video_name_token]
+    except:
+        relative_path = os.path.relpath(pred_name, pred_dir)
+        video_name = os.path.splitext(relative_path)[0]
+    
+    return video_name

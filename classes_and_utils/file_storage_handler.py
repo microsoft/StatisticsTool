@@ -4,52 +4,96 @@ import pathlib
 
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 
-from app_config.constants import Constants
-from utils.AzureStorageHelper import get_full_blob_path, blob_exists, list_blobs_in_results_path, read_video_file_from_blob, get_blob_from_cache_or_download
+from app_config.config import app_config
+from utils.LocalStorageFileCache import LocalStorageFileCache
+from utils.AzureStorageHelper import AzureStorageHelper
 from utils.LocalStrageHelper import list_local_dir
 
-def list_files_in_results_path(path, recursive=True):
+
+class StoreType():
+    Data = 1
+    Annotation = 2
+    Predictions = 3
+
+
+local_storage_cache = None
+storage_handler = None
+def GetStorageHandler():
+    global storage_handler
+    if storage_handler is not None:
+        return storage_handler
+    
+    storage_handler = AzureStorageHelper(app_config.azure_storage_id, app_config.data_container_name, app_config.storage_connection_string)
+    return storage_handler
+
+def GetFilesCache():
+    global local_storage_cache
+
+    if local_storage_cache is not None:
+        return local_storage_cache
+
+    local_storage_cache = LocalStorageFileCache(GetStorageHandler())
+
+    return local_storage_cache
+#create on initialization no race conditions dangare
+GetFilesCache()
+
+def list_files_in_path(path, store_type, recursive=True):
     if os.path.exists(path):
         dirs = list_local_dir(path, recursive)
     else:
-        dirs = list_blobs_in_results_path(path, recursive)
-
+        full_path = get_path_on_store(path, store_type)
+        dirs = GetStorageHandler().ls_files(full_path, recursive)
+        dirs = [os.path.join(path, dir) for dir in dirs]
     return dirs
-    
-def path_exists(path):
-    if path.startswith(Constants.folder_prefix_for_blob):
-        return blob_exists(path)
+
+def get_path_on_store(path, store_type:StoreType):
+    if store_type == StoreType.Annotation:
+        return os.path.join(app_config.annotation_store_blobs_prefix, path)
+    if store_type == StoreType.Data:
+        return os.path.join(app_config.data_store_blobs_prefix, path)
+    if store_type == StoreType.Predictions:
+        return os.path.join(app_config.predictions_blobs_prefix, path)
     else:
-        return os.path.exist(path)
-
-def get_local_video_path(path):
-    if os.path.exists(path):
         return path
+
+def get_file_on_local_storage(path, store_type:StoreType = None):  
+    #file is originally from local storage
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        return path
+
+    #download from data store
+    full_path = get_path_on_store(path, store_type)
     
-    return read_video_file_from_blob(path)
+    local_file_path = GetFilesCache().get_file_and_download_if_needed(full_path)
+    return local_file_path
 
-def get_local_or_blob_full_path(path, storeType):
-    if os.path.exists(path):
-        return path
-    return get_full_blob_path(path, storeType)
 
-def calc_log_file_full_path(log_name, video_name, logs_base_path):
-    video_base_name = pathlib.Path(video_name).stem
-    full_path = None
-    if os.path.exists(logs_base_path):
-        if log_name: #not null, algo_logs format
-            full_path = os.path.join(logs_base_path, video_base_name, log_name)
-        else:
-            full_path = os.path.join(logs_base_path, video_base_name+'.json')
-    else:
-        if log_name:
-            full_path = os.path.join(logs_base_path, os.path.splitext(video_name)[0],log_name)
-        else:
-            full_path = os.path.join(logs_base_path, os.path.splitext(video_name)[0]+'.json')
-    return full_path
-
-def get_local_or_blob_file(path):
-    if os.path.exists(path):
-        return path
+def find_in_store_by_video_name(base_path, full_video_name, log_name, path_exists_func, ext = '.json'):
+    video_file_name = pathlib.Path(full_video_name).stem
     
-    return get_blob_from_cache_or_download(path)
+    #set gt_file path to be as full path in data store. the log is {video_full_name(path)}.json
+    folder = os.path.split(full_video_name)[0]
+    folder = os.path.normpath(folder)
+    gt_local_path = os.path.join(base_path, folder, video_file_name+ext)
+    if path_exists_func(gt_local_path):
+        return gt_local_path
+    
+    #set gt_file path to be as full path in data store. full_video_name includes log name and the video name is the base folder
+    video_path = os.path.dirname(full_video_name)
+    folder, video_name = os.path.split(video_path)
+    folder = os.path.normpath(folder)
+    gt_local_path = os.path.join(base_path, folder, video_name+ext)
+    if path_exists_func(gt_local_path):
+        return gt_local_path
+    
+    #if not exists set gt_file to be as algo_logs file format
+    gt_local_path = os.path.join(base_path, video_file_name, log_name)
+    if path_exists_func(gt_local_path):
+        return gt_local_path
+    
+    return None
+
+def find_in_blob_by_video_name(file_name, log_name, store_type, ext = '.json'):
+    full_file_name = get_path_on_store(file_name, store_type)
+    return find_in_store_by_video_name('', full_file_name, log_name, GetStorageHandler().blob_exists, ext)

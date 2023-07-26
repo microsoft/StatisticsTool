@@ -12,117 +12,17 @@ from utils.report_metadata import CONFIG_TOKEN, create_metadata
 
 class ParallelExperiment:
  
-    def __init__(self, comp_data, threshold, partitioning_func = None):
+    def __init__(self, comp_data, threshold, partitioning_func):
         self.comp_data = comp_data
         self.segmentations_masks = {}
         self.detections_images_dict = {}
         self.cell_statistics_map = {}
     
-        if partitioning_func:
-            self.segmentations_masks, self.detections_images_dict = ParallelExperiment.calc_experiment(comp_data, threshold, partitioning_func)
+        self.segmentations_masks, self.detections_images_dict = ParallelExperiment.calc_experiment(comp_data, threshold, partitioning_func)
        
-    
-    @staticmethod
-    def experiment_from_evaluation_files(compared_videos, threshold):
-        
-        datafrme_dict = []
-        for file_name in compared_videos:
-            df = pd.read_json (file_name)
-            datafrme_dict.append(df)
-            continue
-        
-        if len(datafrme_dict) > 0:
-            # concatenate the dictionary of dataframes into a single dataframe
-            comp_data = pd.concat(datafrme_dict).reset_index(drop=True)
-        
-        exp = ParallelExperiment(comp_data, threshold)
-        return exp
-    
-    @staticmethod
-    def get_TP_FP_FN_masks(comp_data, threshold):
-        """
-        :param threshold: float , above this value an overlap is considered a hit (the prediction will be TP)
-        :return: Boolean masks of TP, FP, FN that indicates which row in the predictions dataframe is TP/FP
-                 and which row in the labels dataframe is a FN (row = bounding box)
-        """
-        #first key from 'detection' key in input
-        key = 'detection'
-        FN_mask = ((comp_data[key+'_gt']==True) & ((comp_data['state']<threshold) | (comp_data[key]==False) ))
-        FP_mask = ((comp_data[key]==True) & (comp_data['state']<threshold))
-        TP_mask = ((comp_data[key]==True) &((comp_data['state']>=threshold) & (comp_data[key+'_gt']==True)))
-        TN_mask = (comp_data[key+'_gt']==False) & (comp_data[key]==False)
-        if len(comp_data)!=(sum(FN_mask)+sum(FP_mask)+sum(TP_mask)+sum(TN_mask)):
-            print('Masks sizes doesnt match dataset size !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-        
-        return TP_mask, FP_mask, FN_mask
-               
-    @staticmethod
-    def calc_experiment(comp_data, threshold, segmentation_func):
-        
-        threshold = float(threshold)
-        assert threshold >= 0, 'threshold should be a positive number'
-       
-        # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
-        TP_mask, FP_mask, FN_mask = ParallelExperiment.get_TP_FP_FN_masks(comp_data, threshold)
-        # calculate the boolean masks of the partitions (which row/bounding box in the dataframes belongs to which partition)
-        wanted_segmentations = segmentation_func(comp_data)
-        # initialize masks with the total masks for TP/FP/FN
-        segmentations_masks = {'total_stats': {'TP': TP_mask, 'FP': FP_mask, 'FN': FN_mask}}
-        # Add the segmentation masks to masks
-        segmentations_masks.update(wanted_segmentations)
-
-        video_name = comp_data['video'].values.copy()[:, np.newaxis]
-        frame = comp_data['frame_id'].values.astype(int).copy()[:, np.newaxis] 
-        index = comp_data.index.to_series().values.copy()[:, np.newaxis]
-        if 'end_frame' in comp_data.keys():
-            end_frames = comp_data['end_frame'].values.astype(int).copy()[:, np.newaxis]
-        else:
-            end_frames = frame
-        detections_images_dict = {}
-        detections_images_dict['prediction'] = np.concatenate((video_name, index, frame, end_frames), axis=1)
-        
-        detections_images_dict['label'] = detections_images_dict['prediction']
-
-        return segmentations_masks, detections_images_dict
-
     def get_masks(self):
         return self.segmentations_masks
     
-    @staticmethod
-    def cell_name_from_segmentations(segmentations):
-        if len(segmentations) < 1:
-            return '*'
-        # Combine all the keys and values into a single list
-        all_items = []
-        for d in segmentations:
-            for k, v in d.items():
-                all_items.append((k, v))
-        
-        # Sort the list by key
-        sorted_items = sorted(all_items, key=lambda x: x[0])
-        
-        # Combine the sorted items into a single string
-        result = ''
-        for k, v in sorted_items:
-            result += f'{k}-{v},'
-        
-        # Remove the trailing comma and return the result
-        return result[:-1]
-    @staticmethod
-    def segmentations_from_name(cell_name):
-        if cell_name == '*':
-            return []
-        # Split the string into key-value pairs
-        pairs = cell_name.split(',')
-        
-        # Create a list of dictionaries from the pairs
-        result = []
-        for pair in pairs:
-            k, v = pair.split('-')
-            result.append({k: v})
-        
-        return result
-     
     def get_statistics_masks(self, segmentations):
         cell_name = ParallelExperiment.cell_name_from_segmentations(segmentations)
         
@@ -164,8 +64,6 @@ class ParallelExperiment:
             return self.detections_images_dict['prediction'][FP_masks]
         elif state == 'FN':
             return self.detections_images_dict['label'][FN_masks]
-        
-
        
     def get_detection_bounding_boxes(self, detection_index):
         bb_obj = self.comp_data.loc[detection_index]
@@ -194,7 +92,6 @@ class ParallelExperiment:
 
         return prd_bbs, label_bbs, pred_index, label_index
     
-
     def get_detection_properties_text_list(self, detection_index):
         data = self.comp_data.loc[detection_index]
 
@@ -208,16 +105,124 @@ class ParallelExperiment:
         video=data['video']
          
         return video
+     
+    @staticmethod
+    def combine_evaluation_files(compared_videos, threshold):
+        
+        datafrme_dict = []
+        for file_name in compared_videos:
+            df = pd.read_json (file_name)
+            datafrme_dict.append(df)
+            continue
+        
+        if len(datafrme_dict) > 0:
+            # concatenate the dictionary of dataframes into a single dataframe
+            comp_data = pd.concat(datafrme_dict).reset_index(drop=True)
+        
+        return comp_data
+    
+    @staticmethod
+    def get_TP_FP_FN_masks(comp_data, threshold):
+        """
+        :param threshold: float , above this value an overlap is considered a hit (the prediction will be TP)
+        :return: Boolean masks of TP, FP, FN that indicates which row in the predictions dataframe is TP/FP
+                 and which row in the labels dataframe is a FN (row = bounding box)
+        """
+        #first key from 'detection' key in input
+        key = 'detection'
+        FN_mask = ((comp_data[key+'_gt']==True) & ((comp_data['state']<threshold) | (comp_data[key]==False) ))
+        FP_mask = ((comp_data[key]==True) & (comp_data['state']<threshold))
+        TP_mask = ((comp_data[key]==True) &((comp_data['state']>=threshold) & (comp_data[key+'_gt']==True)))
+        TN_mask = (comp_data[key+'_gt']==False) & (comp_data[key]==False)
+        if len(comp_data)!=(sum(FN_mask)+sum(FP_mask)+sum(TP_mask)+sum(TN_mask)):
+            print('Masks sizes doesnt match dataset size !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+        
+        return TP_mask, FP_mask, FN_mask
+               
+    @staticmethod
+    def calc_experiment(comp_data, threshold, segmentation_func):
+        
+        threshold = float(threshold)
+        assert threshold >= 0, 'threshold should be a positive number'
+       
+        # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
+        TP_mask, FP_mask, FN_mask = ParallelExperiment.get_TP_FP_FN_masks(comp_data, threshold)
+        # calculate the boolean masks of the partitions (which row/bounding box in the dataframes belongs to which partition)
+        
+        wanted_segmentations = {}
+        if segmentation_func:
+            try:
+                wanted_segmentations = segmentation_func(comp_data)
+            except Exception as ex:
+                print("------------ERROR------------")
+                print("Failed to calculate partitioning with given partitioning user defined functions, continue without segmentations\n")
+                print(ex)
+                print('\n\n')
 
 
-    def save_experiment(self, out_folder, config_name, report_run_info):
+        # initialize masks with the total masks for TP/FP/FN
+        segmentations_masks = {'total_stats': {'TP': TP_mask, 'FP': FP_mask, 'FN': FN_mask}}
+        # Add the segmentation masks to masks
+        segmentations_masks.update(wanted_segmentations)
+
+        video_name = comp_data['video'].values.copy()[:, np.newaxis]
+        frame = comp_data['frame_id'].values.astype(int).copy()[:, np.newaxis] 
+        index = comp_data.index.to_series().values.copy()[:, np.newaxis]
+        if 'end_frame' in comp_data.keys():
+            end_frames = comp_data['end_frame'].values.astype(int).copy()[:, np.newaxis]
+        else:
+            end_frames = frame
+        detections_images_dict = {}
+        detections_images_dict['prediction'] = np.concatenate((video_name, index, frame, end_frames), axis=1)
+        
+        detections_images_dict['label'] = detections_images_dict['prediction']
+
+        return segmentations_masks, detections_images_dict
+  
+    @staticmethod
+    def cell_name_from_segmentations(segmentations):
+        if len(segmentations) < 1:
+            return '*'
+        # Combine all the keys and values into a single list
+        all_items = []
+        for d in segmentations:
+            for k, v in d.items():
+                all_items.append((k, v))
+        
+        # Sort the list by key
+        sorted_items = sorted(all_items, key=lambda x: x[0])
+        
+        # Combine the sorted items into a single string
+        result = ''
+        for k, v in sorted_items:
+            result += f'{k}-{v},'
+        
+        # Remove the trailing comma and return the result
+        return result[:-1]
+    @staticmethod
+    def segmentations_from_name(cell_name):
+        if cell_name == '*':
+            return []
+        # Split the string into key-value pairs
+        pairs = cell_name.split(',')
+        
+        # Create a list of dictionaries from the pairs
+        result = []
+        for pair in pairs:
+            k, v = pair.split('-')
+            result.append({k: v})
+        
+        return result
+ 
+    @staticmethod
+    def save_experiment(comp_data, out_folder, config_name, report_run_info):
 
         report_name = os.path.splitext(os.path.split(config_name)[-1])[0]
         report_file_name = report_name + Constants.EXPERIMENT_EXTENSION
         report_output_file = os.path.join(out_folder, report_file_name)
 
         with open(report_output_file, 'wb') as output:  # Overwrites any existing file.
-            pickle.dump(self.comp_data, output, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(comp_data, output, pickle.HIGHEST_PROTOCOL)
 
         config = load_config_dict(config_name)
         

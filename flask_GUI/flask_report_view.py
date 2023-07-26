@@ -24,9 +24,6 @@ from flask import Flask, jsonify, redirect, render_template, request, send_from_
 
 server.secret_key = 'any random string'
 
-# getting the options for each type of necessary function
-file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
-
 @server.route('/viewer/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
 
@@ -40,7 +37,7 @@ def Report_Viewer():
 
         main_added_experiments, ref_added_experiments  = experiments_manager.add_experiments_folders(main, ref)
         js_pairs,  missing_files_from_main, missing_files_from_ref = ExperimentsHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
-        if(len(missing_files_from_main) > 0 or len(missing_files_from_ref) > 0):      
+        if ref and (len(missing_files_from_main) > 0 or len(missing_files_from_ref) > 0):      
             location = f'/static/index.html?reports={quote(js_pairs)}'
             return render_template('missing_files_alert.html', 
                                    location=location, 
@@ -93,7 +90,7 @@ def get_report_table():
             res_table = experiments_manager.get_results_table(main_path,ref_path)
             if res_table == None:
                 segmentations = experiments_manager.get_item_segmentations(main_path)
-                statistics_func, evaluation_func, overlap_func = ExperimentsManager.get_user_defined_functions(main_path)
+                statistics_func, evaluation_func, overlap_func = ExperimentsManager.get_experiment_udf(main_path)
                 res_table = Results_table(server, main,ref, main_path, ref_path, segmentations, statistics_func, evaluation_func, overlap_func)
                 experiments_manager.add_results_table(main_path,ref_path,res_table)
     
