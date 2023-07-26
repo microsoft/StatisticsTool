@@ -86,6 +86,10 @@ export class NewReportService {
 
             this.partitioning_functions = map.partitioning_functions;
             this.partitioning_functions.sort((a,b) =>  (a > b ? 1 : -1));
+            let partitioning_funcs:string[] = [];
+            partitioning_funcs.push('none');
+            partitioning_funcs = partitioning_funcs.concat(this.partitioning_functions);
+            this.partitioning_functions = partitioning_funcs;
             
             this.statistics_functions = map.statistics_functions;
             this.statistics_functions.sort((a,b) =>  (a > b ? 1 : -1));
