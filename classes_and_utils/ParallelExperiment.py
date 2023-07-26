@@ -148,7 +148,18 @@ class ParallelExperiment:
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
         TP_mask, FP_mask, FN_mask = ParallelExperiment.get_TP_FP_FN_masks(comp_data, threshold)
         # calculate the boolean masks of the partitions (which row/bounding box in the dataframes belongs to which partition)
-        wanted_segmentations = segmentation_func(comp_data)
+        
+        wanted_segmentations = {}
+        if segmentation_func:
+            try:
+                wanted_segmentations = segmentation_func(comp_data)
+            except Exception as ex:
+                print("------------ERROR------------")
+                print("Failed to calculate partitioning with given partitioning user defined functions, continue without segmentations\n")
+                print(ex)
+                print('\n\n')
+
+
         # initialize masks with the total masks for TP/FP/FN
         segmentations_masks = {'total_stats': {'TP': TP_mask, 'FP': FP_mask, 'FN': FN_mask}}
         # Add the segmentation masks to masks

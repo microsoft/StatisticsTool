@@ -59,7 +59,7 @@ def get_path_on_store(path, store_type:StoreType):
 
 def get_file_on_local_storage(path, store_type:StoreType = None):  
     #file is originally from local storage
-    if os.path.exists(path):
+    if os.path.exists(path) and os.path(path).getsize() > 0:
         return path
 
     #download from data store

@@ -23,9 +23,6 @@ from flask import Flask, jsonify, redirect, render_template, request, send_from_
 
 server.secret_key = 'any random string'
 
-# getting the options for each type of necessary function
-file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
-
 @server.route('/viewer/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
 

@@ -49,7 +49,7 @@ class LocalStorageFileCache:
     def is_blob_exists_in_cache(self, file_name):
         full_path = self.get_path_on_cache(file_name)
         
-        if os.path.exists(full_path):
+        if os.path.exists(full_path) and os.path.getsize(full_path) > 0:
             return True
 
         return False
