@@ -83,7 +83,7 @@ class ExperimentsManager:
             if ref:
                 #get the partitioning function of the main report in order to compare same partitinings
                 metadata = ExperimentsManager.load_report_metadata(exp)
-                func_name = metadata[CONFIG_TOKEN][PARTITIONING_FUNC_TOKEN]
+                func_name = metadata[CONFIG_TOKEN].get(PARTITIONING_FUNC_TOKEN)
                 partitioning_func = get_userdefined_function(UserDefinedConstants.PARTITIONING_FUNCTIONS, func_name)
 
                 experiment_object = self.load_experiments(ref, partitioning_func)
@@ -108,9 +108,9 @@ class ExperimentsManager:
     @staticmethod
     def get_experiment_udf(report_path):
         metadata = ExperimentsManager.load_report_metadata(report_path)
-        statistics_func = get_userdefined_function(UserDefinedConstants.STATISTICS_FUNCTIONS, func_name = metadata[CONFIG_TOKEN][STATISTICS_FUNC_TOKEN])
-        overlap_func = get_userdefined_function(UserDefinedConstants.OVERLAP_FUNCTIONS, func_name = metadata[CONFIG_TOKEN][OVERLAP_FUNC_TOKEN])
-        evaluation_func = get_userdefined_function(UserDefinedConstants.EVALUATION_FUNCTIONS, func_name = metadata[CONFIG_TOKEN][EVALUATION_FUNC_TOKEN])
+        statistics_func = get_userdefined_function(UserDefinedConstants.STATISTICS_FUNCTIONS, func_name = metadata[CONFIG_TOKEN].get(STATISTICS_FUNC_TOKEN))
+        overlap_func = get_userdefined_function(UserDefinedConstants.OVERLAP_FUNCTIONS, func_name = metadata[CONFIG_TOKEN].get(OVERLAP_FUNC_TOKEN))
+        evaluation_func = get_userdefined_function(UserDefinedConstants.EVALUATION_FUNCTIONS, func_name = metadata[CONFIG_TOKEN].get(EVALUATION_FUNC_TOKEN))
 
         return statistics_func, evaluation_func, overlap_func
 
@@ -138,9 +138,10 @@ class ExperimentsManager:
             comp_data = pickle.load(report_data)
 
         metadata = ExperimentsManager.load_report_metadata(file_path)
-        func_name = metadata[CONFIG_TOKEN][PARTITIONING_FUNC_TOKEN]
         
         if not partitioning_func:
+            func_name = metadata[CONFIG_TOKEN].get(PARTITIONING_FUNC_TOKEN)
+
             partitioning_func = get_userdefined_function(UserDefinedConstants.PARTITIONING_FUNCTIONS, func_name)
 
         threshold = metadata[CONFIG_TOKEN][THRESHOLD_TOKEN]

@@ -37,7 +37,7 @@ def Report_Viewer():
 
         main_added_experiments, ref_added_experiments  = experiments_manager.add_experiments_folders(main, ref)
         js_pairs,  missing_files_from_main, missing_files_from_ref = ExperimentsHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
-        if(len(missing_files_from_main) > 0 or len(missing_files_from_ref) > 0):      
+        if ref and (len(missing_files_from_main) > 0 or len(missing_files_from_ref) > 0):      
             location = f'/static/index.html?reports={quote(js_pairs)}'
             return render_template('missing_files_alert.html', 
                                    location=location, 

@@ -10,11 +10,12 @@ from flask_GUI.flask_server import server
 from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.utils import loading_json, save_json
 from classes_and_utils.experiments.ExperimentRunner import compare_predictions_directory
+from utils.report_metadata import *
 
 
 @server.route('/new_report/nav_new_report', methods=['GET', 'POST'])
 def nav_report_func():
-    possible_configs = manage_new_report_page(request)
+    possible_configs = manage_new_report_page()
     possible_suites = get_possible_suites()
     js_possible_configs = json.dumps(possible_configs)
     js_possible_suites = json.dumps(possible_suites)
@@ -61,16 +62,7 @@ def get_user_defined_functions_list():
 @server.route('/new_report/get_configuration',methods=['GET'])
 def get_config():
     config_name = request.args.get('config')
-    config_path = os.path.join(get_configs_folder(), config_name)
-    config_file = loading_json(config_path)
-    config_dict = config_file[0]
-    
-    if 'File Reading Function' in config_dict.keys():
-        config_dict['Prediction Reading Function'] = config_dict['File Reading Function']
-        config_dict.pop('File Reading Function')
-
-    if 'GT Reading Function' not in config_dict.keys():
-        config_dict['GT Reading Function'] = 'none'
+    config_dict = load_config_dict(config_name)
 
     return json.dumps(config_dict)
 
@@ -167,40 +159,11 @@ def unpack_calc_request(request):
         
     return suite_name,config_file_names, prd_dir, GT_dir, output_dir
 
-def unpack_new_config(request):
-    """
-    extracts the configurations names from the request and place them in a dictionary
-    :param request: request that was sent to '/create_new_report' route
-    :return: a dictionary with the selected configurations names
-    """
-    new_config_name = request.form.get('name')
-    threshold = request.form.get('Threshold')
-    reading_func_name = request.form.get('Reading_func')
-    transform_func_name = request.form.get('transform_func')
-    overlap_func_name = request.form.get('overlap_func')
-    evaluation_func_name = request.form.get("evaluation_func")
-    statistics_func_name = request.form.get('statistics_func')
-    partitioning_func_name = request.form.get('partitioning_func')
-    log_names_to_evaluate = request.form.get('log_names_to_evaluate')
-
-    new_config = [
-        {"File Reading Function": reading_func_name, "Overlap Function": overlap_func_name, "Threshold": threshold,
-         "Evaluation Function": evaluation_func_name, "Statistics Functions": statistics_func_name, "Partitioning Functions": partitioning_func_name,
-         "Transformation Function":transform_func_name, "Log Names to Evaluate":log_names_to_evaluate }]
-    return new_config, new_config_name
-
-def manage_new_report_page(request):
+def manage_new_report_page():
   
     configs_folder = get_configs_folder()
     # if a new config is added in the GUI
-    if "add_config" in request.url:
-        # unpack the fields in the request and concentrate it in a configuration dictionary
-        new_config, new_config_name = unpack_new_config(request)
-        path_to_save = os.path.join(configs_folder, new_config_name+'.json')
-        # save the dictionary in the config folder as a json file
-        save_json(path_to_save, new_config)
-    # check what are the available config files in the config folder
-   
+  
     if not os.path.exists(configs_folder):
         os.makedirs(configs_folder)
     possible_configs = os.listdir(configs_folder)
