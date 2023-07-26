@@ -10,6 +10,7 @@ from classes_and_utils.UserDefinedFunctionsHelper import options_for_funcs
 from classes_and_utils.experiments.ExperimentsHelper import ExperimentsHelper
 from flask_GUI.dash_apps.results_table import Results_table
 from app_config.constants import Constants, UserDefinedConstants
+from urllib.parse import quote
 
 #from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
@@ -35,8 +36,13 @@ def Report_Viewer():
             ref = request.values and request.values[Constants.REF_REPORT_FILE_PATH]            
 
         main_added_experiments, ref_added_experiments  = experiments_manager.add_experiments_folders(main, ref)
-
-        js_pairs = ExperimentsHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+        js_pairs,  missing_files_from_main, missing_files_from_ref = ExperimentsHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+        if(len(missing_files_from_main) > 0 or len(missing_files_from_ref) > 0):      
+            location = f'/static/index.html?reports={quote(js_pairs)}'
+            return render_template('missing_files_alert.html', 
+                                   location=location, 
+                                   missing_files_from_main = missing_files_from_main, 
+                                   missing_files_from_ref = missing_files_from_ref)
         return redirect(f'/static/index.html?reports={js_pairs}')
     
     except Exception as ex:

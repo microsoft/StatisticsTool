@@ -18,6 +18,17 @@ from flask import render_template, send_from_directory
 def homepage():
     return render_template('start_page.html', exp_ext = Constants.EXPERIMENT_EXTENSION, wiki_page = Constants.WIKI_URL)
 
+@server.route("/validate_path", methods=["POST"])
+def validate_path():
+    data = request.get_json()
+    path = data.get("path")
+
+    # Perform validation here (e.g., check if the path is a directory)
+    is_directory = os.path.isdir(path)
+
+    # Return the result as JSON
+    return jsonify({"isValidDirectory": is_directory})
+
 @server.route('/static/<file_name>')
 def send_static_file(file_name):
     mime = mimetypes.guess_type(file_name, strict=False)[0]
