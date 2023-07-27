@@ -2,13 +2,15 @@
 from threading import Lock
 import traceback
 import os, sys
+from classes_and_utils.experiments.ExperminetsManager import ExperimentsManager
 
 from flask_GUI.flask_server import server, experiments_manager
 
 from classes_and_utils.UserDefinedFunctionsHelper import options_for_funcs
 from classes_and_utils.experiments.ExperimentsHelper import ExperimentsHelper
 from flask_GUI.dash_apps.results_table import Results_table
-from app_config.constants import Constants
+from app_config.constants import Constants, UserDefinedConstants
+from urllib.parse import quote
 
 #from flask_GUI.configuration_results import ConfigurationResults
 # the absolute path for this file
@@ -22,30 +24,34 @@ from flask import Flask, jsonify, redirect, render_template, request, send_from_
 
 server.secret_key = 'any random string'
 
-# getting the options for each type of necessary function
-file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs = options_for_funcs()
-
 @server.route('/viewer/Report_Viewer', methods=['GET', 'POST'])
 def Report_Viewer():
 
     try:
+        #load_all_user_defined_functions()
         main = request.values and request.values[Constants.MAIN_REPORT_FILE_PATH]
 
         ref = None
         if Constants.REF_REPORT_FILE_PATH in request.values.keys():
             ref = request.values and request.values[Constants.REF_REPORT_FILE_PATH]            
 
-        main_added_experiments = experiments_manager.add(main)
-        ref_added_experiments  = experiments_manager.add(ref)
-        js_pairs = ExperimentsHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+        main_added_experiments, ref_added_experiments  = experiments_manager.add_experiments_folders(main, ref)
+        js_pairs,  missing_files_from_main, missing_files_from_ref = ExperimentsHelper.build_main_ref_pairs(main_added_experiments,ref_added_experiments)
+        if ref and (len(missing_files_from_main) > 0 or len(missing_files_from_ref) > 0):      
+            location = f'/static/index.html?reports={quote(js_pairs)}'
+            return render_template('missing_files_alert.html', 
+                                   location=location, 
+                                   missing_files_from_main = missing_files_from_main, 
+                                   missing_files_from_ref = missing_files_from_ref)
         return redirect(f'/static/index.html?reports={js_pairs}')
     
     except Exception as ex:
         print (f"error: {ex}. Traceback: ")
         for a in traceback.format_tb(ex.__traceback__): print(a)
         print (f"exception message: {ex}.")
+        error_message = f"We encountered an error while attempting to load the report for the request {request.values}."
+        return render_template('error_page.html', error_message=error_message)
 
-        return f'Failed to load report for request {request.values}'
 
 @server.route('/viewer/get_segmentations', methods=['POST'])    
 def get_segmentations():
@@ -84,8 +90,9 @@ def get_report_table():
             res_table = experiments_manager.get_results_table(main_path,ref_path)
             if res_table == None:
                 segmentations = experiments_manager.get_item_segmentations(main_path)
-                res_table = Results_table(server, main,ref, main_path, ref_path, segmentations)
-                res_table = experiments_manager.add_results_table(main_path,ref_path,res_table)
+                statistics_func, evaluation_func, overlap_func = ExperimentsManager.get_experiment_udf(main_path)
+                res_table = Results_table(server, main,ref, main_path, ref_path, segmentations, statistics_func, evaluation_func, overlap_func)
+                experiments_manager.add_results_table(main_path,ref_path,res_table)
     
     res_table.set_unique(calc_unique)
     

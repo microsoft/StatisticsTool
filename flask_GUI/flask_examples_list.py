@@ -18,7 +18,7 @@ def show_list():
     show_unique = 'unique' in request.args
 
     results_table = experiments_manager.get_results_table(main_path, ref_path)
-    per_video_example_hash, saved_file = UpdateListManager.manage_list_request(results_table, main_path, cell_name, stat, show_unique, list_ref_report, 'save_json' in request.args)
+    per_video_example_hash, saved_file = UpdateListManager.manage_list_request(results_table, main_path, ref_path, cell_name, stat, show_unique, list_ref_report, 'save_json' in request.args)
 
     unique_flag = '' if show_unique is False else 'unique'
     return render_template('examples_list.html', 
@@ -42,20 +42,30 @@ def show_image():
     if request.args.get('local_path'):
         local_path = request.args.get('local_path')
     
-    example_name = request.args.get('example_name')
+    video_name = request.args.get('example_vid')
+    example_index = int(request.args.get('example_index'))
+    frame_num = int(request.args.get('example_frame'))
 
     main_exp = experiments_manager.get_experiment(main_path)
     ref_exp = experiments_manager.get_experiment(ref_path)
 
     main_dir,_ = os.path.split(main_path)
     
-    detection_text_list, data, save_path = manage_image_request(request,main_exp, ref_exp,main_dir, comp_index>-1, local_path, example_name)
-    
-    example_name = example_name.replace('\\','/')
-    return render_template('example_image.html', data=data, save_path=save_path, detection_text_list=detection_text_list, example_name = example_name, main_path=main_path, ref_path=ref_path, comp_index = comp_index)
+    detection_text_list, data, save_path = manage_image_request(request,main_exp, ref_exp,main_dir, comp_index>-1, local_path, example_index, video_name, frame_num)
+
+    return render_template('example_image.html', 
+                           data=data, 
+                           save_path=save_path, 
+                           detection_text_list=detection_text_list, 
+                           video_name = video_name, 
+                           example_index = example_index, 
+                           frame_num = frame_num, 
+                           main_path=main_path, 
+                           ref_path=ref_path, 
+                           comp_index = comp_index)
 
 
-def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, local_path, example_name):
+def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, local_path, bb_index, video, frame_id):
     """
     Accepts the requests to /show_im route and returns an encoded image and the path where the image was saved (if it was saved)
 
@@ -67,16 +77,8 @@ def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, loc
     save_path = False
     data = None
     image = None
-    # request came from examples_list.html to show an example image
-
-    if example_name:
-        example_id = eval(example_name.replace(" ", ","))
-   
-    video, bb_index,frame_id,_ = example_id
-    if local_path:
-        video = os.path.join(local_path,video)
-    
-    image = read_frame_from_video(video, frame_id)
+ 
+    image = read_frame_from_video(video, frame_id, local_path)
     
     exp = main_exp
     if use_ref:
@@ -89,7 +91,7 @@ def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, loc
         data = base64.b64encode(out_figure.getbuffer()).decode("ascii")
     
     if out_figure and 'save_image' in request.args:
-        name = example_id[0].replace('.json', '')
+        name = video.replace('.json', '')
         name = name.replace(':','')
         if name.startswith('/'):
             name = name[1:]
@@ -98,7 +100,7 @@ def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, loc
         save_path = os.path.normpath(save_path)
         if os.path.exists(save_path) == False:
             os.makedirs(save_path)
-        save_file = os.path.join(save_path,  str(example_id[1]) + '.png')
+        save_file = os.path.join(save_path,  str(bb_index) + '.png')
         with open(save_file, "wb") as outfile:
             outfile.write(out_figure.getbuffer())
         

@@ -4,6 +4,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { NavigationStart, Router } from '@angular/router';
 import { StatisticsToolService } from './services/statistics-tool.service';
 import { NewReportService } from './services/new-report.service';
+import { CommonService } from './services/common.service';
 
 @Pipe({
   name: 'safe'
@@ -25,6 +26,11 @@ export class SafePipe implements PipeTransform {
 })
 export class AppComponent implements OnInit {
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    this.commonSvc.onMouseClicked.next(event);
+  }
+
   showFiller = false;
   isNewReport = false;
 
@@ -39,8 +45,15 @@ export class AppComponent implements OnInit {
   @HostListener("window:message",["$event"])
   SampleFunction($event:MessageEvent) {
     
-    this.statToolSvc.openDrawer.next($event.data);
     let o = $event.data as {'action':string, 'value':string};
+    
+    if (o.action == 'viewer-mousedown'){
+      console.log('viewer-mousedown')
+      this.commonSvc.onMouseClicked.next(true);
+      return;
+    }
+    
+    this.statToolSvc.openDrawer.next($event.data);
 
     if (o.action == 'update_list'){
       let updateListUrl = o.value;
@@ -62,7 +75,8 @@ export class AppComponent implements OnInit {
   constructor(private router : Router,
               public statToolSvc:StatisticsToolService,
               private newReportService:NewReportService,
-              public eltRef: ElementRef) {
+              public eltRef: ElementRef,
+              private commonSvc:CommonService) {
   }
 
   ngOnInit(){

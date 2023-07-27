@@ -1,5 +1,9 @@
-<div *ngIf="dropdownList.length > 0">
+<div *ngIf="dropdownList.length > 0" [class.dropdown-open]="isDropdownOpen" class="dropdown-wrapper" #dropdown>
     <ng-multiselect-dropdown
+        appClickOutside
+        [viewguid]="viewguid"
+        [viewId]="viewId"
+        [segmentName]="name"
         [placeholder]="name"
         [settings]="dropdownSettings"
         [data]="dropdownList"
@@ -8,6 +12,7 @@
         (onSelectAll)="onSelectAll($event)"
         (onDeSelect)="onUnSelect($event)"
         (onDeSelectAll)="onUnSelectAll($event)"
+        (click)="onClick($event)"
     >
     </ng-multiselect-dropdown>
 </div>

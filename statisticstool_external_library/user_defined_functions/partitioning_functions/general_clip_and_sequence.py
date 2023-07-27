@@ -42,7 +42,7 @@ def refine_annotations(dataframe, **kwargs):
     return dataframe
 
 
-def general_clip_and_sequence(dataframe, from_file=False):
+def general_clip_and_sequence(dataframe, from_file=False, **kwargs):
     desired_masks = {}
 
     # refine annotations

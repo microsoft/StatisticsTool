@@ -1,6 +1,6 @@
 import os,json
-class ExperimentsHelper:
 
+class ExperimentsHelper:
     '''
         input:   request
         retruns: main object ,is main object a directory or experiment,ref object, is ref object a directory or experiment
@@ -22,21 +22,30 @@ class ExperimentsHelper:
 
 
         arr = []
+        missing_files_from_main_arr = []
+        missing_files_from_ref_arr = []
 
         map_ref_exp = dict()
         for f in list_ref:
             _,file = os.path.split(f)
             map_ref_exp[str(file).lower()] = f
 
+        main_exp = []
         for v in list_main:
             _, main_file = os.path.split(v)
+            main_exp.append(str(main_file).lower())
             if str(main_file).lower() in map_ref_exp.keys():
                 arr.append({'main':v,'ref':map_ref_exp[str(main_file).lower()]})
             else:
                 arr.append({'main':v,'ref':''})
+                missing_files_from_ref_arr.append(main_file)
+        json_res = json.dumps(arr)  
 
-        json_res = json.dumps(arr)                
-        return json_res                    
+        for key in map_ref_exp:
+            if key not in main_exp:
+                missing_files_from_main_arr.append(key)
+                
+        return json_res, missing_files_from_main_arr, missing_files_from_ref_arr                
     
     @staticmethod
     def parse_segmentations_csv(csv_segs):

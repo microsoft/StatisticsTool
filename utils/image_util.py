@@ -1,21 +1,21 @@
 import pathlib
 import cv2
-import math
-
+import os
+import pathlib
 from io import BytesIO
-import pandas as base64
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
-from classes_and_utils.file_storage_handler import get_local_video_path
+from classes_and_utils.file_storage_handler import StoreType, find_in_blob_by_video_name, get_file_on_local_storage
 
-def read_frame_from_video(video_file, frame_id):
+def read_frame_from_video(video_file, frame_id, local_store = None):
     frame = None
     vid = None
-    local_video_path = get_local_video_path(video_file)
-    if local_video_path is None:
-        return None
+    if local_store:
+        local_video_path = os.path.join(local_store,video_file)
+    else:
+        path_on_blob = find_in_blob_by_video_name(video_file, '', StoreType.Data, '.mp4')
+        local_video_path = get_file_on_local_storage(path_on_blob)
+        if local_video_path is None:
+            return None
         
     if pathlib.Path(local_video_path).suffix == ".mp4":
         vid= cv2.VideoCapture(local_video_path)

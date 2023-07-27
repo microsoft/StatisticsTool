@@ -124,6 +124,7 @@
                 </button>
                     <div class="content" [ngStyle]="{'min-height':getViewHeight(i)}">
                         <pkl-view 
+                            [viewguid] = "x.viewguid"
                             [selectedRowsSet] = "x.rows"
                             [selectedColumnsSet] = "x.columns"
                             [name] = "x.name"

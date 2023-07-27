@@ -2,15 +2,17 @@ import numpy as np
 import pandas as pd
 from dash import html
 
+from classes_and_utils.ParallelExperiment import ParallelExperiment
+
 
 class UniqueHelper:
 
-    def __init__(self,exp,ref_exp):
+    def __init__(self,exp,ref_exp, evaluation_function, overlap_function):
         self.exp = exp
         self.ref_exp = ref_exp
-        self.exp.main_ref_dict, self.exp.ref_main_dict = UniqueHelper.match_main_ref_predictions(self.exp,self.ref_exp)
-        self.main_ref_dict = self.exp.main_ref_dict
-        self.ref_main_dict = self.exp.ref_main_dict
+        main_ref_dict, ref_main_dict = UniqueHelper.match_main_ref_predictions(self.exp, self.ref_exp, evaluation_function, overlap_function)
+        self.main_ref_dict = main_ref_dict
+        self.ref_main_dict = ref_main_dict
         self.cells_data = {}
         self.cells_data_ref = {}
 
@@ -40,12 +42,12 @@ class UniqueHelper:
 
         #if no partition is selected will take total stats
         if type(stat_func) is str:
-            if stat_func not in self.exp.masks['total_stats']:
+            if stat_func not in self.exp.get_masks()['total_stats']:
                 return None,None,None
 
             partitions_parts_list = [stat_func]
-            mask = self.exp.masks['total_stats'][stat_func]
-            mask_ref = self.ref_exp.masks['total_stats'][stat_func]
+            mask = self.exp.get_masks()['total_stats'][stat_func]
+            mask_ref = self.ref_exp.get_masks()['total_stats'][stat_func]
             if 'total' not in unique_out:
                 unique_out['total'] = {}
             unique = unique_out['total']
@@ -55,23 +57,23 @@ class UniqueHelper:
             unique[stat_func] = {}
             unique_ref[stat_func] = {}
         else:
-            if partitions_parts_list[-1] not in self.exp.masks['total_stats']:
+            if partitions_parts_list[-1] not in self.exp.get_masks()['total_stats']:
                 return None,None,None
                 
             #calculated current partition masks        
             mask = pd.Series(True, range(self.exp.comp_data.shape[0]))
             mask_ref = pd.Series(True, range(self.ref_exp.comp_data.shape[0]))
             for n in partitions_parts_list[:-1]:
-                for seg in self.exp.masks.keys():
-                    if 'possible partitions' in self.exp.masks[seg] and n in self.exp.masks[seg]['possible partitions']:
-                        cur_mask = self.exp.masks[seg]['masks'][self.exp.masks[seg]['possible partitions'].index(n)]
-                        cur_mask_ref = self.ref_exp.masks[seg]['masks'][self.ref_exp.masks[seg]['possible partitions'].index(n)]
+                for seg in self.exp.get_masks().keys():
+                    if 'possible partitions' in self.exp.get_masks()[seg] and n in self.exp.get_masks()[seg]['possible partitions']:
+                        cur_mask = self.exp.get_masks()[seg]['masks'][self.exp.get_masks()[seg]['possible partitions'].index(n)]
+                        cur_mask_ref = self.ref_exp.get_masks()[seg]['masks'][self.ref_exp.get_masks()[seg]['possible partitions'].index(n)]
                         break    
                 mask = mask & cur_mask
                 mask_ref = mask_ref & cur_mask_ref
             
-            mask = mask & self.exp.masks['total_stats'][partitions_parts_list[-1]]
-            mask_ref = mask_ref & self.ref_exp.masks['total_stats'][partitions_parts_list[-1]]
+            mask = mask & self.exp.get_masks()['total_stats'][partitions_parts_list[-1]]
+            mask_ref = mask_ref & self.ref_exp.get_masks()['total_stats'][partitions_parts_list[-1]]
 
         current_unique_segment = unique
         current_unique_segment_ref = unique_ref
@@ -89,12 +91,12 @@ class UniqueHelper:
         unique_array_ref=[]
 
         for val in mask.index[mask==True]:
-            if val not in self.main_ref_dict or self.ref_exp.masks['total_stats'][partitions_parts_list[-1]][self.main_ref_dict[val]] != self.exp.masks['total_stats'][partitions_parts_list[-1]][val]:
-                unique_array.append(self.exp.ID_storage['prediction'][val])
+            if val not in self.main_ref_dict or self.ref_exp.get_masks()['total_stats'][partitions_parts_list[-1]][self.main_ref_dict[val]] != self.exp.get_masks()['total_stats'][partitions_parts_list[-1]][val]:
+                unique_array.append(self.exp.detections_images_dict['prediction'][val])
 
         for val in mask_ref.index[mask_ref==True]:
-            if val not in self.ref_main_dict or self.exp.masks['total_stats'][partitions_parts_list[-1]][self.ref_main_dict[val]] != self.ref_exp.masks['total_stats'][partitions_parts_list[-1]][val]:
-                unique_array_ref.append(self.ref_exp.ID_storage['prediction'][val])
+            if val not in self.ref_main_dict or self.exp.get_masks()['total_stats'][partitions_parts_list[-1]][self.ref_main_dict[val]] != self.ref_exp.get_masks()['total_stats'][partitions_parts_list[-1]][val]:
+                unique_array_ref.append(self.ref_exp.detections_images_dict['prediction'][val])
 
         tup = None
         if type(stat_func) is str:
@@ -112,16 +114,16 @@ class UniqueHelper:
 
         return ids
 
-    def get_cell_stat_data(self, cell_name, stat, segmentations):
-        if cell_name not in self.cells_data or cell_name not in self.cells_data_ref:
-            self.calc_cell_data(cell_name, segmentations)
+    def get_cell_stat_data(self, stat, segmentations):
+        cell_name = ParallelExperiment.cell_name_from_segmentations(segmentations)
 
+        if cell_name not in self.cells_data:
+            self.cells_data[cell_name], self.cells_data_ref[cell_name] = self.calc_cell_data(segmentations)
+        
         return self.cells_data[cell_name][stat], self.cells_data_ref[cell_name][stat]
 
-    def calc_cell_data(self, cell_name, segmentations):
+    def calc_cell_data(self, segmentations):
         
-        if cell_name in self.cells_data and cell_name in self.cells_data_ref:
-            return
         
           #todo - hagai
         dict = {'None':'None'}
@@ -139,20 +141,22 @@ class UniqueHelper:
         uniqueFN, uniqueFN_ref, _  = self.calc_unique_detections(cols,rows,'FN')
                
 
-        self.cells_data_ref[cell_name] = {
+        cells_data_ref = {
             'TP':uniqueTP_ref,
             'FP':uniqueFP_ref,
             'FN':uniqueFN_ref
         }
 
-        self.cells_data[cell_name] = {
+        cells_data = {
             'TP':uniqueTP,
             'FP':uniqueFP,
             'FN':uniqueFN
         }
 
+        return cells_data, cells_data_ref
+
     @staticmethod       
-    def match_frame_predictions(predictions, ref_predictions, exp):
+    def match_frame_predictions(predictions, ref_predictions, evaluation_function, overlap_function):
         """
         Match beween 2 set of preditcions in a frame using the user defined functions in the experiment object.
         :param (in/out) predictions: predictions in the main reort. The predictions filled with thier matched one and overlap values
@@ -179,15 +183,15 @@ class UniqueHelper:
                         pred['matching'] = j
                         ref['matching'] = i
                 elif not (pred['detection_gt'] or ref['detection_gt']) and pred['detection'] and ref['detection']:
-                    overlap = exp.overlap_function(pred, ref)
+                    overlap = overlap_function(pred, ref)
                     mat[i, j] = round(overlap, 2)
 
         #the evaluation function should add the matched prediction to the right record in predictions list
-        exp.evaluation_function(predictions, mat)
+        evaluation_function(predictions, mat)
             
     #create dictionsary for main/ref report with matched bounding box in ref/main if there is any
     @staticmethod
-    def match_main_ref_predictions(exp, ref_exp):
+    def match_main_ref_predictions(exp, ref_exp, evaluation_function, overlap_function):
         """
         Match all the predictions in main reort and ref report. Detections with no matched detection in the ref report, will have no entry in the dictionary.
         :param exp: main experiment object.
@@ -232,7 +236,7 @@ class UniqueHelper:
                     predictions.append(main_cur_video_list[current_main_index])
                     current_main_index+=1
                 
-                UniqueHelper.match_frame_predictions(predictions, ref_predictions, exp)
+                UniqueHelper.match_frame_predictions(predictions, ref_predictions, evaluation_function=evaluation_function, overlap_function=overlap_function)
                 for _, x in enumerate(predictions): 
                     if 'matching' in x:
                         main_ref[x['index']]=ref_predictions[x['matching']]['index']

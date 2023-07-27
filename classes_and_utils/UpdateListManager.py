@@ -43,7 +43,6 @@ class UpdateListManager():
                 per_video_example_hash[example[0]][start_frame] = {}
                 (((per_video_example_hash[example[0]])[start_frame]))['frames']  = []
 
-            
             (((per_video_example_hash[example[0]])[start_frame])['frames']).append(example)
             ((per_video_example_hash[example[0]])[start_frame])['end_frame'] = example[3]
 
@@ -52,7 +51,7 @@ class UpdateListManager():
 
 
     @staticmethod
-    def manage_list_request(results_table, main_path, cell_name, stat, show_unique, show_ref_report, save_json_file):
+    def manage_list_request(results_table, main_path, ref_path, cell_name, stat, show_unique, show_ref_report, save_json_file):
         """
         Accepts a the requests to /update_list route and returns all the parameter needed to show and save the list of examples asked by the user
         :param request: request from either table.html (link writen in macros.html) or in examples_list.html
@@ -61,9 +60,6 @@ class UpdateListManager():
         """
         # get the names of requested states and partitions, a save boolean and a dictionary of {partition_class: selected_option} (example {"vehicles":"bus"})
         
-        exp = results_table.get_ref_exp() if show_ref_report else results_table.get_main_exp()
-        # masks = exp.masks
-
         saved_json = ''
 
         list_of_examples = results_table.get_ids(cell_name, stat, show_ref_report = show_ref_report, unique=show_unique)
@@ -71,9 +67,9 @@ class UpdateListManager():
         per_video_example_hash = UpdateListManager.create_collapsing_list(list_of_examples)
 
         if save_json_file:
-            saved_json = UpdateListManager.export_list_to_json(per_video_example_hash, 
-                                        exp.report_metadata, 
+            saved_json = UpdateListManager.export_list_to_json(per_video_example_hash,
                                         main_path, 
+                                        ref_path,
                                         cell_name,
                                         stat, 
                                         show_unique, 
@@ -89,7 +85,7 @@ class UpdateListManager():
         return per_video_example_hash, saved_json
 
     @staticmethod
-    def export_list_to_json(images_list, report_metadata, report_path, cell_name, states, is_unique, show_ref_report):
+    def export_list_to_json(images_list, report_path, ref_report_path, cell_name, states, is_unique, show_ref_report):
         segmentation_list = cell_name.split("*") if cell_name !="*" else ['All']
         json_list = []
         header = {}
@@ -97,11 +93,11 @@ class UpdateListManager():
         output_dir = os.path.dirname(report_path)
         #TODO: Move json header to here
         #Jump file header should be created only when exporting it (on UI)
-        new_json_header = create_report_metadata(\
-            report_metadata[PRIMARY_LOG][LOGS_PATH],
-            report_metadata[PRIMARY_LOG][LOG_FILE_NAME],
-            report_metadata[SECONDARY_LOG][LOGS_PATH],
-            report_metadata[SECONDARY_LOG][LOG_FILE_NAME],
+        new_json_header = create_run_info(\
+            os.path.split(report_path)[0],
+            os.path.split(report_path)[1],
+            os.path.split(ref_report_path)[0] if ref_report_path else '',
+            os.path.split(ref_report_path)[1] if ref_report_path else '',
              '') 
 
 
@@ -124,9 +120,6 @@ class UpdateListManager():
                 json_link['message']['Video Location']=vid_name
                 json_link['message']['Frame Number']= actual_event['frames'][0][2]
                 json_link['message']['end_frame'] = actual_event['end_frame']
-
-                # json_link['message']['primary_log_path'] = calc_log_file_full_path(header['header'][PRIMARY_LOG][LOG_FILE_NAME], vid_name, header['header'][PRIMARY_LOG][LOGS_PATH])
-                # json_link['message']['secondary_log_path'] = calc_log_file_full_path(header['header'][SECONDARY_LOG][LOG_FILE_NAME], vid_name, header['header'][SECONDARY_LOG][LOGS_PATH])
 
                 json_list.append(json.dumps(json_link))
         

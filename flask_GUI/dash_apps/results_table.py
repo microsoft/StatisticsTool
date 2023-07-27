@@ -9,6 +9,7 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import math
 import uuid
+from classes_and_utils.ParallelExperiment import ParallelExperiment
 
 # adding the statistics_tool folder to path
 current_file_directory = os.path.realpath(__file__)
@@ -26,7 +27,7 @@ REF_EXP = 'ref'
 
 def get_color_from_gradient(x, gradient):
     if x<0 or x>1:
-        print ("values must be between 0-1")
+        #print ("values must be between 0-1")
         return 'white'
     
     gradient_len = len(gradient)
@@ -56,14 +57,17 @@ def get_text_color_by_stat(main, gradient):
 
 class Results_table():
     
-    def __init__(self, server, main_exp,ref_exp, main_path, ref_path, segmentations):
+    def __init__(self, server, main_exp,ref_exp, main_path, ref_path, segmentations, statistics_func, evaluation_function, overlap_function):
         
         self.unique_helper = None
         self.main_exp = main_exp
         self.ref_exp = ref_exp
         self.main_path = main_path
         self.ref_path = ref_path
-        self.segmentations = segmentations 
+        self.segmentations = segmentations
+        self.statistics_func = statistics_func
+        self.evaluation_func = evaluation_function
+        self.overlap_func = overlap_function
         
         self.unique_lock = Lock()
         self.dash_app = Dash(
@@ -104,7 +108,7 @@ class Results_table():
         if self.ref_exp is not None and calc_unique and self.unique_helper is None:
             with self.unique_lock:
                 if self.unique_helper is None:
-                    self.unique_helper = UniqueHelper(self.main_exp,self.ref_exp)
+                    self.unique_helper = UniqueHelper(self.main_exp,self.ref_exp, self.evaluation_func, self.overlap_func)
   
     def get_webpage(self):
         return self.dash_app.index()
@@ -146,18 +150,19 @@ class Results_table():
                 
         return ids
 
-    def get_link_for_update_list(self,cell_name:str, stat:str, is_ref:bool = False, is_unique:bool = False)-> str:
+    def get_link_for_update_list(self,segmentations, stat:str, is_ref:bool = False, is_unique:bool = False)-> str:
+        cell_name = ParallelExperiment.cell_name_from_segmentations(segmentations)
         unique_flag = "&unique" if is_unique else ""
         ref_flag = "&ref" if is_ref else ""
         link = f"/example_list/update_list?cell_name={cell_name}&stat={stat}&main_path={self.main_path}&ref_path={self.ref_path}"+ref_flag+unique_flag
         return link
 
-    def generate_unique_html_dash_element(self, exp_name, cell_name, stat_functions, segmentations):
+    def generate_unique_html_dash_element(self, exp_name, stat_functions, segmentations):
         '''
             stat_func: TP,TN,FN
         '''        
-        unique_array,unique_array_ref = self.unique_helper.get_cell_stat_data(cell_name, stat=stat_functions, segmentations=segmentations)
-        link_unique = self.get_link_for_update_list(cell_name=cell_name, 
+        unique_array,unique_array_ref = self.unique_helper.get_cell_stat_data(stat=stat_functions, segmentations=segmentations)
+        link_unique = self.get_link_for_update_list(segmentations, 
                                                 stat=stat_functions, 
                                                 is_ref = exp_name==REF_EXP,
                                                 is_unique = True)
@@ -177,11 +182,10 @@ class Results_table():
         '''     
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
         
-        cell_name = self.main_exp.calc_cell_name(segmentations)
         exp_data = {}
-        exp_data[MAIN_EXP] = self.main_exp.get_cell_data(cell_name, segmentations)
+        exp_data[MAIN_EXP] = self.main_exp.get_cell_data(segmentations, self.statistics_func)
         if self.ref_exp is not None:
-            exp_data[REF_EXP] = self.ref_exp.get_cell_data(cell_name, segmentations) 
+            exp_data[REF_EXP] = self.ref_exp.get_cell_data(segmentations, self.statistics_func) 
         
         all_metrics = []
         if self.ref_exp is not None:
@@ -196,9 +200,6 @@ class Results_table():
         idx = 0
         for k in exp_data[MAIN_EXP].keys():
             
-            if k == 'cell_name':
-                continue
-            
             TDs = [html.Td(k,style={'white-space':'nowrap'})]
             num_of_exps = len(exp_data.keys())
             
@@ -212,7 +213,7 @@ class Results_table():
             for exp_name in exp_data.keys():
                 txt = "{}".format(exp_data[exp_name][k])
                 if k in ["TP", "FP", "FN"]:
-                    link = self.get_link_for_update_list(cell_name=exp_data[exp_name]['cell_name'], 
+                    link = self.get_link_for_update_list(segmentations, 
                                                     stat=k, 
                                                     is_ref = exp_name==REF_EXP)
                     if k == "TN":
@@ -234,7 +235,7 @@ class Results_table():
                
                 if show_unique == True and k in ["TP", "FP", "FN"]:
                     if self.unique_helper != None:
-                        txt_unique, link_unique = self.generate_unique_html_dash_element(exp_name, exp_data[exp_name]['cell_name'], k, segmentations)
+                        txt_unique, link_unique = self.generate_unique_html_dash_element(exp_name, k, segmentations)
                         js = json.dumps({'action':'update_list','value': link_unique})
                         msg = "javascript:window.parent.postMessage({});".format(js)
                         a_unique = html.A(txt_unique,href=msg, target="")
@@ -268,5 +269,7 @@ class Results_table():
         t = table.get_report_table(columns,rows, unique)
         table_buttons_div = html.Div(id='table-div',children=t,style=css['table-div'])
 
-        whole_page = html.Div(children=[table_buttons_div], style=css['whole-reporter'],id='report_id')
+        whole_page = html.Div([ html.Div(children=[table_buttons_div], style=css['whole-reporter'], id='report_id'),
+                                html.Script(src='/assets/app.js') 
+                            ])
         return  whole_page    

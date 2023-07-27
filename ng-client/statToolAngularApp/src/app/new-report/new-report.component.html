@@ -30,7 +30,7 @@
 
         <div style="display: flex;position: relative;margin-right: 20px;" autocomplete="on">
             <div class="overlay" [class.show]="newReportService.creatingReport"></div>
-            <div class="form-container">
+            <form class="form-container">
                 <div class="form-header">
                     Crate New Report 
                 </div>
@@ -78,33 +78,28 @@
                                     </ng-container>
                                 </div>
                             </div>
-                            <!--<div class="link-button" style="display:flex">
-                                <a class="link-a-cls" (click)="newReportService.openSaveSuiteDialog()">Save Suite</a>  
-                            </div>-->
                         </div>
                         <div class="text-inputs dropdown-wrapper">
                             <div class="input-sm">
                                 <label for="predictions_directory" style="width:30%;font-weight: bold">Predictions Directory:</label>
                                 <input type="text" class="form-control input-sm" id="predictions_directory" 
                                     (focus)="onFocus($event)" 
-                                    [ngbTypeahead]="searchPredictionsDirectory"
-                                    [resultFormatter]="formatter"
-                                    placeholder="Local directory or blob folder" name="predictions_directory"
-                                    minlength="0" required #predictionsDirectoryInput="ngModel"
+                                    placeholder="Local directory or blob folder" 
+                                    name="predictions_directory"
+                                    minlength="0" 
+                                    required 
+                                    #predictionsDirectoryInput="ngModel"
                                     [(ngModel)]="newReportService.predictionsDirectory"
-                                        [ngClass]="{
-                                            'is-invalid': predictionsDirectoryInput.invalid && predictionsDirectoryInput.touched,
-                                            'is-valid': predictionsDirectoryInput.valid && predictionsDirectoryInput.touched
-                                        }"
-                                    >
+                                    [ngClass]="{
+                                        'is-invalid': predictionsDirectoryInput.invalid && (predictionsDirectoryInput.dirty || predictionsDirectoryInput.touched),
+                                        'is-valid': predictionsDirectoryInput.valid && (predictionsDirectoryInput.dirty || predictionsDirectoryInput.touched)
+                                    }"
+                                >
                             </div>
                             <div class="input-sm">
                                 <label for="ground_truth_directory" style="width:30%;font-weight: bold">Ground Truth Directory:</label>
                                 <input type="text" class="form-control input-sm" id="ground_truth_directory" placeholder="Leave blank if GT is from annotation store" 
-                                        autocomplete="new-ground_truth_directory" 
                                         (focus)="onFocus($event)"   
-                                        [ngbTypeahead]="searchGTDirectroy"
-                                        [resultFormatter]="formatter"
                                         name="ground_truth_directory"
                                         minlength="0"
                                         [(ngModel)]="newReportService.groundTruthDirectory"
@@ -113,16 +108,15 @@
                             <div class="input-sm">
                                 <label for="output_directory" style="width:30%;font-weight: bold;">Output Directory:</label>
                                 <input type="text" class="form-control input-sm" id="output_directory" 
-                                    autocomplete="off"
                                     (focus)="onFocus($event)" 
-                                    [ngbTypeahead]="searchOutputDirectroy"
-                                    [resultFormatter]="formatter"
                                     placeholder="" name="output_directory"
-                                    minlength="0" required #reporterOutputDirectoryInput="ngModel"
-                                        [(ngModel)]="newReportService.reporterOutputDirectory"
-                                        [ngClass]="{
-                                            'is-invalid': reporterOutputDirectoryInput.invalid && reporterOutputDirectoryInput.touched,
-                                            'is-valid': reporterOutputDirectoryInput.valid && reporterOutputDirectoryInput.touched}"
+                                    minlength="0" 
+                                    required 
+                                    #reporterOutputDirectoryInput="ngModel"
+                                    [(ngModel)]="newReportService.reporterOutputDirectory"
+                                    [ngClass]="{
+                                        'is-invalid': reporterOutputDirectoryInput.invalid && (reporterOutputDirectoryInput.dirty || reporterOutputDirectoryInput.touched),
+                                        'is-valid': reporterOutputDirectoryInput.valid && (reporterOutputDirectoryInput.dirty || reporterOutputDirectoryInput.touched)}"
                                         
                                     >
                             </div>
@@ -130,12 +124,12 @@
                     </div>
                 </div>
                 <div class="form-footer">
-                    <button type="button"  style="margin-bottom: 5px;"
+                    <button type="submit"  style="margin-bottom: 5px;"
                             class="btn btn btn-primary btn-mdcd"
                             (click)="newReportService.createReport()"
                             [disabled]="disableCreateReportButton()">Create Report</button>
                 </div>
-            </div>
+            </form>
             <div style="width:30%;margin-top: 10px;">
                 <configuration-viewer></configuration-viewer>
             </div>
