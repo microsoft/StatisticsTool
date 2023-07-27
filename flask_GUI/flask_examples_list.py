@@ -78,10 +78,7 @@ def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, loc
     data = None
     image = None
  
-    if local_path:
-        video = os.path.join(local_path,video)
-    
-    image = read_frame_from_video(video, frame_id)
+    image = read_frame_from_video(video, frame_id, local_path)
     
     exp = main_exp
     if use_ref:

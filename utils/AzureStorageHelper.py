@@ -12,7 +12,8 @@ class AzureStorageHelper():
 
         print(f"Try create client for container: {container_name}")
         if not connection_string:
-            print("No connection string, work only with local files")
+            print("******************** ERROR ************")
+            print("No connection string, work only with local files\n\n")
         else:
             # Create the BlobServiceClient object
             self.blob_service_client_obj = BlobServiceClient.from_connection_string(connection_string)
