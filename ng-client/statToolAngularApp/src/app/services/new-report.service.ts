@@ -168,7 +168,9 @@ export class NewReportService {
     }
 
     configSelectionChanged(event:any,config:string){
-        this.configsSelections.set(config.toLocaleLowerCase(),event.target.checked)
+        this.configsSelections.set(config.toLocaleLowerCase(),event.target.checked);
+        if (event.target.checked)
+            this.showConfig(config.toLocaleLowerCase());
     }
 
     saveSuite(suiteName:string){    
