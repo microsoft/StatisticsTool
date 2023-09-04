@@ -6,7 +6,7 @@ from classes_and_utils.file_storage_handler import *
 from utils.LogsParser import get_video_name_from_pred_file
 from utils.report_metadata import create_run_info
 
-def compare_predictions_directory(pred_dir, output_dir, overlap_function, predictionReaderFunction,gtReaderFunction,transform_func, evaluation_func, local_gt_dir = None, log_names_to_evaluate = None):
+def compare_predictions_directory(pred_dir, output_dir, overlap_function, threshold, predictionReaderFunction,gtReaderFunction,transform_func, evaluation_func, local_gt_dir = None, log_names_to_evaluate = None):
     """
 
     :param GT_path_list:  a list of paths to GT files (matching to the preditions and images lists)
@@ -73,7 +73,7 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, predic
                 continue
 
             V = VideoEvaluation(overlap_function=overlap_function, predictionReaderFunction=predictionReaderFunction,gtReaderFunction=gtReaderFunction ,evaluation_func=evaluation_func, transform_func = transform_func)
-            res = V.compute_dataframe(pred_file, gt_local_path, video_name)
+            res = V.compute_dataframe(pred_file, gt_local_path, threshold, video_name)
             if not res:
                 print (f"Reading function didn't read file: {pred} and gt:{gt_local_path}")
                 skipped_reading_fnc.append(pred)

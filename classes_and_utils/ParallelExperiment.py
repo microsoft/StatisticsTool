@@ -13,12 +13,12 @@ EXAMPLES_IN_SEGMENT_CONST = 'examples_in_segment'
 
 class ParallelExperiment:
  
-    def __init__(self, comp_data, threshold, partitioning_func):
+    def __init__(self, comp_data, partitioning_func):
         self.comp_data = comp_data
         self.segmentations_masks = {}
         self.cell_statistics_map = {}
     
-        self.confusion_masks, self.segmentations_masks, self.detections_images_dict = ParallelExperiment.calc_experiment(comp_data, threshold, partitioning_func)
+        self.confusion_masks, self.segmentations_masks, self.detections_images_dict = ParallelExperiment.calc_experiment(comp_data, partitioning_func)
        
     def get_segmentations_masks(self):
         return self.segmentations_masks
@@ -108,7 +108,7 @@ class ParallelExperiment:
         return video
      
     @staticmethod
-    def combine_evaluation_files(compared_videos, threshold):
+    def combine_evaluation_files(compared_videos):
         
         datafrme_dict = []
         for file_name in compared_videos:
@@ -123,30 +123,27 @@ class ParallelExperiment:
         return comp_data
     
     @staticmethod
-    def get_TP_FP_FN_masks(comp_data, threshold):
+    def get_TP_FP_FN_masks(comp_data, **kwargs):
         """
-        :param threshold: float , above this value an overlap is considered a hit (the prediction will be TP)
+        :param comp_data: 
         :return: Boolean masks of TP, FP, FN that indicates which row in the predictions dataframe is TP/FP
                  and which row in the labels dataframe is a FN (row = bounding box)
         """
         #first key from 'detection' key in input
         key = 'detection'
-        FN_mask = ((comp_data[key+'_gt']==True) & ((comp_data['state']<threshold) | (comp_data[key]==False) ))
-        FP_mask = ((comp_data[key]==True) & ((comp_data['state']<threshold) | (comp_data[key+'_gt']==False) ))
-        TP_mask = ((comp_data[key]==True) &((comp_data['state']>=threshold) & (comp_data[key+'_gt']==True)))
+        FN_mask = (comp_data[key+'_gt']==True) & (comp_data[key]==False)
+        FP_mask = (comp_data[key]==True) & (comp_data[key+'_gt']==False)
+        TP_mask = (comp_data[key]==True) & (comp_data[key+'_gt']==True)
         TN_mask = (comp_data[key+'_gt']==False) & (comp_data[key]==False)
         
         return {"TP":TP_mask, "FP":FP_mask, "FN":FN_mask, "TN":TN_mask}
                
     @staticmethod
-    def calc_experiment(comp_data, threshold, segmentation_func):
+    def calc_experiment(comp_data, segmentation_func):
         confusion_calc_func = ParallelExperiment.get_TP_FP_FN_masks
 
-        threshold = float(threshold)
-        assert threshold >= 0, 'threshold should be a positive number'
-       
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
-        confusion_masks = confusion_calc_func(comp_data, threshold)
+        confusion_masks = confusion_calc_func(comp_data)
         
         # add Total example to statistics functions for unified calculation in future ones (e.g. unique calculation)
         confusion_masks[EXAMPLES_IN_SEGMENT_CONST] = pd.Series(np.ones(len(comp_data), dtype=bool))
