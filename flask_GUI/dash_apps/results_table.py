@@ -157,17 +157,17 @@ class Results_table():
         link = f"/example_list/update_list?cell_name={cell_name}&stat={stat}&main_path={self.main_path}&ref_path={self.ref_path}"+ref_flag+unique_flag
         return link
 
-    def generate_unique_html_dash_element(self, exp_name, stat_functions, segmentations):
+    def generate_unique_html_dash_element(self, is_ref, stat_functions, segmentations):
         '''
             stat_func: TP,TN,FN
         '''        
         unique_array,unique_array_ref = self.unique_helper.get_cell_stat_data(stat=stat_functions, segmentations=segmentations)
         link_unique = self.get_link_for_update_list(segmentations, 
                                                 stat=stat_functions, 
-                                                is_ref = exp_name==REF_EXP,
+                                                is_ref = is_ref,
                                                 is_unique = True)
         num = 0
-        if exp_name == MAIN_EXP:
+        if not is_ref:
             num = len(unique_array)
         else:
             num = len(unique_array_ref)
@@ -175,17 +175,19 @@ class Results_table():
         txt_unique = "(unique: " + str(num) + ")"
         
         return txt_unique,link_unique
-       
+    
     def get_cell_exp(self, column_keys, row_keys,row_index, show_unique):  
         '''
         The function that return a single cell
         '''     
         segmentations = [curr_segment for curr_segment in column_keys+row_keys if 'None' not in curr_segment.keys()]
         
-        exp_data = {}
-        exp_data[MAIN_EXP] = self.main_exp.get_cell_data(segmentations, self.statistics_func)
+        confusion_sums, statistics = self.main_exp.get_cell_data(segmentations, self.statistics_func)
+        exp_data = {**statistics, **confusion_sums}
         if self.ref_exp is not None:
-            exp_data[REF_EXP] = self.ref_exp.get_cell_data(segmentations, self.statistics_func) 
+            confusion_sums_ref, statistics_ref = self.ref_exp.get_cell_data(segmentations, self.statistics_func) 
+            exp_data_ref = { **statistics_ref, **confusion_sums_ref}
+
         
         all_metrics = []
         if self.ref_exp is not None:
@@ -198,26 +200,25 @@ class Results_table():
             all_metrics.append(html.Tr(TDs,style=css['table-row']))
         
         idx = 0
-        for k in exp_data[MAIN_EXP].keys():
+        for k in exp_data.keys():
             
             TDs = [html.Td(k,style={'white-space':'nowrap'})]
-            num_of_exps = len(exp_data.keys())
             
             bg_color = '#ffffff'
             style ={'white-space': 'nowrap', 'color': 'black'}
-            if num_of_exps > 1: #if there is more than one report so use backgournd color not text color
-                bg_color = get_color_by_two_values_diff(exp_data[REF_EXP][k], exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_WHITE_BLUE)
+            if self.ref_exp is not None: #if there is more than one report so use backgournd color not text color
+                bg_color = get_color_by_two_values_diff(exp_data_ref[k], exp_data[k], COLOR_GRADIENT_RED_WHITE_BLUE)
                 style['background-color'] = bg_color
                 
-            
-            for exp_name in exp_data.keys():
-                txt = "{}".format(exp_data[exp_name][k])
-                if k in ["TP", "FP", "FN"]:
+            exps = [exp_data]
+            if self.ref_exp is not None:
+                exps.append(exp_data_ref)
+            for ind, cur_exp in enumerate(exps):
+                txt = "{}".format(cur_exp[k])
+                if k in confusion_sums.keys():
                     link = self.get_link_for_update_list(segmentations, 
                                                     stat=k, 
-                                                    is_ref = exp_name==REF_EXP)
-                    if k == "TN":
-                        link = ""
+                                                    is_ref = ind>0)
                     js = json.dumps({'action':'update_list','value': link})
                     msg = "javascript:window.parent.postMessage({});".format(js)
                     cur_style = {'text-decoration':'underline'}
@@ -228,14 +229,14 @@ class Results_table():
                 else:
                     curr_metric = txt
                     if bg_color == 'white' or bg_color == '#ffffff':
-                        style['color'] = get_text_color_by_stat(1-exp_data[MAIN_EXP][k], COLOR_GRADIENT_RED_BLUE)               
+                        style['color'] = get_text_color_by_stat(1-exp_data[k], COLOR_GRADIENT_RED_BLUE)               
                    
                 TDs.append(html.Td(curr_metric,style=style))
 
                
-                if show_unique == True and k in ["TP", "FP", "FN"]:
+                if show_unique == True and k in confusion_sums.keys():
                     if self.unique_helper != None:
-                        txt_unique, link_unique = self.generate_unique_html_dash_element(exp_name, k, segmentations)
+                        txt_unique, link_unique = self.generate_unique_html_dash_element(ind>0, k, segmentations)
                         js = json.dumps({'action':'update_list','value': link_unique})
                         msg = "javascript:window.parent.postMessage({});".format(js)
                         a_unique = html.A(txt_unique,href=msg, target="")

@@ -99,7 +99,7 @@ class ExperimentsManager:
         if experiment == None:
             return None
         
-        segmentations = {seg_category:v['possible partitions'] for seg_category, v in experiment.get_masks().items() if seg_category != 'total_stats'}
+        segmentations = {seg_category:v['possible partitions'] for seg_category, v in experiment.get_segmentations_masks().items()}
         result = []
         for k, v in segmentations.items():
             result.append({'name':k,'values':v})

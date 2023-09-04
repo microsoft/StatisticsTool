@@ -12,8 +12,15 @@ Returns a dictionary with the following form:
 {'Statistics Name': Statistics numerical score}
 """
 
-def precision_recall(TP, FP, FN, total_preds, **kwargs):
-    TN = total_preds - (TP + FP + FN)
+import numpy as np
+
+
+def precision_recall(confusion_masks, compare_dataframe, **kwargs):
+    TP = np.sum(confusion_masks['TP'])
+    FP = np.sum(confusion_masks['FP'])
+    FN = np.sum(confusion_masks['FN'])
+    TN = np.sum(confusion_masks['TN'])
+    
     if TP + FN == 0:
         recall = -1
     else:
