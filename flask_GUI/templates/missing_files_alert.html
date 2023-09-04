@@ -14,14 +14,13 @@
             {
                 message += "Reports in reference folder without matching reports in main folder: \n";
                 for (var i = 0; i < missing_files_from_main_arr.length; i++) {
-                    message += missing_files_from_main_arr[i] + "\n";
-                    }
+                    message += missing_files_from_main_arr[i] + "\n";}
             };
 
             if(missing_files_from_ref_arr.length > 1)
             {
                 message += "Reports in main folder without matching reports in reference folder: \n"
-                for (var i = 0; i <   missing_files_from_ref_arr.length; i++) {
+                for (var i = 0; i < missing_files_from_ref_arr.length; i++) {
                     message += missing_files_from_ref_arr[i] + "\n";}
             }
 

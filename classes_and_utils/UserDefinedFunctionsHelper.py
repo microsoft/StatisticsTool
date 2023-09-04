@@ -1,10 +1,12 @@
 import os,importlib,sys
 from glob import glob
 from pathlib import Path
-from app_config.config import app_config
+from app_config.config import AppConfig
 from app_config.constants import Constants, UserDefinedConstants
 from classes_and_utils.utils import loading_json
 from utils.report_metadata import *
+
+
 
 def get_external_lib_path():
     # need to change to use commandline arguments
@@ -12,15 +14,20 @@ def get_external_lib_path():
     # if ex_lib_path != None and ex_lib_path != '':
     #     return ex_lib_path
     # else:
-    #     
+    #    
+    app_config = AppConfig.get_app_config() 
     return app_config.external_lib_path
 
 def get_configs_folder():
     configs_folder = os.path.join(get_external_lib_path(), Constants.CONFIG_FOLDER_NAME)
+    if not os.path.exists(configs_folder):
+        os.makedirs(configs_folder)
     return configs_folder
 
 def get_suites_folder():
     suites_folder = os.path.join(get_external_lib_path(), Constants.SUITES_FOLDER_NAME)
+    if not os.path.exists(suites_folder):
+        os.makedirs(suites_folder)
     return suites_folder
 
 '''

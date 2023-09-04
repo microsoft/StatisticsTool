@@ -1,4 +1,5 @@
 
+import argparse
 import mimetypes
 
 import sys, os
@@ -10,7 +11,7 @@ from flask_GUI.flask_server import server
 from flask_GUI.flask_report_view import *
 from flask_GUI.flask_create_report import *
 from flask_GUI.flask_examples_list import *
-
+from app_config.config import AppConfig
 
 
 from flask import render_template, send_from_directory
@@ -44,7 +45,21 @@ def favicon():
     return send_from_directory('static','favicon.ico',mimetype='image/x-icon')
    
 
+def process_command_line_args():
+    parser = argparse.ArgumentParser(description='StatisticsTool')
+    parser.add_argument("--azure_storage_id", help="azure storage id to access data container")
+    parser.add_argument("--data_container_name", help="name of data container")
+    parser.add_argument("--annotation_store_blobs_prefix", help="prefix in data container for the annotations files")
+    parser.add_argument("--data_store_blobs_prefix", help="prefix in data container for the data files")
+    parser.add_argument("--predictions_blobs_prefix", help="prefix in data container for predictions files")
+    parser.add_argument("--external_lib_path", help="local path to the the external library")
+    parser.add_argument("--config_file_path", help="path to the config file, default path is [repo_dir]/app_config/app_config.json")
+
+    args = parser.parse_args()
+    app_config = AppConfig.get_app_config()
+    app_config.update_values_from_cmd_args(args)
 
 if __name__=='__main__':
+    process_command_line_args()
     server.debug = False
     server.run()

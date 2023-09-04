@@ -14,8 +14,8 @@ class Constants:
     WIKI_URL =  "https://www.deviceswiki.com/wiki/Statistics_Tool"
     METADATA_EXTENTION = '.metadata.json'
     INTERMEDIATE_RESULTS_DIR="intermediate resutls"
-    CONFIG_FOLDER_NAME = "reports/configs"
-    SUITES_FOLDER_NAME = "reports/suites"
+    CONFIG_FOLDER_NAME = "reports_configurations/configs"
+    SUITES_FOLDER_NAME = "reports_configurations/suites"
     EXTERNAL_LIBRARY = 'statisticstool_external_library'
     USER_DEFINED_FUNCTIONS = 'user_defined_functions'
 
