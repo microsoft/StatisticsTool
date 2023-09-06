@@ -57,7 +57,7 @@ def process_command_line_args():
 
     args = parser.parse_args()
     app_config = AppConfig.get_app_config()
-    app_config.update_values_from_cmd_args(args)
+    app_config.update_values_from_cmd_args(args, args.config_file_path)
 
 if __name__=='__main__':
     process_command_line_args()
