@@ -33,14 +33,16 @@ class UniqueHelper:
         
         ref_stat_in_main_index = pd.Series(np.zeros(len(mask), dtype=bool))
         ref_stat_in_main_index[ref_stat_in_main_index.index.isin(stat_ref_main[stat_ref_main!=-1])] = True
-        unique_array = self.exp.detections_images_dict[mask & (self.exp.get_confusion_masks()[stat_func]!=ref_stat_in_main_index)]
+        unique_mask = mask & (self.exp.get_confusion_masks()[stat_func]!=ref_stat_in_main_index)
+        unique_array = self.exp.get_list_array(unique_mask)
 
         stat_main_ref = self.main_ref_dict.copy()
         stat_main_ref[self.exp.get_confusion_masks()[stat_func]==False]=-1
         
         main_stat_in_ref_index = pd.Series(np.zeros(len(mask_ref), dtype=bool))
         main_stat_in_ref_index[main_stat_in_ref_index.index.isin(stat_main_ref[stat_main_ref!=-1])] = True
-        unique_array_ref = self.ref_exp.detections_images_dict[mask_ref & (self.ref_exp.get_confusion_masks()[stat_func]!=main_stat_in_ref_index)]
+        unique_ref_mask = mask_ref & (self.ref_exp.get_confusion_masks()[stat_func]!=main_stat_in_ref_index)
+        unique_array_ref = self.ref_exp.get_list_array(unique_ref_mask)
 
         return unique_array, unique_array_ref
 

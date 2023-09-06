@@ -18,7 +18,7 @@ class ParallelExperiment:
         self.segmentations_masks = {}
         self.cell_statistics_map = {}
     
-        self.confusion_masks, self.segmentations_masks, self.detections_images_dict = ParallelExperiment.calc_experiment(comp_data, partitioning_func)
+        self.confusion_masks, self.segmentations_masks = ParallelExperiment.calc_experiment(comp_data, partitioning_func)
        
     def get_segmentations_masks(self):
         return self.segmentations_masks
@@ -45,7 +45,6 @@ class ParallelExperiment:
             for key in self.confusion_masks.keys():
                 masks[key] = self.confusion_masks[key] & segmentation_mask
                 
-            #masks[EXAMPLES_IN_SEGMENT_CONST] = segmentation_mask
             self.cell_statistics_map[cell_name] = masks
         
         return self.cell_statistics_map[cell_name]
@@ -60,11 +59,16 @@ class ParallelExperiment:
         
         return confusion_sums, statistics
 
+    def get_list_array(self, mask):
+        arr = self.comp_data[mask][['video','frame_id','end_frame']].to_numpy()
+        list_arr = np.insert(arr,1,self.comp_data[mask].index.to_numpy(), axis=1)
+        return list_arr
+
     def get_ids(self, cell_key, state):
         segmentations = ParallelExperiment.segmentations_from_name(cell_name=cell_key)
         confusion_masks = self.get_statistics_masks(segmentations)
         
-        return self.detections_images_dict[confusion_masks[state]]
+        return self.get_list_array(confusion_masks[state])
         
     def get_detection_bounding_boxes(self, detection_index):
         bb_obj = self.comp_data.loc[detection_index]
@@ -163,16 +167,7 @@ class ParallelExperiment:
         # Add the segmentation masks to masks
         segmentations_masks = wanted_segmentations
 
-        video_name = comp_data['video'].values.copy()[:, np.newaxis]
-        frame = comp_data['frame_id'].values.astype(int).copy()[:, np.newaxis] 
-        index = comp_data.index.to_series().values.copy()[:, np.newaxis]
-        if 'end_frame' in comp_data.keys():
-            end_frames = comp_data['end_frame'].values.astype(int).copy()[:, np.newaxis]
-        else:
-            end_frames = frame
-        detections_images_dict = np.concatenate((video_name, index, frame, end_frames), axis=1)
-        
-        return confusion_masks, segmentations_masks, detections_images_dict
+        return confusion_masks, segmentations_masks
   
     @staticmethod
     def cell_name_from_segmentations(segmentations):
