@@ -28,8 +28,9 @@ class AppConfig():
             if hasattr(self, key):
                 setattr(self, key, loaded_config[key])
 
-    def update_values_from_cmd_args(self, args):
-        AppConfig.app_config = AppConfig(args.external_config_path, secrets_file_name)
+    def update_values_from_cmd_args(self, args, config_file = None):
+        if config_file:
+            AppConfig.app_config = AppConfig(config_file, secrets_file_name)
         for arg_name, arg_value in vars(args).items():
             if arg_value and hasattr(self, arg_name):
                  setattr(AppConfig.app_config, arg_name, arg_value)
