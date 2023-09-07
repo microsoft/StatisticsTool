@@ -2,12 +2,11 @@
 import base64
 import os
 from classes_and_utils.UpdateListManager import UpdateListManager
-from flask import render_template, request
+from flask import render_template, request, Markup
 from flask_GUI.flask_server import server, experiments_manager
 
 from utils.image_util import draw_detection_on_figure, read_frame_from_video
-
-
+     
 @server.route('/example_list/update_list', methods=['GET', 'POST'])
 def show_list():
     main_path = request.args.get('main_path')
@@ -18,19 +17,19 @@ def show_list():
     show_unique = 'unique' in request.args
 
     results_table = experiments_manager.get_results_table(main_path, ref_path)
-    per_video_example_hash, saved_file = UpdateListManager.manage_list_request(results_table, main_path, ref_path, cell_name, stat, show_unique, list_ref_report, 'save_json' in request.args)
+    list_html, saved_file = UpdateListManager.manage_list_request(results_table, main_path, ref_path, cell_name, stat, show_unique, list_ref_report, 'save_json' in request.args)
 
-    unique_flag = '' if show_unique is False else 'unique'
-    return render_template('examples_list.html', 
+    retval= render_template('examples_list.html', 
                             state=stat, 
                             cell_name=cell_name,
-                            per_video_example_hash = per_video_example_hash,
                             saved_json = saved_file,
                             comp_index = 0 if list_ref_report else -1,
-                            unique = unique_flag,
+                            unique = show_unique,
                             main_path = main_path,
-                            ref_path = ref_path
+                            ref_path = ref_path,
+                            list_html = Markup(list_html)
     )
+    return retval
 
 @server.route('/show_im', methods=['GET', 'POST'])
 def show_image():

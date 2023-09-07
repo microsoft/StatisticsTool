@@ -46,18 +46,13 @@
         <div class="header" style="text-align: left; overflow: hidden; position:relative;">
     
                   <h1 style="font-family: Arial, Helvetica, sans-serif;"> Examples for {%if unique%}uniques {%endif%} {{state}}{%if comp_index > -1%} in ref{%endif%} </h1>
-        <!--
-                  {% for cl in cl_and_choice: %}
-                  <h3 style="font-family: Arial, Helvetica, sans-serif;white-space:nowrap; display: inline-block;"> {{cl}} = {{cl_and_choice[cl]}} </h3>
-                    {%endfor%}
-        -->  
                     <h3 style="font-family: Arial, Helvetica, sans-serif;white-space:nowrap; display: inline-block;"> Cell Name: {{cell_name}} </h3>
     
                     
         </div>
     
     <div style="position:relative;">
-        <tr><td><form action="/example_list/update_list?save_json=true&cell_name={{cell_name}}&stat={{state}}&{{ref_flag}}&{{unique}}&main_path={{main_path}}&ref_path={{ref_path}}" method="post">
+        <tr><td><form action="/example_list/update_list?save_json=true&cell_name={{cell_name}}&stat={{state}}&{{ref_flag}}&"{%if unique%}"unique"{%endif%}"&main_path={{main_path}}&ref_path={{ref_path}}" method="post">
             <button type="submit"> Export To Json </button>    
         </form></td></tr>
     
@@ -69,24 +64,6 @@
     
     <div style="position:relative;top: 0px; left: 0px;display: inline-block;">
         <ul class="col_ul">
-            {% for vid_key in per_video_example_hash: %}
-                <li>
-                    <span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;">{{vid_key}}</span>
-                    <ul>
-                       {% for frame_key in per_video_example_hash[vid_key]: %}
-                        <li >
-                            <span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;"> Frame # {{frame_key}}-{{per_video_example_hash[vid_key][frame_key]["end_frame"]}}</span>
-                            <ul>
-                                {% for example_name in per_video_example_hash[vid_key][frame_key]["frames"]: %}
-                               <li><a style="font-family: Arial, Helvetica, sans-serif;" 
-                                       target="" 
-                                       href='javascript:window.parent.postMessage({"action":"show_image","value":"/show_im?example_vid={{example_name[0]}}&example_index={{example_name[1]}}&example_frame={{example_name[2]}}&comp_index={{comp_index}}&main_path={{main_path}}&ref_path={{ref_path}}&{{unique}}"})'> Frame - {{example_name[2]}}, Index # {{example_name[1]}}</a> </li>
-                                {%endfor%}
-                            </ul>
-                        </li>
-                        {%endfor%}
-                    </ul>
-                </li>
-            {%endfor%}
+            {{list_html}}
         </ul>
     </div>
