@@ -1,8 +1,8 @@
 {
-    "azure_storage_id":"presencecv0851576016",
-    "data_container_name": "dev-data",
-    "annotation_store_blobs_prefix": "annotations/GT_logs/Latest/",
-    "data_store_blobs_prefix": "raw_data/",
-    "predictions_blobs_prefix": "results/",
-    "external_lib_path": "./statisticstool_external_library"
+    "azure_storage_id":"<<AZURE_STORAGE_ID>>",
+    "data_container_name": "<<DATA_CONTAINER_NAME>>",
+    "annotation_store_blobs_prefix": "<<ANNOTATION_STORE_BLOBS_PREFIX>>",
+    "data_store_blobs_prefix": "<<DATA_STORE_BLOBS_PREFIX>>",
+    "predictions_blobs_prefix": "<<PREDICTION_BLOB_PREFIX>>",
+    "external_lib_path": "<<EXTERNAL_LIB_PATH>>"
 }

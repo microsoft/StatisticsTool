@@ -102,6 +102,10 @@ class VideoEvaluation:
         if 'detection_gt' not in self.comp_data.keys():
             self.comp_data['detection_gt'] = None
         self.comp_data.loc[self.comp_data['detection_gt'].isnull(), 'detection_gt']=False
+        
+        if video_name:
+                video_name = video_name.replace('\\','/')
+
         self.comp_data['video']=video_name
         
         #Add end_frame same as current frame

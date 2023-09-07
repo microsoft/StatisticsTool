@@ -76,8 +76,10 @@ def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, loc
     save_path = False
     data = None
     image = None
- 
-    image = read_frame_from_video(video, frame_id, local_path)
+    try:
+        image = read_frame_from_video(video, frame_id, local_path)
+    except Exception as ex:
+        print (f'failed to load image with exception: {ex}')
     
     exp = main_exp
     if use_ref:

@@ -171,8 +171,6 @@ def manage_new_report_page():
 
 def get_possible_suites():
     suites_folder = get_suites_folder()
-    if not os.path.exists(suites_folder):
-        os.makedirs(suites_folder)
     possible_suites = os.listdir(suites_folder)
     return possible_suites
 

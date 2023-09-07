@@ -4,10 +4,11 @@ import pathlib
 
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 
-from app_config.config import app_config
+from app_config.config import AppConfig
 from utils.LocalStorageFileCache import LocalStorageFileCache
 from utils.AzureStorageHelper import AzureStorageHelper
 from utils.LocalStrageHelper import list_local_dir
+
 
 
 class StoreType():
@@ -23,6 +24,7 @@ def GetStorageHandler():
     if storage_handler is not None:
         return storage_handler
     
+    app_config = AppConfig.get_app_config()
     storage_handler = AzureStorageHelper(app_config.azure_storage_id, app_config.data_container_name, app_config.storage_connection_string)
     return storage_handler
 
@@ -48,6 +50,7 @@ def list_files_in_path(path, store_type, recursive=True):
     return dirs
 
 def get_path_on_store(path, store_type:StoreType):
+    app_config = AppConfig.get_app_config()
     if store_type == StoreType.Annotation:
         return os.path.join(app_config.annotation_store_blobs_prefix, path)
     if store_type == StoreType.Data:

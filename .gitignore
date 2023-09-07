@@ -8,7 +8,7 @@ __pycache__*
 
 *.npz
 *.pt
-*.pkl
+
 
 **/__pycache__/*
 **/.idea/*
