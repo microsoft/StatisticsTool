@@ -1,0 +1,13 @@
+[
+    {
+        "Prediction Reading Function": "statistic_tool_reader_face_detection",
+        "GT Reading Function": "none",
+        "Overlap Function": "Dice",
+        "Transformation Function": "naive_event_transform",
+        "Partitioning Functions": "size_horizontal_vertical",
+        "Statistics Functions": "precision_recall",
+        "Evaluation Function": "min_distance_evaluation",
+        "Log Names to Evaluate": "FaceDetectionOutput.json",
+        "Threshold": "0.1"
+    }
+]

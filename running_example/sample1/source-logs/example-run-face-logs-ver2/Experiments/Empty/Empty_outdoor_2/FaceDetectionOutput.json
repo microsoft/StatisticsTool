@@ -1,0 +1,18 @@
+{"header":{"version":"1.0","type":"IO","logger_name":"FaceDetectionOutput","message_type":"FaceDetectionOutput","video_file_name":"Experiments/Empty/Empty_outdoor_2.mp4","data_path":"/tmp/Experiments/Empty/Empty_outdoor_2.mp4","frames_size_raw":[1920.0,1080.0],"fps_original_video":30,"fps_golden":3,"emulated_resolution":true,"emulation_matrix":"[[     8.2759           0           0]\n [          0      8.1818           0]\n [          0           0           1]]","body_detection_type":"yolov5"}}
+{"keys":{"frame_id":0,"golden_frame_index":0,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":10,"golden_frame_index":1,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":20,"golden_frame_index":2,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":30,"golden_frame_index":3,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":40,"golden_frame_index":4,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":50,"golden_frame_index":5,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":60,"golden_frame_index":6,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":70,"golden_frame_index":7,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":80,"golden_frame_index":8,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":90,"golden_frame_index":9,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":100,"golden_frame_index":10,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":110,"golden_frame_index":11,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":120,"golden_frame_index":12,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":130,"golden_frame_index":13,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":140,"golden_frame_index":14,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":150,"golden_frame_index":15,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
+{"keys":{"frame_id":160,"golden_frame_index":16,"type":"FaceDetectionOutput"},"message":{"objects":[],"ActivityDetectionState":0}}
