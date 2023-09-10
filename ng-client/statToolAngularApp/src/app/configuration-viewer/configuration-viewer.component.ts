@@ -34,4 +34,6 @@ export class ConfigurationViewerComponent {
       return this.newReportService.configName;
     return 'New Configuration';
  }
+
+  
 }

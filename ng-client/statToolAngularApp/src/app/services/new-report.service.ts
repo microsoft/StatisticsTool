@@ -64,6 +64,13 @@ export class NewReportService {
     last_ground_truth_directory :string[] = [];
     last_output_directory       :string[] = [];
 
+    gtReadingEnabled: boolean = false;
+    overlapEnabled:   boolean = true;
+    evaluateEnabled:  boolean = true;
+    tresholdEnabled:  boolean = true;
+    transformEnabled:  boolean = false;
+    partitioningEnabled:  boolean = false;
+
     constructor(private http:HttpClient,private modalService: NgbModal){
 
         let url = '/new_report/get_all_user_defined_functions';
@@ -75,7 +82,7 @@ export class NewReportService {
             this.prediction_reading_functions.sort((a,b) =>  (a > b ? 1 : -1));
 
             this.gt_reading_functions = [];
-            this.gt_reading_functions.push(NONE_GT_READING_CUNCTION);
+            //this.gt_reading_functions.push(NONE_GT_READING_CUNCTION);
             this.gt_reading_functions = this.gt_reading_functions.concat(this.prediction_reading_functions);
 
             this.evaluation_functions = map.evaluation_functions;
@@ -87,7 +94,6 @@ export class NewReportService {
             this.partitioning_functions = map.partitioning_functions;
             this.partitioning_functions.sort((a,b) =>  (a > b ? 1 : -1));
             let partitioning_funcs:string[] = [];
-            partitioning_funcs.push('none');
             partitioning_funcs = partitioning_funcs.concat(this.partitioning_functions);
             this.partitioning_functions = partitioning_funcs;
             
@@ -97,7 +103,6 @@ export class NewReportService {
             this.transform_functions = map.transform_functions;
             this.transform_functions.sort((a,b) =>  (a > b ? 1 : -1));
             let trans:string[] = [];
-            trans.push('None');
             trans = trans.concat(this.transform_functions)
             this.transform_functions = trans;
 

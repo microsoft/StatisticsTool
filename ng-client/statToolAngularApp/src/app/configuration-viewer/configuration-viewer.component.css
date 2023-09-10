@@ -47,4 +47,10 @@
     margin-top: 0px;
   }
   
+  .enable-user-defined-function {
+    color: #182a69; /* Color when enabled */
+  }
   
+  .disable-user-defined-function {
+    color: lightgray; /* Color when disabled */
+  }
