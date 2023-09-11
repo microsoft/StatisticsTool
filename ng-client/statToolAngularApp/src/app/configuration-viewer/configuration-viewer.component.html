@@ -165,7 +165,6 @@
             </div>
           </div>
         </div>
-        
         <!-- Transform Function: -->
         <div class="row" style="width: 100%">
           <div class="col">
@@ -194,8 +193,7 @@
             </div>
           </div>
         </div>
-        
-        <!-- Statistics Function: -->
+         <!-- Statistics Function: -->
         <div class="row" style="width:100%">
             <div class="col">
               <div class="form-group">
@@ -243,7 +241,26 @@
             </div>
           </div>
         </div>
-        
+        <!-- Confusion Function-->
+        <div class="row" style="width:100%">
+          <div class="col">
+            <div class="form-group">
+              <label for="confusion_function" style="font-weight: bold">Confusion Function:</label>
+                  <select class="form-select form-select-sm" id="confusion_function" style="padding-right: 10px;width:100%"
+                      [(ngModel)]="newReportService.selectedConfusionFunction" required #confusionFunctionSelect="ngModel"
+                          [ngClass]="{
+                              'is-invalid': confusionFunctionSelect.invalid && confusionFunctionSelect.touched,
+                              'is-valid': confusionFunctionSelect.valid && confusionFunctionSelect.touched
+                          }"
+                      >
+                      <option *ngFor="let func of newReportService.confusion_functions"
+                                      value="{{func}}"
+                              >{{func}}
+                      </option>
+                  </select>
+            </div>
+          </div>
+        </div>       
     </div>
     <div class="form-footer">
         <button type="button" style="margin-bottom: 5px;"

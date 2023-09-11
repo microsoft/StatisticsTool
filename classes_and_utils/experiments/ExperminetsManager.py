@@ -5,7 +5,7 @@ import uuid,os
 from app_config.constants import Constants, UserDefinedConstants
 from classes_and_utils.ParallelExperiment import ParallelExperiment
 from classes_and_utils.UserDefinedFunctionsHelper import get_userdefined_function
-from utils.report_metadata import CONFIG_TOKEN, EVALUATION_FUNC_TOKEN, OVERLAP_FUNC_TOKEN, PARTITIONING_FUNC_TOKEN, STATISTICS_FUNC_TOKEN
+from utils.report_metadata import CONFIG_TOKEN, CONFUSION_FUNC_TOKEN, EVALUATION_FUNC_TOKEN, OVERLAP_FUNC_TOKEN, PARTITIONING_FUNC_TOKEN, STATISTICS_FUNC_TOKEN
 
 
 class ExperimentsManager:
@@ -144,6 +144,8 @@ class ExperimentsManager:
 
             partitioning_func = get_userdefined_function(UserDefinedConstants.PARTITIONING_FUNCTIONS, func_name)
 
-        ret_exp = ParallelExperiment(comp_data, partitioning_func)
+        confusion_func_name = metadata[CONFIG_TOKEN].get(CONFUSION_FUNC_TOKEN)
+        confusion_func = get_userdefined_function(UserDefinedConstants.CONFUSION_FUNCTIONS, confusion_func_name)
+        ret_exp = ParallelExperiment(comp_data, partitioning_func,confusion_func)
         return ret_exp
     

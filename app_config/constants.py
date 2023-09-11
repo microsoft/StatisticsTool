@@ -26,4 +26,5 @@ class UserDefinedConstants:
     PARTITIONING_FUNCTIONS = 'partitioning_functions'
     STATISTICS_FUNCTIONS = 'statistics_functions'
     TRANSFORM_FUNCTIONS = 'transform_functions'
+    CONFUSION_FUNCTIONS = 'confusion_functions'
 

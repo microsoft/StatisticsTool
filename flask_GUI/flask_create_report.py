@@ -56,7 +56,8 @@ def get_user_defined_functions_list():
     functions[UserDefinedConstants.PARTITIONING_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.PARTITIONING_FUNCTIONS)
     functions[UserDefinedConstants.STATISTICS_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.STATISTICS_FUNCTIONS)
     functions[UserDefinedConstants.TRANSFORM_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS)
-   
+    functions[UserDefinedConstants.CONFUSION_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.CONFUSION_FUNCTIONS)
+
     return json.dumps(functions)
 
 @server.route('/new_report/get_configuration',methods=['GET'])
@@ -188,7 +189,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     """
 
     # extract the functions specified in the configuration file
-    prediction_reading_func,gt_reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate = load_config(config_file_name)
+    prediction_reading_func,gt_reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate,confusion_fun = load_config(config_file_name)
     
     intermediate_dir = os.path.join(save_stats_dir,Constants.INTERMEDIATE_RESULTS_DIR)
     if not os.path.exists(intermediate_dir):

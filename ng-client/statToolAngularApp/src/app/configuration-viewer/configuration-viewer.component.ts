@@ -18,15 +18,20 @@ export class ConfigurationViewerComponent {
   }
 
   disableSaveButton(){
+    if (this.newReportService.configName == '') return true;
+    if (this.newReportService.selectedPredictionReadingFunction == '') return true;
+    if (this.newReportService.selectedPredictionReadingFunction == '') return true;
+    if (this.newReportService.gtReadingEnabled && this.newReportService.selectedGTReadingFunction == '') return true;
+    if (this.newReportService.overlapEnabled && this.newReportService.selectedOverlapFunction == '') return true;
+    if (this.newReportService.evaluateEnabled && this.newReportService.selectedEvaluationFunction == '') return true;
+    if (this.newReportService.tresholdEnabled && this.newReportService.treshold == '') return true;
+    if (this.newReportService.transformEnabled && this.newReportService.selectedTransformFunction == '') return true;
+    if (this.newReportService.selectedStatisticsFunction == '') return true;
+    if (this.newReportService.partitioningEnabled && this.newReportService.selectedPartitioningFunction == '') return true;
+    if (this.newReportService.selectedConfusionFunction == '') return true;
 
-    return (this.newReportService.selectedPredictionReadingFunction == '') || 
-            (this.newReportService.selectedOverlapFunction == '') || 
-            (this.newReportService.selectedTransformFunction == '') ||             
-            (this.newReportService.selectedPartitioningFunction == '') ||             
-            (this.newReportService.selectedStatisticsFunction == '') ||
-            (this.newReportService.selectedEvaluationFunction == '') ||             
-            (this.newReportService.configName == '') ||             
-            (this.newReportService.treshold == '')      
+    return false
+      
  }
 
  getTitle(){

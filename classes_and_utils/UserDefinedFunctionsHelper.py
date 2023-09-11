@@ -69,7 +69,7 @@ def options_for_funcs():
     partition_funcs      = get_users_defined_functions(UserDefinedConstants.PARTITIONING_FUNCTIONS)
     statistics_funcs     = get_users_defined_functions(UserDefinedConstants.STATISTICS_FUNCTIONS)
     transformation_funcs = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS)
-    transformation_funcs.append('None')
+    confusion_funcs      = get_users_defined_functions(UserDefinedConstants.CONFUSION_FUNCTIONS)
     
     return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs
 
@@ -103,6 +103,7 @@ def load_config(config_file_name):
     overlap_func_name = config_dict.get(OVERLAP_FUNC_TOKEN)
     evaluation_func_name = config_dict.get(EVALUATION_FUNC_TOKEN)
     threshold = config_dict.get(THRESHOLD_TOKEN)
+    confusion_func_name = config_dict.get(CONFUSION_FUNC_TOKEN)
     
     gt_reading_func = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS,gt_reading_func_name)
     overlap_func = get_userdefined_function(UserDefinedConstants.OVERLAP_FUNCTIONS,overlap_func_name)
@@ -111,6 +112,7 @@ def load_config(config_file_name):
     partitioning_func = get_userdefined_function(UserDefinedConstants.PARTITIONING_FUNCTIONS,partitioning_func_name)
     transform_func = get_userdefined_function(UserDefinedConstants.TRANSFORM_FUNCTIONS,transform_func_name)
     prediction_reading_func = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS, prediction_reading_func_name)
+    confusion_func = get_userdefined_function(UserDefinedConstants.CONFUSION_FUNCTIONS, confusion_func_name)
 
     if not gt_reading_func:
         gt_reading_func = prediction_reading_func
@@ -125,5 +127,5 @@ def load_config(config_file_name):
                 log_names_to_evaluate = log_names_to_evaluate.split(',')
 
     
-    return prediction_reading_func,gt_reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate
+    return prediction_reading_func,gt_reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate,confusion_func
 

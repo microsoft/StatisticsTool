@@ -39,14 +39,16 @@ export class NewReportService {
     partitioning_functions          :string[] = [];
     statistics_functions            :string[] = [];
     transform_functions             :string[] = [];
+    confusion_functions            :string[] = [];
     
-    selectedPredictionReadingFunction = '';
-    selectedGTReadingFunction = '';
-    selectedOverlapFunction = '';
-    selectedTransformFunction = '';
-    selectedPartitioningFunction = '';
-    selectedStatisticsFunction = '';
-    selectedEvaluationFunction = '';
+    selectedPredictionReadingFunction   = '';
+    selectedGTReadingFunction           = '';
+    selectedOverlapFunction             = '';
+    selectedTransformFunction           = '';
+    selectedPartitioningFunction        = '';
+    selectedStatisticsFunction          = '';
+    selectedEvaluationFunction          = '';
+    selectedConfusionFunction           = '';
 
     configName = '';
     logName = '';
@@ -64,12 +66,12 @@ export class NewReportService {
     last_ground_truth_directory :string[] = [];
     last_output_directory       :string[] = [];
 
-    gtReadingEnabled: boolean = false;
-    overlapEnabled:   boolean = true;
-    evaluateEnabled:  boolean = true;
-    tresholdEnabled:  boolean = true;
-    transformEnabled:  boolean = false;
-    partitioningEnabled:  boolean = false;
+    gtReadingEnabled:    boolean = false;
+    overlapEnabled:      boolean = true;
+    evaluateEnabled:     boolean = true;
+    tresholdEnabled:     boolean = true;
+    transformEnabled:    boolean = false;
+    partitioningEnabled: boolean = false;
 
     constructor(private http:HttpClient,private modalService: NgbModal){
 
@@ -106,7 +108,8 @@ export class NewReportService {
             trans = trans.concat(this.transform_functions)
             this.transform_functions = trans;
 
-            this.initDataFromLocalStorage();
+            this.confusion_functions = map.confusion_functions;
+            this.confusion_functions.sort((a,b) =>  (a > b ? 1 : -1));
         })
     }
 
@@ -225,7 +228,8 @@ export class NewReportService {
         this.selectedPartitioningFunction = '';
         this.selectedStatisticsFunction = '';
         this.selectedEvaluationFunction = '';
-    
+        this.selectedConfusionFunction = '';    
+
         this.configName = '';
         this.logName = '';
         this.treshold = '';
@@ -250,6 +254,7 @@ export class NewReportService {
             this.selectedPartitioningFunction = config['Partitioning Functions'];
             this.selectedStatisticsFunction = config['Statistics Functions'];
             this.selectedEvaluationFunction = config['Evaluation Function'];
+            this.selectedConfusionFunction = config['Confusion Functions'];
         
             this.configName = configName;
             this.logName = config['Log Names to Evaluate'];
@@ -271,6 +276,7 @@ export class NewReportService {
         dictionary['configName'] = this.configName;
         dictionary['Log Names to Evaluate'] = this.logName;
         dictionary['Threshold'] = this.treshold;
+        dictionary['Confusion Functions']= this.selectedConfusionFunction;
 
         const url = '/new_report/save_configuration'; 
 

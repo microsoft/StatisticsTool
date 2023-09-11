@@ -8,6 +8,7 @@
         "Statistics Functions": "precision_recall",
         "Evaluation Function": "min_distance_evaluation",
         "Log Names to Evaluate": "FaceDetectionOutput.json",
-        "Threshold": "0.1"
+        "Threshold": "0.1",
+        "Confusion Functions": "get_TP_FP_FN_masks"
     }
 ]
