@@ -39,7 +39,8 @@ export class NewReportService {
     partitioning_functions          :string[] = [];
     statistics_functions            :string[] = [];
     transform_functions             :string[] = [];
-    confusion_functions            :string[] = [];
+    confusion_functions             :string[] = [];
+    association_functions           :string[] = [];
     
     selectedPredictionReadingFunction   = '';
     selectedGTReadingFunction           = '';
@@ -49,6 +50,7 @@ export class NewReportService {
     selectedStatisticsFunction          = '';
     selectedEvaluationFunction          = '';
     selectedConfusionFunction           = '';
+    selectedAssociationFunction         = '';
 
     configName = '';
     logName = '';
@@ -66,15 +68,18 @@ export class NewReportService {
     last_ground_truth_directory :string[] = [];
     last_output_directory       :string[] = [];
 
-    gtReadingEnabled:    boolean = false;
-    overlapEnabled:      boolean = true;
-    evaluateEnabled:     boolean = true;
-    tresholdEnabled:     boolean = true;
-    transformEnabled:    boolean = false;
-    partitioningEnabled: boolean = false;
+    //gtReadingEnabled:    boolean = false;
+    gtReadingSameAsPrediction:  boolean = true;
+    overlapEnabled:             boolean = true;
+    evaluateEnabled:            boolean = true;
+    tresholdEnabled:            boolean = true;
+    transformEnabled:           boolean = false;
+    partitioningEnabled:        boolean = false;
+    associationEnabled:         boolean = false;
+
+    isPanelOpen = false;
 
     constructor(private http:HttpClient,private modalService: NgbModal){
-
         let url = '/new_report/get_all_user_defined_functions';
         this.http.get<string[]>(url).subscribe(functions => {
             
@@ -110,6 +115,10 @@ export class NewReportService {
 
             this.confusion_functions = map.confusion_functions;
             this.confusion_functions.sort((a,b) =>  (a > b ? 1 : -1));
+
+            this.association_functions = map.association_functions;
+            this.association_functions.sort((a,b) =>  (a > b ? 1 : -1));
+            
         })
     }
 
@@ -222,13 +231,14 @@ export class NewReportService {
       
     clearConfigViewer(){
         this.selectedPredictionReadingFunction = '';
-        this.selectedGTReadingFunction = 'none';
+        this.selectedGTReadingFunction = '';
         this.selectedOverlapFunction = '';
         this.selectedTransformFunction = '';
         this.selectedPartitioningFunction = '';
         this.selectedStatisticsFunction = '';
         this.selectedEvaluationFunction = '';
         this.selectedConfusionFunction = '';    
+        this.selectedAssociationFunction = '';
 
         this.configName = '';
         this.logName = '';
@@ -249,8 +259,8 @@ export class NewReportService {
 
             this.selectedOverlapFunction = config['Overlap Function'];
             this.selectedTransformFunction = config['Transformation Function'];
-            if (this.selectedTransformFunction == '' || this.selectedTransformFunction == null || this.selectedTransformFunction == undefined)
-                this.selectedTransformFunction = 'None';
+            /*if (this.selectedTransformFunction == '' || this.selectedTransformFunction == null || this.selectedTransformFunction == undefined)
+                this.selectedTransformFunction = 'None';*/
             this.selectedPartitioningFunction = config['Partitioning Functions'];
             this.selectedStatisticsFunction = config['Statistics Functions'];
             this.selectedEvaluationFunction = config['Evaluation Function'];
@@ -259,6 +269,20 @@ export class NewReportService {
             this.configName = configName;
             this.logName = config['Log Names to Evaluate'];
             this.treshold = config['Threshold'];
+
+            this.gtReadingSameAsPrediction = (this.selectedPredictionReadingFunction == this.selectedGTReadingFunction) || (this.selectedGTReadingFunction.toLowerCase() == 'none');
+
+            this.overlapEnabled = this.selectedOverlapFunction != '' && this.selectedOverlapFunction != undefined;
+            this.evaluateEnabled = this.selectedEvaluationFunction != '' && this.selectedEvaluationFunction != undefined;
+            this.tresholdEnabled = this.treshold != '' && this.treshold != undefined;
+            this.transformEnabled = this.selectedTransformFunction != '' && this.selectedTransformFunction != undefined;
+            this.partitioningEnabled = this.selectedPartitioningFunction != '' && this.selectedPartitioningFunction != undefined;
+
+            if (this.overlapEnabled || this.evaluateEnabled || this.treshold){
+                this.isPanelOpen = true;
+            } else {
+                this.isPanelOpen = false;
+            }    
         })
     }
 
@@ -267,15 +291,22 @@ export class NewReportService {
         const dictionary: { [key: string]: any } = {};
 
         dictionary['Prediction Reading Function'] = this.selectedPredictionReadingFunction;
-        dictionary['GT Reading Function'] = this.selectedGTReadingFunction;
-        dictionary['Overlap Function'] = this.selectedOverlapFunction;
-        dictionary['Transformation Function'] = this.selectedTransformFunction;
-        dictionary['Partitioning Functions'] = this.selectedPartitioningFunction;
+        if (!this.gtReadingSameAsPrediction)
+            dictionary['GT Reading Function'] = this.selectedGTReadingFunction;
+        
+        if (this.overlapEnabled)
+            dictionary['Overlap Function'] = this.selectedOverlapFunction;
+        if (this.transformEnabled)
+            dictionary['Transformation Function'] = this.selectedTransformFunction;
+        if (this.partitioningEnabled)
+            dictionary['Partitioning Functions'] = this.selectedPartitioningFunction;
         dictionary['Statistics Functions'] = this.selectedStatisticsFunction;
-        dictionary['Evaluation Function'] = this.selectedEvaluationFunction;
+        if (this.evaluateEnabled)
+            dictionary['Evaluation Function'] = this.selectedEvaluationFunction;
         dictionary['configName'] = this.configName;
         dictionary['Log Names to Evaluate'] = this.logName;
-        dictionary['Threshold'] = this.treshold;
+        if (this.tresholdEnabled)
+            dictionary['Threshold'] = this.treshold;
         dictionary['Confusion Functions']= this.selectedConfusionFunction;
 
         const url = '/new_report/save_configuration'; 
@@ -363,5 +394,14 @@ export class NewReportService {
             }
         }
         return count;
+    }
+
+    getUDFUserArguments(funcType:string,funcName:string){
+        let params = { 'func_type':funcType,'func_name':funcName };
+        let url = '/new_report/get_udf_user_arguments';
+        this.http.get<any>(url,{params}).subscribe(config => {
+
+        });
+
     }
 }

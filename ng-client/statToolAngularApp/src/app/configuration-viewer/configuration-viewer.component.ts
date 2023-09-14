@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NewReportService } from '../services/new-report.service';
 
 @Component({
@@ -6,12 +6,19 @@ import { NewReportService } from '../services/new-report.service';
   templateUrl: './configuration-viewer.component.html',
   styleUrls: ['./configuration-viewer.component.css']
 })
-export class ConfigurationViewerComponent {
- 
-  constructor(public newReportService:NewReportService) {
-  }
+export class ConfigurationViewerComponent implements OnInit {
 
   title = 'New Configuration'
+
+  constructor(public newReportService:NewReportService) {
+  }
+  
+  ngOnInit(): void {
+  }
+
+  togglePanel() {
+    this.newReportService.isPanelOpen = !this.newReportService.isPanelOpen;
+  }
 
   close(){
     this.newReportService.showConfigViewer = false;
@@ -21,7 +28,7 @@ export class ConfigurationViewerComponent {
     if (this.newReportService.configName == '') return true;
     if (this.newReportService.selectedPredictionReadingFunction == '') return true;
     if (this.newReportService.selectedPredictionReadingFunction == '') return true;
-    if (this.newReportService.gtReadingEnabled && this.newReportService.selectedGTReadingFunction == '') return true;
+    if (!this.newReportService.gtReadingSameAsPrediction && this.newReportService.selectedGTReadingFunction == '') return true;
     if (this.newReportService.overlapEnabled && this.newReportService.selectedOverlapFunction == '') return true;
     if (this.newReportService.evaluateEnabled && this.newReportService.selectedEvaluationFunction == '') return true;
     if (this.newReportService.tresholdEnabled && this.newReportService.treshold == '') return true;
@@ -32,13 +39,23 @@ export class ConfigurationViewerComponent {
 
     return false
       
- }
+  }
 
- getTitle(){
+  getTitle(){
     if (this.newReportService.configName != '')
       return this.newReportService.configName;
     return 'New Configuration';
- }
+  }
 
-  
+  getGtReadingLabel(){
+    if (this.newReportService.gtReadingSameAsPrediction)
+      return "GT Reading Function (same as prediction):";
+    else
+      return "GT Reading Function:";
+  }
+
+  onAssociationFunctionChange(event: Event) {
+    const selectedValue = (event.target as HTMLSelectElement).value;
+    this.newReportService.getUDFUserArguments('association_functions',selectedValue);
+  }
 }

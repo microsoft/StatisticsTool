@@ -144,7 +144,10 @@ class ParallelExperiment:
                
     @staticmethod
     def calc_experiment(comp_data, segmentation_func,confusion_func):
-        confusion_calc_func = confusion_func #ParallelExperiment.get_TP_FP_FN_masks
+        confusion_calc_func = confusion_func 
+
+        if confusion_calc_func == None:
+            confusion_calc_func = ParallelExperiment.get_TP_FP_FN_masks
 
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
         confusion_masks = confusion_calc_func(comp_data)

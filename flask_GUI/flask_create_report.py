@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import request,redirect
 import urllib.parse
 from app_config.constants import Constants
-from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, get_suites_folder,get_users_defined_functions
+from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, get_suites_folder,get_users_defined_functions,get_udf_argument_function
 from app_config.constants import UserDefinedConstants
 
 from flask_GUI.flask_server import server
@@ -50,15 +50,26 @@ def save_suite():
 def get_user_defined_functions_list():
     
     functions = dict()
-    functions[UserDefinedConstants.READING_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.READING_FUNCTIONS)
-    functions[UserDefinedConstants.EVALUATION_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.EVALUATION_FUNCTIONS)
-    functions[UserDefinedConstants.OVERLAP_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.OVERLAP_FUNCTIONS)
-    functions[UserDefinedConstants.PARTITIONING_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.PARTITIONING_FUNCTIONS)
-    functions[UserDefinedConstants.STATISTICS_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.STATISTICS_FUNCTIONS)
-    functions[UserDefinedConstants.TRANSFORM_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS)
-    functions[UserDefinedConstants.CONFUSION_FUNCTIONS] = get_users_defined_functions(UserDefinedConstants.CONFUSION_FUNCTIONS)
+    functions[UserDefinedConstants.READING_FUNCTIONS]       = get_users_defined_functions(UserDefinedConstants.READING_FUNCTIONS)
+    functions[UserDefinedConstants.EVALUATION_FUNCTIONS]    = get_users_defined_functions(UserDefinedConstants.EVALUATION_FUNCTIONS)
+    functions[UserDefinedConstants.OVERLAP_FUNCTIONS]       = get_users_defined_functions(UserDefinedConstants.OVERLAP_FUNCTIONS)
+    functions[UserDefinedConstants.PARTITIONING_FUNCTIONS]  = get_users_defined_functions(UserDefinedConstants.PARTITIONING_FUNCTIONS)
+    functions[UserDefinedConstants.STATISTICS_FUNCTIONS]    = get_users_defined_functions(UserDefinedConstants.STATISTICS_FUNCTIONS)
+    functions[UserDefinedConstants.TRANSFORM_FUNCTIONS]     = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS)
+    functions[UserDefinedConstants.CONFUSION_FUNCTIONS]     = get_users_defined_functions(UserDefinedConstants.CONFUSION_FUNCTIONS)
+    functions[UserDefinedConstants.ASSOCIATION_FUNCTIONS]   = get_users_defined_functions(UserDefinedConstants.ASSOCIATION_FUNCTIONS)
 
     return json.dumps(functions)
+
+@server.route('/new_report/get_udf_user_arguments', methods=['GET'])
+def get_udf_user_arguments():
+
+    func_type = request.args['func_type']
+    func_name = request.args['func_name']
+
+    f = get_udf_argument_function(func_type,func_name)
+    user_args = f()
+    return json.dumps(user_args)
 
 @server.route('/new_report/get_configuration',methods=['GET'])
 def get_config():

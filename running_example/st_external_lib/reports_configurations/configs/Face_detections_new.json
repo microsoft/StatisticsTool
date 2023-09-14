@@ -1,0 +1,8 @@
+[
+    {
+        "Prediction Reading Function": "statistic_tool_reader_face_detection",
+        "Statistics Functions": "precision_recall",
+        "Log Names to Evaluate": "FaceDetectionOutput.json",
+        "Confusion Functions": "get_TP_FP_FN_masks"
+    }
+]

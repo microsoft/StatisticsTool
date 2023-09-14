@@ -46,6 +46,13 @@ def get_userdefined_function(func_type,func_name):
     module = importlib.import_module(func_name)
     return getattr(module,func_name)
 
+def get_udf_argument_function(func_type,func_name):
+    if not func_name or func_name == 'none' or func_name == 'None':
+        return None
+    sys.path.append(os.path.join(get_external_lib_path(),Constants.USER_DEFINED_FUNCTIONS,func_type))
+    module = importlib.import_module(func_name)
+    return getattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION)
+
 def get_users_defined_functions(directoryName):
     user_defined_functions = []
     path = os.path.join(get_external_lib_path(), Constants.USER_DEFINED_FUNCTIONS, directoryName,'*')
