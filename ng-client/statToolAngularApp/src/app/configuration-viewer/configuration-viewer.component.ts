@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { NewReportService } from '../services/new-report.service';
+import { ignoreElements } from 'rxjs';
 
 @Component({
   selector: 'configuration-viewer',
@@ -7,6 +8,8 @@ import { NewReportService } from '../services/new-report.service';
   styleUrls: ['./configuration-viewer.component.css']
 })
 export class ConfigurationViewerComponent implements OnInit {
+
+  @ViewChild('readingFunctionImg', { static: false }) readingFunctionImgElement: ElementRef|null = null;
 
   title = 'New Configuration';
 
@@ -67,24 +70,39 @@ export class ConfigurationViewerComponent implements OnInit {
     this.newReportService.getUDFUserArguments('association_functions',selectedValue);
   }
 
-  getArgumentSvg(udf:string){
+  getArgumentSvg(funcType:string){
+    
+    if (funcType == 'prediction_reading_functions'){
+      if(this.newReportService.selectedPredictionReadingFunction == '')
+        return 'assets/argument-gray-icon.svg'
+      else {
+        if (this.paramsHaveValue('prediction_reading_functions')){
+          return 'assets/argument-green-icon.svg'
+        } else {
+          return 'assets/argument-red-icon.svg'
+        }
+      }
+    }
     return 'assets/argument-red-icon.svg'
   }
 
-  showArgumentsPanel(event: MouseEvent,funcType:string,title:string,funcName:string){
+  showArgumentsPanel(elm:ElementRef|null,
+                     funcType:string,
+                     title:string,
+                     funcName:string){
+                     
     this.newReportService.showParams = !this.newReportService.showParams;
     if (!this.newReportService.showParams)
       return;
 
-    const button = event.target as HTMLElement;
-    const buttonRect = button.getBoundingClientRect();
-    
-    this.newReportService.argPanelTop = `${buttonRect.top-40}px`;
-    this.newReportService.argPanelLeft = `${buttonRect.right + window.scrollX}px`;
-    this.newReportService.showArgumentsPanel(funcType,title,funcName);  
-    //this.showPredictionAguments = !this.showPredictionAguments;    
+    if (elm == null)
+      return;                     
 
-    //this.openDiv(event);
+    const img: HTMLElement = elm.nativeElement;
+    const imgRect = img.getBoundingClientRect();
+    this.newReportService.argPanelTop  = `${imgRect.top-40}px`;
+    this.newReportService.argPanelLeft = `${imgRect.right + window.scrollX}px`;
+    this.newReportService.showArgumentsPanel(funcType,title,funcName);  
   }
 
   openDiv(event: MouseEvent) {
@@ -93,7 +111,7 @@ export class ConfigurationViewerComponent implements OnInit {
   }
 
   enableArgumentsButton(funcType:string){
-    if (funcType == 'reading_functions'){
+    if (funcType == 'prediction_reading_functions'){
       if (this.newReportService.selectedPredictionReadingFunction != '')
         return true;
       return false;
@@ -101,6 +119,20 @@ export class ConfigurationViewerComponent implements OnInit {
 
     return false;
 
+  }
+
+  paramsHaveValue(funcType:string){
+    if (funcType == 'prediction_reading_functions'){
+      let x = this.newReportService.udf.get('reading_functions')?.find(x => x.funcName == this.newReportService.selectedPredictionReadingFunction)!;
+      let b = true;
+      x.params.forEach(p => {
+        if (p.value == '')
+          b = false;
+      })
+      return b;
+    } 
+
+    return true;
   }
 }
 

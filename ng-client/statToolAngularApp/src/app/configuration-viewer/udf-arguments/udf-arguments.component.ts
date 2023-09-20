@@ -38,4 +38,10 @@ export class UdfArgumentsComponent implements OnInit,OnDestroy {
   close(){
     this.newReportSvc.showParams = false;
   }
+
+  getTitle(){
+    if (this.data != null)
+      return this.data.title;
+    return '';
+  }
 }

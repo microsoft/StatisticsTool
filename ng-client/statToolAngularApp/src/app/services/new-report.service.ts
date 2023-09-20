@@ -36,6 +36,7 @@ export namespace UDF {
 
         name = '';
         type = ParamType.STRING;
+        value = '';
     }
 
     export class Item {
@@ -114,7 +115,7 @@ export class NewReportService {
 
     //map between udf type (e.g. reading_function) to function names
     udf = new Map<string,UDF.Item[]>();
-    showArgumentsEvent = new Subject<{'funcType':string,'udfItem':UDF.Item,'title':string}>();
+    showArgumentsEvent = new Subject<{'funcType':string,'funcName':string,'udfItem':UDF.Item,'title':string}>();
     showParams = false;
     argPanelTop = '';
     argPanelLeft = '';
@@ -471,7 +472,7 @@ export class NewReportService {
     showArgumentsPanel(funcType:string,title:string,funcName:string){
         let o = this.udf.get(funcType)?.find(x => x.funcName == funcName)
         if (o != undefined){
-            this.showArgumentsEvent.next({'funcType':funcType,'udfItem':o,'title':title});
+            this.showArgumentsEvent.next({'funcType':funcType,'funcName':funcName,'udfItem':o,'title':title});
         }
     }
 }

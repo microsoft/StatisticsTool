@@ -7,12 +7,13 @@
     flex-direction: column;
     border: 1px solid lightgray;
     background: white;
+    direction: rtl;
 }
 
 .closeButton{
     margin-right: 0px;
     position:absolute;
-    padding-left:2px;
+    padding-right:5px;
     cursor: pointer;
     color: #182a69;
   }
@@ -40,5 +41,6 @@
     align-items: stretch;
     padding:5px;
     flex-direction: column;
+    direction: ltr !important;
   }
 

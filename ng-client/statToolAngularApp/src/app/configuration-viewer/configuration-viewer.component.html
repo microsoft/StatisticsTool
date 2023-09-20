@@ -51,9 +51,10 @@
                           }">
                     <option *ngFor="let func of newReportService.prediction_reading_functions" [value]="func">{{func}}</option>
                   </select>
-                  <img [src]="getArgumentSvg('prediction_reading_functions')" 
-                       (click)="showArgumentsPanel($event,'reading_functions','Prediction Reading Function',newReportService.selectedPredictionReadingFunction)"
-                       [ngStyle]="{'pointer-events': enableArgumentsButton('reading_functions') ? 'all' : 'none'}"
+                  <img #readingFunctionImg 
+                       [src]="getArgumentSvg('prediction_reading_functions')" 
+                       (click)="showArgumentsPanel(readingFunctionImgElement,'reading_functions','Prediction Reading Function',newReportService.selectedPredictionReadingFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton('prediction_reading_functions') ? 'all' : 'none'}"
                        style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
