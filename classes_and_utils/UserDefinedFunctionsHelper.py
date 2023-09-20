@@ -5,8 +5,27 @@ from app_config.config import AppConfig
 from app_config.constants import Constants, UserDefinedConstants
 from classes_and_utils.utils import loading_json
 from utils.report_metadata import *
+from utils.report_metadata import READING_FUNCTION_OLD_TOKEN
+from utils.report_metadata import GT_READING_FUNC_TOKEN
+from utils.report_metadata import PREDICTIONS_READING_TOKEN
+from utils.report_metadata import PARTITIONING_FUNC_TOKEN
+from utils.report_metadata import STATISTICS_FUNC_TOKEN
+from utils.report_metadata import TRANSFORM_FUNC_TOKEN
+from utils.report_metadata import OVERLAP_FUNC_TOKEN
+from utils.report_metadata import EVALUATION_FUNC_TOKEN
+from utils.report_metadata import THRESHOLD_TOKEN
+from utils.report_metadata import CONFUSION_FUNC_TOKEN
+from utils.report_metadata import LOGS_TO_EVALUATE_TOKEN
 
-
+class UdfObject:
+    def __init__(self,func_type,func_name,params):
+        self.func_type  = func_type
+        self.func_name  = func_name
+        self.func       = get_userdefined_function(self.func_type,self.func_name)
+        self.params     = params
+    
+    def __call__(self, *kargs):
+        self.func(*kargs, **self.params)
 
 def get_external_lib_path():
     # need to change to use commandline arguments
@@ -51,7 +70,10 @@ def get_udf_argument_function(func_type,func_name):
         return None
     sys.path.append(os.path.join(get_external_lib_path(),Constants.USER_DEFINED_FUNCTIONS,func_type))
     module = importlib.import_module(func_name)
-    return getattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION)
+    if hasattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION):
+        return getattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION)
+    else:
+        return None
 
 def get_users_defined_functions(directoryName):
     user_defined_functions = []
@@ -61,7 +83,14 @@ def get_users_defined_functions(directoryName):
         filename = fullname.split(os.sep)[-1]
         file_parts = filename.split('.')
         if len(file_parts) == 2 and file_parts[1] == 'py':
-            user_defined_functions.append(file_parts[0])
+            #user_defined_functions.append(file_parts[0])
+            arguments = ''
+            arg_func = get_udf_argument_function(directoryName,file_parts[0])
+            if arg_func is not None:
+                arguments = arg_func()
+            udf = {'func_name':file_parts[0],'func_arguments':arguments} 
+            user_defined_functions.append(udf)
+        
     return user_defined_functions
 
 def options_for_funcs():
@@ -99,27 +128,35 @@ def load_config(config_file_name):
     
     # extracting the configuration from the config file (which is a dictionary at this point)
     if READING_FUNCTION_OLD_TOKEN in config_dict.keys():
-        prediction_reading_func_name = config_dict[READING_FUNCTION_OLD_TOKEN]    
+        prediction_reading_func = config_dict[READING_FUNCTION_OLD_TOKEN]    
     else:
-        prediction_reading_func_name = config_dict.get(PREDICTIONS_READING_TOKEN)    
+        prediction_reading_func = config_dict.get(PREDICTIONS_READING_TOKEN)    
 
-    gt_reading_func_name = config_dict.get(GT_READING_FUNC_TOKEN)
-    partitioning_func_name = config_dict.get(PARTITIONING_FUNC_TOKEN) 
-    statistics_func_name = config_dict.get(STATISTICS_FUNC_TOKEN)
-    transform_func_name = config_dict.get(TRANSFORM_FUNC_TOKEN)
-    overlap_func_name = config_dict.get(OVERLAP_FUNC_TOKEN)
-    evaluation_func_name = config_dict.get(EVALUATION_FUNC_TOKEN)
+    gt_reading_func = config_dict.get(GT_READING_FUNC_TOKEN)
+    partitioning_func = config_dict.get(PARTITIONING_FUNC_TOKEN) 
+    statistics_func = config_dict.get(STATISTICS_FUNC_TOKEN)
+    transform_func = config_dict.get(TRANSFORM_FUNC_TOKEN)
+    overlap_func = config_dict.get(OVERLAP_FUNC_TOKEN)
+    evaluation_func = config_dict.get(EVALUATION_FUNC_TOKEN)
     threshold = config_dict.get(THRESHOLD_TOKEN)
-    confusion_func_name = config_dict.get(CONFUSION_FUNC_TOKEN)
+    confusion_func = config_dict.get(CONFUSION_FUNC_TOKEN)
     
-    gt_reading_func = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS,gt_reading_func_name)
-    overlap_func = get_userdefined_function(UserDefinedConstants.OVERLAP_FUNCTIONS,overlap_func_name)
-    evaluation_func = get_userdefined_function(UserDefinedConstants.EVALUATION_FUNCTIONS,evaluation_func_name)
-    statistics_func = get_userdefined_function(UserDefinedConstants.STATISTICS_FUNCTIONS,statistics_func_name) 
-    partitioning_func = get_userdefined_function(UserDefinedConstants.PARTITIONING_FUNCTIONS,partitioning_func_name)
-    transform_func = get_userdefined_function(UserDefinedConstants.TRANSFORM_FUNCTIONS,transform_func_name)
-    prediction_reading_func = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS, prediction_reading_func_name)
-    confusion_func = get_userdefined_function(UserDefinedConstants.CONFUSION_FUNCTIONS, confusion_func_name)
+    gt_reading_obj          = UdfObject(UserDefinedConstants.READING_FUNCTIONS,gt_reading_func['func_name'],gt_reading_func['params'])
+    overlap_obj             = UdfObject(UserDefinedConstants.OVERLAP_FUNCTIONS,overlap_func['func_name'],overlap_func['params']) 
+    evaluation_obj          = UdfObject(UserDefinedConstants.EVALUATION_FUNCTIONS,evaluation_func['func_name'],evaluation_func['params']) 
+    statistics_obj          = UdfObject(UserDefinedConstants.STATISTICS_FUNCTIONS,statistics_func['func_name'],statistics_func['params']) 
+    partitioning_obj        = UdfObject(UserDefinedConstants.PARTITIONING_FUNCTIONS,partitioning_func['func_name'],partitioning_func['params']) 
+    transform_obj           = UdfObject(UserDefinedConstants.TRANSFORM_FUNCTIONS,transform_func['func_name'],transform_func['params']) 
+    prediction_reading_obj  = UdfObject(UserDefinedConstants.READING_FUNCTIONS,prediction_reading_func['func_name'],prediction_reading_func['params']) 
+    confusion_obj           = UdfObject(UserDefinedConstants.CONFUSION_FUNCTIONS,confusion_func['func_name'],confusion_func['params']) 
+    #gt_reading_func = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS,gt_reading_func_name)
+    #overlap_func = get_userdefined_function(UserDefinedConstants.OVERLAP_FUNCTIONS,overlap_func_name)
+    #evaluation_func = get_userdefined_function(UserDefinedConstants.EVALUATION_FUNCTIONS,evaluation_func_name)
+    #statistics_func = get_userdefined_function(UserDefinedConstants.STATISTICS_FUNCTIONS,statistics_func_name) 
+    #partitioning_func = get_userdefined_function(UserDefinedConstants.PARTITIONING_FUNCTIONS,partitioning_func_name)
+    #transform_func = get_userdefined_function(UserDefinedConstants.TRANSFORM_FUNCTIONS,transform_func_name)
+    #prediction_reading_func = get_userdefined_function(UserDefinedConstants.READING_FUNCTIONS, prediction_reading_func_name)
+    #confusion_func = get_userdefined_function(UserDefinedConstants.CONFUSION_FUNCTIONS, confusion_func_name)
 
     if not gt_reading_func:
         gt_reading_func = prediction_reading_func
@@ -134,5 +171,5 @@ def load_config(config_file_name):
                 log_names_to_evaluate = log_names_to_evaluate.split(',')
 
     
-    return prediction_reading_func,gt_reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate,confusion_func
-
+    #return prediction_reading_func,gt_reading_func, overlap_func, evaluation_func, statistics_func, partitioning_func, transform_func, threshold, log_names_to_evaluate,confusion_func
+    return prediction_reading_obj,gt_reading_obj, overlap_obj, evaluation_obj, statistics_obj, partitioning_obj, transform_obj, threshold, log_names_to_evaluate,confusion_obj

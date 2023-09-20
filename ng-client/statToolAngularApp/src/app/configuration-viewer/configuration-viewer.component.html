@@ -35,25 +35,29 @@
                 </div>
               </div>
           </div>
-          <!-- Prediction Reading Function-->
-          <div class="row" style="width:100%">
-              <div class="col">
-                <div class="form-group">
-                  <label for="prediction_reading_function" style="font-weight: bold">Prediction Reading Function:</label>
-                      <select class="form-select form-select-sm" id="prediction_reading_function" style="padding-right: 10px;width:100%"
+          <!-- Prediction Reading Function -->
+          <div class="row" style="width: 100%">
+            <div class="col">
+              <div class="form-group">
+                <label for="prediction_reading_function" style="font-weight: bold">Prediction Reading Function:</label>
+                <div style="display: flex; align-items: center;">
+                  <select class="form-select form-select-sm" id="prediction_reading_function" 
+                          style="padding-right: 10px; width: 95%" 
+                          (change)="onPredictionReadingFunctionChange($event)"
                           [(ngModel)]="newReportService.selectedPredictionReadingFunction" required #predictionReadingFunctionSelect="ngModel"
-                              [ngClass]="{
-                                  'is-invalid': predictionReadingFunctionSelect.invalid && predictionReadingFunctionSelect.touched,
-                                  'is-valid': predictionReadingFunctionSelect.valid && predictionReadingFunctionSelect.touched
-                              }"
-                          >
-                          <option *ngFor="let func of newReportService.prediction_reading_functions"
-                                          value="{{func}}"
-                                  >{{func}}
-                          </option>
-                      </select>
+                          [ngClass]="{
+                            'is-invalid': predictionReadingFunctionSelect.invalid && predictionReadingFunctionSelect.touched,
+                            'is-valid': predictionReadingFunctionSelect.valid && predictionReadingFunctionSelect.touched
+                          }">
+                    <option *ngFor="let func of newReportService.prediction_reading_functions" [value]="func">{{func}}</option>
+                  </select>
+                  <img [src]="getArgumentSvg('prediction_reading_functions')" 
+                       (click)="showArgumentsPanel($event,'reading_functions','Prediction Reading Function',newReportService.selectedPredictionReadingFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton('reading_functions') ? 'all' : 'none'}"
+                       style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
+            </div>
           </div>
           <!-- GT Reading Function-->
           <div class="row" style="width: 100%">
@@ -308,3 +312,7 @@
                  (click)="newReportService.saveConfig()">Save</button>
     </div>
 </div>
+
+<udf-arguments [top]="newReportService.argPanelTop" [left]="newReportService.argPanelLeft" [show]="newReportService.showParams">
+
+</udf-arguments>

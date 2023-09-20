@@ -2,4 +2,4 @@ def test():
     return True
 
 def get_function_arguments():
-    return {"threshold":[], "overlap":["iou","dice"]}
+    return { "param1":"string", "param2":"string","param3":"string" }

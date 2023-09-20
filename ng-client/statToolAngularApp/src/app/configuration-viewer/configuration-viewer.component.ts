@@ -8,9 +8,12 @@ import { NewReportService } from '../services/new-report.service';
 })
 export class ConfigurationViewerComponent implements OnInit {
 
-  title = 'New Configuration'
+  title = 'New Configuration';
+
+  showPredictionAguments = false;
 
   constructor(public newReportService:NewReportService) {
+    
   }
   
   ngOnInit(): void {
@@ -54,8 +57,50 @@ export class ConfigurationViewerComponent implements OnInit {
       return "GT Reading Function:";
   }
 
+  onPredictionReadingFunctionChange(event: Event) {
+    const selectedValue = (event.target as HTMLSelectElement).value;
+    this.newReportService.getUDFUserArguments('reading_functions',selectedValue);
+  }
+
   onAssociationFunctionChange(event: Event) {
     const selectedValue = (event.target as HTMLSelectElement).value;
     this.newReportService.getUDFUserArguments('association_functions',selectedValue);
   }
+
+  getArgumentSvg(udf:string){
+    return 'assets/argument-red-icon.svg'
+  }
+
+  showArgumentsPanel(event: MouseEvent,funcType:string,title:string,funcName:string){
+    this.newReportService.showParams = !this.newReportService.showParams;
+    if (!this.newReportService.showParams)
+      return;
+
+    const button = event.target as HTMLElement;
+    const buttonRect = button.getBoundingClientRect();
+    
+    this.newReportService.argPanelTop = `${buttonRect.top-40}px`;
+    this.newReportService.argPanelLeft = `${buttonRect.right + window.scrollX}px`;
+    this.newReportService.showArgumentsPanel(funcType,title,funcName);  
+    //this.showPredictionAguments = !this.showPredictionAguments;    
+
+    //this.openDiv(event);
+  }
+
+  openDiv(event: MouseEvent) {
+    //this.showDiv = true;
+    
+  }
+
+  enableArgumentsButton(funcType:string){
+    if (funcType == 'reading_functions'){
+      if (this.newReportService.selectedPredictionReadingFunction != '')
+        return true;
+      return false;
+    }
+
+    return false;
+
+  }
 }
+

@@ -1,14 +1,38 @@
 [
     {
-        "Prediction Reading Function": "statistic_tool_reader_face_detection",
-        "GT Reading Function": "statistic_tool_reader_face_detection_classification",
-        "Overlap Function": "Classification_True_False",
-        "Transformation Function": "basic_event_transform",
-        "Partitioning Functions": "size_horizontal_vertical",
-        "Statistics Functions": "precision_recall",
-        "Evaluation Function": "min_distance_evaluation",
+        "Prediction Reading Function": { 
+            "func_name":"statistic_tool_reader_face_detection",
+            "params":{"param1":1,"param2":2}
+        },
+        "GT Reading Function": {
+            "func_name":"statistic_tool_reader_face_detection_classification",
+            "params":[]
+        },
+        "Overlap Function": {
+            "func_name":"Classification_True_False",
+            "params":[]
+        },
+        "Transformation Function": {
+            "func_name":"basic_event_transform",
+            "params":[]
+        },
+        "Partitioning Functions": {
+            "func_name":"size_horizontal_vertical",
+            "params":[]
+        },
+        "Statistics Functions":{
+            "func_name":"precision_recall",
+            "params":[]
+        },
+        "Evaluation Function": {
+            "func_name":"min_distance_evaluation",
+            "params":[]
+        },
         "Log Names to Evaluate": "FaceDetectionOutput.json",
         "Threshold": "0.1",
-        "Confusion Functions": "get_TP_FP_FN_masks"
+        "Confusion Functions": {
+            "func_name":"get_TP_FP_FN_masks",
+            "params":[]
+        }
     }
 ]

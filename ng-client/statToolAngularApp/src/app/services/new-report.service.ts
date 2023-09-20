@@ -3,6 +3,7 @@ import { Injectable } from "@angular/core";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { SaveSuiteDialogComponent } from "../save-suite-dialog/save-suite-dialog.component";
 import { GROUND_TRUTH_DIRECTORY, LocalStorgeHelper, OUTPUT_DIRECTORY, PREDICTION_DIRECTORY } from "./localStorageHelper";
+import { Subject } from "rxjs";
 
 export const SELECTE_SUITE = '--- Select Suite ---';
 export const NONE_GT_READING_CUNCTION = 'none';
@@ -19,11 +20,43 @@ export class NewReportResult {
     skipped_not_in_lognames:string[] = [];
 }
 
+export namespace UDF {
+    export enum ParamType {
+        STRING = 0
+    }
+
+    export class Param {
+        
+        constructor(name:string,type:string) {
+            this.name = name;
+            if (type == 'string'){
+                this.type = ParamType.STRING;
+            }            
+        }
+
+        name = '';
+        type = ParamType.STRING;
+    }
+
+    export class Item {
+
+        constructor(funcName:string,params:Param[]){
+            this.funcName = funcName;
+            this.params = params;
+        }
+
+        funcName = '';
+        params:Param[] = [];
+    }
+}
+
 @Injectable({
     providedIn: 'root'
   })
 
 export class NewReportService {
+
+    FUNC_TYPES = ['reading_functions','evaluation_functions','overlap_functions','partitioning_functions','statistics_functions','transform_functions','confusion_functions','association_functions'];
     
     showConfigViewer = true;
 
@@ -79,47 +112,76 @@ export class NewReportService {
 
     isPanelOpen = false;
 
+    //map between udf type (e.g. reading_function) to function names
+    udf = new Map<string,UDF.Item[]>();
+    showArgumentsEvent = new Subject<{'funcType':string,'udfItem':UDF.Item,'title':string}>();
+    showParams = false;
+    argPanelTop = '';
+    argPanelLeft = '';
+    udfArgumentsMap:{ [key: string]: any } = {};
+
     constructor(private http:HttpClient,private modalService: NgbModal){
         let url = '/new_report/get_all_user_defined_functions';
-        this.http.get<string[]>(url).subscribe(functions => {
+        this.http.get<any>(url).subscribe(response => {
             
-            let map:any;
-            map = functions;
-            this.prediction_reading_functions = map.reading_functions;
+            this.processUdfResponse(response);
+
+            this.prediction_reading_functions = this.udf.get('reading_functions')?.map(o => o.funcName)!
             this.prediction_reading_functions.sort((a,b) =>  (a > b ? 1 : -1));
+            
+            this.gt_reading_functions = this.prediction_reading_functions;
 
-            this.gt_reading_functions = [];
-            //this.gt_reading_functions.push(NONE_GT_READING_CUNCTION);
-            this.gt_reading_functions = this.gt_reading_functions.concat(this.prediction_reading_functions);
-
-            this.evaluation_functions = map.evaluation_functions;
+            this.evaluation_functions = this.udf.get('evaluation_functions')?.map(o => o.funcName)!;
             this.evaluation_functions.sort((a,b) =>  (a > b ? 1 : -1));
 
-            this.overlap_functions = map.overlap_functions;
+            this.overlap_functions = this.udf.get('overlap_functions')?.map(o => o.funcName)!;
             this.overlap_functions.sort((a,b) =>  (a > b ? 1 : -1));
 
-            this.partitioning_functions = map.partitioning_functions;
+            this.partitioning_functions = this.udf.get('partitioning_functions')?.map(o => o.funcName)!;
             this.partitioning_functions.sort((a,b) =>  (a > b ? 1 : -1));
-            let partitioning_funcs:string[] = [];
-            partitioning_funcs = partitioning_funcs.concat(this.partitioning_functions);
-            this.partitioning_functions = partitioning_funcs;
             
-            this.statistics_functions = map.statistics_functions;
+            this.statistics_functions = this.udf.get('statistics_functions')?.map(o => o.funcName)!;
             this.statistics_functions.sort((a,b) =>  (a > b ? 1 : -1));
 
-            this.transform_functions = map.transform_functions;
+            this.transform_functions = this.udf.get('transform_functions')?.map(o => o.funcName)!;
             this.transform_functions.sort((a,b) =>  (a > b ? 1 : -1));
-            let trans:string[] = [];
-            trans = trans.concat(this.transform_functions)
-            this.transform_functions = trans;
 
-            this.confusion_functions = map.confusion_functions;
+            this.confusion_functions = this.udf.get('confusion_functions')?.map(o => o.funcName)!;
             this.confusion_functions.sort((a,b) =>  (a > b ? 1 : -1));
 
-            this.association_functions = map.association_functions;
+            this.association_functions = this.udf.get('association_functions')?.map(o => o.funcName)!;
             this.association_functions.sort((a,b) =>  (a > b ? 1 : -1));
             
         })
+    }
+
+    processUdfResponse(udfResponse:any){
+
+        for (const f of this.FUNC_TYPES){
+            let funcs = this.processUdfItem(f,udfResponse);
+            this.udf.set(f,funcs);
+        }
+    }
+
+    processUdfItem(funcType:string,udfResponse:any){
+        let arrFuncs:UDF.Item[] = [];
+        let functions = udfResponse[funcType];
+
+        for (const func of functions){
+            let funcName = func.func_name;
+            let funcArguments = func.func_arguments;
+            let params:UDF.Param[] = [];
+            for (const key in funcArguments) {
+                if (funcArguments.hasOwnProperty(key)) {
+                  const argumentName = key;
+                  const argumentValue = funcArguments[key];
+                  params.push(new UDF.Param(argumentName,argumentValue))
+                }
+            }
+            arrFuncs.push(new UDF.Item(funcName,params));
+        }
+
+        return arrFuncs;
     }
 
     initDataFromLocalStorage(){
@@ -399,9 +461,17 @@ export class NewReportService {
     getUDFUserArguments(funcType:string,funcName:string){
         let params = { 'func_type':funcType,'func_name':funcName };
         let url = '/new_report/get_udf_user_arguments';
+
         this.http.get<any>(url,{params}).subscribe(config => {
-
+            this.udfArgumentsMap[funcType + "-" + funcName] = config;       
+            console.log('map',JSON.stringify(this.udfArgumentsMap))        
         });
+    }
 
+    showArgumentsPanel(funcType:string,title:string,funcName:string){
+        let o = this.udf.get(funcType)?.find(x => x.funcName == funcName)
+        if (o != undefined){
+            this.showArgumentsEvent.next({'funcType':funcType,'udfItem':o,'title':title});
+        }
     }
 }

@@ -1,0 +1,44 @@
+.params-container{
+    position: absolute;
+    width: 350px;
+    min-height: 300px;
+    padding: 0px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid lightgray;
+    background: white;
+}
+
+.closeButton{
+    margin-right: 0px;
+    position:absolute;
+    padding-left:2px;
+    cursor: pointer;
+    color: #182a69;
+  }
+
+.titleText{
+    flex-grow: 1;
+    text-align: center;
+}
+
+.params-header {
+    display: flex;
+    text-align: center;
+    position: relative;
+    margin-bottom: 0px;
+    background-color: #E4F0F5;
+    border-bottom: 1px solid lightgray;
+    color: #182a69;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.params-content {
+    flex-grow: 1;
+    display: flex;
+    align-items: stretch;
+    padding:5px;
+    flex-direction: column;
+  }
+

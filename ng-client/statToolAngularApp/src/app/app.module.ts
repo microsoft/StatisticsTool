@@ -35,6 +35,7 @@ import { ConfigurationViewerComponent } from './configuration-viewer/configurati
 import { NewReportResultComponent } from './new-report/new-report-result/new-report-result.component';
 import { ClickOutsideDirective } from './click-outside.directive'; // Adjust the path to your directive
 import { CommonService } from './services/common.service';
+import { UdfArgumentsComponent } from './configuration-viewer/udf-arguments/udf-arguments.component';
 
 
 @NgModule({
@@ -52,7 +53,8 @@ import { CommonService } from './services/common.service';
     SaveSuiteDialogComponent,
     ConfigurationViewerComponent,
     NewReportResultComponent,
-    ClickOutsideDirective
+    ClickOutsideDirective,
+    UdfArgumentsComponent,
   ],
   imports: [
     NgMultiSelectDropDownModule.forRoot(),

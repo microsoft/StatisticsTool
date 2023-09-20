@@ -1,6 +1,5 @@
 .configuration-container {
     width: 100%;
-    
     min-height: 580px;
     padding: 0px;
     display: flex;
@@ -97,4 +96,17 @@
 
 .rotate {
   transform: rotate(180deg);
+}
+
+.button-container {
+  position: relative;
+  /* Add any other styles as needed */
+}
+
+.dynamic-div {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  /* Add other styles as needed */
 }
