@@ -118,13 +118,13 @@ export class ConfigurationViewerComponent implements OnInit {
   }
 
   getArgumentSvg(funcType:string){
-    if (funcType == 'prediction_reading_functions'){
+    if (funcType == 'reading_functions'){
       if(this.newReportService.selectedPredictionReadingFunction == '')
         return 'assets/argument-gray-icon.svg'
       else {
         if (!this.functionHasArguments(funcType,this.newReportService.selectedPredictionReadingFunction))
           return 'assets/argument-gray-icon.svg'
-        if (this.paramsHaveValue('prediction_reading_functions')){
+        if (this.paramsHaveValue('reading_functions')){
           return 'assets/argument-green-icon.svg'
         } else {
           return 'assets/argument-red-icon.svg'
@@ -203,7 +203,7 @@ export class ConfigurationViewerComponent implements OnInit {
   }
 
   enableArgumentsButton(funcType:string){
-    if (funcType == 'prediction_reading_functions'){
+    if (funcType == 'reading_functions'){
       if (this.newReportService.selectedPredictionReadingFunction != '' && 
           this.functionHasArguments(funcType,this.newReportService.selectedPredictionReadingFunction))
         return true;
@@ -235,7 +235,7 @@ export class ConfigurationViewerComponent implements OnInit {
   }
 
   paramsHaveValue(funcType:string){
-    if (funcType == 'prediction_reading_functions'){
+    if (funcType == 'reading_functions'){
       let x = this.newReportService.udf.get('reading_functions')?.find(x => x.funcName == this.newReportService.selectedPredictionReadingFunction)!;
       let b = true;
       x.params.forEach(p => {
