@@ -4,6 +4,7 @@ import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { SaveSuiteDialogComponent } from "../save-suite-dialog/save-suite-dialog.component";
 import { GROUND_TRUTH_DIRECTORY, LocalStorgeHelper, OUTPUT_DIRECTORY, PREDICTION_DIRECTORY } from "./localStorageHelper";
 import { Subject } from "rxjs";
+import { read } from "@popperjs/core";
 
 export const SELECTE_SUITE = '--- Select Suite ---';
 export const NONE_GT_READING_CUNCTION = 'none';
@@ -113,8 +114,9 @@ export class NewReportService {
 
     isPanelOpen = false;
 
-    //map between udf type (e.g. reading_function) to function names
+    //map between udf type (foe example reading_function) to function names
     udf = new Map<string,UDF.Item[]>();
+
     showArgumentsEvent = new Subject<{'funcType':string,'funcName':string,'udfItem':UDF.Item,'title':string}>();
     showParams = false;
     argPanelTop = '';
@@ -162,6 +164,10 @@ export class NewReportService {
             let funcs = this.processUdfItem(f,udfResponse);
             this.udf.set(f,funcs);
         }
+
+        let readingFunc = this.udf.get('reading_functions')
+        let gt = JSON.parse(JSON.stringify(readingFunc));
+        this.udf.set('gt_reading_functions',gt);
     }
 
     processUdfItem(funcType:string,udfResponse:any){

@@ -36,12 +36,13 @@
               </div>
           </div>
           <!-- Prediction Reading Function -->
-          <div class="row" style="width: 100%">
+          <div class="row" style="width: 100%;padding-right: 0px !important;">
             <div class="col">
-              <div class="form-group">
+              <div class="form-group" style="width:105% !important">
                 <label for="prediction_reading_function" style="font-weight: bold">Prediction Reading Function:</label>
                 <div style="display: flex; align-items: center;">
-                  <select class="form-select form-select-sm" id="prediction_reading_function" 
+                  <select class="form-select form-select-sm" 
+                          id="prediction_reading_function" 
                           style="padding-right: 10px; width: 95%" 
                           (change)="onPredictionReadingFunctionChange($event)"
                           [(ngModel)]="newReportService.selectedPredictionReadingFunction" required #predictionReadingFunctionSelect="ngModel"
@@ -63,19 +64,19 @@
           <!-- GT Reading Function-->
           <div class="row" style="width: 100%">
             <div class="col">
-              <div class="form-group">
+              <div class="form-group" style="width:105% !important">
                 <div style="display: flex; align-items: center;">
-                  <input type="checkbox" style="margin-right: 3px;" [(ngModel)]="newReportService.gtReadingSameAsPrediction">
+                  <input type="checkbox" 
+                         style="margin-right: 3px;" 
+                         [(ngModel)]="newReportService.gtReadingSameAsPrediction"
+                         (ngModelChange)="checkboxChanged('gt_reading_functions')">
                   <label for="gt_reading_function" style="font-weight: bold">{{ getGtReadingLabel()}}</label>
-                  <!--<label class="switch" style="margin-left: 10px">
-                    <input type="checkbox" [(ngModel)]="newReportService.gtReadingSameAsPrediction">
-                    <span class="slider round"></span>
-                  </label>-->
                 </div>
-                <div style="align-items: center;">
+                <div style="display: flex; align-items: center;">
                   <select class="form-select form-select-sm"
                           id="gt_reading_function"
                           style="padding-right: 10px; width: 100%;"
+                          (change)="onGTReadingFunctionChange($event)"
                           [(ngModel)]="newReportService.selectedGTReadingFunction" required #gtReadingFunctionSelect="ngModel"
                           [ngClass]="{
                             'is-invalid': gtReadingFunctionSelect.invalid && gtReadingFunctionSelect.touched,
@@ -85,102 +86,26 @@
                           }" [disabled]="newReportService.gtReadingSameAsPrediction">
                     <option *ngFor="let func of newReportService.gt_reading_functions" [value]="func">{{func}}</option>
                   </select>
+                  <img #gtReadingFunctionImg 
+                       [src]="getArgumentSvg('gt_reading_functions')" 
+                       (click)="showArgumentsPanel(gtReadingFunctionImgElement,'gt_reading_functions','GT Reading Function',newReportService.selectedGTReadingFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton('gt_reading_functions') ? 'all' : 'none'}"
+                       style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
             </div>
           </div>
-          <!--<div class="expandable-panel" style="margin-top:10px">
-            <div class="panel-header" (click)="togglePanel()">
-              <div class="header-text">Detection Scenario</div>
-              <span class="caret" [class.rotate]="newReportService.isPanelOpen">&#9660;</span>
-            </div>
-            <div class="panel-content" *ngIf="newReportService.isPanelOpen">
-              <div class="row" style="width: 100%;margin-left: 5px;">
-                <div class="col">
-                  <div class="form-group">
-                    <label for="overlap_function" style="font-weight: bold">Overlap Function:</label>
-                    <div style="display: flex; align-items: center;">
-                      <select class="form-select form-select-sm"
-                              id="overlap_function"
-                              style="padding-right: 10px; width: 90%;"
-                              [(ngModel)]="newReportService.selectedOverlapFunction" required #overlapFunctionSelect="ngModel"
-                              [ngClass]="{
-                                'is-invalid': overlapFunctionSelect.invalid && overlapFunctionSelect.touched,
-                                'is-valid': overlapFunctionSelect.valid && overlapFunctionSelect.touched,
-                                'enable-user-defined-function': newReportService.overlapEnabled,
-                                'disable-user-defined-function': !newReportService.overlapEnabled
-                              }" [disabled]="!newReportService.overlapEnabled">
-                        <option *ngFor="let func of newReportService.overlap_functions" [value]="func">{{func}}</option>
-                      </select>
-                      <div style="display: flex; align-items: center;">
-                        <label class="switch" style="margin-left: 10px">
-                          <input type="checkbox" [(ngModel)]="newReportService.overlapEnabled">
-                          <span class="slider round"></span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="row" style="width: 100%;margin-left: 5px;">
-                <div class="col">
-                  <div class="form-group">
-                    <label for="evaluate_function" style="font-weight: bold">Evaluate Function:</label>
-                    <div style="display: flex; align-items: center;">
-                      <select class="form-select form-select-sm"
-                              id="evaluate_function"
-                              style="padding-right: 10px; width: 90%;"
-                              [(ngModel)]="newReportService.selectedEvaluationFunction" required #evaluateFunctionSelect="ngModel"
-                              [ngClass]="{
-                                'is-invalid': evaluateFunctionSelect.invalid && evaluateFunctionSelect.touched,
-                                'is-valid': evaluateFunctionSelect.valid && evaluateFunctionSelect.touched,
-                                'enable-user-defined-function': newReportService.evaluateEnabled,
-                                'disable-user-defined-function': !newReportService.evaluateEnabled
-                              }" [disabled]="!newReportService.evaluateEnabled">
-                        <option *ngFor="let func of newReportService.evaluation_functions" [value]="func">{{func}}</option>
-                      </select>
-                      <div style="display: flex; align-items: center;">
-                        <label class="switch" style="margin-left: 10px">
-                          <input type="checkbox" [(ngModel)]="newReportService.evaluateEnabled">
-                          <span class="slider round"></span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="row" style="width: 100%;margin-left: 5px;margin-bottom: 7px;">
-                <div class="col">
-                  <div class="form-group">
-                    <label for="treshold" style="font-weight: bold">Treshold:</label>
-                    <div style="display: flex; align-items: center;">
-                      <input type="text" class="form-control form-control-sm" id="treshold" 
-                              style="background-color: white  !important;"
-                              [(ngModel)]="newReportService.treshold"
-                              placeholder="" name="treshold" style="min-height: 0px !important; width: 90%; padding-right: 10px;" minlength="1" required #treshholdInput="ngModel"
-                              [ngClass]="{
-                                'is-invalid': treshholdInput.invalid && treshholdInput.touched,
-                                'is-valid': treshholdInput.valid && treshholdInput.touched,
-                                'enable-user-defined-function': newReportService.tresholdEnabled,
-                                'disable-user-defined-function': !newReportService.tresholdEnabled
-                              }" [disabled]="!newReportService.tresholdEnabled">
-                      <div style="display: flex; align-items: center;">
-                        <label class="switch" style="margin-left: 10px">
-                          <input type="checkbox" [(ngModel)]="newReportService.tresholdEnabled">
-                          <span class="slider round"></span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>-->
           <!-- Association Function: -->
           <div class="row" style="width: 100%">
             <div class="col">
-              <div class="form-group">
-                <label for="transform_functions" style="font-weight: bold">Association Function:</label>
+              <div class="form-group" style="width:105% !important">
+                <div style="display: flex; align-items: center;">
+                  <input type="checkbox" 
+                         style="margin-right: 3px;" 
+                         [(ngModel)]="newReportService.associationEnabled"
+                         (ngModelChange)="checkboxChanged('association_functions')">
+                  <label for="association_functions" style="font-weight: bold">Association Function:</label>
+                </div>
                 <div style="display: flex; align-items: center;">
                   <select class="form-select form-select-sm"
                           id="association_functions"
@@ -195,12 +120,11 @@
                           }" [disabled]="!newReportService.associationEnabled">
                     <option *ngFor="let func of newReportService.association_functions" [value]="func">{{func}}</option>
                   </select>
-                  <div style="display: flex; align-items: center;">
-                    <label class="switch" style="margin-left: 10px">
-                      <input type="checkbox" [(ngModel)]="newReportService.associationEnabled">
-                      <span class="slider round"></span>
-                    </label>
-                  </div>
+                  <img #associationFunctionImg 
+                       [src]="getArgumentSvg('association_functions')" 
+                       (click)="showArgumentsPanel(associationFunctionImgElement,'association_functions','Association Function',newReportService.selectedAssociationFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton('association_functions') ? 'all' : 'none'}"
+                       style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
             </div>
@@ -208,13 +132,20 @@
           <!-- Transform Function: -->
           <div class="row" style="width: 100%">
             <div class="col">
-              <div class="form-group">
-                <label for="transform_functions" style="font-weight: bold">Transform Function:</label>
+              <div class="form-group" style="width:105% !important">
+                <div style="display: flex; align-items: center;">
+                  <input type="checkbox" 
+                         style="margin-right: 3px;" 
+                         [(ngModel)]="newReportService.transformEnabled"
+                         (ngModelChange)="checkboxChanged('transform_functions')">
+                  <label for="transform_functions" style="font-weight: bold">Transform Function:</label>
+                </div>
                 <div style="display: flex; align-items: center;">
                   <select class="form-select form-select-sm"
                           id="transform_functions"
                           style="padding-right: 10px; width: 100%;"
                           [(ngModel)]="newReportService.selectedTransformFunction" required #transformFunctionSelect="ngModel"
+                          (change)="onTransformFunctionChange($event)"
                           [ngClass]="{
                             'is-invalid': transformFunctionSelect.invalid && transformFunctionSelect.touched,
                             'is-valid': transformFunctionSelect.valid && transformFunctionSelect.touched,
@@ -223,12 +154,11 @@
                           }" [disabled]="!newReportService.transformEnabled">
                     <option *ngFor="let func of newReportService.transform_functions" [value]="func">{{func}}</option>
                   </select>
-                  <div style="display: flex; align-items: center;">
-                    <label class="switch" style="margin-left: 10px">
-                      <input type="checkbox" [(ngModel)]="newReportService.transformEnabled">
-                      <span class="slider round"></span>
-                    </label>
-                  </div>
+                  <img #transformFunctionImg 
+                       [src]="getArgumentSvg('transform_functions')" 
+                       (click)="showArgumentsPanel(transformFunctionImgElement,'transform_functions','Transform Function',newReportService.selectedAssociationFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton('transform_functions') ? 'all' : 'none'}"
+                       style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
             </div>

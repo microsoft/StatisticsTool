@@ -107,7 +107,7 @@ def options_for_funcs():
     transformation_funcs = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS)
     confusion_funcs      = get_users_defined_functions(UserDefinedConstants.CONFUSION_FUNCTIONS)
     
-    return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs
+    return file_reading_funcs, Evaluation_funcs, overlap_funcs, partition_funcs, statistics_funcs, transformation_funcs,confusion_funcs
 
 def load_config_dict(config_file_name):
     config_path = os.path.join(get_configs_folder(), config_file_name)
