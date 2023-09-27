@@ -56,4 +56,4 @@ def statistic_tool_reader_face_detection_classification(path, **kwargs):
     return df
 
 def get_function_arguments():
-    return { "param1":"string", "param2":"string","param3":"string" }
+    return { "param1":"string", "param2":"string","param3":"string","param4":"string","param5":"string","param6":"string" }

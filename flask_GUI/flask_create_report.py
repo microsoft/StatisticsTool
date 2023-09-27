@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 from flask import request,redirect
 import urllib.parse
-from app_config.constants import Constants
+from app_config.constants import Args, Constants, NewReportRoutes
 from classes_and_utils.UserDefinedFunctionsHelper import get_configs_folder, load_config, get_suites_folder,get_users_defined_functions,get_udf_argument_function
 from app_config.constants import UserDefinedConstants
 
@@ -13,40 +13,49 @@ from classes_and_utils.experiments.ExperimentRunner import run_experiment
 from utils.report_metadata import *
 
 
-@server.route('/new_report/nav_new_report', methods=['GET', 'POST'])
+@server.route(NewReportRoutes.NAV_NEW_REPORT, methods=['GET', 'POST'])
 def nav_report_func():
+    return redirect(f'/static/index.html?new_report=true')
+
+@server.route(NewReportRoutes.GET_ALL_CONFIGS_AND_SUITES, methods=['GET', 'POST'])
+def get_all_configs_and_suits():
     possible_configs = manage_new_report_page()
     possible_suites = get_possible_suites()
-    js_possible_configs = json.dumps(possible_configs)
-    js_possible_suites = json.dumps(possible_suites)
-    return redirect(f'/static/index.html?new_report=true&possible_configs={js_possible_configs}&possible_suites={js_possible_suites}')
+    
+    data = {
+        Args.CONFIGS: possible_configs,
+        Args.SUITES : possible_suites
+    }
+    
+    return json.dumps(data)
 
-@server.route('/new_report/get_suite', methods=['GET'])
+
+@server.route(NewReportRoutes.GET_SUITE, methods=['GET'])
 def get_suite():
-    suite_name = request.args.get('suite')
+    suite_name = request.args.get(Args.SUITE)
     configs = get_suite_configurations(suite_name)
     return json.dumps(configs)
 
-@server.route('/new_report/save_suite', methods=['GET','POST'])
+@server.route(NewReportRoutes.SAVE_SUITE, methods=['GET','POST'])
 def save_suite():
-    suite_name = request.json['suite']
-    configs = request.json['configurations']
+    suite_name = request.json[Args.SUITE]
+    configs = request.json[Args.CONFIGURATIONS]
     data = {
-        'configurations': list(csv.reader([configs]))[0]
+        Args.CONFIGURATIONS: list(csv.reader([configs]))[0]
     }
     json_object = json.dumps(data)
     
     folder = get_suites_folder()
     file_name = suite_name
-    if os.path.splitext(file_name)[1] != ".json":
-        file_name += ".json"
+    if os.path.splitext(file_name)[1] != Constants.JSON_EXTENSION:
+        file_name += Constants.JSON_EXTENSION
     path = os.path.join(folder,file_name)
     with open(path, "w") as js:
         js.write(json_object)
 
     return json.dumps(get_possible_suites())
 
-@server.route('/new_report/get_all_user_defined_functions', methods=['GET'])
+@server.route(NewReportRoutes.GET_ALL_USER_DEFINED_FUNCTIONS, methods=['GET'])
 def get_user_defined_functions_list():
     
     functions = dict()
@@ -61,30 +70,30 @@ def get_user_defined_functions_list():
 
     return json.dumps(functions)
 
-@server.route('/new_report/get_udf_user_arguments', methods=['GET'])
+@server.route(NewReportRoutes.GET_UDF_USER_ARGUMENTS, methods=['GET'])
 def get_udf_user_arguments():
 
-    func_type = request.args['func_type']
-    func_name = request.args['func_name']
+    func_type = request.args[Args.FUNC_TYPE]
+    func_name = request.args[Args.FUNC_NAME]
 
     f = get_udf_argument_function(func_type,func_name)
     user_args = f()
     return json.dumps(user_args)
 
-@server.route('/new_report/get_configuration',methods=['GET'])
+@server.route(NewReportRoutes.GET_CONFIGURATION,methods=['GET'])
 def get_config():
-    config_name = request.args.get('config')
+    config_name = request.args.get(Args.CONFIG)
     config_dict = load_config_dict(config_name)
 
     return json.dumps(config_dict)
 
-@server.route('/new_report/save_configuration',methods=['POST'])
+@server.route(NewReportRoutes.SAVE_CONFIGURATION,methods=['POST'])
 def save_configuration():
-    config_name = request.json['configName']
-    if os.path.splitext(config_name)[1] != ".json":
-        config_name += ".json"
+    config_name = request.json[Args.CONFIG_NAME]
+    if os.path.splitext(config_name)[1] != Constants.JSON_EXTENSION:
+        config_name += Constants.JSON_EXTENSION
     dic = request.json
-    del dic['configName']
+    del dic[Args.CONFIG_NAME]
     configs_folder = get_configs_folder()
     path_to_save = os.path.join(configs_folder, config_name)
     save_json(path_to_save, [dic])
@@ -95,7 +104,7 @@ def save_configuration():
     return  json.dumps(possible_configs)
     
 
-@server.route('/new_report/calculating_page', methods=['GET', 'POST'])
+@server.route(NewReportRoutes.CALCULATING_PAGE, methods=['GET', 'POST'])
 def calculating():
     
     # extract the user specified directories and names
@@ -119,13 +128,13 @@ def calculating():
             os.makedirs(report_dir)
             # calculate the intermediate results for all the videos then combine them
             process_result, _ = manage_video_analysis(config_file_name, prd_dir, report_dir, gt_dir=GT_dir)   
-            process_result['output_path'] = output_path
+            process_result[Args.OUTPUT_PATH] = output_path
             all_process_result.append(process_result)
         except Exception as e:
-            result['ok'] = False
-            result['link'] = ''
-            result['messages'] = ''
-            result['errorMessage'] = f'An error occurred while executing the {config_file_name} configuration file' 
+            result[Args.OK] = False
+            result[Args.LINK] = ''
+            result[Args.MESSAGE] = ''
+            result[Args.ERROR_MESSAGE] = f'An error occurred while executing the {config_file_name} configuration file' 
             return  json.dumps(result)
 
     link = "/viewer/Report_Viewer?&report_file_path=" +  urllib.parse.quote(output_path)

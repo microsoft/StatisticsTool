@@ -1,7 +1,7 @@
 <div class="configuration-container" *ngIf="newReportService.showConfigViewer">
     <div class="configuration-header">
         <div class="closeButton" (click)="close()">X</div>
-        <div class="titleText">{{getTitle()}} </div>
+        <div class="titleText">{{getTitle()}}</div>
     </div>
     <div class="configuration-content">
         <!-- Configuration Name -->
@@ -36,14 +36,14 @@
               </div>
           </div>
           <!-- Prediction Reading Function -->
-          <div class="row" style="width: 100%;padding-right: 0px !important;">
+          <div class="row" style="width: 104.5%;padding-right: 0px !important;">
             <div class="col">
-              <div class="form-group" style="width:105% !important">
-                <label for="prediction_reading_function" style="font-weight: bold">Prediction Reading Function:</label>
+              <div class="form-group" style="width:100% !important">
+                <label for="prediction_reading_function" style="font-weight: bold">{{ udfTitles.PREDICTION_READING_FUNCTION}}:</label>
                 <div style="display: flex; align-items: center;">
                   <select class="form-select form-select-sm" 
                           id="prediction_reading_function" 
-                          style="padding-right: 10px; width: 95%" 
+                          style="padding-right: 10px; width: 90%" 
                           (change)="onPredictionReadingFunctionChange($event)"
                           [(ngModel)]="newReportService.selectedPredictionReadingFunction" required #predictionReadingFunctionSelect="ngModel"
                           [ngClass]="{
@@ -53,9 +53,9 @@
                     <option *ngFor="let func of newReportService.prediction_reading_functions" [value]="func">{{func}}</option>
                   </select>
                   <img #readingFunctionImg 
-                       [src]="getArgumentSvg('reading_functions')" 
-                       (click)="showArgumentsPanel(readingFunctionImgElement,'reading_functions','Prediction Reading Function',newReportService.selectedPredictionReadingFunction)"
-                       [ngStyle]="{'pointer-events': enableArgumentsButton('reading_functions') ? 'all' : 'none'}"
+                       [src]="getArgumentSvg(udfTypes.READING_FUNCTIONS)" 
+                       (click)="showArgumentsPanel(readingFunctionImgElement,udfTypes.READING_FUNCTIONS,udfTitles.PREDICTION_READING_FUNCTION,newReportService.selectedPredictionReadingFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton(udfTypes.READING_FUNCTIONS) ? 'all' : 'none'}"
                        style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
@@ -64,14 +64,26 @@
           <!-- GT Reading Function-->
           <div class="row" style="width: 100%">
             <div class="col">
-              <div class="form-group" style="width:105% !important">
+              <div class="form-group" style="width:101% !important">
                 <div style="display: flex; align-items: center;">
-                  <input type="checkbox" 
-                         style="margin-right: 3px;" 
-                         [(ngModel)]="newReportService.gtReadingSameAsPrediction"
-                         (ngModelChange)="checkboxChanged('gt_reading_functions')">
-                  <label for="gt_reading_function" style="font-weight: bold">{{ getGtReadingLabel()}}</label>
+                  <label>
+                    <input type="radio" 
+                           name="gt_reading_function" 
+                           [(ngModel)]="newReportService.gtReadingSameAsPrediction" 
+                           [value]="true"
+                           (ngModelChange)="gtReadingRadioChanged(true)">
+                    {{ udfTitles.GT_READING_FUNCTION_SAME_AS_PREDICTION }}
+                  </label>
+                  <label style="margin-left: 20px;">
+                    <input type="radio" 
+                           name="gt_reading_function" 
+                           [(ngModel)]="newReportService.gtReadingSameAsPrediction" 
+                           [value]="false"
+                           (ngModelChange)="gtReadingRadioChanged(false)">
+                    {{ udfTitles.GT_READING_FUNCTION_SEPARATE_FUNCTIONS }}
+                  </label>
                 </div>
+
                 <div style="display: flex; align-items: center;">
                   <select class="form-select form-select-sm"
                           id="gt_reading_function"
@@ -87,9 +99,9 @@
                     <option *ngFor="let func of newReportService.gt_reading_functions" [value]="func">{{func}}</option>
                   </select>
                   <img #gtReadingFunctionImg 
-                       [src]="getArgumentSvg('gt_reading_functions')" 
-                       (click)="showArgumentsPanel(gtReadingFunctionImgElement,'gt_reading_functions','GT Reading Function',newReportService.selectedGTReadingFunction)"
-                       [ngStyle]="{'pointer-events': enableArgumentsButton('gt_reading_functions') ? 'all' : 'none'}"
+                       [src]="getArgumentSvg(udfTypes.GT_READING_FUNCTIONS)" 
+                       (click)="showArgumentsPanel(gtReadingFunctionImgElement,udfTypes.GT_READING_FUNCTIONS,udfTitles.GT_READING_FUNCTION,newReportService.selectedGTReadingFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton(udfTypes.GT_READING_FUNCTIONS) ? 'all' : 'none'}"
                        style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
@@ -98,13 +110,13 @@
           <!-- Association Function: -->
           <div class="row" style="width: 100%">
             <div class="col">
-              <div class="form-group" style="width:105% !important">
+              <div class="form-group" style="width:101% !important">
                 <div style="display: flex; align-items: center;">
                   <input type="checkbox" 
                          style="margin-right: 3px;" 
                          [(ngModel)]="newReportService.associationEnabled"
-                         (ngModelChange)="checkboxChanged('association_functions')">
-                  <label for="association_functions" style="font-weight: bold">Association Function:</label>
+                         (ngModelChange)="checkboxChanged(udfTypes.ASSOCIATION_FUNCTIONS)">
+                  <label for="association_functions" style="font-weight: bold">{{ udfTitles.ASSOCIATION_FUNCTION }}:</label>
                 </div>
                 <div style="display: flex; align-items: center;">
                   <select class="form-select form-select-sm"
@@ -121,9 +133,9 @@
                     <option *ngFor="let func of newReportService.association_functions" [value]="func">{{func}}</option>
                   </select>
                   <img #associationFunctionImg 
-                       [src]="getArgumentSvg('association_functions')" 
-                       (click)="showArgumentsPanel(associationFunctionImgElement,'association_functions','Association Function',newReportService.selectedAssociationFunction)"
-                       [ngStyle]="{'pointer-events': enableArgumentsButton('association_functions') ? 'all' : 'none'}"
+                       [src]="getArgumentSvg(udfTypes.ASSOCIATION_FUNCTIONS)" 
+                       (click)="showArgumentsPanel(associationFunctionImgElement,udfTypes.ASSOCIATION_FUNCTIONS,udfTitles.ASSOCIATION_FUNCTION,newReportService.selectedAssociationFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton(udfTypes.ASSOCIATION_FUNCTIONS) ? 'all' : 'none'}"
                        style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
@@ -132,13 +144,13 @@
           <!-- Transform Function: -->
           <div class="row" style="width: 100%">
             <div class="col">
-              <div class="form-group" style="width:105% !important">
+              <div class="form-group" style="width:101% !important">
                 <div style="display: flex; align-items: center;">
                   <input type="checkbox" 
                          style="margin-right: 3px;" 
                          [(ngModel)]="newReportService.transformEnabled"
-                         (ngModelChange)="checkboxChanged('transform_functions')">
-                  <label for="transform_functions" style="font-weight: bold">Transform Function:</label>
+                         (ngModelChange)="checkboxChanged(udfTypes.TRANSFORM_FUNCTIONS)">
+                  <label for="transform_functions" style="font-weight: bold">{{ udfTitles.TRANSFORM_FUNCTION }}:</label>
                 </div>
                 <div style="display: flex; align-items: center;">
                   <select class="form-select form-select-sm"
@@ -155,9 +167,9 @@
                     <option *ngFor="let func of newReportService.transform_functions" [value]="func">{{func}}</option>
                   </select>
                   <img #transformFunctionImg 
-                       [src]="getArgumentSvg('transform_functions')" 
-                       (click)="showArgumentsPanel(transformFunctionImgElement,'transform_functions','Transform Function',newReportService.selectedAssociationFunction)"
-                       [ngStyle]="{'pointer-events': enableArgumentsButton('transform_functions') ? 'all' : 'none'}"
+                       [src]="getArgumentSvg(udfTypes.TRANSFORM_FUNCTIONS)" 
+                       (click)="showArgumentsPanel(transformFunctionImgElement,udfTypes.TRANSFORM_FUNCTIONS,udfTitles.TRANSFORM_FUNCTION,newReportService.selectedAssociationFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton(udfTypes.TRANSFORM_FUNCTIONS) ? 'all' : 'none'}"
                        style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
@@ -169,13 +181,20 @@
           <!-- Partitioning Function: -->
           <div class="row" style="width: 100%">
             <div class="col">
-              <div class="form-group">
-                <label for="partitioning_function" style="font-weight: bold">Partitioning Function:</label>
+              <div class="form-group" style="width:101% !important">
+                <div style="display: flex; align-items: center;">
+                  <input  type="checkbox" 
+                          style="margin-right: 3px;" 
+                          [(ngModel)]="newReportService.partitioningEnabled"
+                          (ngModelChange)="checkboxChanged(udfTypes.PARTITIONING_FUNCTIONS)">
+                    <label for="partitioning_functions" style="font-weight: bold">{{ udfTitles.PARTITIONING_FUNCTION }}:</label>
+                </div>
                 <div style="display: flex; align-items: center;">
                   <select class="form-select form-select-sm"
-                          id="partitioning_function"
+                          id="partitioning_functions"
                           style="padding-right: 10px; width: 100%;"
                           [(ngModel)]="newReportService.selectedPartitioningFunction" required #partitFunctionSelect="ngModel"
+                          (change)="onPartitioningFunctionChange($event)"
                           [ngClass]="{
                             'is-invalid': partitFunctionSelect.invalid && partitFunctionSelect.touched,
                             'is-valid': partitFunctionSelect.valid && partitFunctionSelect.touched,
@@ -184,12 +203,11 @@
                           }" [disabled]="!newReportService.partitioningEnabled">
                     <option *ngFor="let func of newReportService.partitioning_functions" [value]="func">{{func}}</option>
                   </select>
-                  <div style="display: flex; align-items: center;">
-                    <label class="switch" style="margin-left: 10px">
-                      <input type="checkbox" [(ngModel)]="newReportService.partitioningEnabled">
-                      <span class="slider round"></span>
-                    </label>
-                  </div>
+                  <img #partitioningFunctionImg 
+                       [src]="getArgumentSvg(udfTypes.PARTITIONING_FUNCTIONS)" 
+                       (click)="showArgumentsPanel(partitioningFunctionImgElement,udfTypes.PARTITIONING_FUNCTIONS,udfTitles.PARTITIONING_FUNCTION,newReportService.selectedPartitioningFunction)"
+                       [ngStyle]="{'pointer-events': enableArgumentsButton(udfTypes.PARTITIONING_FUNCTIONS) ? 'all' : 'none'}"
+                       style="margin-left: 5px; cursor: pointer;" />
                 </div>
               </div>
             </div>
@@ -198,7 +216,7 @@
           <div class="row" style="width:100%">
             <div class="col">
               <div class="form-group">
-                <label for="confusion_function" style="font-weight: bold">Confusion Function:</label>
+                <label for="confusion_function" style="font-weight: bold"> {{ udfTitles.CONFUSION_FUNCTION }}:</label>
                     <select class="form-select form-select-sm" id="confusion_function" style="padding-right: 10px;width:100%"
                         [(ngModel)]="newReportService.selectedConfusionFunction" required #confusionFunctionSelect="ngModel"
                             [ngClass]="{
@@ -218,7 +236,7 @@
           <div class="row" style="width:100%">
               <div class="col">
                 <div class="form-group">
-                  <label for="statistics_function" style="font-weight: bold">Statistics Function:</label>
+                  <label for="statistics_function" style="font-weight: bold">{{ udfTitles.STATISTICS_FUNCTION }}:</label>
                       <select class="form-select form-select-sm" id="statistics_function" style="padding-right: 10px;width:100%"
                           [(ngModel)]="newReportService.selectedStatisticsFunction" required #statFunctionSelect="ngModel"
                           [ngClass]="{

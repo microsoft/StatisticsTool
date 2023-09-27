@@ -1,4 +1,4 @@
-<div class="centered-image" *ngIf="newReportService.creatingReport" style="z-index:999999">
+<div class="centered-image" *ngIf="newReportService.isBusy" style="z-index:999999">
     <img src="assets/spinner-90-ring-with-bg.svg" style="width:40px;height:40x" />
   </div>
 <div style="height:100%">
@@ -29,7 +29,7 @@
         </div>
 
         <div style="display: flex;position: relative;margin-right: 20px;" autocomplete="on">
-            <div class="overlay" [class.show]="newReportService.creatingReport"></div>
+            <div class="overlay" [class.show]="newReportService.isBusy"></div>
             <form class="form-container">
                 <div class="form-header">
                     Crate New Report 
