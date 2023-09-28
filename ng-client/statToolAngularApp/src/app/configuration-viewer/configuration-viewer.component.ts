@@ -293,8 +293,11 @@ export class ConfigurationViewerComponent implements OnInit {
   }
 
   paramsHaveValue(funcType:UDFTypeEnum){
+    
     if (funcType == UDFTypeEnum.READING_FUNCTIONS){
       let x = this.newReportService.udf.get(funcType)?.find(x => x.funcName == this.newReportService.selectedPredictionReadingFunction)!;
+      if (x == undefined || x.params == undefined)
+        return false;
       let b = true;
       x.params.forEach(p => {
         if (p.value == '')

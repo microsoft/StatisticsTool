@@ -1,22 +1,18 @@
 [
     {
         "Prediction Reading Function": {
-            "function": "statistic_tool_reader_face_detection_classification",
+            "func_name": "statistic_tool_reader_face_detection",
             "params": {
-                "param1": "p1",
-                "param2": "p2",
-                "param3": "p3",
-                "param4": "p4",
-                "param5": "p5",
-                "param6": "p6"
+                "param1": "1",
+                "param2": "2"
             }
         },
         "Statistics Function": {
-            "function": "precision_recall",
+            "func_name": "precision_recall",
             "params": {}
         },
         "Confusion Function": {
-            "function": "get_TP_FP_FN_masks",
+            "func_name": "get_TP_FP_FN_masks",
             "params": {}
         },
         "Log Names to Evaluate": "FaceDetectionOutput.json"

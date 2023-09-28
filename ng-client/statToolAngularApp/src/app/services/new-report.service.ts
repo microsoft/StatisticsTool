@@ -329,6 +329,33 @@ export class NewReportService {
         this.logName = '';
     }  
 
+    parseGetConfigResult(udfTitle:UDFTitleEnum,udfType:UDFTypeEnum,result:any){
+        
+        if (result[udfTitle] != undefined){
+            let func = result[udfTitle].func_name;
+            if (udfTitle == UDFTitleEnum.PREDICTION_READING_FUNCTION)
+                this.selectedPredictionReadingFunction = func;
+            if (udfTitle == UDFTitleEnum.ASSOCIATION_FUNCTION)
+                this.selectedAssociationFunction = func;
+            if (udfTitle == UDFTitleEnum.CONFUSION_FUNCTION)
+                this.selectedConfusionFunction = func;
+            if (udfTitle == UDFTitleEnum.GT_READING_FUNCTION)
+                this.selectedGTReadingFunction = func;
+            if (udfTitle == UDFTitleEnum.STATISTICS_FUNCTION)
+                this.selectedStatisticsFunction = func;
+            if (udfTitle == UDFTitleEnum.TRANSFORM_FUNCTION)
+                this.selectedTransformFunction = func;
+                
+            let args = result[udfTitle].params;
+            let udfItem = this.udf.get(udfType)?.find(x => x.funcName == func);
+            if (udfItem != undefined){
+                udfItem.params.forEach(p => {
+                    p.value = args[p.name];
+                })
+            }
+        }
+    }
+
     showConfig(configName:string){
         this.showConfigViewer = true;    
         //get the confing from server
@@ -336,19 +363,22 @@ export class NewReportService {
         let url = '/new_report/get_configuration';
         this.http.get<any>(url,{params}).subscribe(config => {
             //clear the config viewer  
+            
             this.clearConfigViewer();
             //show the new config in the viewer
-            this.selectedPredictionReadingFunction = config[UDFTitleEnum.PREDICTION_READING_FUNCTION]; 
-            this.selectedGTReadingFunction = config[UDFTitleEnum.GT_READING_FUNCTION];
-            this.selectedTransformFunction = config[UDFTitleEnum.TRANSFORM_FUNCTION];
-            this.selectedPartitioningFunction = config[UDFTitleEnum.PARTITIONING_FUNCTION];
-            this.selectedStatisticsFunction = config[UDFTitleEnum.STATISTICS_FUNCTION];
-            this.selectedConfusionFunction = config[UDFTitleEnum.CONFUSION_FUNCTION];
-        
+
+            this.parseGetConfigResult(UDFTitleEnum.ASSOCIATION_FUNCTION,UDFTypeEnum.ASSOCIATION_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTitleEnum.CONFUSION_FUNCTION,UDFTypeEnum.CONFUSION_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTitleEnum.GT_READING_FUNCTION,UDFTypeEnum.GT_READING_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTitleEnum.PARTITIONING_FUNCTION,UDFTypeEnum.PARTITIONING_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTitleEnum.PREDICTION_READING_FUNCTION,UDFTypeEnum.READING_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTitleEnum.STATISTICS_FUNCTION,UDFTypeEnum.STATISTICS_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTitleEnum.TRANSFORM_FUNCTION,UDFTypeEnum.TRANSFORM_FUNCTIONS,config);
+                    
             this.configName = configName;
             this.logName = config['Log Names to Evaluate'];
 
-            this.gtReadingSameAsPrediction = (this.selectedPredictionReadingFunction == this.selectedGTReadingFunction) || (this.selectedGTReadingFunction.toLowerCase() == 'none');
+            this.gtReadingSameAsPrediction = (this.selectedGTReadingFunction == undefined || this.selectedGTReadingFunction == null || this.selectedGTReadingFunction == '') || (this.selectedPredictionReadingFunction == this.selectedGTReadingFunction) || (this.selectedGTReadingFunction.toLowerCase() == 'none');
             this.transformEnabled = this.selectedTransformFunction != '' && this.selectedTransformFunction != undefined;
             this.partitioningEnabled = this.selectedPartitioningFunction != '' && this.selectedPartitioningFunction != undefined;
 
@@ -367,7 +397,8 @@ export class NewReportService {
         }
 
         dictionary[title] = {
-            'function':selectedFunc,
+
+            'func_name':selectedFunc,
             'params':paramsObj
         }
     }
@@ -376,7 +407,7 @@ export class NewReportService {
         this.newReportResult = new NewReportResult();
         const dictionary: { [key: string]: any } = {};
         this.addUdfToConfig(UDFTypeEnum.READING_FUNCTIONS,UDFTitleEnum.PREDICTION_READING_FUNCTION,this.selectedPredictionReadingFunction,dictionary);
-        if (!this.gtReadingSameAsPrediction)
+        if (!this.gtReadingSameAsPrediction && this.selectedGTReadingFunction.toLocaleLowerCase() != 'none')
             this.addUdfToConfig(UDFTypeEnum.GT_READING_FUNCTIONS,UDFTitleEnum.GT_READING_FUNCTION,this.selectedGTReadingFunction,dictionary);
         if (this.transformEnabled)
             this.addUdfToConfig(UDFTypeEnum.TRANSFORM_FUNCTIONS,UDFTitleEnum.TRANSFORM_FUNCTION,this.selectedTransformFunction,dictionary);
