@@ -47,22 +47,22 @@ export class ConfigurationViewerComponent implements OnInit {
     if (this.newReportService.configName == '') return true;
 
     if (this.newReportService.selectedPredictionReadingFunction == '') return true;
-    else if (this.newReportService.selectedPredictionReadingFunction != '' && !this.paramsHaveValue(UDFTypeEnum.READING_FUNCTIONS)) return true;
+    //else if (this.newReportService.selectedPredictionReadingFunction != '' && !this.paramsHaveValue(UDFTypeEnum.READING_FUNCTIONS)) return true;
 
     if (!this.newReportService.gtReadingSameAsPrediction && this.newReportService.selectedGTReadingFunction == '') return true;
-    else if (!this.newReportService.gtReadingSameAsPrediction && this.newReportService.selectedGTReadingFunction != '' && !this.paramsHaveValue(UDFTypeEnum.GT_READING_FUNCTIONS)) return true;
+    //else if (!this.newReportService.gtReadingSameAsPrediction && this.newReportService.selectedGTReadingFunction != '' && !this.paramsHaveValue(UDFTypeEnum.GT_READING_FUNCTIONS)) return true;
     
     if (this.newReportService.transformEnabled && this.newReportService.selectedTransformFunction == '') return true;
-    else if (this.newReportService.transformEnabled && this.newReportService.selectedTransformFunction != '' && !this.paramsHaveValue(UDFTypeEnum.TRANSFORM_FUNCTIONS)) return true;
+    //else if (this.newReportService.transformEnabled && this.newReportService.selectedTransformFunction != '' && !this.paramsHaveValue(UDFTypeEnum.TRANSFORM_FUNCTIONS)) return true;
 
     if (this.newReportService.selectedStatisticsFunction == '') return true;
-    else if (this.newReportService.selectedStatisticsFunction != '' && !this.paramsHaveValue(UDFTypeEnum.STATISTICS_FUNCTIONS)) return true;
+    //else if (this.newReportService.selectedStatisticsFunction != '' && !this.paramsHaveValue(UDFTypeEnum.STATISTICS_FUNCTIONS)) return true;
 
     if (this.newReportService.partitioningEnabled && this.newReportService.selectedPartitioningFunction == '') return true;
-    else if (this.newReportService.partitioningEnabled && this.newReportService.selectedPartitioningFunction != ''  && !this.paramsHaveValue(UDFTypeEnum.PARTITIONING_FUNCTIONS)) return true;
+    //else if (this.newReportService.partitioningEnabled && this.newReportService.selectedPartitioningFunction != ''  && !this.paramsHaveValue(UDFTypeEnum.PARTITIONING_FUNCTIONS)) return true;
 
     if (this.newReportService.selectedConfusionFunction == '') return true;
-    else if (this.newReportService.selectedConfusionFunction != '' && !this.paramsHaveValue(UDFTypeEnum.CONFUSION_FUNCTIONS)) return true;
+    //else if (this.newReportService.selectedConfusionFunction != '' && !this.paramsHaveValue(UDFTypeEnum.CONFUSION_FUNCTIONS)) return true;
 
     return false
       

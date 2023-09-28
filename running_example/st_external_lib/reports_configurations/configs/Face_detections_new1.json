@@ -1,25 +1,14 @@
 [
     {
         "Prediction Reading Function": {
-            "func_name": "statistic_tool_reader_face_detection_classification",
-            "params": {
-                "param1": "1",
-                "param2": "2",
-                "param3": "3",
-                "param4": "4",
-                "param5": "5",
-                "param6": "6"
-            }
-        },
-        "GT Reading Function": {
             "func_name": "statistic_tool_reader_face_detection",
             "params": {
-                "param1": "p",
-                "param2": ""
+                "param1": "par1",
+                "param2": "233"
             }
         },
         "Transform Function": {
-            "func_name": "basic_event_transform",
+            "func_name": "naive_event_transform",
             "params": {}
         },
         "Statistics Function": {
@@ -33,7 +22,7 @@
         "Association Function": {
             "func_name": "test",
             "params": {
-                "param1": "sa",
+                "param1": "xxx",
                 "param2": "aa",
                 "param3": "sas"
             }

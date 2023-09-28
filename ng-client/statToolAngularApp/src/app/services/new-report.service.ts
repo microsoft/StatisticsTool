@@ -5,6 +5,7 @@ import { SaveSuiteDialogComponent } from "../save-suite-dialog/save-suite-dialog
 import { GROUND_TRUTH_DIRECTORY, LocalStorgeHelper, OUTPUT_DIRECTORY, PREDICTION_DIRECTORY } from "./localStorageHelper";
 import { Subject } from "rxjs";
 import { UDFTitleEnum, UDFTypeEnum } from "../common/enums";
+import Swal from 'sweetalert2';
 
 export const SELECTE_SUITE = '--- Select Suite ---';
 export const NONE_GT_READING_CUNCTION = 'none';
@@ -327,6 +328,16 @@ export class NewReportService {
 
         this.configName = '';
         this.logName = '';
+
+        //clear param values
+        this.udf.forEach((value, key) => {
+            value.forEach(item => {
+                item.params.forEach(p => {
+                    p.value = '';
+                })
+            });
+        })
+
     }  
 
     parseGetConfigResult(udfTitle:UDFTitleEnum,udfType:UDFTypeEnum,result:any){
@@ -357,6 +368,7 @@ export class NewReportService {
     }
 
     showConfig(configName:string){
+        this.showParams = false;
         this.showConfigViewer = true;    
         //get the confing from server
         let params = { 'config':configName };
@@ -404,6 +416,8 @@ export class NewReportService {
     }
 
     saveConfig(){
+        this.isBusy = true;
+        this.showParams = false
         this.newReportResult = new NewReportResult();
         const dictionary: { [key: string]: any } = {};
         this.addUdfToConfig(UDFTypeEnum.READING_FUNCTIONS,UDFTitleEnum.PREDICTION_READING_FUNCTION,this.selectedPredictionReadingFunction,dictionary);
@@ -415,7 +429,7 @@ export class NewReportService {
             this.addUdfToConfig(UDFTypeEnum.PARTITIONING_FUNCTIONS,UDFTitleEnum.PARTITIONING_FUNCTION,this.selectedPartitioningFunction,dictionary);
         this.addUdfToConfig(UDFTypeEnum.STATISTICS_FUNCTIONS,UDFTitleEnum.STATISTICS_FUNCTION,this.selectedStatisticsFunction,dictionary);
         this.addUdfToConfig(UDFTypeEnum.CONFUSION_FUNCTIONS,UDFTitleEnum.CONFUSION_FUNCTION,this.selectedConfusionFunction,dictionary);
-
+        this.addUdfToConfig(UDFTypeEnum.ASSOCIATION_FUNCTIONS,UDFTitleEnum.ASSOCIATION_FUNCTION,this.selectedAssociationFunction,dictionary);
 
         /*dictionary['Prediction Reading Function'] = this.selectedPredictionReadingFunction;
         if (!this.gtReadingSameAsPrediction)
@@ -433,11 +447,23 @@ export class NewReportService {
         const url = '/new_report/save_configuration'; 
 
         this.http.post(url, dictionary).subscribe(response => {
+            this.isBusy = false;
             let configs:any;
             configs = response;
             this.configs = configs;
             this.configs.sort((a,b) =>  (a > b ? 1 : -1));
-        })
+
+            Swal.fire({
+                text: 'Configuration saved successfully',
+                timer:3000,
+                showConfirmButton:false,
+                showCancelButton:false,
+                backdrop:false,
+                color:'white',
+                position:'bottom',
+                background:'#00CC00',
+              });
+            })
     }
 
     saveDataInLocalStorage(){
