@@ -80,15 +80,12 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(){
+    this.newReportService.initialize();
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart){
         let reports = new URLSearchParams(window.location.search).get('reports');
         if (reports == null){
           this.isNewReport = true;
-          let configs = new URLSearchParams(window.location.search).get('possible_configs');
-          let suites = new URLSearchParams(window.location.search).get('possible_suites');
-          this.newReportService.init(configs!,suites!);
-
         } else {
           this.isNewReport = false;
           let reportsPairs = new URLSearchParams(window.location.search).get('reports')?.toString();

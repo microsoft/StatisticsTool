@@ -21,6 +21,7 @@ THRESHOLD_TOKEN = 'Threshold'
 PREDICTIONS_READING_TOKEN = "Prediction Reading Function"
 GT_READING_FUNC_TOKEN = "GT Reading Function"
 LOGS_TO_EVALUATE_TOKEN = "Log Names to Evaluate"
+CONFUSION_FUNC_TOKEN = 'Confusion Functions'
 
 def create_run_info(primary_path, primary_name, secondary_path, secondary_name, video_path) -> dict:
     header = {}

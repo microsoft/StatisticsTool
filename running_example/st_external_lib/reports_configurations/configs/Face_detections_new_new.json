@@ -1,0 +1,43 @@
+[
+    {
+        "Prediction Reading Function": {
+            "func_name": "statistic_tool_reader_face_detection_classification",
+            "params": {
+                "param1": "1",
+                "param2": "2",
+                "param3": "3",
+                "param4": "4",
+                "param5": "5",
+                "param6": "6"
+            }
+        },
+        "GT Reading Function": {
+            "func_name": "statistic_tool_reader_face_detection",
+            "params": {
+                "param1": "p",
+                "param2": ""
+            }
+        },
+        "Transform Function": {
+            "func_name": "basic_event_transform",
+            "params": {}
+        },
+        "Statistics Function": {
+            "func_name": "precision_recall",
+            "params": {}
+        },
+        "Confusion Function": {
+            "func_name": "get_TP_FP_FN_masks",
+            "params": {}
+        },
+        "Association Function": {
+            "func_name": "test",
+            "params": {
+                "param1": "sa",
+                "param2": "aa",
+                "param3": "sas"
+            }
+        },
+        "Log Names to Evaluate": "FaceDetectionOutput.json"
+    }
+]

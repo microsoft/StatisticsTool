@@ -38,4 +38,3 @@ def min_distance_evaluation(predictions_dict_list, overlap_mat, **kwargs):
             predictions_dict_list[i]['state'] = overlap_mat[i][j]
             if overlap_mat[i][j] > 0:
                 predictions_dict_list[i]['matching'] = j
-

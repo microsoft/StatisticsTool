@@ -13,12 +13,12 @@ EXAMPLES_IN_SEGMENT_CONST = 'examples_in_segment'
 
 class ParallelExperiment:
  
-    def __init__(self, comp_data, partitioning_func):
+    def __init__(self, comp_data, partitioning_func,confusion_func):
         self.comp_data = comp_data
         self.segmentations_masks = {}
         self.cell_statistics_map = {}
     
-        self.confusion_masks, self.segmentations_masks = ParallelExperiment.calc_experiment(comp_data, partitioning_func)
+        self.confusion_masks, self.segmentations_masks = ParallelExperiment.calc_experiment(comp_data, partitioning_func,confusion_func)
        
     def get_segmentations_masks(self):
         return self.segmentations_masks
@@ -143,8 +143,11 @@ class ParallelExperiment:
         return {"TP":TP_mask, "FP":FP_mask, "FN":FN_mask, "TN":TN_mask}
                
     @staticmethod
-    def calc_experiment(comp_data, segmentation_func):
-        confusion_calc_func = ParallelExperiment.get_TP_FP_FN_masks
+    def calc_experiment(comp_data, segmentation_func,confusion_func):
+        confusion_calc_func = confusion_func 
+
+        if confusion_calc_func == None:
+            confusion_calc_func = ParallelExperiment.get_TP_FP_FN_masks
 
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
         confusion_masks = confusion_calc_func(comp_data)

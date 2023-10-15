@@ -1,0 +1,31 @@
+<div class="params-container" *ngIf="show" 
+    [style.top]="top" 
+    [style.left]="left"
+    style="margin-left: 30px;">
+    <div class="params-header" >
+        <div class="titleText">{{ getTitle() }} </div>
+        <div class="closeButton" (click)="close()">X</div>
+    </div>
+    <div class="params-content">
+        <div class="row text-center" style="width:100%;margin-bottom: 7px;">
+            <div class="col">
+              <div class="form-group">
+                <label style="font-weight: bold">Args of {{data.funcName}}</label>
+              </div>
+            </div>
+        </div>
+        <ng-container *ngFor="let p of params; let i = index">
+            <div class="row" style="width:100%;margin-bottom: 7px;">
+                <div class="col">
+                  <div class="form-group">
+                    <label style="font-weight: bold">{{p.name}}:</label>
+                    <input type="text" class="form-control form-control-sm" 
+                          style="min-height: 0px !important;width:100%;padding-right: 10px;" 
+                          [(ngModel)]="p.value"
+                          >
+                  </div>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+</div>

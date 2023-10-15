@@ -1,3 +1,5 @@
+
+
 class Constants:
     folder_prefix_for_blob = "blob:"
     log_header_video_name_token = "video_file_name"
@@ -6,6 +8,8 @@ class Constants:
     log_header_token = "header"
     TEMPLATE_EXTENSION   = ".template.json"
     EXPERIMENT_EXTENSION = ".pkl"
+    JSON_EXTENSION = '.json'
+    PNG_EXTENSION = '.png'
     REPORTS_TEMPLATES_FOLDER_NAME = "reports_templates"
     MAIN_REPORT_FILE_PATH   = 'report_file_path'
     MAIN_REPORT_CHOOSEFILE  = 'choose_report_file'
@@ -18,12 +22,23 @@ class Constants:
     SUITES_FOLDER_NAME = "reports_configurations/suites"
     EXTERNAL_LIBRARY = 'statisticstool_external_library'
     USER_DEFINED_FUNCTIONS = 'user_defined_functions'
+    UDF_USER_ARGUMENT_FUNCTION = 'get_function_arguments'
 
 class UserDefinedConstants:
-    READING_FUNCTIONS = 'reading_functions'
-    EVALUATION_FUNCTIONS = 'evaluation_functions'
-    OVERLAP_FUNCTIONS = 'overlap_functions'
-    PARTITIONING_FUNCTIONS = 'partitioning_functions'
-    STATISTICS_FUNCTIONS = 'statistics_functions'
-    TRANSFORM_FUNCTIONS = 'transform_functions'
+    READING_FUNCTIONS       = 'reading_functions'
+    EVALUATION_FUNCTIONS    = 'evaluation_functions'
+    OVERLAP_FUNCTIONS       = 'overlap_functions'
+    PARTITIONING_FUNCTIONS  = 'partitioning_functions'
+    STATISTICS_FUNCTIONS    = 'statistics_functions'
+    TRANSFORM_FUNCTIONS     = 'transform_functions'
+    CONFUSION_FUNCTIONS     = 'confusion_functions'
+    ASSOCIATION_FUNCTIONS   = 'association_functions'
+
+class URLs:
+    #INDEX_HTML_NEW_REPORT = '/static/index.html?new_report='
+    INDEX_HTML = '/static/index.html'
+
+class Tags:
+    NEW_REPORT = 'new_report'
+    REPORTS = 'reports'
 
