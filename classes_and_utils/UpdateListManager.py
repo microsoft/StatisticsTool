@@ -48,7 +48,25 @@ class UpdateListManager():
 
         return per_video_example_hash
 
+    @staticmethod
+    def create_list_html(examples, comp_index,main_path,ref_path,unique):
+        a=[]
+        unique_flag = '' if unique is False else 'unique'
 
+        txt=f'<li><a style="font-family: Arial, Helvetica, sans-serif;" target'
+        txt += ' href='+"'javascript:window.parent.postMessage({{"+'"action":"show_image","value":"/show_im?'
+        txt += 'example_vid={}&example_index={}&example_frame={}&comp_index={}&main_path={}&ref_path={}&{}"}})'+"'> Frame - {}, Index # {}</a> </li>"
+        for vid_key in examples:
+            a.append(f'<li><span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;">{vid_key}</span><ul>')
+            for frame_key in examples[vid_key]:
+                a.append(f'<li><span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;"> Frame # {frame_key}-{examples[vid_key][frame_key]["end_frame"]}</span><ul>')
+                for example_name in examples[vid_key][frame_key]['frames']:
+                    line = txt.format(example_name[0],example_name[1],example_name[2],comp_index,main_path,ref_path,unique_flag,example_name[2],example_name[1])
+                    a.append(line)
+                a.append('</ul></li>')
+            a.append('</ul></li>')
+            
+        return "".join(a)
 
     @staticmethod
     def manage_list_request(results_table, main_path, ref_path, cell_name, stat, show_unique, show_ref_report, save_json_file):
@@ -81,8 +99,8 @@ class UpdateListManager():
         # exp_in_UpdateList.state = state ## TODO: TEMP - move it to the right place
         # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see
 
-        
-        return per_video_example_hash, saved_json
+        list_html = UpdateListManager.create_list_html(per_video_example_hash, 0 if show_ref_report else -1, main_path, ref_path, show_unique)
+        return list_html, saved_json
 
     @staticmethod
     def export_list_to_json(images_list, report_path, ref_report_path, cell_name, states, is_unique, show_ref_report):

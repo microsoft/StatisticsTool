@@ -102,14 +102,25 @@ class VideoEvaluation:
         if 'detection_gt' not in self.comp_data.keys():
             self.comp_data['detection_gt'] = None
         self.comp_data.loc[self.comp_data['detection_gt'].isnull(), 'detection_gt']=False
+        
+        if video_name:
+                video_name = video_name.replace('\\','/')
+
         self.comp_data['video']=video_name
         
         #Add end_frame same as current frame
         #end_frame can be manipulate in transformation function callback in order to calculate statistics per events.
         self.comp_data['end_frame'] = self.comp_data.loc[:,'frame_id']
 
-    def create_frames_dictionary(self, loaded_dataframe):
+    def create_frames_dictionary(self, loaded_dataframe, threshold_in):
         frames_dict = loaded_dataframe.to_dict()
+        threshold = None
+        try:
+            threshold = float(threshold_in)
+        except:
+            print(f'failed to parse threshold set threshold to None')
+            threshold = None
+
         for frame_num in frames_dict['frame_id']:
             prediction = frames_dict['predictions'][frame_num]
             gt = frames_dict['gt'][frame_num]
@@ -128,6 +139,8 @@ class VideoEvaluation:
                     if 'prediction' not in prd_BB.keys() or 'prediction' not in label_BB.keys():
                         continue
                     overlap = self.overlap_function(prd_BB['prediction'], label_BB['prediction'])
+                    if threshold and overlap < threshold:
+                        overlap = 0
                     mat[i, j] = round(overlap, 2)
            
             self.evaluation_func(prediction, mat)
@@ -143,7 +156,7 @@ class VideoEvaluation:
                     prediction.append({'matching':x,'state':0, 'detection': False}) 
         return frames_dict
 
-    def compute_dataframe(self, pred_file, gt_file, video_name = None):
+    def compute_dataframe(self, pred_file, gt_file, threshold, video_name = None):
         """
         :return: a list of dictionaries each belongs to a different frame:
           each dictionary contains the data of the frame's bounding boxes (predictions & labels) and an overlap matrix
@@ -153,7 +166,7 @@ class VideoEvaluation:
         if loaded_data is None:
             return False
         
-        frames_dict = self.create_frames_dictionary(loaded_data)
+        frames_dict = self.create_frames_dictionary(loaded_data, threshold)
         
         self.create_dataframe_from_dict(frames_dict, video_name)
 

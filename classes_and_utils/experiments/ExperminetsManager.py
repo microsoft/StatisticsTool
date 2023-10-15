@@ -5,7 +5,7 @@ import uuid,os
 from app_config.constants import Constants, UserDefinedConstants
 from classes_and_utils.ParallelExperiment import ParallelExperiment
 from classes_and_utils.UserDefinedFunctionsHelper import get_userdefined_function
-from utils.report_metadata import CONFIG_TOKEN, EVALUATION_FUNC_TOKEN, OVERLAP_FUNC_TOKEN, PARTITIONING_FUNC_TOKEN, STATISTICS_FUNC_TOKEN, THRESHOLD_TOKEN
+from utils.report_metadata import CONFIG_TOKEN, EVALUATION_FUNC_TOKEN, OVERLAP_FUNC_TOKEN, PARTITIONING_FUNC_TOKEN, STATISTICS_FUNC_TOKEN
 
 
 class ExperimentsManager:
@@ -99,7 +99,7 @@ class ExperimentsManager:
         if experiment == None:
             return None
         
-        segmentations = {seg_category:v['possible partitions'] for seg_category, v in experiment.get_masks().items() if seg_category != 'total_stats'}
+        segmentations = {seg_category:v['possible partitions'] for seg_category, v in experiment.get_segmentations_masks().items()}
         result = []
         for k, v in segmentations.items():
             result.append({'name':k,'values':v})
@@ -144,7 +144,6 @@ class ExperimentsManager:
 
             partitioning_func = get_userdefined_function(UserDefinedConstants.PARTITIONING_FUNCTIONS, func_name)
 
-        threshold = metadata[CONFIG_TOKEN][THRESHOLD_TOKEN]
-        ret_exp = ParallelExperiment(comp_data, threshold, partitioning_func)
+        ret_exp = ParallelExperiment(comp_data, partitioning_func)
         return ret_exp
     

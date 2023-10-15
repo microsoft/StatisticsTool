@@ -1,21 +1,20 @@
 """
-Evaluation Function instructions:
+Partitioning Function instructions:
 ------------------------------
-
 Input:
-a. list of predictions and labels dictionaries to fill with 'state' and 'matching' keys.
-b. kwargs - Additional options and parameters that can be passed to the function.
+a.  Dataframe that contains combined data that was loaded from prediction logs and from annotation logs. 
+    The data is after the overlap/evaluation/threshold calculation (According to user defined functions)
 
-Output:
-fill each prediction with it's matching state and matching index in labels list:
-fill the prediction array with the following format:
+Returns:
 
-for i in range(len(predictions_dict_list)):
-        predictions_dict_list[i]['state'] = grade that will be used with threshold to decide TP/FP/FN - 0 if there is no matching label
-        predictions_dict_list[i]['matching'] = index in array of matching labels, if any, otherwise don't set the key
+1. Dictionary with possible partitions in the following form:
+{'Partition1 Name': Partition1 Dictionary (see below for dictionary stracture), 'Partition2 Name': Partition2 Dictionary(see below for dictionary stracture)}
 
-notice:
-a. the overlap matrix rows corresponds to the index in the prediction list (i'th row >> i'th prediction in the list)
-b. the overlap matrix columns corresponds to the index in the labels list (j'th column >> j'th label in the list)
+2. Each "Partition Dictionary" should be in the following form:
+{'possible partitions': ['option 1', 'option 2', ..., 'option n'],
+ 'prediction masks': [predictions boolean mask for option 1, predictions boolean mask for option 2, ..., predictions boolean mask for option n]}
+ 
+Notice: the predictions boolean masks should be in the same size asthe dataframe with True/False values 
 
+Example {'size':{'possible partitions': ['large', 'small','medium'], 'masks': [large_mask, small_mask, medium_mask]},'position':{'possible partitions': ['right', 'center','left'], 'masks': [right_mask, center_mask, left_mask]}}
 """

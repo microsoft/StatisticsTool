@@ -9,25 +9,31 @@ from app_config.constants import Constants
 from classes_and_utils.UserDefinedFunctionsHelper import load_config_dict
 from utils.report_metadata import CONFIG_TOKEN, create_metadata
 
+EXAMPLES_IN_SEGMENT_CONST = 'examples_in_segment'
 
 class ParallelExperiment:
  
-    def __init__(self, comp_data, threshold, partitioning_func):
+    def __init__(self, comp_data, partitioning_func):
         self.comp_data = comp_data
         self.segmentations_masks = {}
-        self.detections_images_dict = {}
         self.cell_statistics_map = {}
     
-        self.segmentations_masks, self.detections_images_dict = ParallelExperiment.calc_experiment(comp_data, threshold, partitioning_func)
+        self.confusion_masks, self.segmentations_masks = ParallelExperiment.calc_experiment(comp_data, partitioning_func)
        
-    def get_masks(self):
+    def get_segmentations_masks(self):
         return self.segmentations_masks
+    
+    def get_confusion_masks(self):
+        return self.confusion_masks
     
     def get_statistics_masks(self, segmentations):
         cell_name = ParallelExperiment.cell_name_from_segmentations(segmentations)
         
+        all_stats = self.confusion_masks.keys()
+        assert len(all_stats)>0, 'There should be at least one statistic calc for cell'
+        
         if cell_name not in self.cell_statistics_map:
-            len_ = len(self.segmentations_masks['total_stats']['TP'])
+            len_ = len(list(self.confusion_masks.values())[0])
             segmentation_mask = np.ones([len_], dtype=bool)
             for curr_segmentation in segmentations:
                 assert(len(curr_segmentation)==1)
@@ -35,36 +41,35 @@ class ParallelExperiment:
                 seg_idx = self.segmentations_masks[seg_cat]['possible partitions'].index(seg_value)
                 segmentation_mask &= self.segmentations_masks[seg_cat]['masks'][seg_idx]
         
-            TP_masks = self.segmentations_masks['total_stats']['TP'] & segmentation_mask
-            FP_masks = self.segmentations_masks['total_stats']['FP'] & segmentation_mask
-            FN_masks = self.segmentations_masks['total_stats']['FN'] & segmentation_mask
-
-            self.cell_statistics_map[cell_name] = tuple([TP_masks, FP_masks, FN_masks, np.sum(segmentation_mask)])
+            masks = {}
+            for key in self.confusion_masks.keys():
+                masks[key] = self.confusion_masks[key] & segmentation_mask
+                
+            self.cell_statistics_map[cell_name] = masks
         
         return self.cell_statistics_map[cell_name]
 
     def get_cell_data(self, segmentations, statistic_funcs):
-        TP_masks, FP_masks, FN_masks, total = self.get_statistics_masks(segmentations)
-
-        TP, FP, FN, total_examples = np.sum(TP_masks), np.sum(FP_masks), np.sum(FN_masks), np.sum(total)
-        TN = total_examples - (TP + FP + FN)
-
-        statistics_dict = statistic_funcs(TP, FP, FN, total_examples)
-        statistics_dict.update({'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN, 'TOTAL_EXAMPLES': total_examples})
+        confusion_masks = self.get_statistics_masks(segmentations)
+        confusion_sums = {}
+        for mask in confusion_masks.keys():
+            confusion_sums[mask] = np.sum(confusion_masks[mask])
+            
+        statistics = statistic_funcs(confusion_masks, self.comp_data)
         
-        return statistics_dict
+        return confusion_sums, statistics
+
+    def get_list_array(self, mask):
+        arr = self.comp_data[mask][['video','frame_id','end_frame']].to_numpy()
+        list_arr = np.insert(arr,1,self.comp_data[mask].index.to_numpy(), axis=1)
+        return list_arr
 
     def get_ids(self, cell_key, state):
         segmentations = ParallelExperiment.segmentations_from_name(cell_name=cell_key)
-        TP_masks, FP_masks, FN_masks, _ = self.get_statistics_masks(segmentations)
+        confusion_masks = self.get_statistics_masks(segmentations)
         
-        if state == 'TP':
-            return self.detections_images_dict['prediction'][TP_masks]
-        elif state == 'FP':
-            return self.detections_images_dict['prediction'][FP_masks]
-        elif state == 'FN':
-            return self.detections_images_dict['label'][FN_masks]
-       
+        return self.get_list_array(confusion_masks[state])
+        
     def get_detection_bounding_boxes(self, detection_index):
         bb_obj = self.comp_data.loc[detection_index]
 
@@ -107,7 +112,7 @@ class ParallelExperiment:
         return video
      
     @staticmethod
-    def combine_evaluation_files(compared_videos, threshold):
+    def combine_evaluation_files(compared_videos):
         
         datafrme_dict = []
         for file_name in compared_videos:
@@ -122,31 +127,31 @@ class ParallelExperiment:
         return comp_data
     
     @staticmethod
-    def get_TP_FP_FN_masks(comp_data, threshold):
+    def get_TP_FP_FN_masks(comp_data, **kwargs):
         """
-        :param threshold: float , above this value an overlap is considered a hit (the prediction will be TP)
+        :param comp_data: 
         :return: Boolean masks of TP, FP, FN that indicates which row in the predictions dataframe is TP/FP
                  and which row in the labels dataframe is a FN (row = bounding box)
         """
         #first key from 'detection' key in input
         key = 'detection'
-        FN_mask = ((comp_data[key+'_gt']==True) & ((comp_data['state']<threshold) | (comp_data[key]==False) ))
-        FP_mask = ((comp_data[key]==True) & (comp_data['state']<threshold))
-        TP_mask = ((comp_data[key]==True) &((comp_data['state']>=threshold) & (comp_data[key+'_gt']==True)))
+        FN_mask = (comp_data[key+'_gt']==True) & (comp_data[key]==False)
+        FP_mask = (comp_data[key]==True) & (comp_data[key+'_gt']==False)
+        TP_mask = (comp_data[key]==True) & (comp_data[key+'_gt']==True)
         TN_mask = (comp_data[key+'_gt']==False) & (comp_data[key]==False)
-        if len(comp_data)!=(sum(FN_mask)+sum(FP_mask)+sum(TP_mask)+sum(TN_mask)):
-            print('Masks sizes doesnt match dataset size !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         
-        return TP_mask, FP_mask, FN_mask
+        return {"TP":TP_mask, "FP":FP_mask, "FN":FN_mask, "TN":TN_mask}
                
     @staticmethod
-    def calc_experiment(comp_data, threshold, segmentation_func):
-        
-        threshold = float(threshold)
-        assert threshold >= 0, 'threshold should be a positive number'
-       
+    def calc_experiment(comp_data, segmentation_func):
+        confusion_calc_func = ParallelExperiment.get_TP_FP_FN_masks
+
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
-        TP_mask, FP_mask, FN_mask = ParallelExperiment.get_TP_FP_FN_masks(comp_data, threshold)
+        confusion_masks = confusion_calc_func(comp_data)
+        
+        # add Total example to statistics functions for unified calculation in future ones (e.g. unique calculation)
+        confusion_masks[EXAMPLES_IN_SEGMENT_CONST] = pd.Series(np.ones(len(comp_data), dtype=bool))
+        
         # calculate the boolean masks of the partitions (which row/bounding box in the dataframes belongs to which partition)
         
         wanted_segmentations = {}
@@ -159,25 +164,10 @@ class ParallelExperiment:
                 print(ex)
                 print('\n\n')
 
-
-        # initialize masks with the total masks for TP/FP/FN
-        segmentations_masks = {'total_stats': {'TP': TP_mask, 'FP': FP_mask, 'FN': FN_mask}}
         # Add the segmentation masks to masks
-        segmentations_masks.update(wanted_segmentations)
+        segmentations_masks = wanted_segmentations
 
-        video_name = comp_data['video'].values.copy()[:, np.newaxis]
-        frame = comp_data['frame_id'].values.astype(int).copy()[:, np.newaxis] 
-        index = comp_data.index.to_series().values.copy()[:, np.newaxis]
-        if 'end_frame' in comp_data.keys():
-            end_frames = comp_data['end_frame'].values.astype(int).copy()[:, np.newaxis]
-        else:
-            end_frames = frame
-        detections_images_dict = {}
-        detections_images_dict['prediction'] = np.concatenate((video_name, index, frame, end_frames), axis=1)
-        
-        detections_images_dict['label'] = detections_images_dict['prediction']
-
-        return segmentations_masks, detections_images_dict
+        return confusion_masks, segmentations_masks
   
     @staticmethod
     def cell_name_from_segmentations(segmentations):
@@ -199,6 +189,7 @@ class ParallelExperiment:
         
         # Remove the trailing comma and return the result
         return result[:-1]
+    
     @staticmethod
     def segmentations_from_name(cell_name):
         if cell_name == '*':
