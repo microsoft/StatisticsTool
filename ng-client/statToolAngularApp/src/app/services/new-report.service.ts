@@ -59,8 +59,6 @@ export namespace UDF {
 
 export class NewReportService {
 
-    //FUNC_TYPES = ['reading_functions','partitioning_functions','statistics_functions','transform_functions','confusion_functions','association_functions'];
-    
     showConfigViewer = true;
 
     configs:string[]  = [];
@@ -175,11 +173,6 @@ export class NewReportService {
     }
 
     processUdfResponse(udfResponse:any){
-
-        /*for (const f of this.FUNC_TYPES){
-            let funcs = this.processUdfItem(f,udfResponse);
-            this.udf.set(f,funcs);
-        }*/
 
         for (const value of Object.values(UDFTypeEnum)) {
             
@@ -431,18 +424,8 @@ export class NewReportService {
         this.addUdfToConfig(UDFTypeEnum.CONFUSION_FUNCTIONS,UDFTitleEnum.CONFUSION_FUNCTION,this.selectedConfusionFunction,dictionary);
         this.addUdfToConfig(UDFTypeEnum.ASSOCIATION_FUNCTIONS,UDFTitleEnum.ASSOCIATION_FUNCTION,this.selectedAssociationFunction,dictionary);
 
-        /*dictionary['Prediction Reading Function'] = this.selectedPredictionReadingFunction;
-        if (!this.gtReadingSameAsPrediction)
-            dictionary['GT Reading Function'] = this.selectedGTReadingFunction;
-        if (this.transformEnabled)
-            dictionary['Transformation Function'] = this.selectedTransformFunction;
-        if (this.partitioningEnabled)
-            dictionary['Partitioning Functions'] = this.selectedPartitioningFunction;
-
-        dictionary['Statistics Functions'] = this.selectedStatisticsFunction;*/
         dictionary['configName'] = this.configName;
         dictionary['Log Names to Evaluate'] = this.logName;
-        //dictionary['Confusion Functions']= this.selectedConfusionFunction;
 
         const url = '/new_report/save_configuration'; 
 
