@@ -1,5 +1,6 @@
 import pathlib
 import os
+from classes_and_utils.ParallelExperiment import ParallelExperiment
 from classes_and_utils.VideoEvaluation import VideoEvaluation
 
 from classes_and_utils.file_storage_handler import *
@@ -126,38 +127,22 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, thresh
     report_run_info = create_run_info(primary_path=pred_dir, primary_name=pred_file_name, secondary_path=local_gt_dir, secondary_name=gt_file_name, video_path=video_dir)
     return output_files, report_run_info,process_result
 
+def run_experiment(pred_dir, output_dir, overlap_function, threshold, predictionReaderFunction,gtReaderFunction,transform_func, evaluation_func, local_gt_dir, log_names_to_evaluate):
+        # extract all the intermediate results from the raw prediction-label files
 
+    compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir, output_dir, 
+                                                                                     overlap_function, 
+                                                                                     threshold,predictionReaderFunction,
+                                                                                     gtReaderFunction, 
+                                                                                     transform_func, 
+                                                                                     evaluation_func, 
+                                                                                     local_gt_dir, 
+                                                                                     log_names_to_evaluate)
 
-    def read_gt_file_from_blob(video_name):
-        invalidate_gt_version_if_needed()
-        annotation_blob_path = os.path.join(app_config.annotation_store_blobs_prefix, video_name)
-        annotation_blob_path = os.path.splitext(annotation_blob_path)[0]+".json"
+    if len(compared_videos) == 0:
+        return process_result, None
 
-        annotation_local_path = get_blob_from_cache_or_download(annotation_blob_path)
-        return annotation_local_path
+    # combine the intermediate results for further statistics and example extraction
+    comp_data = ParallelExperiment.combine_evaluation_files(compared_videos)
 
-       
-    def list_blobs_in_results_path(path, recursive=False):
-        '''
-        List directories under a path, optionally recursively
-        '''
-        container_client_obj = self.container_client_obj
-        if not path == '' and not path.endswith('/'):
-            path += '/'
-
-        if path.startswith('https'): #Handle full address of files
-            if path.startswith(container_client_obj.primary_endpoint+'/'): # Verify that the address in under the right blob
-                cur_path = path.replace(container_client_obj.primary_endpoint+'/', '')
-            else:
-                print(f"Cannot handle blob adress that are not under: {container_client_obj.primary_endpoint}") #TODO: plot this message to UI
-                return []
-        else:
-            cur_path =  f"{app_config.predictions_blobs_prefix}{path}" 
-        #TODO: Verify that cur_path exists
-        blob_iter = container_client_obj.list_blobs(name_starts_with=cur_path)
-        dirs = []
-        for blob in blob_iter:
-            dirs.append(blob.name)
-
-        return dirs
- 
+    return comp_data, report_run_info, process_result

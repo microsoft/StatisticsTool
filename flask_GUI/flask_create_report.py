@@ -9,7 +9,7 @@ from app_config.constants import UserDefinedConstants
 from flask_GUI.flask_server import server
 from classes_and_utils.ParallelExperiment import *
 from classes_and_utils.utils import loading_json, save_json
-from classes_and_utils.experiments.ExperimentRunner import compare_predictions_directory
+from classes_and_utils.experiments.ExperimentRunner import run_experiment
 from utils.report_metadata import *
 
 
@@ -196,18 +196,17 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
         
     # extract all the intermediate results from the raw prediction-label files
 
-    compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir=prd_dir, output_dir = intermediate_dir, overlap_function=overlap_func, threshold=threshold,
-                                                                  predictionReaderFunction=prediction_reading_func,gtReaderFunction=gt_reading_func, transform_func=transform_func, evaluation_func=evaluation_func, local_gt_dir = gt_dir, log_names_to_evaluate = log_names_to_evaluate)
- 
-    if len(compared_videos) == 0:
-        return process_result, None
-
-    # combine the intermediate results for further statistics and example extraction
-    comp_data = ParallelExperiment.combine_evaluation_files(compared_videos)
-    
-    folder_name = save_stats_dir
-
-    report_file_name = ParallelExperiment.save_experiment(comp_data, folder_name, config_file_name, report_run_info)
+    comp_data, report_run_info, process_result = run_experiment(pred_dir=prd_dir, output_dir = intermediate_dir, 
+                                                                overlap_function=overlap_func, 
+                                                                threshold=threshold,
+                                                                predictionReaderFunction=prediction_reading_func,
+                                                                gtReaderFunction=gt_reading_func, 
+                                                                transform_func=transform_func, 
+                                                                evaluation_func=evaluation_func, 
+                                                                local_gt_dir = gt_dir, 
+                                                                log_names_to_evaluate = log_names_to_evaluate)    
+   
+    report_file_name = ParallelExperiment.save_experiment(comp_data, save_stats_dir, config_file_name, report_run_info)
     return process_result, report_file_name
 
 def get_suite_configurations(suite_name):
