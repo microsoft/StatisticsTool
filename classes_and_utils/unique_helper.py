@@ -1,16 +1,18 @@
 import numpy as np
 import pandas as pd
 from dash import html
+from app_config.dataframe_tokens import DataFrameTokens
+from classes_and_utils.VideoEvaluation import VideoEvaluation
 
 from classes_and_utils.ParallelExperiment import ParallelExperiment
 
 
 class UniqueHelper:
 
-    def __init__(self,exp,ref_exp, evaluation_function, overlap_function):
+    def __init__(self,exp,ref_exp, association_function):
         self.exp = exp
         self.ref_exp = ref_exp
-        main_ref_dict, ref_main_dict = UniqueHelper.match_main_ref_predictions(self.exp, self.ref_exp, evaluation_function, overlap_function)
+        main_ref_dict, ref_main_dict = UniqueHelper.match_main_ref_predictions(self.exp, self.ref_exp, association_function)
         self.main_ref_dict = main_ref_dict
         self.ref_main_dict = ref_main_dict
         
@@ -73,47 +75,30 @@ class UniqueHelper:
             cells_data[stat] = unique
 
         return cells_data, cells_data_ref
-
-    @staticmethod       
-    def match_frame_predictions(predictions, ref_predictions, evaluation_function, overlap_function):
-        """
-        Match beween 2 set of preditcions in a frame using the user defined functions in the experiment object.
-        :param (in/out) predictions: predictions in the main reort. The predictions filled with thier matched one and overlap values
-        :param (in/out) ref_predictions: predictions in the ref reort. The predictions filled with thier matched one and overlap values
-        :param exp: experiment object 
-
-        """
-        if not len(ref_predictions) or not len(predictions):
-                mat=[]
-        else:
-            mat = np.zeros((len(predictions), len(ref_predictions)))
-        
-        for i, pred in enumerate(predictions):
-            for j, ref in enumerate(ref_predictions):
-                #check if all gt attributes are equal in main and ref predictions
-                if pred['detection_gt'] and ref['detection_gt']:
-                    match = True
-                    for key in pred: 
-                        if '_gt' in key:
-                            if pred[key] != ref[key]:
-                                match = False
-                                break
-                    if match:
-                        pred['matching'] = j
-                        ref['matching'] = i
-                elif not (pred['detection_gt'] or ref['detection_gt']) and pred['detection'] and ref['detection']:
-                    overlap = overlap_function(pred, ref)
-                    mat[i, j] = round(overlap, 2)
-                #TN in main and in ref experiments mark as overlapped detection
-                elif not pred['detection_gt'] and not ref['detection_gt'] and not pred['detection'] and not ref['detection']:
-                    mat[i, j] = round(1, 2)
-
-        #the evaluation function should add the matched prediction to the right record in predictions list
-        evaluation_function(predictions, mat)
             
     #create dictionsary for main/ref report with matched bounding box in ref/main if there is any
+    
     @staticmethod
-    def match_main_ref_predictions(exp, ref_exp, evaluation_function, overlap_function):
+    def get_gt_columns(comp_data):
+        gt_data = pd.DataFrame()
+        suffix_len = len(DataFrameTokens.GT_ANNOT_SUFFIX)
+        # iterate over the columns of the comp_data dataframe
+        for col in comp_data.columns:
+            # check if the column name ends with '_gt'
+            if col.endswith(DataFrameTokens.GT_ANNOT_SUFFIX):
+                # check if a column without the '_gt' suffix already exists in the comp_data dataframe
+                if col[:-suffix_len] in comp_data.columns:
+                    # use the existing column name without the '_gt' suffix
+                    gt_data[col[:-suffix_len]] = comp_data[col]
+        
+        gt_data[DataFrameTokens.LABELS_GROUP_KEY] = comp_data[DataFrameTokens.LABELS_GROUP_KEY]
+        gt_data[DataFrameTokens.UNIQUE_BATCH_TOKEN] = comp_data[DataFrameTokens.UNIQUE_BATCH_TOKEN]
+        return gt_data
+
+
+    
+    @staticmethod
+    def match_main_ref_predictions(exp, ref_exp, association_function):
         """
         Match all the predictions in main reort and ref report. Detections with no matched detection in the ref report, will have no entry in the dictionary.
         :param exp: main experiment object.
@@ -125,44 +110,36 @@ class UniqueHelper:
         
         main_ref = pd.Series(np.full(len(exp.comp_data),-1))
         ref_main = pd.Series(np.full(len(ref_exp.comp_data),-1))
-        
-        for vid in exp.comp_data['video'].unique():
-            print('calculating matching bounding boxes for vid: ' + vid)
-            #set frame_id as index, and keep the original index as another column
-            ref_cur_video_df = ref_exp.comp_data[ref_exp.comp_data['video'] == vid].reset_index().set_index('frame_id').reset_index()
-            main_cur_video_df = exp.comp_data[exp.comp_data['video'] == vid].reset_index().set_index('frame_id').reset_index()
-            unique_frames = np.unique(np.concatenate([ref_cur_video_df['frame_id'],main_cur_video_df['frame_id']]))
-            
-            #use dictionary for performance improvements
-            main_cur_video_list = main_cur_video_df.to_dict('records')
-            ref_cur_video_list = ref_cur_video_df.to_dict('records')
-                        
-            current_main_index = 0
-            current_ref_index = 0
-            
-            for frame in unique_frames:
-                while current_ref_index < len(ref_cur_video_list) and ref_cur_video_list[current_ref_index]['frame_id'] < frame:
-                    current_ref_index+=1
-                    
-                while current_main_index < len(main_cur_video_list) and main_cur_video_list[current_main_index]['frame_id'] < frame:
-                    current_main_index+=1
-                
-                predictions = []
-                ref_predictions = []
-                
-                while current_ref_index < len(ref_cur_video_list) and ref_cur_video_list[current_ref_index]['frame_id'] == frame:
-                    ref_predictions.append(ref_cur_video_list[current_ref_index])
-                    current_ref_index+=1
 
-                while current_main_index < len(main_cur_video_list) and main_cur_video_list[current_main_index]['frame_id'] == frame:
-                    predictions.append(main_cur_video_list[current_main_index])
-                    current_main_index+=1
-                
-                UniqueHelper.match_frame_predictions(predictions, ref_predictions, evaluation_function=evaluation_function, overlap_function=overlap_function)
-                for _, x in enumerate(predictions): 
-                    if 'matching' in x:
-                        main_ref[x['index']]=ref_predictions[x['matching']]['index']
-                        ref_main[ref_predictions[x['matching']]['index']] = x['index']
+        exp_no_value = exp.comp_data[exp.comp_data[DataFrameTokens.HAS_VALUE_TOKEN] == False]
+        exp_has_value = exp.comp_data[exp.comp_data[DataFrameTokens.HAS_VALUE_TOKEN] == True]
+        ref_no_value = ref_exp.comp_data[ref_exp.comp_data[DataFrameTokens.HAS_VALUE_TOKEN] == False]
+        ref_has_value = ref_exp.comp_data[ref_exp.comp_data[DataFrameTokens.HAS_VALUE_TOKEN] == True]
+
+        exp_gt = UniqueHelper.get_gt_columns(exp_no_value)
+        ref_exp_gt = UniqueHelper.get_gt_columns(ref_no_value)
+
+        for vid in exp.comp_data[DataFrameTokens.UNIQUE_BATCH_TOKEN].unique():
+            vid_str = vid
+            if DataFrameTokens.VIDEO_TOKEN in exp.comp_data.columns:
+                vid_str = str(exp.comp_data.loc[exp.comp_data[DataFrameTokens.UNIQUE_BATCH_TOKEN] == vid][DataFrameTokens.VIDEO_TOKEN].iloc[0])
+            print('calculating matching bounding boxes for data: ' + str(vid_str))
+            #set frame_id as index, and keep the original index as another column
+            ref_cur_video_df = ref_has_value.loc[(ref_has_value[DataFrameTokens.UNIQUE_BATCH_TOKEN] == vid)]
+            main_cur_video_df = exp_has_value.loc[(exp_has_value[DataFrameTokens.UNIQUE_BATCH_TOKEN] == vid) ]
+            cur_main_ref, cur_ref_main = VideoEvaluation.create_association_indexes(main_cur_video_df, ref_cur_video_df, association_function)    
+
+            main_ref.loc[cur_main_ref.index] =cur_main_ref
+            ref_main.loc[cur_ref_main.index] =cur_ref_main
+
+
+            #for rows without prediction, there is only gt so assiciate the gt data instead           
+            ref_cur_video_df_nv = ref_exp_gt.loc[(ref_exp_gt[DataFrameTokens.UNIQUE_BATCH_TOKEN] == vid)]
+            main_cur_video_df_nv = exp_gt.loc[(exp_gt[DataFrameTokens.UNIQUE_BATCH_TOKEN] == vid) ]
+            cur_main_ref, cur_ref_main = VideoEvaluation.create_association_indexes(main_cur_video_df_nv, ref_cur_video_df_nv, association_function)    
+
+            main_ref.loc[cur_main_ref.index] =cur_main_ref
+            ref_main.loc[cur_ref_main.index] =cur_ref_main
                         
         print ('Finished calculate matched bounding boxes')      
         return main_ref, ref_main

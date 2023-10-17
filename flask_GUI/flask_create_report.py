@@ -50,16 +50,14 @@ class NewReport_Tags:
     SKIPPED_NOT_IN_LOGNAMES = 'skipped_not_in_lognames'
     MESSAGES = 'messages'
     ERROR_MESSAGE = 'errorMessage'
-    CONFIGURATIONS = 'Configurations'
-    SUITE_NAME = 'Suite Name'
-    PREDICTIONS_DIRECTORY = 'Predictions Directory'
-    GROUND_TRUTH_DIRECTORY = 'Ground Truth Directory'
-    REPORTER_OUTPUT_DIRECTORY = 'Reporter Output Directory'
+    SUITE_NAME = 'suite_Name'
+    PREDICTIONS_DIRECTORY = 'predictions_directory'
+    GROUND_TRUTH_DIRECTORY = 'groundtruth_directory'
+    REPORTER_OUTPUT_DIRECTORY = 'reporter_output_directory'
 
 @server.route(NewReport_Routes.NAV_NEW_REPORT, methods=['GET', 'POST'])
 def nav_report_func():
     url = "{}?{}={}".format(URLs.INDEX_HTML,Tags.NEW_REPORT,'true')
-    #return redirect(URLs.INDEX_HTML_NEW_REPORT + 'true')
     return redirect(url)
 
 @server.route(NewReport_Routes.GET_ALL_CONFIGS_AND_SUITES, methods=['GET', 'POST'])
@@ -104,14 +102,12 @@ def save_suite():
 def get_user_defined_functions_list():
     
     functions = dict()
-    functions[UserDefinedConstants.READING_FUNCTIONS]       = get_users_defined_functions(UserDefinedConstants.READING_FUNCTIONS)
-    #functions[UserDefinedConstants.EVALUATION_FUNCTIONS]    = get_users_defined_functions(UserDefinedConstants.EVALUATION_FUNCTIONS)
-    #functions[UserDefinedConstants.OVERLAP_FUNCTIONS]       = get_users_defined_functions(UserDefinedConstants.OVERLAP_FUNCTIONS)
-    functions[UserDefinedConstants.PARTITIONING_FUNCTIONS]  = get_users_defined_functions(UserDefinedConstants.PARTITIONING_FUNCTIONS)
-    functions[UserDefinedConstants.STATISTICS_FUNCTIONS]    = get_users_defined_functions(UserDefinedConstants.STATISTICS_FUNCTIONS)
-    functions[UserDefinedConstants.TRANSFORM_FUNCTIONS]     = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS)
-    functions[UserDefinedConstants.CONFUSION_FUNCTIONS]     = get_users_defined_functions(UserDefinedConstants.CONFUSION_FUNCTIONS)
-    functions[UserDefinedConstants.ASSOCIATION_FUNCTIONS]   = get_users_defined_functions(UserDefinedConstants.ASSOCIATION_FUNCTIONS)
+    functions[UserDefinedConstants.READING_FUNCTIONS_KEY]       = get_users_defined_functions(UserDefinedConstants.READING_FUNCTIONS_KEY)
+    functions[UserDefinedConstants.PARTITIONING_FUNCTIONS_KEY]  = get_users_defined_functions(UserDefinedConstants.PARTITIONING_FUNCTIONS_KEY)
+    functions[UserDefinedConstants.STATISTICS_FUNCTIONS_KEY]    = get_users_defined_functions(UserDefinedConstants.STATISTICS_FUNCTIONS_KEY)
+    functions[UserDefinedConstants.TRANSFORM_FUNCTIONS_KEY]     = get_users_defined_functions(UserDefinedConstants.TRANSFORM_FUNCTIONS_KEY)
+    functions[UserDefinedConstants.CONFUSION_FUNCTIONS_KEY]     = get_users_defined_functions(UserDefinedConstants.CONFUSION_FUNCTIONS_KEY)
+    functions[UserDefinedConstants.ASSOCIATION_FUNCTIONS_KEY]   = get_users_defined_functions(UserDefinedConstants.ASSOCIATION_FUNCTIONS_KEY)
 
     return json.dumps(functions)
 
@@ -257,7 +253,7 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     """
 
     # extract the functions specified in the configuration file
-    prediction_reading_func,gt_reading_func, statistics_func, partitioning_func, transform_func,log_names_to_evaluate,confusion_fun = load_config(config_file_name)
+    log_names_to_evaluate, prediction_reading_func,gt_reading_func, association_func, transform_func, _,_,_ = load_config(config_file_name)
     
     intermediate_dir = os.path.join(save_stats_dir,Constants.INTERMEDIATE_RESULTS_DIR)
     if not os.path.exists(intermediate_dir):
@@ -266,12 +262,10 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
     # extract all the intermediate results from the raw prediction-label files
 
     comp_data, report_run_info, process_result = run_experiment(pred_dir=prd_dir, output_dir = intermediate_dir, 
-                                                                overlap_function=overlap_func, 
-                                                                threshold=threshold,
+                                                                assiciation_function=association_func,
                                                                 predictionReaderFunction=prediction_reading_func,
                                                                 gtReaderFunction=gt_reading_func, 
-                                                                transform_func=transform_func, 
-                                                                evaluation_func=evaluation_func, 
+                                                                transform_func=transform_func,
                                                                 local_gt_dir = gt_dir, 
                                                                 log_names_to_evaluate = log_names_to_evaluate)    
    

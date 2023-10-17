@@ -8,16 +8,16 @@ import { StatisticsToolService } from '../services/statistics-tool.service';
   templateUrl: './drawer.component.html',
   styleUrls: ['./drawer.component.css'],
   animations: [
-        trigger('widthGrow', [
-            state('closed', style({
-                width: 0,
-            })),
-            state('open', style({
-                width: 400
-            })),
-            transition('* => *', animate(150))
-        ]),
-    ]
+    trigger('widthGrow', [
+      state('closed', style({
+        width: 0,
+      })),
+      state('open', style({
+        width: 400
+      })),
+      transition('* => *', animate(150))
+    ]),
+  ]
 })
 export class DrawerComponent implements OnInit {
 

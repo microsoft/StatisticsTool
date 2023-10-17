@@ -1,7 +1,9 @@
 
+import time
 import numpy as np, os
 import pandas as pd
 
+from app_config.dataframe_tokens import DataFrameTokens
 
 class VideoEvaluation:
     """
@@ -29,38 +31,43 @@ class VideoEvaluation:
            a list that contains each frames bounding boxes data and overlap matrix (first object is the image folder name)
     """
 
-    def __init__(self, overlap_function, predictionReaderFunction,gtReaderFunction, evaluation_func, transform_func):
-        self.overlap_function = overlap_function
-        self.predictionReaderFunction = predictionReaderFunction
-        self.gtReaderFunction = gtReaderFunction
-        self.evaluation_func = evaluation_func
+    def __init__(self, predictionReaderFunction,gtReaderFunction, associationFunction, transform_func):
+        self.association_function = associationFunction
+        self.prediction_reading_function = predictionReaderFunction
+        self.gt_reading_function = gtReaderFunction
         self.transform_func = transform_func
         self.comp_data = []
 
 
     def load_data(self, pred_file, gt_file):
 
-        pred_data = self.predictionReaderFunction(pred_file)
-       
+        pred_data = self.prediction_reading_function(pred_file)
         if pred_data is None: #The user defined reader function doesn't recognize this file
             print (f"reader function could't parse {pred_file} log")
-            return None
-            
-        gt_data = self.gtReaderFunction(gt_file)
-        
+            return None, None
+
+        gt_data = self.gt_reading_function(gt_file)
+
         if gt_data is None:
             print (f"failed to parse or no data for gt file: {gt_file}")
-            return None
-        
+            return None, None
+
         if  len(gt_data) == 0:
             print(f"gt file parser returns with no lines for file: {gt_file}")
-            return None
+            return None, None
         
-        gt_data.rename(columns={'predictions': 'gt'}, inplace=True)
+        #if there is no group key in the data, add it to be as the index
+        if DataFrameTokens.LABELS_GROUP_KEY not in pred_data.columns:
+            pred_data[DataFrameTokens.LABELS_GROUP_KEY] = pred_data.index
         
-        loaded_dataframe = pred_data.merge(gt_data, left_on='frame_id', right_on='frame_id',how='inner')
+        if DataFrameTokens.LABELS_GROUP_KEY not in gt_data.columns:
+            gt_data[DataFrameTokens.LABELS_GROUP_KEY] = gt_data.index
         
-        return loaded_dataframe
+        pred_data[DataFrameTokens.HAS_VALUE_TOKEN] = True
+        gt_data[DataFrameTokens.HAS_VALUE_TOKEN] = True
+
+        return pred_data, gt_data
+ 
 
     def save_data(self, output_file_path):
         dir = os.path.split(output_file_path)[0]
@@ -78,101 +85,116 @@ class VideoEvaluation:
                 VideoEvaluation.add_dict_recursive(dict_in[p], p, new_obj, add_gt)
         else:
             if add_gt:
-                key = key+'_gt'
+                key = key+DataFrameTokens.GT_ANNOT_SUFFIX
             new_obj[key] = dict_in
 
-    def create_dataframe_from_dict(self, frames_dictionary, video_name):
-        self.comp_data = pd.DataFrame.from_dict(frames_dictionary)
-        self.comp_data.drop('gt',axis=1,inplace=True)
+    @staticmethod
+    def create_association_indexes(pred_df, gt_df, association_function):
+        pred_association = pd.Series(np.full(len(pred_df),-1), index = pred_df.index)
+        gt_association = pd.Series(np.full(len(gt_df),-1), index = gt_df.index)
+       
+        preds_dict = pred_df.replace({np.nan: None}).to_dict('index')
+       
+        gts_dict = gt_df.replace({np.nan: None}).to_dict('index')
         
-        self.comp_data = self.comp_data.explode('predictions')
+        for frame_num in pred_df[DataFrameTokens.LABELS_GROUP_KEY].unique():
+            predictions_indexes = pred_df.index[(pred_df[DataFrameTokens.LABELS_GROUP_KEY]==frame_num)]
+            predictions = [preds_dict[x] for x in predictions_indexes]
+            gts_indexes = gt_df.index[(gt_df[DataFrameTokens.LABELS_GROUP_KEY]==frame_num)]
+            gts = [gts_dict[x] for x in gts_indexes]
 
-        self.comp_data = self.comp_data.reset_index(drop=True)
+            if not association_function:
+                if len(gts_indexes): 
+                    pred_association.loc[predictions_indexes[0]]=gts_indexes[0]
+                    gt_association.loc[gts_indexes[0]]=predictions_indexes[0]
+                    continue
+
+            try:
+                association_dict = association_function(predictions, gts)       
+            except Exception as ex:
+                print ("\n\n\n----------- EXCEPTION IN ASSICIATION FUNCTION --------------------")
+                print(f"Failed in user defined association function for predictions: {predictions} and gts: {gts}")
+                print (ex)
+                print('\n\n\n')
+                #raise ex
+            try:
+
+                for ind, _ in enumerate(predictions):
+                    if ind in association_dict and len(gts_indexes) > association_dict[ind]: 
+                        pred_association.loc[predictions_indexes[ind]]=gts_indexes[association_dict[ind]]
+                        gt_association.loc[gts_indexes[association_dict[ind]]]=predictions_indexes[ind]
+            except Exception as ex:
+                print(ex)
+
+        return pred_association, gt_association
+
+    @staticmethod
+    def create_associated_labels_dataframe(pred_df, gt_df, association_function):
         
-        new_data = []   
-        pred_arr = self.comp_data.to_numpy()
-        keys = self.comp_data.keys()
-        for row in pred_arr:
-            new_obj={}
-            for i, key in enumerate(keys):
-                VideoEvaluation.add_dict_recursive(row[i],key,new_obj)
-                
-            new_data.append(new_obj)
-        self.comp_data = pd.DataFrame(new_data)
-        if 'detection_gt' not in self.comp_data.keys():
-            self.comp_data['detection_gt'] = None
-        self.comp_data.loc[self.comp_data['detection_gt'].isnull(), 'detection_gt']=False
+        gt_suffix_df = gt_df.add_suffix(DataFrameTokens.GT_ANNOT_SUFFIX)
+        gt_suffix_df = gt_suffix_df.rename(columns={ DataFrameTokens.LABELS_GROUP_KEY+DataFrameTokens.GT_ANNOT_SUFFIX: DataFrameTokens.LABELS_GROUP_KEY})
         
-        if video_name:
-                video_name = video_name.replace('\\','/')
+        pred_association, gt_association = VideoEvaluation.create_association_indexes(pred_df, gt_df, association_function)
 
-        self.comp_data['video']=video_name
+        pred_matched = pred_df.loc[pred_association[pred_association > -1].index].reset_index(drop=True)
+        gt_matched = gt_suffix_df.loc[pd.Index(pred_association.loc[pred_association >-1].values)].reset_index(drop=True).drop(DataFrameTokens.LABELS_GROUP_KEY, axis=1)
         
-        #Add end_frame same as current frame
-        #end_frame can be manipulate in transformation function callback in order to calculate statistics per events.
-        self.comp_data['end_frame'] = self.comp_data.loc[:,'frame_id']
+        comp_data = pred_matched.merge(gt_matched, left_index=True, right_index=True)
+        
+        comp_data = pd.concat([comp_data, pred_df.loc[pred_association.loc[pred_association == -1].index]], ignore_index = True)
 
-    def create_frames_dictionary(self, loaded_dataframe, threshold_in):
-        frames_dict = loaded_dataframe.to_dict()
-        threshold = None
-        try:
-            threshold = float(threshold_in)
-        except:
-            print(f'failed to parse threshold set threshold to None')
-            threshold = None
+        gt_append = gt_suffix_df.loc[gt_association.loc[gt_association == -1].index]
+        gt_append = gt_append[gt_append[DataFrameTokens.LABELS_GROUP_KEY].isin(pred_df[DataFrameTokens.LABELS_GROUP_KEY].unique())]
+        comp_data =  pd.concat([comp_data,gt_append], ignore_index = True)
+        
+        comp_data=comp_data.sort_values(by=DataFrameTokens.LABELS_GROUP_KEY).reset_index(drop=True)
 
-        for frame_num in frames_dict['frame_id']:
-            prediction = frames_dict['predictions'][frame_num]
-            gt = frames_dict['gt'][frame_num]
-           
-            if type(prediction) is not list:
-                prediction = [prediction]
-            if type(gt) is not list:
-                gt = [gt]        
-            if not len(gt) or not len(prediction):
-                mat=[]
-            else:
-                mat = np.zeros((len(prediction), len(gt)))
-            for i, prd_BB in enumerate(prediction):
-                for j, label_BB in enumerate(gt):
-                    # if there is no object in row and only 1 key (it suppose to be 'detection' key) no detections and don't calculate overlap
-                    if 'prediction' not in prd_BB.keys() or 'prediction' not in label_BB.keys():
-                        continue
-                    overlap = self.overlap_function(prd_BB['prediction'], label_BB['prediction'])
-                    if threshold and overlap < threshold:
-                        overlap = 0
-                    mat[i, j] = round(overlap, 2)
-           
-            self.evaluation_func(prediction, mat)
+        #For unique calculation fill all the entries where there is no matched label in the predictions/gt with False
+        comp_data[DataFrameTokens.HAS_VALUE_TOKEN] = comp_data[DataFrameTokens.HAS_VALUE_TOKEN].fillna(False)
+        comp_data[DataFrameTokens.HAS_VALUE_TOKEN+DataFrameTokens.GT_ANNOT_SUFFIX] = comp_data[DataFrameTokens.HAS_VALUE_TOKEN+DataFrameTokens.GT_ANNOT_SUFFIX].fillna(False)
+        return comp_data
 
-            gts = []
-            for ind, x in enumerate(prediction): 
-                if 'matching' in x:
-                    gts.append(x['matching'])
-                    x['matching'] = gt[x['matching']]
-                
-            for ind, x in enumerate(gt): 
-                if ind not in gts  and 'prediction' in x and x['prediction']: 
-                    prediction.append({'matching':x,'state':0, 'detection': False}) 
-        return frames_dict
-
-    def compute_dataframe(self, pred_file, gt_file, threshold, video_name = None):
+    def compute_dataframe(self, pred_file, gt_file, video_name = None):
         """
         :return: a list of dictionaries each belongs to a different frame:
           each dictionary contains the data of the frame's bounding boxes (predictions & labels) and an overlap matrix
         """
         # load the per frame bounding box hash table (dictionary) for labels and predictions
-        loaded_data = self.load_data(pred_file, gt_file)
-        if loaded_data is None:
-            return False
+        start = time.time()
         
-        frames_dict = self.create_frames_dictionary(loaded_data, threshold)
+        try:
+            pred_data, gt_data = self.load_data(pred_file, gt_file)
+            if pred_data is None:
+                return False
+        except Exception as ex:
+            print ("\n\n\n----------- EXCEPTION IN UDF READING FUNCTION --------------------")
+            print(f"Failed in user defined load function for prediction: {pred_file} and gt: {gt_file}")
+            print (ex)
+            print('\n\n\n')
+            raise ex
         
-        self.create_dataframe_from_dict(frames_dict, video_name)
-
-        if self.transform_func:
-            self.comp_data=self.transform_func(self.comp_data)    
-
+        end = time.time()
+        load_time = end-start
+        self.comp_data = self.create_associated_labels_dataframe(pred_data, gt_data, self.association_function)
+        end2 = time.time()
+        print(f'load: {load_time:.2f} association: {end2-end:.2f}')
+        
+        if DataFrameTokens.VIDEO_TOKEN not in self.comp_data and video_name:
+            self.comp_data[DataFrameTokens.VIDEO_TOKEN] = video_name
+        self.comp_data[DataFrameTokens.END_EVENT_TOKEN] = self.comp_data[DataFrameTokens.LABELS_GROUP_KEY]
+        
+        try:
+            
+            if self.transform_func:
+                self.comp_data=self.transform_func(self.comp_data) 
+               
+        except Exception as ex:
+            print ("\n\n\n----------- EXCEPTION IN UDF TRANSFORM FUNCTION --------------------")
+            print(f"Failed in user defined transform function for prediction: {pred_file} and gt: {gt_file}")
+            print (ex)
+            print('\n\n\n')
+            raise ex
+       
         return True  
         
  

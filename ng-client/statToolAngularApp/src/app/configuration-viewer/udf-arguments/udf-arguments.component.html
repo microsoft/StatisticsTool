@@ -10,7 +10,7 @@
         <div class="row text-center" style="width:100%;margin-bottom: 7px;">
             <div class="col">
               <div class="form-group">
-                <label style="font-weight: bold">Args of {{data.funcName}}</label>
+                <label style="font-weight: bold">Args of {{func_name}}</label>
               </div>
             </div>
         </div>
@@ -22,6 +22,7 @@
                     <input type="text" class="form-control form-control-sm" 
                           style="min-height: 0px !important;width:100%;padding-right: 10px;" 
                           [(ngModel)]="p.value"
+                          name="{{p.name}}"
                           >
                   </div>
                 </div>

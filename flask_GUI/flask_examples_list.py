@@ -67,8 +67,8 @@ def show_image():
     example_index = int(request.args.get(ExampleList_Tags.EXAMPLE_INDEX))
     frame_num = int(request.args.get(ExampleList_Tags.EXAMPLE_FRAME))
 
-    main_exp = experiments_manager.get_experiment(main_path)
-    ref_exp = experiments_manager.get_experiment(ref_path)
+    main_exp = experiments_manager.get_or_load_experiment(main_path)
+    ref_exp = experiments_manager.get_or_load_experiment(ref_path)
 
     main_dir,_ = os.path.split(main_path)
     

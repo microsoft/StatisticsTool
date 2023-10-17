@@ -2,9 +2,8 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { SaveSuiteDialogComponent } from "../save-suite-dialog/save-suite-dialog.component";
-import { GROUND_TRUTH_DIRECTORY, LocalStorgeHelper, OUTPUT_DIRECTORY, PREDICTION_DIRECTORY } from "./localStorageHelper";
 import { Subject } from "rxjs";
-import { UDFTitleEnum, UDFTypeEnum } from "../common/enums";
+import { UDFTypeEnum } from "../common/enums";
 import Swal from 'sweetalert2';
 
 export const SELECTE_SUITE = '--- Select Suite ---';
@@ -167,6 +166,7 @@ export class NewReportService {
     
           this.association_functions = this.udf.get(UDFTypeEnum.ASSOCIATION_FUNCTIONS)?.map((o) => o.funcName)!;
           this.association_functions.sort((a, b) => (a > b ? 1 : -1));
+
         } catch (error) {
           console.error('Error initializing user-defined functions:', error);
         }
@@ -192,10 +192,13 @@ export class NewReportService {
     processUdfItem(funcType:string,udfResponse:any){
         let arrFuncs:UDF.Item[] = [];
         let functions = udfResponse[funcType];
+        
+        if (functions == undefined || functions == null)
+            return arrFuncs;
 
         for (const func of functions){
             let funcName = func.func_name;
-            let funcArguments = func.func_arguments;
+            let funcArguments = func.params;
             let params:UDF.Param[] = [];
             for (const key in funcArguments) {
                 if (funcArguments.hasOwnProperty(key)) {
@@ -208,13 +211,6 @@ export class NewReportService {
         }
 
         return arrFuncs;
-    }
-
-    initDataFromLocalStorage(){
-        LocalStorgeHelper.loadAll();
-        this.last_prediction_directory      = LocalStorgeHelper.getList(PREDICTION_DIRECTORY)!;
-        this.last_ground_truth_directory    = LocalStorgeHelper.getList(GROUND_TRUTH_DIRECTORY)!;
-        this.last_output_directory          = LocalStorgeHelper.getList(OUTPUT_DIRECTORY)!;
     }
 
     parseConfigs(configs:any){
@@ -268,7 +264,7 @@ export class NewReportService {
     configSelectionChanged(event:any,config:string){
         this.configsSelections.set(config.toLocaleLowerCase(),event.target.checked);
         if (event.target.checked)
-            this.showConfig(config.toLocaleLowerCase());
+            this.showConfig(config);
     }
 
     saveSuite(suiteName:string){    
@@ -333,24 +329,26 @@ export class NewReportService {
 
     }  
 
-    parseGetConfigResult(udfTitle:UDFTitleEnum,udfType:UDFTypeEnum,result:any){
+    parseGetConfigResult(udfType:UDFTypeEnum,result:any){
         
-        if (result[udfTitle] != undefined){
-            let func = result[udfTitle].func_name;
-            if (udfTitle == UDFTitleEnum.PREDICTION_READING_FUNCTION)
+        if (result[udfType] != undefined){
+            let func = result[udfType].func_name;
+            if (udfType == UDFTypeEnum.READING_FUNCTIONS)
                 this.selectedPredictionReadingFunction = func;
-            if (udfTitle == UDFTitleEnum.ASSOCIATION_FUNCTION)
+            if (udfType == UDFTypeEnum.ASSOCIATION_FUNCTIONS)
                 this.selectedAssociationFunction = func;
-            if (udfTitle == UDFTitleEnum.CONFUSION_FUNCTION)
+            if (udfType == UDFTypeEnum.CONFUSION_FUNCTIONS)
                 this.selectedConfusionFunction = func;
-            if (udfTitle == UDFTitleEnum.GT_READING_FUNCTION)
+            if (udfType == UDFTypeEnum.GT_READING_FUNCTIONS)
                 this.selectedGTReadingFunction = func;
-            if (udfTitle == UDFTitleEnum.STATISTICS_FUNCTION)
+            if (udfType == UDFTypeEnum.STATISTICS_FUNCTIONS)
                 this.selectedStatisticsFunction = func;
-            if (udfTitle == UDFTitleEnum.TRANSFORM_FUNCTION)
+            if (udfType == UDFTypeEnum.TRANSFORM_FUNCTIONS)
                 this.selectedTransformFunction = func;
-                
-            let args = result[udfTitle].params;
+            if (udfType == UDFTypeEnum.PARTITIONING_FUNCTIONS)
+                this.selectedPartitioningFunction = func;    
+
+            let args = result[udfType].params;
             let udfItem = this.udf.get(udfType)?.find(x => x.funcName == func);
             if (udfItem != undefined){
                 udfItem.params.forEach(p => {
@@ -372,36 +370,38 @@ export class NewReportService {
             this.clearConfigViewer();
             //show the new config in the viewer
 
-            this.parseGetConfigResult(UDFTitleEnum.ASSOCIATION_FUNCTION,UDFTypeEnum.ASSOCIATION_FUNCTIONS,config);
-            this.parseGetConfigResult(UDFTitleEnum.CONFUSION_FUNCTION,UDFTypeEnum.CONFUSION_FUNCTIONS,config);
-            this.parseGetConfigResult(UDFTitleEnum.GT_READING_FUNCTION,UDFTypeEnum.GT_READING_FUNCTIONS,config);
-            this.parseGetConfigResult(UDFTitleEnum.PARTITIONING_FUNCTION,UDFTypeEnum.PARTITIONING_FUNCTIONS,config);
-            this.parseGetConfigResult(UDFTitleEnum.PREDICTION_READING_FUNCTION,UDFTypeEnum.READING_FUNCTIONS,config);
-            this.parseGetConfigResult(UDFTitleEnum.STATISTICS_FUNCTION,UDFTypeEnum.STATISTICS_FUNCTIONS,config);
-            this.parseGetConfigResult(UDFTitleEnum.TRANSFORM_FUNCTION,UDFTypeEnum.TRANSFORM_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTypeEnum.ASSOCIATION_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTypeEnum.CONFUSION_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTypeEnum.GT_READING_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTypeEnum.PARTITIONING_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTypeEnum.READING_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTypeEnum.STATISTICS_FUNCTIONS,config);
+            this.parseGetConfigResult(UDFTypeEnum.TRANSFORM_FUNCTIONS,config);
                     
             this.configName = configName;
-            this.logName = config['Log Names to Evaluate'];
+            this.logName = config[UDFTypeEnum.LOGS_NAME_TO_EVALUATE];
 
-            this.gtReadingSameAsPrediction = (this.selectedGTReadingFunction == undefined || this.selectedGTReadingFunction == null || this.selectedGTReadingFunction == '') || (this.selectedPredictionReadingFunction == this.selectedGTReadingFunction) || (this.selectedGTReadingFunction.toLowerCase() == 'none');
+            this.gtReadingSameAsPrediction = (this.selectedGTReadingFunction == undefined || this.selectedGTReadingFunction == null || this.selectedGTReadingFunction == '') || (this.selectedGTReadingFunction.toLowerCase() == 'none');
             this.transformEnabled = this.selectedTransformFunction != '' && this.selectedTransformFunction != undefined;
             this.partitioningEnabled = this.selectedPartitioningFunction != '' && this.selectedPartitioningFunction != undefined;
+            this.associationEnabled = this.selectedAssociationFunction != '' && this.selectedAssociationFunction != undefined;
 
             this.isPanelOpen = false;
         })
     }
 
-    addUdfToConfig(type:UDFTypeEnum,title:UDFTitleEnum,selectedFunc:string,dictionary:{ [key: string]: any }){
+    addUdfToConfig(type:UDFTypeEnum,selectedFunc:string,dictionary:{ [key: string]: any }){
         let item = this.udf.get(type);
         let x = item?.find(x => x.funcName == selectedFunc);
         const paramsObj: { [key: string]: any } = {};
-        
+        if (x == undefined)
+            return
         for(let i = 0;i<x!.params.length;i++){
             let param = x!.params[i];
             paramsObj[param.name] = param.value;
         }
 
-        dictionary[title] = {
+        dictionary[type] = {
 
             'func_name':selectedFunc,
             'params':paramsObj
@@ -413,19 +413,20 @@ export class NewReportService {
         this.showParams = false
         this.newReportResult = new NewReportResult();
         const dictionary: { [key: string]: any } = {};
-        this.addUdfToConfig(UDFTypeEnum.READING_FUNCTIONS,UDFTitleEnum.PREDICTION_READING_FUNCTION,this.selectedPredictionReadingFunction,dictionary);
+        this.addUdfToConfig(UDFTypeEnum.READING_FUNCTIONS,this.selectedPredictionReadingFunction,dictionary);
         if (!this.gtReadingSameAsPrediction && this.selectedGTReadingFunction.toLocaleLowerCase() != 'none')
-            this.addUdfToConfig(UDFTypeEnum.GT_READING_FUNCTIONS,UDFTitleEnum.GT_READING_FUNCTION,this.selectedGTReadingFunction,dictionary);
+            this.addUdfToConfig(UDFTypeEnum.GT_READING_FUNCTIONS,this.selectedGTReadingFunction,dictionary);
         if (this.transformEnabled)
-            this.addUdfToConfig(UDFTypeEnum.TRANSFORM_FUNCTIONS,UDFTitleEnum.TRANSFORM_FUNCTION,this.selectedTransformFunction,dictionary);
+            this.addUdfToConfig(UDFTypeEnum.TRANSFORM_FUNCTIONS,this.selectedTransformFunction,dictionary);
         if (this.partitioningEnabled)
-            this.addUdfToConfig(UDFTypeEnum.PARTITIONING_FUNCTIONS,UDFTitleEnum.PARTITIONING_FUNCTION,this.selectedPartitioningFunction,dictionary);
-        this.addUdfToConfig(UDFTypeEnum.STATISTICS_FUNCTIONS,UDFTitleEnum.STATISTICS_FUNCTION,this.selectedStatisticsFunction,dictionary);
-        this.addUdfToConfig(UDFTypeEnum.CONFUSION_FUNCTIONS,UDFTitleEnum.CONFUSION_FUNCTION,this.selectedConfusionFunction,dictionary);
-        this.addUdfToConfig(UDFTypeEnum.ASSOCIATION_FUNCTIONS,UDFTitleEnum.ASSOCIATION_FUNCTION,this.selectedAssociationFunction,dictionary);
+            this.addUdfToConfig(UDFTypeEnum.PARTITIONING_FUNCTIONS,this.selectedPartitioningFunction,dictionary);
+        this.addUdfToConfig(UDFTypeEnum.STATISTICS_FUNCTIONS,this.selectedStatisticsFunction,dictionary);
+        this.addUdfToConfig(UDFTypeEnum.CONFUSION_FUNCTIONS,this.selectedConfusionFunction,dictionary);
+        if (this.associationEnabled)
+            this.addUdfToConfig(UDFTypeEnum.ASSOCIATION_FUNCTIONS,this.selectedAssociationFunction,dictionary);
 
-        dictionary['configName'] = this.configName;
-        dictionary['Log Names to Evaluate'] = this.logName;
+        dictionary[UDFTypeEnum.CONFIG_NAME] = this.configName;
+        dictionary[UDFTypeEnum.LOGS_NAME_TO_EVALUATE] = this.logName;
 
         const url = '/new_report/save_configuration'; 
 
@@ -449,13 +450,6 @@ export class NewReportService {
             })
     }
 
-    saveDataInLocalStorage(){
-        LocalStorgeHelper.addToList(PREDICTION_DIRECTORY,this.predictionsDirectory);
-        LocalStorgeHelper.addToList(GROUND_TRUTH_DIRECTORY,this.groundTruthDirectory);
-        LocalStorgeHelper.addToList(OUTPUT_DIRECTORY,this.reporterOutputDirectory);
-        LocalStorgeHelper.saveInLocaStorage();
-        this.initDataFromLocalStorage();
-    }
 
     createReport(){
         this.isBusy = true;
@@ -465,14 +459,13 @@ export class NewReportService {
         this.newReportResult.errorMessage = '';
         this.newReportResult.ok = false;
 
-        this.saveDataInLocalStorage();
 
         let params = { 
-            'Configurations':this.getSuiteConfigurations(this.selectedSuite),
-            'Suite Name':this.selectedSuite == SELECTE_SUITE ? '' : this.selectedSuite,
-            'Predictions Directory': this.predictionsDirectory,
-            'Ground Truth Directory': this.groundTruthDirectory,
-            'Reporter Output Directory':this.reporterOutputDirectory
+            'configurations':this.getSuiteConfigurations(this.selectedSuite),
+            'suite_Name':this.selectedSuite == SELECTE_SUITE ? '' : this.selectedSuite,
+            'predictions_directory': this.predictionsDirectory,
+            'groundtruth_directory': this.groundTruthDirectory,
+            'reporter_output_directory':this.reporterOutputDirectory
         };
 
         let url = '/new_report/calculating_page';

@@ -23,16 +23,18 @@ class Constants:
     EXTERNAL_LIBRARY = 'statisticstool_external_library'
     USER_DEFINED_FUNCTIONS = 'user_defined_functions'
     UDF_USER_ARGUMENT_FUNCTION = 'get_function_arguments'
+    CONFIG_FUNCTION_NAME_TOKEN = 'func_name'
+    CONFIG_FUNCTION_PARAMS_TOKEN = 'params'
 
 class UserDefinedConstants:
-    READING_FUNCTIONS       = 'reading_functions'
-    EVALUATION_FUNCTIONS    = 'evaluation_functions'
-    OVERLAP_FUNCTIONS       = 'overlap_functions'
-    PARTITIONING_FUNCTIONS  = 'partitioning_functions'
-    STATISTICS_FUNCTIONS    = 'statistics_functions'
-    TRANSFORM_FUNCTIONS     = 'transform_functions'
-    CONFUSION_FUNCTIONS     = 'confusion_functions'
-    ASSOCIATION_FUNCTIONS   = 'association_functions'
+    READING_FUNCTIONS_KEY           = 'reading_functions'
+    GT_READING_FUNCTIONS_KEY        = 'gt_reading_functions'
+    PARTITIONING_FUNCTIONS_KEY      = 'partitioning_functions'
+    STATISTICS_FUNCTIONS_KEY        = 'statistics_functions'
+    TRANSFORM_FUNCTIONS_KEY         = 'transform_functions'
+    CONFUSION_FUNCTIONS_KEY         = 'confusion_functions'
+    ASSOCIATION_FUNCTIONS_KEY       = 'association_functions'
+    LOGS_TO_EVALUATE_KEY            = 'logs_file_names_to_evaluate'
 
 class URLs:
     #INDEX_HTML_NEW_REPORT = '/static/index.html?new_report='

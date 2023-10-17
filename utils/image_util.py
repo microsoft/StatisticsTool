@@ -19,7 +19,8 @@ def read_frame_from_video(video_file, frame_id, local_store = None):
         
     if pathlib.Path(local_video_path).suffix == ".mp4":
         vid= cv2.VideoCapture(local_video_path)
-        vid.set(cv2.CAP_PROP_POS_FRAMES, int(frame_id))
+        if is_video(local_video_path):
+            vid.set(cv2.CAP_PROP_POS_FRAMES, int(frame_id))
         _, frame = vid.read()
     
     if frame is not None:
@@ -29,6 +30,13 @@ def read_frame_from_video(video_file, frame_id, local_store = None):
         print(f'Cant find frmae {frame_id} for: {video_file}')
 
     return frame
+        
+def is_video(file_path):
+    extension = os.path.splitext(file_path)[1].lower()
+    if extension in ['.mp4', '.avi', '.mov', '.wmv', '.flv']:
+        return True
+    else:
+        return False
 
 def draw_rect_on_image(image, x, y, width, height, color, thickness):
     bb_x_top_left = x

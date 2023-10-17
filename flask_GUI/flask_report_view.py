@@ -6,10 +6,9 @@ from classes_and_utils.experiments.ExperminetsManager import ExperimentsManager
 
 from flask_GUI.flask_server import server, experiments_manager
 
-from classes_and_utils.UserDefinedFunctionsHelper import options_for_funcs
 from classes_and_utils.experiments.ExperimentsHelper import ExperimentsHelper
 from flask_GUI.dash_apps.results_table import Results_table
-from app_config.constants import Constants, Tags, URLs, UserDefinedConstants
+from app_config.constants import Constants, Tags, URLs
 from urllib.parse import quote
 
 #from flask_GUI.configuration_results import ConfigurationResults
@@ -63,7 +62,7 @@ def Report_Viewer():
                                    location=location, 
                                    missing_files_from_main = missing_files_from_main, 
                                    missing_files_from_ref = missing_files_from_ref)
-        url = "{}?{}={}".format(URLs.INDEX_HTML,Tags.REPORTS,{js_pairs})
+        url = "{}?{}={}".format(URLs.INDEX_HTML,Tags.REPORTS,js_pairs)
         #return redirect(f'/static/index.html?reports={js_pairs}')
         return redirect(url)
     
@@ -96,11 +95,11 @@ def get_report_table():
     main_path = request.args.get(ReportViewer_Tags.MAIN_PATH)
     ref_path = request.args.get(ReportViewer_Tags.REF_PATH)
 
-    if experiments_manager.get_experiment(main_path) == None:
+    if experiments_manager.get_or_load_experiment(main_path) == None:
         return None
 
-    main = experiments_manager.get_experiment(main_path)
-    ref = experiments_manager.get_experiment(ref_path) if ref_path != '' else None
+    main = experiments_manager.get_or_load_experiment(main_path)
+    ref = experiments_manager.get_or_load_experiment(ref_path) if ref_path != '' else None
 
     calc_unique = True if ref and request.args.get(ReportViewer_Routes.CALC_UNIQUE) == 'true' else False
     
@@ -112,8 +111,8 @@ def get_report_table():
             res_table = experiments_manager.get_results_table(main_path,ref_path)
             if res_table == None:
                 segmentations = experiments_manager.get_item_segmentations(main_path)
-                statistics_func, evaluation_func, overlap_func = ExperimentsManager.get_experiment_udf(main_path)
-                res_table = Results_table(server, main,ref, main_path, ref_path, segmentations, statistics_func, evaluation_func, overlap_func)
+                statistics_func, association_func = ExperimentsManager.get_experiment_udf(main_path)
+                res_table = Results_table(server, main,ref, main_path, ref_path, segmentations, statistics_func, association_func)
                 experiments_manager.add_results_table(main_path,ref_path,res_table)
     
     res_table.set_unique(calc_unique)

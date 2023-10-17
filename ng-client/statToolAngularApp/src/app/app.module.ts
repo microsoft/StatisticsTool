@@ -36,6 +36,7 @@ import { NewReportResultComponent } from './new-report/new-report-result/new-rep
 import { ClickOutsideDirective } from './click-outside.directive'; // Adjust the path to your directive
 import { CommonService } from './services/common.service';
 import { UdfArgumentsComponent } from './configuration-viewer/udf-arguments/udf-arguments.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations'; // Import the BrowserAnimationsModule
 
 
 @NgModule({
@@ -54,7 +55,7 @@ import { UdfArgumentsComponent } from './configuration-viewer/udf-arguments/udf-
     ConfigurationViewerComponent,
     NewReportResultComponent,
     ClickOutsideDirective,
-    UdfArgumentsComponent,
+    UdfArgumentsComponent
   ],
   imports: [
     NgMultiSelectDropDownModule.forRoot(),
@@ -76,7 +77,9 @@ import { UdfArgumentsComponent } from './configuration-viewer/udf-arguments/udf-
     NgbModule,
     NgbTypeaheadModule,
     NgbAlertModule,
-    DragDropModule
+    DragDropModule, 
+    BrowserModule,
+    BrowserAnimationsModule
   ],
   providers: [StatisticsToolService,CommonService],
   bootstrap: [AppComponent]

@@ -17,6 +17,7 @@ export class UdfArgumentsComponent implements OnInit,OnDestroy {
   @Input() show = false;
 
   data:any;
+  func_name = ''
   params:UDF.Param[] = [];
   
   constructor(public newReportSvc:NewReportService) {
@@ -25,7 +26,8 @@ export class UdfArgumentsComponent implements OnInit,OnDestroy {
   ngOnInit() {
     this.subscribeOpenArgs = this.newReportSvc.showArgumentsEvent.subscribe(data => {
       this.data = data;
-      this.params = data.udfItem.params;
+      this.func_name = data?data.funcName:'';
+      this.params = data?data.udfItem.params:[];
     })
   }
   

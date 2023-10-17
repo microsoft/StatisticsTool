@@ -19,8 +19,6 @@ def statistic_tool_reader_face_detection_classification(path, **kwargs):
     if len(lines) < 1:
         return None
     
-    emulation_matrix = get_emulation_matrix(json.loads(header))
-
     log_type = check_log_type(json.loads(header))
     if log_type == LogTypes.IO_LOG:
         log_field_type = 'FaceDetectionOutput'
@@ -28,32 +26,17 @@ def statistic_tool_reader_face_detection_classification(path, **kwargs):
         log_field_type = 'Face BB'
 
     records = []
-    
+    prediction = {'frame_id':-1, 'detection':-1}
     for line in lines:
         line = json.loads(line)
         if ('type' in line['keys'] and line['keys']['type'] != log_field_type) or 'objects' not in line['message']:
             continue
 
-        detections = []
-        frame_id = line['keys']['frame_id']
-       
-        for obj in line['message']['objects']:
-            if obj["Source"] != "FACE_DETECTION":
-                continue
-            bb = transform_bb_to_original_frame_size(obj['BoundingBox'], emulation_matrix)
-            prediction = {'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']}
-            if 'Score' in obj:
-                prediction['Score'] = obj['Score']
-            detections.append({'detection':True, 'prediction': prediction})
-
-        if len(detections) == 0:
-            detections=[{'detection':False}]
-
-        records.append({'frame_id': frame_id, 'predictions':detections})
+        prediction['frame_id'] = line['keys']['frame_id']
+        prediction['detection']= True if len(line['message']['objects'])>0 else False
+        
+        records.append(prediction.copy())
     
     df = pd.DataFrame.from_records(records)  
     
     return df
-
-def get_function_arguments():
-    return { "param1":"string", "param2":"string","param3":"string","param4":"string","param5":"string","param6":"string" }

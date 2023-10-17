@@ -57,7 +57,7 @@ def get_text_color_by_stat(main, gradient):
 
 class Results_table():
     
-    def __init__(self, server, main_exp,ref_exp, main_path, ref_path, segmentations, statistics_func, evaluation_function, overlap_function):
+    def __init__(self, server, main_exp,ref_exp, main_path, ref_path, segmentations, statistics_func, association_function):
         
         self.unique_helper = None
         self.main_exp = main_exp
@@ -66,8 +66,7 @@ class Results_table():
         self.ref_path = ref_path
         self.segmentations = segmentations
         self.statistics_func = statistics_func
-        self.evaluation_func = evaluation_function
-        self.overlap_func = overlap_function
+        self.association_function = association_function
         
         self.unique_lock = Lock()
         self.dash_app = Dash(
@@ -108,7 +107,7 @@ class Results_table():
         if self.ref_exp is not None and calc_unique and self.unique_helper is None:
             with self.unique_lock:
                 if self.unique_helper is None:
-                    self.unique_helper = UniqueHelper(self.main_exp,self.ref_exp, self.evaluation_func, self.overlap_func)
+                    self.unique_helper = UniqueHelper(self.main_exp,self.ref_exp, self.association_function)
   
     def get_webpage(self):
         return self.dash_app.index()

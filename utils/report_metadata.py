@@ -11,17 +11,6 @@ VIDEO_SUFFIX = 'video_suffix'
 RUN_INFO_TOKEN = 'run_info'
 CONFIG_TOKEN = 'config'
 
-READING_FUNCTION_OLD_TOKEN = "File Reading Function"
-PARTITIONING_FUNC_TOKEN = 'Partitioning Functions'
-STATISTICS_FUNC_TOKEN = 'Statistics Functions'
-EVALUATION_FUNC_TOKEN = 'Evaluation Function'
-TRANSFORM_FUNC_TOKEN = 'Transformation Function'
-OVERLAP_FUNC_TOKEN = 'Overlap Function'
-THRESHOLD_TOKEN = 'Threshold'
-PREDICTIONS_READING_TOKEN = "Prediction Reading Function"
-GT_READING_FUNC_TOKEN = "GT Reading Function"
-LOGS_TO_EVALUATE_TOKEN = "Log Names to Evaluate"
-CONFUSION_FUNC_TOKEN = 'Confusion Functions'
 
 def create_run_info(primary_path, primary_name, secondary_path, secondary_name, video_path) -> dict:
     header = {}

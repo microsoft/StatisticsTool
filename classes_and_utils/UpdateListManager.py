@@ -1,11 +1,13 @@
 import numpy as np
 import os
+from app_config.dataframe_tokens import DataFrameTokens
 from classes_and_utils.utils import save_json
 
 from utils.report_metadata import *
 
 class UpdateListManager():
-    
+    END_FRAME_LIST = 'end_frame'
+    FRAMES = 'frames'
     @staticmethod  
     def create_collapsing_list(arr_of_examples):
         """
@@ -41,10 +43,10 @@ class UpdateListManager():
                 start_index = example[1]
                 start_frame = example[2]
                 per_video_example_hash[example[0]][start_frame] = {}
-                (((per_video_example_hash[example[0]])[start_frame]))['frames']  = []
+                (((per_video_example_hash[example[0]])[start_frame]))[UpdateListManager.FRAMES]  = []
 
-            (((per_video_example_hash[example[0]])[start_frame])['frames']).append(example)
-            ((per_video_example_hash[example[0]])[start_frame])['end_frame'] = example[3]
+            (((per_video_example_hash[example[0]])[start_frame])[UpdateListManager.FRAMES]).append(example)
+            ((per_video_example_hash[example[0]])[start_frame])[UpdateListManager.END_FRAME_LIST] = example[3]
 
         return per_video_example_hash
 
@@ -59,8 +61,8 @@ class UpdateListManager():
         for vid_key in examples:
             a.append(f'<li><span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;">{vid_key}</span><ul>')
             for frame_key in examples[vid_key]:
-                a.append(f'<li><span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;"> Frame # {frame_key}-{examples[vid_key][frame_key]["end_frame"]}</span><ul>')
-                for example_name in examples[vid_key][frame_key]['frames']:
+                a.append(f'<li><span style="cursor: pointer; font-family: Arial, Helvetica, sans-serif;"> Frame # {frame_key}-{examples[vid_key][frame_key][UpdateListManager.END_FRAME_LIST]}</span><ul>')
+                for example_name in examples[vid_key][frame_key][UpdateListManager.FRAMES]:
                     line = txt.format(example_name[0],example_name[1],example_name[2],comp_index,main_path,ref_path,unique_flag,example_name[2],example_name[1])
                     a.append(line)
                 a.append('</ul></li>')
@@ -134,10 +136,10 @@ class UpdateListManager():
                 json_link['message']={}
                 json_link['message']['IsChecked']='False'
 
-                vid_name = actual_event['frames'][0][0].replace(".mp4","")
+                vid_name = actual_event[UpdateListManager.FRAMES][0][0].replace(".mp4","")
                 json_link['message']['Video Location']=vid_name
-                json_link['message']['Frame Number']= actual_event['frames'][0][2]
-                json_link['message']['end_frame'] = actual_event['end_frame']
+                json_link['message']['Frame Number']= actual_event[UpdateListManager.FRAMES][0][2]
+                json_link['message']['end_frame'] = actual_event[UpdateListManager.END_FRAME_LIST]
 
                 json_list.append(json.dumps(json_link))
         

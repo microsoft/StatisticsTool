@@ -15,6 +15,8 @@ export class ConfigurationViewerComponent implements OnInit {
   @ViewChild('associationFunctionImg',  { static: false }) associationFunctionImgElement: ElementRef|null = null;
   @ViewChild('transformFunctionImg',    { static: false }) transformFunctionImgElement: ElementRef|null = null;
   @ViewChild('partitioningFunctionImg', { static: false }) partitioningFunctionImgElement: ElementRef|null = null;
+  @ViewChild('statisticsFunctionImg', { static: false }) statisticsFunctionImgElement: ElementRef|null = null;
+  @ViewChild('confusionFunctionImg', { static: false }) confusionFunctionImgElement: ElementRef|null = null;
 
   readonly title = 'New Configuration';
 
@@ -123,6 +125,37 @@ export class ConfigurationViewerComponent implements OnInit {
       true);
   }
 
+  onStatisticsFunctionChange(event: Event) {
+    this.newReportService.showParams = false;
+
+    if (!this.functionHasArguments(this.udfTypes.STATISTICS_FUNCTIONS,this.newReportService.selectedStatisticsFunction))
+      return;
+
+    const selectedValue = (event.target as HTMLSelectElement).value;
+    this.newReportService.getUDFUserArguments(UDFTypeEnum.STATISTICS_FUNCTIONS,selectedValue);
+    this.showArgumentsPanel(this.statisticsFunctionImgElement,
+      UDFTypeEnum.STATISTICS_FUNCTIONS,
+      UDFTitleEnum.STATISTICS_FUNCTION,
+      this.newReportService.selectedStatisticsFunction,
+      true);
+  }
+
+  
+  onConfusionFunctionChange(event: Event) {
+    this.newReportService.showParams = false;
+
+    if (!this.functionHasArguments(this.udfTypes.CONFUSION_FUNCTIONS,this.newReportService.selectedConfusionFunction))
+      return;
+
+    const selectedValue = (event.target as HTMLSelectElement).value;
+    this.newReportService.getUDFUserArguments(UDFTypeEnum.CONFUSION_FUNCTIONS,selectedValue);
+    this.showArgumentsPanel(this.confusionFunctionImgElement,
+      UDFTypeEnum.CONFUSION_FUNCTIONS,
+      UDFTitleEnum.CONFUSION_FUNCTION,
+      this.newReportService.selectedConfusionFunction,
+      true);
+  }
+
   onTransformFunctionChange(event: Event) {
 
     this.newReportService.showParams = false;
@@ -154,76 +187,50 @@ export class ConfigurationViewerComponent implements OnInit {
       this.newReportService.selectedPartitioningFunction,
       true);
   }
+  
+  getArgumentSVGType(funcType:UDFTypeEnum, selectedFunction: string, isEnabled = true){
+      if(selectedFunction == '')
+      return this.ARGUMENT_GRAY_ICON;
+    else {
+      if (!this.functionHasArguments(funcType,selectedFunction))
+        return this.ARGUMENT_GRAY_ICON;
+      if (this.paramsHaveValue(funcType)){
+        return this.ARGUMENT_GREEN_ICON;
+      } else {
+        return this.ARGUMENT_RED_ICON;
+      }
+    }
+  }
 
   getArgumentSvg(funcType:UDFTypeEnum){
     if (funcType == UDFTypeEnum.READING_FUNCTIONS){
-      if(this.newReportService.selectedPredictionReadingFunction == '')
-        return this.ARGUMENT_GRAY_ICON;
-      else {
-        if (!this.functionHasArguments(funcType,this.newReportService.selectedPredictionReadingFunction))
-          return this.ARGUMENT_GRAY_ICON;
-        if (this.paramsHaveValue(this.udfTypes.READING_FUNCTIONS)){
-          return this.ARGUMENT_GREEN_ICON;
-        } else {
-          return this.ARGUMENT_RED_ICON;
-        }
-      }
+      return this.getArgumentSVGType(funcType, this.newReportService.selectedPredictionReadingFunction);
     }
 
     if (funcType == UDFTypeEnum.GT_READING_FUNCTIONS){
-      if(this.newReportService.selectedGTReadingFunction == '' || this.newReportService.gtReadingSameAsPrediction)
-        return this.ARGUMENT_GRAY_ICON;
-      else {
-        if (!this.functionHasArguments(funcType,this.newReportService.selectedGTReadingFunction))
-          return this.ARGUMENT_GRAY_ICON;
-        if (this.paramsHaveValue(UDFTypeEnum.GT_READING_FUNCTIONS)){
-          return this.ARGUMENT_GREEN_ICON;
-        } else {
-          return this.ARGUMENT_RED_ICON;
-        }
-      }
+      return this.getArgumentSVGType(funcType, this.newReportService.selectedGTReadingFunction, !this.newReportService.gtReadingSameAsPrediction);
     }
 
     if (funcType == UDFTypeEnum.ASSOCIATION_FUNCTIONS){
-      if (this.newReportService.selectedAssociationFunction == '' || !this.newReportService.associationEnabled)
-        return this.ARGUMENT_GRAY_ICON;
-      else {
-        if (!this.functionHasArguments(funcType,this.newReportService.selectedAssociationFunction))
-          return this.ARGUMENT_GRAY_ICON;
-        if (this.paramsHaveValue(this.udfTypes.ASSOCIATION_FUNCTIONS)){
-          return this.ARGUMENT_GREEN_ICON;
-        } else {
-          return this.ARGUMENT_RED_ICON;
-        }
-      }
+      return this.getArgumentSVGType(funcType, this.newReportService.selectedAssociationFunction, this.newReportService.associationEnabled);
     }
 
     if (funcType == UDFTypeEnum.TRANSFORM_FUNCTIONS){
-      if (this.newReportService.selectedTransformFunction == '' || !this.newReportService.transformEnabled)
-        return this.ARGUMENT_GRAY_ICON;
-      else {
-        if (!this.functionHasArguments(funcType,this.newReportService.selectedTransformFunction))
-          return this.ARGUMENT_GRAY_ICON;
-        if (this.paramsHaveValue(UDFTypeEnum.TRANSFORM_FUNCTIONS)){
-          return this.ARGUMENT_GREEN_ICON;
-        } else {
-          return this.ARGUMENT_RED_ICON;
-        }
-      }
+      return this.getArgumentSVGType(funcType, this.newReportService.selectedTransformFunction, this.newReportService.transformEnabled);
     }
 
     if (funcType == UDFTypeEnum.PARTITIONING_FUNCTIONS){
-      if (this.newReportService.selectedPartitioningFunction == '' || !this.newReportService.partitioningEnabled)
-        return this.ARGUMENT_GRAY_ICON;
-      else {
-        if (!this.functionHasArguments(funcType,this.newReportService.selectedPartitioningFunction))
-          return this.ARGUMENT_GRAY_ICON;
-        if (this.paramsHaveValue(this.udfTypes.PARTITIONING_FUNCTIONS)){
-          return this.ARGUMENT_GREEN_ICON;
-        } else {
-          return this.ARGUMENT_RED_ICON;
-        }
-      }
+      return this.getArgumentSVGType(funcType, this.newReportService.selectedPartitioningFunction, this.newReportService.partitioningEnabled);
+      
+    }
+
+    if (funcType == UDFTypeEnum.CONFUSION_FUNCTIONS){
+      return this.getArgumentSVGType(funcType, this.newReportService.selectedConfusionFunction);
+      
+    }
+    if (funcType == UDFTypeEnum.STATISTICS_FUNCTIONS){
+      return this.getArgumentSVGType(funcType, this.newReportService.selectedStatisticsFunction);
+      
     }
 
     return this.ARGUMENT_RED_ICON;
@@ -370,12 +377,10 @@ export class ConfigurationViewerComponent implements OnInit {
     if (sameAsPredicted){ 
       this.newReportService.gtReadingSameAsPrediction = true;
       this.newReportService.showParams = false;
+      this.newReportService.selectedGTReadingFunction = '';
     } else {
       this.newReportService.gtReadingSameAsPrediction = false;
-      if (this.newReportService.selectedGTReadingFunction != '')
-        this.newReportService.showParams = true;
-      else 
-        this.newReportService.showParams = false;
+      this.newReportService.showParams = false;
     }
      
   }

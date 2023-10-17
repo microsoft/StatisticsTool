@@ -7,7 +7,7 @@ from classes_and_utils.file_storage_handler import *
 from utils.LogsParser import get_video_name_from_pred_file
 from utils.report_metadata import create_run_info
 
-def compare_predictions_directory(pred_dir, output_dir, overlap_function, threshold, predictionReaderFunction,gtReaderFunction,transform_func, evaluation_func, local_gt_dir = None, log_names_to_evaluate = None):
+def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction,gtReaderFunction,transform_func, assiciation_function, local_gt_dir = None, log_names_to_evaluate = None):
     """
 
     :param GT_path_list:  a list of paths to GT files (matching to the preditions and images lists)
@@ -73,8 +73,8 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, thresh
                 print(f"GT file: {gt_local_path} not found for prediction: {pred}, continue with next prediction log..")
                 continue
 
-            V = VideoEvaluation(overlap_function=overlap_function, predictionReaderFunction=predictionReaderFunction,gtReaderFunction=gtReaderFunction ,evaluation_func=evaluation_func, transform_func = transform_func)
-            res = V.compute_dataframe(pred_file, gt_local_path, threshold, video_name)
+            V = VideoEvaluation(predictionReaderFunction=predictionReaderFunction,gtReaderFunction=gtReaderFunction ,associationFunction=assiciation_function, transform_func = transform_func)
+            res = V.compute_dataframe(pred_file, gt_local_path, video_name)
             if not res:
                 print (f"Reading function didn't read file: {pred} and gt:{gt_local_path}")
                 skipped_reading_fnc.append(pred)
@@ -127,17 +127,16 @@ def compare_predictions_directory(pred_dir, output_dir, overlap_function, thresh
     report_run_info = create_run_info(primary_path=pred_dir, primary_name=pred_file_name, secondary_path=local_gt_dir, secondary_name=gt_file_name, video_path=video_dir)
     return output_files, report_run_info,process_result
 
-def run_experiment(pred_dir, output_dir, overlap_function, threshold, predictionReaderFunction,gtReaderFunction,transform_func, evaluation_func, local_gt_dir, log_names_to_evaluate):
+def run_experiment(pred_dir, output_dir, predictionReaderFunction,gtReaderFunction,transform_func, assiciation_function, local_gt_dir, log_names_to_evaluate):
         # extract all the intermediate results from the raw prediction-label files
 
-    compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir, output_dir, 
-                                                                                     overlap_function, 
-                                                                                     threshold,predictionReaderFunction,
-                                                                                     gtReaderFunction, 
-                                                                                     transform_func, 
-                                                                                     evaluation_func, 
-                                                                                     local_gt_dir, 
-                                                                                     log_names_to_evaluate)
+    compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir=pred_dir, output_dir=output_dir,
+                                                                                     predictionReaderFunction=predictionReaderFunction,
+                                                                                     gtReaderFunction=gtReaderFunction, 
+                                                                                     transform_func=transform_func, 
+                                                                                     assiciation_function=assiciation_function, 
+                                                                                     local_gt_dir=local_gt_dir, 
+                                                                                     log_names_to_evaluate=log_names_to_evaluate)
 
     if len(compared_videos) == 0:
         return process_result, None

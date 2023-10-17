@@ -6,10 +6,11 @@ import pandas as pd, os
 import numpy as np
 
 from app_config.constants import Constants
+from app_config.dataframe_tokens import DataFrameTokens
 from classes_and_utils.UserDefinedFunctionsHelper import load_config_dict
-from utils.report_metadata import CONFIG_TOKEN, create_metadata
+from utils.report_metadata import create_metadata
 
-EXAMPLES_IN_SEGMENT_CONST = 'examples_in_segment'
+EXAMPLES_IN_SEGMENT_CONST = 'rows_in_segment'
 
 class ParallelExperiment:
  
@@ -60,7 +61,12 @@ class ParallelExperiment:
         return confusion_sums, statistics
 
     def get_list_array(self, mask):
-        arr = self.comp_data[mask][['video','frame_id','end_frame']].to_numpy()
+        if DataFrameTokens.VIDEO_TOKEN in self.comp_data.columns:
+            batch_key = DataFrameTokens.VIDEO_TOKEN
+        else:
+            batch_key = DataFrameTokens.UNIQUE_BATCH_TOKEN
+
+        arr = self.comp_data[mask][[batch_key,DataFrameTokens.LABELS_GROUP_KEY,DataFrameTokens.END_EVENT_TOKEN]].to_numpy()
         list_arr = np.insert(arr,1,self.comp_data[mask].index.to_numpy(), axis=1)
         return list_arr
 
@@ -77,7 +83,7 @@ class ParallelExperiment:
         prd_bbs = []
         matched = []
         
-        all_frmae_obj=self.comp_data[((self.comp_data['frame_id']==bb_obj['frame_id']) & (self.comp_data['video']==bb_obj['video']))]
+        all_frmae_obj=self.comp_data[((self.comp_data[DataFrameTokens.LABELS_GROUP_KEY]==bb_obj[DataFrameTokens.LABELS_GROUP_KEY]) & (self.comp_data[DataFrameTokens.UNIQUE_BATCH_TOKEN]==bb_obj[DataFrameTokens.UNIQUE_BATCH_TOKEN]))]
 
         if 'x' in bb_obj and bb_obj['x'] is not None:  
             matched.append([bb_obj['x'], bb_obj['y'], bb_obj['width'], bb_obj['height']])
@@ -104,50 +110,27 @@ class ParallelExperiment:
 
         return detection_variables_text_list
     
-    def get_detection_video_frame(self, detection_index):
-        data = self.comp_data.loc[detection_index]
-        
-        video=data['video']
-         
-        return video
-     
     @staticmethod
     def combine_evaluation_files(compared_videos):
         
+
+        batch_id = 0
         datafrme_dict = []
         for file_name in compared_videos:
             df = pd.read_json (file_name)
+            df[DataFrameTokens.UNIQUE_BATCH_TOKEN] = batch_id
+            batch_id = batch_id + 1
             datafrme_dict.append(df)
             continue
         
         if len(datafrme_dict) > 0:
-            # concatenate the dictionary of dataframes into a single dataframe
+            # concatenate the dictionary of dataframes into a single dataframe            
             comp_data = pd.concat(datafrme_dict).reset_index(drop=True)
         
-        return comp_data
-    
-    @staticmethod
-    def get_TP_FP_FN_masks(comp_data, **kwargs):
-        """
-        :param comp_data: 
-        :return: Boolean masks of TP, FP, FN that indicates which row in the predictions dataframe is TP/FP
-                 and which row in the labels dataframe is a FN (row = bounding box)
-        """
-        #first key from 'detection' key in input
-        key = 'detection'
-        FN_mask = (comp_data[key+'_gt']==True) & (comp_data[key]==False)
-        FP_mask = (comp_data[key]==True) & (comp_data[key+'_gt']==False)
-        TP_mask = (comp_data[key]==True) & (comp_data[key+'_gt']==True)
-        TN_mask = (comp_data[key+'_gt']==False) & (comp_data[key]==False)
-        
-        return {"TP":TP_mask, "FP":FP_mask, "FN":FN_mask, "TN":TN_mask}
-               
+        return comp_data              
     @staticmethod
     def calc_experiment(comp_data, segmentation_func,confusion_func):
         confusion_calc_func = confusion_func 
-
-        if confusion_calc_func == None:
-            confusion_calc_func = ParallelExperiment.get_TP_FP_FN_masks
 
         # calculate the boolean masks of TP/FP/FN (which row/bounding box in the dataframes is TP/FP/FN)
         confusion_masks = confusion_calc_func(comp_data)

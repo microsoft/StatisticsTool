@@ -41,6 +41,7 @@
                             <div class="select-input" style="flex-grow: 1;">
                                 <select class="form-select form-select-sm" id="reports_suites"
                                         [(ngModel)]="newReportService.selectedSuite"
+                                        name="reports_suites"
                                         (change)="newReportService.onSuiteSelected($event)"
                                         >
                                         <option *ngFor="let suite of newReportService.suites"
@@ -81,7 +82,7 @@
                         </div>
                         <div class="text-inputs dropdown-wrapper">
                             <div class="input-sm">
-                                <label for="predictions_directory" style="width:30%;font-weight: bold">Predictions Directory:</label>
+                                <label for="predictions_directory" style="width:30%;font-weight: bold;">Predictions Directory:</label>
                                 <input type="text" class="form-control input-sm" id="predictions_directory" 
                                     (focus)="onFocus($event)" 
                                     placeholder="Local directory or blob folder" 
@@ -97,7 +98,7 @@
                                 >
                             </div>
                             <div class="input-sm">
-                                <label for="ground_truth_directory" style="width:30%;font-weight: bold">Ground Truth Directory:</label>
+                                <label for="ground_truth_directory" style="width:30%;font-weight: bold;">Ground Truth Directory:</label>
                                 <input type="text" class="form-control input-sm" id="ground_truth_directory" placeholder="Leave blank if GT is from annotation store" 
                                         (focus)="onFocus($event)"   
                                         name="ground_truth_directory"
