@@ -3,12 +3,11 @@ import { Injectable } from "@angular/core";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { SaveSuiteDialogComponent } from "../save-suite-dialog/save-suite-dialog.component";
 import { Subject } from "rxjs";
-import { UDFTypeEnum } from "../common/enums";
+import { UDFConstants, UDFTypeEnum } from "../common/enums";
 import Swal from 'sweetalert2';
 
 export const SELECTE_SUITE = '--- Select Suite ---';
 export const NONE_GT_READING_CUNCTION = 'none';
-
 export class NewReportResult {
     ok = true;
     errorMessage = '';
@@ -84,7 +83,8 @@ export class NewReportService {
     selectedAssociationFunction         = '';
 
     configName = '';
-    logName = '';
+    logsFilter = UDFConstants.DEFAULT_LOG_FILTER;
+    evaluate_folders = false;
 
     predictionsDirectory = '';
     groundTruthDirectory = '';
@@ -316,7 +316,7 @@ export class NewReportService {
         this.selectedAssociationFunction = '';
 
         this.configName = '';
-        this.logName = '';
+        this.logsFilter = UDFConstants.DEFAULT_LOG_FILTER;
 
         //clear param values
         this.udf.forEach((value, key) => {
@@ -379,7 +379,8 @@ export class NewReportService {
             this.parseGetConfigResult(UDFTypeEnum.TRANSFORM_FUNCTIONS,config);
                     
             this.configName = configName;
-            this.logName = config[UDFTypeEnum.LOGS_NAME_TO_EVALUATE];
+            this.logsFilter = config[UDFTypeEnum.LOGS_NAME_TO_EVALUATE];
+            this.evaluate_folders = config[UDFTypeEnum.EVALUATE_FOLDERS];
 
             this.gtReadingSameAsPrediction = (this.selectedGTReadingFunction == undefined || this.selectedGTReadingFunction == null || this.selectedGTReadingFunction == '') || (this.selectedGTReadingFunction.toLowerCase() == 'none');
             this.transformEnabled = this.selectedTransformFunction != '' && this.selectedTransformFunction != undefined;
@@ -426,7 +427,8 @@ export class NewReportService {
             this.addUdfToConfig(UDFTypeEnum.ASSOCIATION_FUNCTIONS,this.selectedAssociationFunction,dictionary);
 
         dictionary[UDFTypeEnum.CONFIG_NAME] = this.configName;
-        dictionary[UDFTypeEnum.LOGS_NAME_TO_EVALUATE] = this.logName;
+        dictionary[UDFTypeEnum.LOGS_NAME_TO_EVALUATE] = this.logsFilter;
+        dictionary[UDFTypeEnum.EVALUATE_FOLDERS] = this.evaluate_folders;
 
         const url = '/new_report/save_configuration'; 
 

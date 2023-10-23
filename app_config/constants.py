@@ -25,6 +25,7 @@ class Constants:
     UDF_USER_ARGUMENT_FUNCTION = 'get_function_arguments'
     CONFIG_FUNCTION_NAME_TOKEN = 'func_name'
     CONFIG_FUNCTION_PARAMS_TOKEN = 'params'
+    EVALUATE_FOLDER_TOKEN = '*FOLDER*'
 
 class UserDefinedConstants:
     READING_FUNCTIONS_KEY           = 'reading_functions'
@@ -35,6 +36,9 @@ class UserDefinedConstants:
     CONFUSION_FUNCTIONS_KEY         = 'confusion_functions'
     ASSOCIATION_FUNCTIONS_KEY       = 'association_functions'
     LOGS_TO_EVALUATE_KEY            = 'logs_file_names_to_evaluate'
+    EVALUATE_FOLDERS_KEY            = 'evaluate_folders'
+    VIDEO_NAME_PARAM_READING_FNC    = 'video_name'
+
 
 class URLs:
     #INDEX_HTML_NEW_REPORT = '/static/index.html?new_report='

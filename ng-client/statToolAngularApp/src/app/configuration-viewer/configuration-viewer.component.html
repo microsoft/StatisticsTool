@@ -27,16 +27,36 @@
         <div class="report-caption">Report Creation</div>
         <!-- Log Names to Evaluate -->
         <div class="row" style="width:100%">
-            <div class="col">
-              <div class="form-group">
-                <label for="log_name" style="font-weight: bold">Log Names to Evaluate:</label>
+          <div class="col">
+            <div class="form-group">
+              <div style="display: flex; align-items: center;"></div>
+              <label for="log_name" style="font-weight: bold">Predictions files/folders filter:</label>
+              <label style="margin-left: 20px;">
+                <input type="radio" 
+                        name="evaluate_logs_folder" 
+                        [(ngModel)]="newReportService.evaluate_folders" 
+                        [value]="false"
+                        (ngModelChange)="logsFolderRadioChanged(true)">
+                {{ udfTitles.EVALUATE_LOGS_FILES }}
+              </label>
+              <label style="margin-left: 20px;">
+                <input type="radio" 
+                        name="evaluate_logs_folder" 
+                        [(ngModel)]="newReportService.evaluate_folders" 
+                        [value]="true"
+                        (ngModelChange)="logsFolderRadioChanged(false)">
+                {{ udfTitles.EVALUATE_LOGS_FOLDER }}
+              </label>
+              
+              <div style="display: flex; align-items: center;">
                 <input type="text" class="form-control form-control-sm" id="log_name" 
-                        [(ngModel)]="newReportService.logName"
-                        name="log_name"
-                        placeholder="" name="log_name" style="min-height: 0px !important;" 
-                        >
+                      [(ngModel)]="newReportService.logsFilter"
+                      name="logs_filter"
+                      name="logs_filter" style="min-height: 0px !important;" 
+                      >
               </div>
             </div>
+          </div>
         </div>
         <!-- Prediction Reading Function -->
         <div class="row" style="width: 104.5%;padding-right: 0px !important;">
@@ -71,7 +91,7 @@
             <div class="form-group" style="width:101% !important">
               <div style="display: flex; align-items: center;">
                 <label>  GT Reading function:  </label>
-                <label>
+                <label style="margin-left: 20px;">
                   <input type="radio" 
                           name="gt_reading_function" 
                           [(ngModel)]="newReportService.gtReadingSameAsPrediction" 

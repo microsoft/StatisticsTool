@@ -40,8 +40,9 @@ class AzureStorageHelper():
         blob_iter = self.container_client_obj.list_blobs(name_starts_with=path)
         files = []
         for blob in blob_iter:
-            relative_path = os.path.relpath(blob.name, path)
-            if recursive or not '/' in relative_path:
+            relative_path = blob.name.removeprefix(path)
+            relative_path = relative_path.removeprefix('/')
+            if relative_path and (recursive or not '/' in relative_path):
                 files.append(relative_path)
         return files
 

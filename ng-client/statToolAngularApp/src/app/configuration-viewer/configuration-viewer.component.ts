@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { NewReportService } from '../services/new-report.service';
+import { NewReportService, UDF } from '../services/new-report.service';
 import { ignoreElements } from 'rxjs';
-import { UDFTypeEnum, UDFTitleEnum } from '../common/enums';
+import { UDFTypeEnum, UDFTitleEnum, UDFConstants } from '../common/enums';
 
 @Component({
   selector: 'configuration-viewer',
@@ -371,7 +371,13 @@ export class ConfigurationViewerComponent implements OnInit {
       }
     }
   }
-
+  logsFolderRadioChanged(processLogsFolder:boolean){
+    if (processLogsFolder){
+      this.newReportService.logsFilter = UDFConstants.DEFAULT_LOG_FILTER
+    } else {
+      this.newReportService.logsFilter = UDFConstants.DEFAULT_FOLDER_FILTER;
+    }
+  }
   gtReadingRadioChanged(sameAsPredicted:boolean){
 
     if (sameAsPredicted){ 

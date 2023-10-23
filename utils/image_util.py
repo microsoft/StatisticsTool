@@ -4,7 +4,7 @@ import os
 import pathlib
 from io import BytesIO
 
-from classes_and_utils.file_storage_handler import StoreType, find_in_blob_by_video_name, get_file_on_local_storage
+from experiment_engine.file_storage_handler import StoreType, find_in_blob_by_video_name, get_file_on_local_storage
 
 def read_frame_from_video(video_file, frame_id, local_store = None):
     frame = None

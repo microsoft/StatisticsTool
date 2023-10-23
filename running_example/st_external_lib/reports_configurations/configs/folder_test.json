@@ -1,0 +1,28 @@
+[
+    {
+        "reading_functions": {
+            "func_name": "statistic_tool_reader_face_detection",
+            "params": {}
+        },
+        "partitioning_functions": {
+            "func_name": "size_horizontal_vertical",
+            "params": {}
+        },
+        "statistics_functions": {
+            "func_name": "precision_recall",
+            "params": {}
+        },
+        "confusion_functions": {
+            "func_name": "get_TP_FP_FN_masks",
+            "params": {}
+        },
+        "association_functions": {
+            "func_name": "detection_association",
+            "params": {
+                "threshold": "0.1"
+            }
+        },
+        "logs_file_names_to_evaluate": "**",
+        "evaluate_folders": true
+    }
+]

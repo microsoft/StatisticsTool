@@ -8,7 +8,9 @@ export enum UDFTitleEnum {
     TRANSFORM_FUNCTION = 'Transform Function',
     PARTITIONING_FUNCTION = 'Partitioning Function',
     CONFUSION_FUNCTION = 'Confusion Function',
-    STATISTICS_FUNCTION = 'Statistics Function'
+    STATISTICS_FUNCTION = 'Statistics Function',
+    EVALUATE_LOGS_FOLDER = 'Evaluate Logs Folders',
+    EVALUATE_LOGS_FILES = 'Evaluate Logs Files',
 }
 
 export enum UDFTypeEnum {
@@ -20,5 +22,12 @@ export enum UDFTypeEnum {
     CONFUSION_FUNCTIONS     = 'confusion_functions',
     STATISTICS_FUNCTIONS    = 'statistics_functions',
     LOGS_NAME_TO_EVALUATE   = 'logs_file_names_to_evaluate',
-    CONFIG_NAME             = 'configName'
+    CONFIG_NAME             = 'configName',
+    EVALUATE_FOLDERS        = 'evaluate_folders', 
 }
+
+export enum UDFConstants {
+    DEFAULT_LOG_FILTER        = '*.json',
+    DEFAULT_FOLDER_FILTER     = '**',
+}
+
