@@ -20,6 +20,9 @@ class StoreType():
 local_storage_cache = None
 storage_handler = None
 def GetStorageHandler():
+    """
+    Returns an instance of AzureStorageHelper class that is used to interact with Azure Blob Storage.
+    """
     global storage_handler
     if storage_handler is not None:
         return storage_handler
@@ -29,6 +32,9 @@ def GetStorageHandler():
     return storage_handler
 
 def GetFilesCache():
+    """
+    Returns an instance of LocalStorageFileCache class that is used to cache files downloaded from Azure Blob Storage.
+    """
     global local_storage_cache
 
     if local_storage_cache is not None:
@@ -41,6 +47,16 @@ def GetFilesCache():
 GetFilesCache()
 
 def list_files_in_path(path, store_type):
+    """
+    Lists all files in the given path. If the path exists locally, it lists all files in the directory. If the path does not exist locally, it lists all files in the corresponding directory in Azure Blob Storage.
+
+    Args:
+        path (str): The path to list files from.
+        store_type (StoreType): The type of store to list files from.
+
+    Returns:
+        A list of file paths.
+    """
     if os.path.exists(path):
         dirs = list_local_dir(path, True)
     else:
@@ -50,7 +66,15 @@ def list_files_in_path(path, store_type):
     return dirs
 
 def list_files_parent_dirs(files):
+    """
+    Groups files by their parent directory.
 
+    Args:
+        files (list): A list of file paths.
+
+    Returns:
+        A dictionary where the keys are parent directories and the values are lists of files in that directory.
+    """
     parent_dirs = {}
     for file in files:
         parent_dir = os.path.dirname(file)
@@ -61,6 +85,16 @@ def list_files_parent_dirs(files):
     return parent_dirs
 
 def get_path_on_store(path, store_type:StoreType):
+    """
+    Returns the full path of a file in Azure Blob Storage.
+
+    Args:
+        path (str): The path of the file.
+        store_type (StoreType): The type of store the file is in.
+
+    Returns:
+        The full path of the file in Azure Blob Storage.
+    """
     app_config = AppConfig.get_app_config()
     if store_type == StoreType.Annotation:
         return os.path.join(app_config.annotation_store_blobs_prefix, path)
@@ -72,6 +106,17 @@ def get_path_on_store(path, store_type:StoreType):
         return path
 
 def get_file_on_local_storage(path, store_type:StoreType = None, get_folder = False):  
+    """
+    Returns the local path of a file. If the file exists locally, it returns the local path. If the file does not exist locally, it downloads the file from Azure Blob Storage and returns the local path.
+
+    Args:
+        path (str): The path of the file.
+        store_type (StoreType): The type of store the file is in.
+        get_folder (bool): If True, returns the local path of the folder containing the file.
+
+    Returns:
+        The local path of the file.
+    """
     #file is originally from local storage
     if os.path.exists(path) and os.path.getsize(path) > 0:
         return path
@@ -88,6 +133,19 @@ def get_file_on_local_storage(path, store_type:StoreType = None, get_folder = Fa
 
 
 def find_in_store_by_video_name(base_path, full_video_name, log_name, path_exists_func, ext = '.json'):
+    """
+    Finds a file in Azure Blob Storage by video name.
+
+    Args:
+        base_path (str): The base path of the file.
+        full_video_name (str): The full name of the video.
+        log_name (str): The name of the log file.
+        path_exists_func (function): A function that checks if a file exists.
+        ext (str): The extension of the file.
+
+    Returns:
+        The local path of the file.
+    """
     if not ext: #if ext is empty string so full_video_name is a folder and the folder will be video name
         return full_video_name
     
@@ -116,5 +174,17 @@ def find_in_store_by_video_name(base_path, full_video_name, log_name, path_exist
     return None
 
 def find_in_blob_by_video_name(file_name, log_name, store_type, ext = '.json'):
+    """
+    Finds a file in Azure Blob Storage by video name.
+
+    Args:
+        file_name (str): The name of the file.
+        log_name (str): The name of the log file.
+        store_type (StoreType): The type of store the file is in.
+        ext (str): The extension of the file.
+
+    Returns:
+        The local path of the file.
+    """
     full_file_name = get_path_on_store(file_name, store_type)
     return find_in_store_by_video_name('', full_file_name, log_name, GetStorageHandler().blob_exists, ext)

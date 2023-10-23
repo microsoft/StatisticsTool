@@ -10,40 +10,63 @@ from app_config.dataframe_tokens import DataFrameTokens
 
 class VideoEvaluation:
     """
-       A class that accepts a matching prediction-GT data structures and
-        yields a file with each frame's:
-         a) overlap matrix of its predictions and labels
-         b) bounding boxes data, including its state (TP/FP/FN or max(overlap)) and matching label/prediction index
-            divided into a predictions list and a label list
+    A class that accepts a matching prediction-GT data structures and
+    yields a file with each frame's:
+    a) overlap matrix of its predictions and labels
+    b) bounding boxes data, including its state (TP/FP/FN or max(overlap)) and matching label/prediction index
+    divided into a predictions list and a label list
 
-       ...
-
-       Attributes
-       ----------
-       pred_path : str
-           the path to the video's prediction data structure file
-       overlap_function : function
-           a function to evaluate the overlap between a prediction and a label (e.g IOU)
-       readerFunction : function
-           a function to read the original data structure as a pandas dataframe
-       evaluation_func : function
-           a function that dictates how each bounding box will be classified (e.g TP/FP/FN) from the overlap matrix
-       
-       
-       comp_data : list
-           a list that contains each frames bounding boxes data and overlap matrix (first object is the image folder name)
+    Attributes
+    ----------
+    predictionReaderFunction : function
+        a function to read the prediction data structure as a pandas dataframe
+    gtReaderFunction : function
+        a function to read the ground truth data structure as a pandas dataframe
+    associationFunction : function
+        a function to associate predictions with ground truth data
+    transform_func : function
+        a function to transform the data before processing
+    comp_data : list
+        a list that contains each frames bounding boxes data and overlap matrix (first object is the image folder name)
     """
 
-    def __init__(self, predictionReaderFunction,gtReaderFunction, associationFunction, transform_func):
+    def __init__(self, predictionReaderFunction, gtReaderFunction, associationFunction, transform_func):
+        """
+        Parameters
+        ----------
+        predictionReaderFunction : function
+            a function to read the prediction data structure as a pandas dataframe
+        gtReaderFunction : function
+            a function to read the ground truth data structure as a pandas dataframe
+        associationFunction : function
+            a function to associate predictions with ground truth data
+        transform_func : function
+            a function to transform the data before processing
+        """
         self.association_function = associationFunction
         self.prediction_reading_function = predictionReaderFunction
         self.gt_reading_function = gtReaderFunction
         self.transform_func = transform_func
         self.comp_data = []
 
-
     def load_data(self, pred_file, gt_file, video_name):
+        """
+        Load prediction and ground truth data from files.
 
+        Parameters
+        ----------
+        pred_file : str
+            the path to the prediction data structure file
+        gt_file : str
+            the path to the ground truth data structure file
+        video_name : str
+            the name of the video being evaluated
+
+        Returns
+        -------
+        tuple
+            a tuple containing the prediction data and ground truth data as pandas dataframes
+        """
         self.prediction_reading_function.params[UserDefinedConstants.VIDEO_NAME_PARAM_READING_FNC] = video_name
         pred_data = self.prediction_reading_function(pred_file)
         if pred_data is None: #The user defined reader function doesn't recognize this file
@@ -75,6 +98,14 @@ class VideoEvaluation:
     
     save_data_lock = Lock()
     def save_data(self, output_file_path):
+        """
+        Save the computed data to a file.
+
+        Parameters
+        ----------
+        output_file_path : str
+            the path to the output file
+        """
         dir = os.path.split(output_file_path)[0]
         if os.path.exists(dir) == False:
             with VideoEvaluation.save_data_lock:
@@ -85,6 +116,20 @@ class VideoEvaluation:
 
     @staticmethod
     def add_dict_recursive(dict_in, key, new_obj, add_gt=False):
+        """
+        Recursively add a new object to a dictionary.
+
+        Parameters
+        ----------
+        dict_in : dict
+            the dictionary to add the object to
+        key : str
+            the key to add the object under
+        new_obj : object
+            the object to add
+        add_gt : bool, optional
+            whether to add the object to the ground truth data, by default False
+        """
         if type(dict_in) == dict:
             if key == 'matching':
                 add_gt=True
@@ -97,6 +142,23 @@ class VideoEvaluation:
 
     @staticmethod
     def create_association_indexes(pred_df, gt_df, association_function):
+        """
+        Create association indexes between prediction and ground truth data.
+
+        Parameters
+        ----------
+        pred_df : pandas.DataFrame
+            the prediction data as a pandas dataframe
+        gt_df : pandas.DataFrame
+            the ground truth data as a pandas dataframe
+        association_function : function
+            a function to associate predictions with ground truth data
+
+        Returns
+        -------
+        tuple
+            a tuple containing the prediction and ground truth association indexes as pandas series
+        """
         pred_association = pd.Series(np.full(len(pred_df),-1), index = pred_df.index)
         gt_association = pd.Series(np.full(len(gt_df),-1), index = gt_df.index)
        

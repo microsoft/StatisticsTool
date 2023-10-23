@@ -17,6 +17,24 @@ class ProcessResult(enum.Enum):
     skipped_not_in_lognames = 3
 
 def handel_pred(vars):
+    """
+    This function handles a single prediction file and compares it to its corresponding ground truth file.
+    It returns the prediction file path, the result of the comparison, and the output file path.
+
+    :param vars: a tuple containing the following variables:
+        - pred: the path to the prediction file
+        - log_names_to_evaluate: a list of log names to evaluate
+        - pred_dir: the path to the predictions directory
+        - evaluate_folders: a boolean indicating whether to evaluate folders
+        - local_gt_dir: the path to the local ground truth directory
+        - predictionReaderFunction: a function that reads the prediction file
+        - gtReaderFunction: a function that reads the ground truth file
+        - assiciation_function: a function that associates predictions with ground truth
+        - transform_func: a function that transforms the data
+        - output_dir: the path to the output directory
+
+    :return: a tuple containing the prediction file path, the result of the comparison, and the output file path
+    """
     gt_local_path = None 
     pred, log_names_to_evaluate, pred_dir, evaluate_folders, local_gt_dir, predictionReaderFunction, gtReaderFunction, assiciation_function, transform_func, output_dir = vars
     matched = False
@@ -87,14 +105,20 @@ def handel_pred(vars):
 
 def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction,gtReaderFunction,transform_func, assiciation_function, local_gt_dir = None, log_names_to_evaluate = None, evaluate_folders=False):
     """
+    This function compares all prediction files in a directory to their corresponding ground truth files.
+    It returns a dictionary that maps each video file location to its annotations (prediction and ground truth) file location.
 
-    :param GT_path_list:  a list of paths to GT files (matching to the preditions and images lists)
-    :param pred_path_list: a list of paths to predictions files
-    :param images_folders_list: a list of image folders names
-    :param overlap_function: same as in VideoEvaluation
-    :param readingFunction: a function that defines several file reading procedures
-    :param evaluation_func: same as in VideoEvaluation
-    :return: dictionary tahts maps each video file location to it's annotations (pred and GT) file location
+    :param pred_dir: the path to the predictions directory
+    :param output_dir: the path to the output directory
+    :param predictionReaderFunction: a function that reads the prediction file
+    :param gtReaderFunction: a function that reads the ground truth file
+    :param transform_func: a function that transforms the data
+    :param assiciation_function: a function that associates predictions with ground truth
+    :param local_gt_dir: the path to the local ground truth directory
+    :param log_names_to_evaluate: a list of log names to evaluate
+    :param evaluate_folders: a boolean indicating whether to evaluate folders
+
+    :return: a dictionary that maps each video file location to its annotations (prediction and ground truth) file location
     """
     pred_path_list = list_files_in_path(pred_dir, StoreType.Predictions)
     
@@ -172,8 +196,24 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
     return output_files, report_run_info,process_result
 
 def run_experiment(pred_dir, output_dir, predictionReaderFunction,gtReaderFunction,transform_func, assiciation_function, local_gt_dir, log_names_to_evaluate, evaluate_folders):
-        # extract all the intermediate results from the raw prediction-label files
+    """
+    Runs an experiment by comparing predictions to ground truth and returning intermediate and combined results.
 
+    Args:
+        pred_dir (str): Path to directory containing prediction files.
+        output_dir (str): Path to directory where output files will be saved.
+        predictionReaderFunction (function): Function to read prediction files.
+        gtReaderFunction (function): Function to read ground truth files.
+        transform_func (function): Function to transform prediction and ground truth data.
+        assiciation_function (function): Function to associate prediction and ground truth data.
+        local_gt_dir (str): Path to directory containing local ground truth files.
+        log_names_to_evaluate (list): List of log names to evaluate.
+        evaluate_folders (bool): Whether to evaluate folders.
+
+    Returns:
+        tuple: A tuple containing the combined evaluation data, a report of the experiment run, and the process result.
+    """
+    # extract all the intermediate results from the raw prediction-label files
     compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir=pred_dir, output_dir=output_dir,
                                                                                      predictionReaderFunction=predictionReaderFunction,
                                                                                      gtReaderFunction=gtReaderFunction, 
