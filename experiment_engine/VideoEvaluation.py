@@ -2,6 +2,8 @@
 import time
 import numpy as np, os
 import pandas as pd
+from threading import Lock
+
 from app_config.constants import UserDefinedConstants
 
 from app_config.dataframe_tokens import DataFrameTokens
@@ -70,12 +72,14 @@ class VideoEvaluation:
         gt_data[DataFrameTokens.HAS_VALUE_TOKEN] = True
 
         return pred_data, gt_data
- 
-
+    
+    save_data_lock = Lock()
     def save_data(self, output_file_path):
         dir = os.path.split(output_file_path)[0]
         if os.path.exists(dir) == False:
-            os.makedirs(dir)
+            with VideoEvaluation.save_data_lock:
+                if os.path.exists(dir) == False:
+                    os.makedirs(dir)
         
         self.comp_data.to_json(output_file_path)
 

@@ -3,6 +3,7 @@ import tempfile
 import os,sys
 from pathlib import Path
 from timeit import default_timer as timer
+import concurrent
 
 from utils.LocalStrageHelper import list_local_dir
 
@@ -149,7 +150,10 @@ class LocalStorageFileCache:
         for file in temp_files:
             if file.startswith(cache_prefix):
                 os.remove(file)
-    
+    @staticmethod
+    def handle_file_wrapper(vars):
+        path, name, self = vars
+        return self.get_file_and_download_if_needed(path, name)
     def get_folder_and_download_if_needed(self, blob_base_path):
         
         files_in_folder = self.storage_handler.ls_files(blob_base_path)
@@ -158,9 +162,10 @@ class LocalStorageFileCache:
         if not os.path.exists(path_on_cache):
             os.makedirs(path_on_cache)
 
-        for file in files_in_folder:
-            self.get_file_and_download_if_needed(blob_base_path, file)
-        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = executor.map(LocalStorageFileCache.handle_file_wrapper, [(blob_base_path, file, self) for file in files_in_folder])
+            executor.shutdown(wait=True) 
+            
         return path_on_cache
     
     def get_file_and_download_if_needed(self, blob_base_path, blob_name=None):

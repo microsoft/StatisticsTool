@@ -272,8 +272,8 @@ def manage_video_analysis(config_file_name, prd_dir, save_stats_dir, gt_dir = No
                                                                 evaluate_folders = evaluate_folders)    
    
     report_file_name = None
-    if comp_data:
-        report_file_name = ParallelExperiment.save_experiment(comp_data, save_stats_dir, config_file_name, report_run_info)
+    if comp_data is not None:
+        report_file_name = ParallelExperiment.save_experiment(comp_data, save_stats_dir, config_file_name, report_run_info, intermediate_dir)
     return process_result, report_file_name
 
 def get_suite_configurations(suite_name):

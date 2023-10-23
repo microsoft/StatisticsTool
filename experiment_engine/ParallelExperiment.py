@@ -4,6 +4,7 @@ import math
 import pickle
 import pandas as pd, os
 import numpy as np
+import shutil
 
 from app_config.constants import Constants
 from app_config.dataframe_tokens import DataFrameTokens
@@ -192,8 +193,7 @@ class ParallelExperiment:
         return result
  
     @staticmethod
-    def save_experiment(comp_data, out_folder, config_name, report_run_info):
-
+    def save_experiment(comp_data, out_folder, config_name, report_run_info, intermediate_dir=None):
         report_name = os.path.splitext(os.path.split(config_name)[-1])[0]
         report_file_name = report_name + Constants.EXPERIMENT_EXTENSION
         report_output_file = os.path.join(out_folder, report_file_name)
@@ -202,12 +202,15 @@ class ParallelExperiment:
             pickle.dump(comp_data, output, pickle.HIGHEST_PROTOCOL)
 
         config = load_config_dict(config_name)
-        
+
         metadata = create_metadata(report_run_info, config)
-       
-        output_file = os.path.join(out_folder,report_name+Constants.METADATA_EXTENTION)
+
+        output_file = os.path.join(out_folder, report_name + Constants.METADATA_EXTENTION)
         with open(output_file, 'w') as f:
             json.dump(metadata, f)
+
+        if intermediate_dir and os.path.exists(intermediate_dir):
+            shutil.rmtree(intermediate_dir)
 
         return report_output_file
     
