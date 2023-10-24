@@ -1,4 +1,5 @@
 import enum
+import uuid
 import concurrent
 import os
 import fnmatch
@@ -85,13 +86,10 @@ def handel_pred(vars):
         if not res:
             return pred, ProcessResult.skipped_reading, None
 
-        video_folder = video_name
-        if video_folder.startswith('/'):
-            video_folder = video_folder[1:]
-        video_folder = video_folder.replace(':',os.path.sep)
-        output_file =  os.path.join(output_dir, video_folder + '.json')
-        output_file = os.path.normpath(output_file)
-        V.save_data(output_file)
+        output_file_name = video_name.replace('/', '_')[:10] + '_' + str(uuid.uuid4().hex[:6]) + '.json'
+        output_file_name = os.path.join(output_dir, output_file_name)
+        output_file_name = os.path.normpath(output_file_name)
+        V.save_data(output_file_name)
 
         print(f"Finished comparing predictions for video {video_name}")
     except Exception as ex:
@@ -101,7 +99,7 @@ def handel_pred(vars):
     
    
 
-    return pred, ProcessResult.sucess, output_file
+    return pred, ProcessResult.sucess, output_file_name
 
 def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction,gtReaderFunction,transform_func, assiciation_function, local_gt_dir = None, log_names_to_evaluate = None, evaluate_folders=False):
     """
