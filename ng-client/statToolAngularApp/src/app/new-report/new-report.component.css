@@ -153,11 +153,10 @@
   }
 
   .dropdown-wrapper {
-    .dropdown-menu {
-      width: 30%;
+      width: 100%;
     }
 
-    .dropdown-item.active {
-      width: 94.5%;
-    }
+  .dropdown-item.active {
+    width: 94.5%;
   }
+  

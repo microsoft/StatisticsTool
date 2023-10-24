@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build --output-hashing=none",
+    "debug": "ng build --configuration development",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -29,6 +30,7 @@
     "ng-multiselect-dropdown": "^0.3.9",
     "ngx-collapse": "^0.0.4",
     "rxjs": "^7.8.1",
+    "sweetalert2": "^11.6.13",
     "tslib": "^2.5.0",
     "typescript": "^4.9.5",
     "zone.js": "^0.11.3"

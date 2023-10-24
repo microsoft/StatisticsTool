@@ -28,28 +28,28 @@ def statistic_tool_reader_face_detection(path, **kwargs):
         log_field_type = 'Face BB'
 
     records = []
-    
+
     for line in lines:
         line = json.loads(line)
         if ('type' in line['keys'] and line['keys']['type'] != log_field_type) or 'objects' not in line['message']:
             continue
 
-        detections = []
-        frame_id = line['keys']['frame_id']
-       
-        for obj in line['message']['objects']:
-            if obj["Source"] != "FACE_DETECTION":
-                continue
-            bb = transform_bb_to_original_frame_size(obj['BoundingBox'], emulation_matrix)
-            prediction = {'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']}
-            if 'Score' in obj:
-                prediction['Score'] = obj['Score']
-            detections.append({'detection':True, 'prediction': prediction})
+        
+        if len(line['message']['objects']) == 0:
+            prediction = {}        
+            prediction['frame_id'] = line['keys']['frame_id']
+            prediction['detection']=False
+            records.append(prediction)
+        else:
+            for obj in line['message']['objects']:
+                if obj["Source"] != "FACE_DETECTION":
+                    continue
+                bb = transform_bb_to_original_frame_size(obj['BoundingBox'], emulation_matrix)
+                prediction = {'frame_id': line['keys']['frame_id'], 'detection':True, 'object_id':obj['Id'], 'x':bb['Left'],'y':bb['Top'],'width':bb['Width'],'height':bb['Height']}
+                if 'Score' in obj:
+                    prediction['Score'] = obj['Score']
+                records.append(prediction)
 
-        if len(detections) == 0:
-            detections=[{'detection':False}]
-
-        records.append({'frame_id': frame_id, 'predictions':detections})
     
     df = pd.DataFrame.from_records(records)  
     

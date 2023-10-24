@@ -1,6 +1,5 @@
 .configuration-container {
     width: 100%;
-    
     min-height: 580px;
     padding: 0px;
     display: flex;
@@ -47,4 +46,67 @@
     margin-top: 0px;
   }
   
+  .enable-user-defined-function {
+    color: #182a69; /* Color when enabled */
+  }
   
+  .disable-user-defined-function {
+    color: lightgray; /* Color when disabled */
+  }
+
+  .report-container {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .report-caption {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #800080;
+  }
+
+ /* Add this to your component's CSS file */
+.expandable-panel {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.panel-header {
+  background-color: #006400; /* Deep Green background for the header */
+  color: #fff; /* White text color for the header */
+  padding: 5px 10px; /* Adjust padding for a thinner header */
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-text {
+  font-weight: bold;
+  margin: 0;
+}
+
+.caret {
+  font-size: 16px; /* Adjust the size of the caret */
+  transition: transform 0.3s;
+}
+
+.rotate {
+  transform: rotate(180deg);
+}
+
+.button-container {
+  position: relative;
+  /* Add any other styles as needed */
+}
+
+.dynamic-div {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  /* Add other styles as needed */
+}

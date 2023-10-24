@@ -2,8 +2,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import {Location} from '@angular/common';
 import { NewReportService, SELECTE_SUITE } from '../services/new-report.service';
 import { Observable, OperatorFunction, debounceTime, distinctUntilChanged, map } from 'rxjs';
-import { LocalStorgeHelper } from '../services/localStorageHelper';
-
 @Component({
   selector: 'new-report',
   templateUrl: './new-report.component.html',
