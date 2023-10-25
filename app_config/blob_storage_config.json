@@ -1,0 +1,5 @@
+{
+    "storage_id":"<<STORAGE_ID>>",
+    "data_container_name": "<<DATA_CONTAINER_NAME>>",
+    "storage_connection_string": ""  
+}

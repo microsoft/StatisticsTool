@@ -28,7 +28,7 @@ def GetStorageHandler():
         return storage_handler
     
     app_config = AppConfig.get_app_config()
-    storage_handler = AzureStorageHelper(app_config.azure_storage_id, app_config.data_container_name, app_config.storage_connection_string)
+    storage_handler = AzureStorageHelper(app_config.storage_id, app_config.data_container_name, app_config.storage_connection_string)
     return storage_handler
 
 def GetFilesCache():

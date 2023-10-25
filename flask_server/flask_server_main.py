@@ -29,13 +29,6 @@ class GuiMain_Tags:
     STATIC = 'static'
     FAV_ICON_ICO = 'favicon.ico'
     MIME_TYPE = 'image/x-icon'
-    AZURE_STORAGE_ID = '--azure_storage_id'
-    DATA_CONTAINER_NAME = '--data_container_name'
-    ANNOTATION_STORE_BLOBS_PREFIX = '--annotation_store_blobs_prefix'
-    DATA_STORE_BLOBS_PREFIX = '--data_store_blobs_prefix'
-    PREDICTIONS_BLOBS_PREFIX = '--predictions_blobs_prefix'
-    EXTERNAL_LIB_PATH = '--external_lib_path'
-    CONFIG_FILE_PATH = '--config_file_path'
 
 @server.route(GuiMain_Routes.START_PAGE_URL, methods=['GET', 'POST'])
 def homepage():
@@ -68,17 +61,17 @@ def favicon():
 
 def process_command_line_args():
     parser = argparse.ArgumentParser(description='StatisticsTool')
-    parser.add_argument(GuiMain_Tags.AZURE_STORAGE_ID, help="azure storage id to access data container")
-    parser.add_argument(GuiMain_Tags.DATA_CONTAINER_NAME, help="name of data container")
-    parser.add_argument(GuiMain_Tags.ANNOTATION_STORE_BLOBS_PREFIX, help="prefix in data container for the annotations files")
-    parser.add_argument(GuiMain_Tags.DATA_STORE_BLOBS_PREFIX, help="prefix in data container for the data files")
-    parser.add_argument(GuiMain_Tags.PREDICTIONS_BLOBS_PREFIX, help="prefix in data container for predictions files")
-    parser.add_argument(GuiMain_Tags.EXTERNAL_LIB_PATH, help="local path to the the external library")
-    parser.add_argument(GuiMain_Tags.CONFIG_FILE_PATH, help="path to the config file, default path is [repo_dir]/app_config/app_config.json")
-
+    parser.add_argument('--storage_id', help="azure storage id to access data container")
+    parser.add_argument('--data_container_name', help="name of data container")
+    parser.add_argument('--annotation_store_blobs_prefix', help="prefix in data container for the annotations files")
+    parser.add_argument('--data_store_blobs_prefix', help="prefix in data container for the data files")
+    parser.add_argument('--predictions_blobs_prefix', help="prefix in data container for predictions files")
+    parser.add_argument('--external_lib_path', help="local path to the the external library")
+    parser.add_argument('--config_file_path', help="path to the config file, default path is [repo_dir]/app_config/app_config.json")
+    parser.add_argument('--storage_config_path', help="path to the config file, default path is [repo_dir]/app_config/blob_storage_config.json")
     args = parser.parse_args()
     app_config = AppConfig.get_app_config()
-    app_config.update_values_from_cmd_args(args, args.config_file_path)
+    app_config.update_values_from_cmd_args(args, args.config_file_path, args.storage_config_path)
 
 if __name__=='__main__':
     process_command_line_args()
