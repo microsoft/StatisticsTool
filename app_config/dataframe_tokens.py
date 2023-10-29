@@ -5,3 +5,7 @@ class DataFrameTokens():
     VIDEO_TOKEN = 'video'
     UNIQUE_BATCH_TOKEN = 'batch_unique_id'
     HAS_VALUE_TOKEN = 'has_value'
+    BB_X = 'x'
+    BB_Y = 'y'
+    BB_WIDTH = 'width'
+    BB_HEIGHT = 'height'

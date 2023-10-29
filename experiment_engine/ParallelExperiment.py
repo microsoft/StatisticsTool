@@ -86,18 +86,18 @@ class ParallelExperiment:
         
         all_frmae_obj=self.comp_data[((self.comp_data[DataFrameTokens.LABELS_GROUP_KEY]==bb_obj[DataFrameTokens.LABELS_GROUP_KEY]) & (self.comp_data[DataFrameTokens.UNIQUE_BATCH_TOKEN]==bb_obj[DataFrameTokens.UNIQUE_BATCH_TOKEN]))]
 
-        if 'x' in bb_obj and bb_obj['x'] is not None:  
-            matched.append([bb_obj['x'], bb_obj['y'], bb_obj['width'], bb_obj['height']])
+        if DataFrameTokens.BB_X in bb_obj and bb_obj[DataFrameTokens.BB_X] is not None:  
+            matched.append([bb_obj[DataFrameTokens.BB_X], bb_obj[DataFrameTokens.BB_Y], bb_obj[DataFrameTokens.BB_WIDTH], bb_obj[DataFrameTokens.BB_HEIGHT]])
         pred_index = -1
         label_index = -1
         for ind in all_frmae_obj.index:
             obj=all_frmae_obj.loc[ind]
-            if 'x_gt' in obj and not math.isnan(obj['x_gt']):
-                label_bbs.append([obj['x_gt'],obj['y_gt'],obj['width_gt'],obj['height_gt']])
+            if DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX in obj and not math.isnan(obj[DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX]):
+                label_bbs.append([obj[DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_Y+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_WIDTH+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_HEIGHT+DataFrameTokens.GT_ANNOT_SUFFIX]])
                 if ind == detection_index:
                     label_index = len(label_bbs)-1
-            if 'x' in obj  and not math.isnan(obj['x']):
-                prd_bbs.append([obj['x'], obj['y'], obj['width'], obj['height']])
+            if DataFrameTokens.BB_X in obj  and not math.isnan(obj[DataFrameTokens.BB_X]):
+                prd_bbs.append([obj[DataFrameTokens.BB_X], obj[DataFrameTokens.BB_Y], obj[DataFrameTokens.BB_WIDTH], obj[DataFrameTokens.BB_HEIGHT]])
                 if ind == detection_index:
                     pred_index = len(prd_bbs) -1            
     

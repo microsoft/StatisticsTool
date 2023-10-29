@@ -1,19 +1,14 @@
-"""
-Statistics Function instructions:
-------------------------------
+
+ Transform Function
+ ----------------------------------------------------
 Input:
-confusion_masks - Dictinary with all the masks that was calculated in the the confusion function.
-                  The masks can be only part of the rows according to the current segmentatin in the report.
-kwargs - Additional options and parameters that can be passed to the function.
+    dataframe - the dataframe with all the data after the reading functions and association function were called. 
+Output:
+    dataframe - Transform dataframe where each row it is a prediction and may have or not have associated groundtruth/prediction.
 
-Returns a dictionary with all the desired statistics where the key is the name and the value is numerical score:
+The function can transform the data as desired. It can be used in order to calc statistics over event rather than over detections, or any other transformation that may be required.
 
 
-Output Example:
-{'precision': 0.65, 'recall': 0.98, 'any_other_score': 0.2}
-
- 
-  
 Each user defined function should be in seperate file where the name of the file and the name of the user defined function in the file should be the same. 
 
 As with all user-defined functions, it is possible to add parameters to user-defined function. 
