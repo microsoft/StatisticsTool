@@ -1,14 +1,14 @@
 # Project
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+# Introduction 
+The Statistics Tool offers a powerful capability to evaluate model predictions in comparison to ground truth (GT) data. This evaluation process is essential for assessing the performance and accuracy of machine learning models.
 
-As the maintainer of this project, please make a few updates:
+# Getting Started
+1.	install python requirements: pip install -r requirements.txt
+2.	run statistic_tool.bat
+3.	open browser and type in the address: http://127.0.0.1:5000/
+4. you will be presented by the main page. Details about application design and functionality: https://github.com/microsoft/StatisticsTool/wiki
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
 
 ## Contributing
 
