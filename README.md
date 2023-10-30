@@ -7,12 +7,9 @@ The Statistics Tool offers a powerful capability to evaluate model predictions i
 1.	install python requirements: pip install -r requirements.txt
 2.	run statistic_tool.bat
 3.	open browser and type in the address: http://127.0.0.1:5000/
-4. you will be presented by the main page. Details about application design and functionality: https://www.deviceswiki.com/wiki/Statistics_Too
+4. you will be presented by the main page. Details about application design and functionality: https://github.com/microsoft/StatisticsTool/wiki
 =======
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
 
-As the maintainer of this project, please make a few updates:
 
 
 ## Contributing

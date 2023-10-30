@@ -15,7 +15,7 @@ class Constants:
     MAIN_REPORT_CHOOSEFILE  = 'choose_report_file'
     REF_REPORT_FILE_PATH    = 'reference_file_path'
     REF_REPORT_CHOOSE_FILE  = 'choose_reference_file'
-    WIKI_URL =  "https://www.deviceswiki.com/wiki/Statistics_Tool"
+    WIKI_URL =  "https://github.com/microsoft/StatisticsTool/wiki"
     METADATA_EXTENTION = '.metadata.json'
     INTERMEDIATE_RESULTS_DIR="intermediate resutls"
     CONFIG_FOLDER_NAME = "reports_configurations/configs"
