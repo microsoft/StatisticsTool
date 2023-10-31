@@ -3,13 +3,13 @@
 # Introduction 
 The Statistics Tool offers a powerful capability to evaluate model predictions in comparison to ground truth (GT) data. This evaluation process is essential for assessing the performance and accuracy of machine learning models.
 
+
 # Getting Started
+(See Wiki for how to run example: https://github.com/microsoft/StatisticsTool/wiki/Getting-Started:-Running-the-Example)
 1.	install python requirements: pip install -r requirements.txt
 2.	run statistic_tool.bat
 3.	open browser and type in the address: http://127.0.0.1:5000/
 4. you will be presented by the main page. Details about application design and functionality: https://github.com/microsoft/StatisticsTool/wiki
-=======
-
 
 
 ## Contributing
