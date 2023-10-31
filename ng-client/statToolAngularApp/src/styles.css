@@ -87,3 +87,31 @@ span.dropdown-btn {
     border-radius: 50%;
   }
 
+  .is-valid {
+    border-color: #28a745;
+    width: 95%;
+  }
+  
+  .is-invalid {
+    border-color: #dc3545;
+    width: 95%;
+  }
+
+  .dropdown-list {
+    position: absolute;
+    padding-top: 6px;
+    width: 100%;
+    z-index: 0 !important;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fff;
+    margin-top: 10px;
+    box-shadow: 0 1px 5px #959595;
+    overflow: scroll;
+    height: 250px;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+

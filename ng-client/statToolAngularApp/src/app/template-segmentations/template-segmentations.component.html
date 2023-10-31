@@ -1,6 +1,4 @@
 <div>
-    <!-- HEADER (TODO: REMOVE IT TO A SEPARATE COMPONENT) -->
-    
     <div style="width:100%;
                 height:50px;
                 border:1px solid lightgray;
@@ -22,8 +20,25 @@
                         class="back"
                         (click)="back()">
                 </div>
-                <div style="width:10%;padding-top:2px">
+                <div style="width:10%;padding-top:2px;" 
+                    [ngStyle]="{'margin-right':isFireFox() ? '15px' : '5px'}"
+                    >
                     <select 
+                        [title]="getSelectedMainReportTooltip()"
+                        [(ngModel)]="statService.selectedReport"
+                        style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
+                        (change)="onReportSelected($event)"
+                        >
+                        <option *ngFor="let s of statService.reportlistItems"
+                                        value="{{s.key}}"
+                                >Report - {{ statService.getReportDesc(s.value)}}</option>
+                    </select>
+                </div>
+                
+                <div class="pipe"></div>
+                <div style="width:10%;padding-top:2px;margin-left: 3px;">
+                    <select 
+                        [title]="getSelectedTemplateTooltip()"
                         [(ngModel)]="statService.selectedTamplate"
                         style="height: 29px; width:100%;border-color:lightgray;border-radius: 3px;"
                         (change)="onTemplateSelected($event)"
@@ -33,75 +48,44 @@
                                 >{{t.value}}</option>
                     </select>
                 </div>
-                <ng-container *ngIf="isNewTemplateMode">
-                    <div style="width:10%;padding-top: 2px;margin-left: 4px;">
-                        <input *ngIf="!isFireFox()"
-                            type="text" 
-                            placeholder="Template Name"
-                            [(ngModel)]="templateNameCreated"
-                            style="height:27px;width:100%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;"
-                            >
-                        <input *ngIf="isFireFox()"
-                            type="text" 
-                            placeholder="Template Name"
-                            [(ngModel)]="templateNameCreated"
-                            style="height:30px;width:100%;border:1px solid lightgray;border-radius: 3px;padding-left: 3px;margin-left: 11px;"
-                        >
+                <div class="save-icon" style="margin-top: -1px;"
+                     [ngStyle]="{'margin-left': isFireFox() ? '22px' : '12px'}">
+                    <img [src]="addGridImgSrc"
+                        (mouseover)="addGridImgSrc = 'assets/grid-add-orange.svg'"
+                        (mouseout)="addGridImgSrc = 'assets/grid-add-blue.svg'"
+                        style="width: 40px;height:40px;margin-top: 0px;cursor: pointer;" 
+                        title="Add View"
+                        (click)="addView()">
+                </div>
 
-                    </div>
-                </ng-container>
-
-                <ng-container *ngIf="!isFireFox()">
-                    <div class="save-icon" style="margin-left: 12px;margin-top: -1px;">
-                        <img [src]="addGridImgSrc"
-                            (mouseover)="addGridImgSrc = 'assets/grid-add-orange.svg'"
-                            (mouseout)="addGridImgSrc = 'assets/grid-add-blue.svg'"
-                            style="width: 40px;height:40px;margin-top: 0px;cursor: pointer;" 
-                            title="Add View"
-                            (click)="addView()">
-                    </div>
-                </ng-container>
-                <ng-container *ngIf="isFireFox()">
-                    <div class="save-icon" style="margin-left: 22px;margin-top: -1px;">
-                        <img [src]="addGridImgSrc"
-                            (mouseover)="addGridImgSrc = 'assets/grid-add-orange.svg'"
-                            (mouseout)="addGridImgSrc = 'assets/grid-add-blue.svg'"
-                            style="width: 40px;height:40px;margin-top: 0px;cursor: pointer;" 
-                            title="Add View"
-                            (click)="addView()">
-                    </div>
-                </ng-container>
-
-                <ng-container *ngIf="!isFireFox()">
-                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-left: 5px;margin-top: -1px;">
-                        <img [src]="saveImgSrc"
-                            (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
-                            (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
-                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
-                            title="Save Template"
-                            (click)="saveTemplate()">
-                    </div>
-                </ng-container>
-                <ng-container *ngIf="isFireFox()">
-                    <div class="save-icon" [ngClass]="getDisabledClass()" style="margin-top: -1px;margin-left: 10px;">
-                        <img [src]="saveImgSrc"
-                            (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
-                            (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
-                            style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
-                            title="Save Template"
-                            (click)="saveTemplate()">
-                    </div>
-                </ng-container>
+                
+                <div class="save-icon" 
+                    style="margin-top: -1px;"
+                    [ngStyle]="{'margin-left': isFireFox() ? '10px' : '5px'}">
+                    <img [src]="saveImgSrc"
+                        (mouseover)="saveImgSrc = 'assets/save-icon-orange.svg'"
+                        (mouseout)="saveImgSrc = 'assets/save-icon-blue.svg'"
+                        style="width: 33px;height:33px;margin-top: 3px;cursor: pointer;" 
+                        title="Save Template"
+                        (click)="saveTemplate()">
+                </div>
+                
                 <div class="pipe" style="margin-right:5px;margin-left: 7px;"></div>
                 <div style="display:flex;padding-right:3px;">
-                    <div style="margin-bottom:-10px;margin-left:3px;padding-top:10px">
+                    <div style="margin-bottom:-10px;margin-left:3px;padding-top:10px"
+                         
+                         >
                         <label class="switch">
-                            <input type="checkbox" [(ngModel)]="statService.calculateUnique" (change)="slideUniqueChange($event)">
-                            <span class="slider round"></span>
+                            <input type="checkbox" 
+                                   
+                                   [disabled]="disableUnique()" 
+                                   [(ngModel)]="statService.calculateUnique" (change)="slideUniqueChange($event)">
+                            <span class="slider round" [ngStyle]="{'cursor': disableUnique() ? 'none' : 'pointer'}"></span>
                         </label>
                     </div>
                     <div style="margin-left:5px;padding-top: 5px;">
-                        <p style="font-weight: bold;color:#182a69;">Calculate Unique</p>
+                        <p style="font-weight: bold;"
+                           [ngStyle]="{'color':disableUnique()? 'lightgray' : '#182a69'}">Unique</p>
                     </div>
                 </div>
                 <div class="pipe"></div>
@@ -115,14 +99,14 @@
                         </label>
                     </div>
                     <div style="margin-left:5px;padding-top: 5px;">
-                        <p style="font-weight: bold;color:#182a69;">Local Data Store</p>
+                        <p style="font-weight: bold;color:#182a69;">Local Store</p>
                     </div>
                     <input type="text" 
                            [(ngModel)]="statService.localDataStorePath"  
                            (keyup)="localDataStoreChange($event)"
                            [ngClass]="getLocalDataStoreCls()"
                            [readonly]="statService.activeLocalDataStore == false"
-                           style="height:27px;margin:5px;margin-top:3px !important;width:300px;border:1px solid lightgray;border-radius: 3px;outline: none;">
+                           style="height:27px;margin:5px;margin-top:3px !important;width:180px;border:1px solid lightgray;border-radius: 3px;outline: none;">
                 </div>
             </div>
         </div>
@@ -139,12 +123,8 @@
                     [ngClass]="getActiveCls(i)">View - {{ getTitle(i) }}
                 </button>
                     <div class="content" [ngStyle]="{'min-height':getViewHeight(i)}">
-                        <!--<p>
-                            <ngb-alert [dismissible]="false">
-                                <strong>Warning!</strong> Better check yourself, you're not looking too good.
-                            </ngb-alert>
-                        </p>-->
                         <pkl-view 
+                            [viewguid] = "x.viewguid"
                             [selectedRowsSet] = "x.rows"
                             [selectedColumnsSet] = "x.columns"
                             [name] = "x.name"
@@ -154,11 +134,5 @@
                     </div>  
             </ng-container>
     </div>
-
-    <!--<div style="position:fixed;bottom:0px;left:0;height: 50px;z-index: 99999;background: #fafafa;width:100%">
-        <button style="left:5px;top:10px;background-color: lightgray;font-weight: bold;color: #182a69 !important;" 
-                mat-raised-button 
-                (click)="addView()">Add View</button>
-    </div>-->
 </div>
 

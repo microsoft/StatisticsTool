@@ -1,0 +1,18 @@
+[
+    {
+        "reading_functions": {
+            "func_name": "statistic_tool_reader_face_detection_classification",
+            "params": {}
+        },
+        "statistics_functions": {
+            "func_name": "precision_recall",
+            "params": {}
+        },
+        "confusion_functions": {
+            "func_name": "get_TP_FP_FN_masks",
+            "params": {}
+        },
+        "logs_file_names_to_evaluate": "FaceDetectionOutput.json",
+        "evaluate_folders": false
+    }
+]

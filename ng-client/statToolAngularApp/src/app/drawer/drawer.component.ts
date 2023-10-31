@@ -1,5 +1,5 @@
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, Input, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StatisticsToolService } from '../services/statistics-tool.service';
 
@@ -8,16 +8,16 @@ import { StatisticsToolService } from '../services/statistics-tool.service';
   templateUrl: './drawer.component.html',
   styleUrls: ['./drawer.component.css'],
   animations: [
-        trigger('widthGrow', [
-            state('closed', style({
-                width: 0,
-            })),
-            state('open', style({
-                width: 400
-            })),
-            transition('* => *', animate(150))
-        ]),
-    ]
+    trigger('widthGrow', [
+      state('closed', style({
+        width: 0,
+      })),
+      state('open', style({
+        width: 400
+      })),
+      transition('* => *', animate(150))
+    ]),
+  ]
 })
 export class DrawerComponent implements OnInit {
 
@@ -55,7 +55,7 @@ export class DrawerComponent implements OnInit {
   show = false;
 
   clickDrawer(){
-    this.statToolSvc.showDrawer = false;//!this.statToolSvc.showDrawer;
+    this.statToolSvc.showDrawer = false;
     this.changeState();
   }
 }

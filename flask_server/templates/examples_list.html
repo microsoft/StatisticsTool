@@ -1,0 +1,69 @@
+<style>
+    .header{
+      padding: 5px;
+      text-align: center;
+      color: #3e8e41;
+      font-size: 13px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      border: 1px solid #ddd;
+    }
+    
+    ul li {
+      padding: 8px 16px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    ul li:last-child {
+      border-bottom: none
+    }
+    
+    </style>
+    <script>
+    window.onload = function  () {
+        var li_ul = document.querySelectorAll(".col_ul li  ul");
+        for (var i = 0; i < li_ul.length; i++) {
+            li_ul[i].style.display = "none"
+        };
+    
+        var exp_li = document.querySelectorAll(".col_ul li > span");
+        for (var i = 0; i < exp_li.length; i++) {
+            exp_li[i].style.cursor = "pointer";
+            exp_li[i].onclick = showul;
+        };
+        function showul () {
+            nextul = this.nextElementSibling;
+            if(nextul.style.display == "block")
+                nextul.style.display = "none";
+            else
+                nextul.style.display = "block";
+        }
+    }
+    </script>
+    
+        <div class="header" style="text-align: left; overflow: hidden; position:relative;">
+    
+                  <h1 style="font-family: Arial, Helvetica, sans-serif;"> Examples for {%if unique%}uniques {%endif%} {{state}}{%if comp_index > -1%} in ref{%endif%} </h1>
+                    <h3 style="font-family: Arial, Helvetica, sans-serif;white-space:nowrap; display: inline-block;"> Cell Name: {{cell_name}} </h3>
+    
+                    
+        </div>
+    
+    <div style="position:relative;">
+        <tr><td><form action="/example_list/update_list?save_json=true&cell_name={{cell_name}}&stat={{state}}&{{ref_flag}}&"{%if unique%}"unique"{%endif%}"&main_path={{main_path}}&ref_path={{ref_path}}" method="post">
+            <button type="submit"> Export To Json </button>    
+        </form></td></tr>
+    
+        {% if saved_json:%}
+        <p style="font-family: Arial, Helvetica, sans-serif;"> Exported file path: <br>
+            {{saved_json}} </p>
+        {%endif%}
+    </div>
+    
+    <div style="position:relative;top: 0px; left: 0px;display: inline-block;">
+        <ul class="col_ul">
+            {{list_html}}
+        </ul>
+    </div>

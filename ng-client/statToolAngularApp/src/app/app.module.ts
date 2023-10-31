@@ -20,12 +20,24 @@ import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {MatIconModule} from '@angular/material/icon';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatToolbarModule} from '@angular/material/toolbar';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { DrawerComponent } from './drawer/drawer.component';
 import { DrawerContentComponent } from './drawer-content/drawer-content.component';
 import {MatExpansionModule} from '@angular/material/expansion';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
-import '@angular/localize/init'
+import '@angular/localize/init';
+import { SaveTemplateDialogComponent } from './save-template-dialog/save-template-dialog.component';
+import { NewReportComponent } from './new-report/new-report.component';
+import { SaveSuiteDialogComponent } from './save-suite-dialog/save-suite-dialog.component';
+import { ConfigurationViewerComponent } from './configuration-viewer/configuration-viewer.component';
+import { NewReportResultComponent } from './new-report/new-report-result/new-report-result.component';
+import { ClickOutsideDirective } from './click-outside.directive'; // Adjust the path to your directive
+import { CommonService } from './services/common.service';
+import { UdfArgumentsComponent } from './configuration-viewer/udf-arguments/udf-arguments.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations'; // Import the BrowserAnimationsModule
+
 
 @NgModule({
   declarations: [
@@ -37,6 +49,13 @@ import '@angular/localize/init'
     TemplateSegmentsHeaderComponent,
     DrawerComponent,
     DrawerContentComponent,
+    SaveTemplateDialogComponent,
+    NewReportComponent,
+    SaveSuiteDialogComponent,
+    ConfigurationViewerComponent,
+    NewReportResultComponent,
+    ClickOutsideDirective,
+    UdfArgumentsComponent
   ],
   imports: [
     NgMultiSelectDropDownModule.forRoot(),
@@ -56,9 +75,13 @@ import '@angular/localize/init'
     MatToolbarModule,
     MatExpansionModule,
     NgbModule,
-    NgbAlertModule
+    NgbTypeaheadModule,
+    NgbAlertModule,
+    DragDropModule, 
+    BrowserModule,
+    BrowserAnimationsModule
   ],
-  providers: [StatisticsToolService],
+  providers: [StatisticsToolService,CommonService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

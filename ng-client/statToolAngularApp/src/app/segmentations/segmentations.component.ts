@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl,ReactiveFormsModule } from '@angular/forms';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { StatisticsToolService } from '../services/statistics-tool.service';
+import { States, StatisticsToolService } from '../services/statistics-tool.service';
+import { CommonService } from '../services/common.service';
 
 @Component({
   selector: 'segmentations',
@@ -10,7 +10,13 @@ import { StatisticsToolService } from '../services/statistics-tool.service';
   styleUrls: ['./segmentations.component.css']
 })
 export class SegmentationsComponent implements OnInit{
+  @ViewChild('dropdown', { static: false }) dropdown: ElementRef|undefined;
+  isDropdownOpen = false;
 
+  toggleDropdown() {
+    this.isDropdownOpen = !this.isDropdownOpen;
+  }
+  
   @Input() set selectItems(items:string){
     if (items == "," || items == "" || items == ' ')
       return;
@@ -19,10 +25,13 @@ export class SegmentationsComponent implements OnInit{
     arr.forEach(a => {
       this.selected.push({'item_id':a,'item_text':a})
     })
-    console.log('foo','items:',JSON.stringify(arr),'selected:',JSON.stringify(this.selected));
+    
   }
-  
+  @Input() viewId = 0;
   @Input() name = '';
+  @Input() elementRef = '';
+  @Input() viewguid = '';
+
   dropdownList : {'item_id':string,'item_text':string}[] = [];
   selected     : {'item_id':string,'item_text':string}[] = [];
   
@@ -35,7 +44,8 @@ export class SegmentationsComponent implements OnInit{
   @Output() allSegmentsRemoved  = new EventEmitter();
 
   constructor(private statToolService:StatisticsToolService,
-              private httpClient:HttpClient) {
+              private httpClient:HttpClient,
+              private commonSvc:CommonService) {
   }
 
   ngOnInit(): void {
@@ -53,6 +63,15 @@ export class SegmentationsComponent implements OnInit{
         itemsShowLimit: 100,
         allowSearchFilter: true,
       };
+
+      /*this.commonSvc.onMouseClicked.subscribe(event => {
+        this.isDropdownOpen = false;
+        console.log(this.isDropdownOpen +"," + event.target)
+        if (this.dropdown != undefined)
+          if (!this.dropdown.nativeElement.contains(event.target)) {
+            this.isDropdownOpen = false;
+          }
+      })*/
   }
 
   onItemSelect(item: any) {
@@ -73,7 +92,18 @@ export class SegmentationsComponent implements OnInit{
     this.allSegmentsRemoved.emit([])
   }
 
-ngOnDestroy(){
+  onClick(event:any){
+    let name = this.dropdown?.nativeElement.parentElement.attributes['name'].value;
+
+    if (!this.dropdown?.nativeElement.querySelectorAll('.dropdown-list')[0].hidden){
+      this.statToolService.setDropdownState(this.viewguid,name,States.Opened);
+      return;
+    }
+  
+    this.statToolService.setDropdownState(this.viewguid,name,States.Close);
+  }
+
+  ngOnDestroy(){
     if (this.subscribeSegmentationsFetched != null)
       this.subscribeSegmentationsFetched.unsubscribe();
   }

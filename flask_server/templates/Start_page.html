@@ -1,0 +1,224 @@
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"></script>
+
+<style>
+input[type=submit]:disabled {
+  border: none;
+  color: rgb(119, 111, 111);
+  background-color: white;
+  border: 2px solid #cad4cb;
+ 
+}
+input[type=submit] {
+  padding: 25px 32px;
+  background-color: white;
+  color: black;
+  border: 2px solid #4CAF50;
+}
+
+
+input[type=submit]:hover {
+  background-color: #4CAF50;
+  color: white;
+}
+
+input[type=button] {
+  padding: 25px 32px;
+  background-color: white;
+  color: black;
+  border: 2px solid #4CAF50;
+}
+
+
+input[type=button]:hover {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.invalid-file-path {
+    border: 1px solid #e53935;
+    box-shadow: 0 0 4px #e53935;
+    background-color: #FFEBEE;
+  }
+
+.valid-file-path {
+    border: 1px solid #66BB6A;
+    box-shadow: 0 0 4px #66BB6A;
+    /*background-color: #E8F0FE;*/
+    background-color:white !important;
+} 
+
+</style>
+
+
+<div class="row">
+
+        <div class="header" style="text-align: center; color: green;">
+        <div class="col-12">
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+
+              <h1 style="font-family: Arial, Helvetica, sans-serif;">Welcome to Statistics-Tool </h1>
+              <a href="{{wiki_page}}" target="_blank" rel="noopener noreferrer">Statistics-Tool Wiki..</a>
+        </div>
+
+                    <br>
+                    <br>
+
+
+</div>
+
+    <div class="col-md-12" style="text-align: center;">
+        <div>
+        <input type="button" onclick="location.href='/new_report/nav_new_report';" value="New Report" />
+        </div>
+    </div>
+    
+    <div class="col-md-12" style="text-align: center;margin-top: 40px;">
+      <form id = "report_form" action="/viewer/Report_Viewer" target="_blank" method="post" enctype="multipart/form-data">
+        <table class="table" style="margin: auto;width: 40% !important; "> 
+          <tbody>
+            <tr>
+              <td style="width: 25%;"><b>Main Directory</b></td>
+              <td>
+                <div class="form-group">
+                  <input type="text" class="form-control" id="report_file_path"  name = "report_file_path" placeholder="Enter valid directory path"
+                    onchange="validateDirectoryPath('report_file_path')">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><b>Reference Directory</b></td>
+              <td>
+                <div class="form-group">  
+                  <input  type="text" 
+                          class="form-control" 
+                          id="reference_file_path" 
+                          name = "reference_file_path" 
+                          placeholder="Enter valid directory path"
+                          onchange="validateDirectoryPath('reference_file_path')"
+                          oninput="onInput('reference_file_path')">
+                </div>
+
+              </td>
+            </tr>
+          </tbody>
+        </table>
+         <div class="col-md-12" style="margin-top:20px" >
+              <input type = "submit" 
+                     id="submit" 
+                     value = "Load Report" 
+                     disabled="true" 
+                     >
+        </div>
+       
+      </form>
+
+       
+    </div>
+
+    <script>
+    
+    /*$("#report_file_path").on('change keydown paste input', function(){
+        $('#submit').prop('disabled', false); 
+    });*/
+
+    var main_path_valid = true;
+    var ref_path_valid  = true;
+
+    function onInput(id){
+      
+      const inputElement = document.getElementById(id);
+      const inputValue = inputElement.value.trim();
+      
+      if (id == 'reference_file_path' && inputValue == ''){
+        ref_path_valid = true;
+        inputElement.classList.remove("invalid-file-path");
+        inputElement.classList.remove("valid-file-path");
+        if (main_path_valid)
+          $('#submit').prop('disabled',false)
+      }
+    }
+
+    function validateDirectoryPath(elementId) {
+      
+      const inputElement  = document.getElementById(elementId);
+      const inputValue    = inputElement.value.trim();
+
+      if (inputValue == ''){
+          if (elementId == 'reference_file_path'){
+            ref_path_valid = true;
+            inputElement.classList.remove("invalid-file-path");
+            inputElement.classList.remove("valid-file-path");
+            if (main_path_valid)
+              $('#submit').prop('disabled',false)
+          }
+          return;
+      }
+
+     // Make an AJAX request to Flask backend
+      const xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            // Response received successfully
+            const isValidDirectory = JSON.parse(xhr.responseText).isValidDirectory;
+
+            if (inputValue == '' && elementId == 'reference_file_path'){
+              ref_path_valid = true;
+              isValidDirectory = true;
+            } 
+
+            if (inputValue == '' && elementId == 'report_file_path'){
+              ref_path_valid = false;
+              isValidDirectory = false;
+            } 
+
+            if (elementId == 'report_file_path')
+              main_path_valid = isValidDirectory;
+            else  
+              ref_path_valid = isValidDirectory;
+
+            if (isValidDirectory) {
+              inputElement.classList.remove("invalid-file-path");
+              inputElement.classList.add("valid-file-path");
+            } else {
+              inputElement.classList.add("invalid-file-path");
+              inputElement.classList.remove("valid-file-path");
+            }
+            
+            if (main_path_valid)
+              $('#submit').prop('disabled',false)
+            else
+              $('#submit').prop('disabled',true)
+            
+            if (!ref_path_valid)      
+              $('#submit').prop('disabled',true); 
+
+          } else {
+            // Error handling
+            console.error("Error:", xhr.status);
+          }
+        }
+      };
+      
+      xhr.open("POST", "/validate_path", true); 
+      xhr.setRequestHeader("Content-Type", "application/json");
+      const data = JSON.stringify({ path: inputValue });
+      xhr.send(data);
+    }
+
+  </script>
+</div>

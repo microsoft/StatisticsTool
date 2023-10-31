@@ -14,11 +14,11 @@
           "builder": "@angular-devkit/build-angular:browser",
           
             "options": {
-            "outputPath": "../../flask_GUI/static",
+            "outputPath": "../../flask_server/static",
             "baseHref": "/static/",
             "index": {
               "input": "src/index.html",
-              "output": "../../flask_GUI/templates/index.html"
+              "output": "../../flask_server/static/index.html"
               },
             "main": "src/main.ts",
             "polyfills": [
