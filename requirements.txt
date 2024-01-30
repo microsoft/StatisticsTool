@@ -13,3 +13,4 @@ dash_bootstrap_components==1.4.1
 dash==2.9.3
 colorama==0.4.6
 jsonschema==4.17.3
+Werkzeug==2.3.7
