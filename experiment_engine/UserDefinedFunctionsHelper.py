@@ -81,7 +81,11 @@ def get_userdefined_function(func_type,func_name):
     """
     if not func_name or func_name == 'none' or func_name == 'None':
         return None
-    sys.path.append(os.path.join(get_external_lib_path(),Constants.USER_DEFINED_FUNCTIONS,func_type))
+    path = os.path.abspath(os.path.join(get_external_lib_path(),Constants.USER_DEFINED_FUNCTIONS,func_type))
+    
+    if path not in sys.path:
+        sys.path.append(path)
+    
     module = importlib.import_module(func_name)
     return getattr(module,func_name)
 
@@ -98,8 +102,12 @@ def get_udf_argument_function(func_type,func_name):
     """
     if not func_name or func_name == 'none' or func_name == 'None':
         return None
-    sys.path.append(os.path.join(get_external_lib_path(),Constants.USER_DEFINED_FUNCTIONS,func_type))
-    module = importlib.import_module(func_name)
+    path = os.path.abspath(os.path.join(get_external_lib_path(),Constants.USER_DEFINED_FUNCTIONS))
+    
+    if path not in sys.path:
+        sys.path.append(path)
+        
+    module = importlib.import_module(func_type+"."+func_name)
     if hasattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION):
         return getattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION)
     else:

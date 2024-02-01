@@ -1,7 +1,6 @@
 
 import os, sys
-import pathlib
-sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
+
 import json
 from app_config.constants import Constants
 import enum

@@ -7,8 +7,6 @@ from timeit import default_timer as timer
 
 from utils.LocalStorageHelper import list_local_dir
 
-sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
-
 
 ONE_GIGA = 1024 * 1024 * 1024
 STATISTICS_TOOL_TEMP_FOLDER_NAME = "statistic-tool-tmp"

@@ -11,10 +11,6 @@ import math
 import uuid
 from experiment_engine.ParallelExperiment import ParallelExperiment
 
-# adding the statistics_tool folder to path
-current_file_directory = os.path.realpath(__file__)
-sys.path.append(os.path.join(os.path.join(os.path.join(current_file_directory, '..'), '..'), '..'))
-
 from experiments_handlers.ExperimentsHelper import ExperimentsHelper
 import flask_server.dash_apps.my_pivot_table as pt
 from flask_server.dash_apps.results_table_css import css

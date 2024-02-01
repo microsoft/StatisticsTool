@@ -3,9 +3,6 @@ import pathlib
 import importlib.util
 
 from app_config.constants import StorageHelper
-
-sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
-
 from app_config.config import AppConfig
 from utils.LocalStorageFileCache import LocalStorageFileCache
 from utils.AzureStorageHelper import AzureStorageHelper
