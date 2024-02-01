@@ -2,8 +2,8 @@ import json
 import os
 
 
-default_secrets_file_name = r"blob_storage_config.json"
-default_config_file_name = r"app_config.json"
+default_secrets_file_name = r"app_config/blob_storage_config.json"
+default_config_file_name = r"app_config/app_config.json"
 class AppConfig():
     app_config = None
     def __init__(self, config_file = None, secrets_file = None):
@@ -21,7 +21,7 @@ class AppConfig():
             self.update_values_from_config(secrets_file)
 
     def update_values_from_config(self, config_file):
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),config_file), 'r') as f:
+        with open(config_file, 'r') as f:
             loaded_config = json.loads(f.read())
         for key in loaded_config.keys():
             if hasattr(self, key):
