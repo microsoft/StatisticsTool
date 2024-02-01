@@ -1,13 +1,15 @@
 import os,sys
 import pathlib
+import importlib.util
 
+from app_config.constants import StorageHelper
 
 sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
 
 from app_config.config import AppConfig
 from utils.LocalStorageFileCache import LocalStorageFileCache
 from utils.AzureStorageHelper import AzureStorageHelper
-from utils.LocalStrageHelper import list_local_dir
+from utils.LocalStorageHelper import list_local_dir
 
 
 
@@ -28,7 +30,16 @@ def GetStorageHandler():
         return storage_handler
     
     app_config = AppConfig.get_app_config()
-    storage_handler = AzureStorageHelper(app_config.storage_id, app_config.data_container_name, app_config.storage_connection_string)
+    if (app_config.custom_storage_helper):
+        spec = importlib.util.spec_from_file_location(StorageHelper.CUSTOM_CLASS_NAME, app_config.custom_storage_helper)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module) 
+        Class = getattr(module, StorageHelper.CUSTOM_CLASS_NAME)
+        storage_handler = Class()
+    else:        
+        storage_handler = AzureStorageHelper()
+    
+    storage_handler.set_storage(app_config.storage_id, app_config.data_container_name, app_config.storage_connection_string)
     return storage_handler
 
 def GetFilesCache():

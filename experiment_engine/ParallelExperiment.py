@@ -6,12 +6,11 @@ import pandas as pd, os
 import numpy as np
 import shutil
 
-from app_config.constants import Constants
+from app_config.constants import Constants, UserDefinedConstants
 from app_config.dataframe_tokens import DataFrameTokens
 from experiment_engine.UserDefinedFunctionsHelper import load_config_dict
 from utils.report_metadata import create_metadata
 
-EXAMPLES_IN_SEGMENT_CONST = 'rows_in_segment'
 
 class ParallelExperiment:
  
@@ -137,7 +136,7 @@ class ParallelExperiment:
         confusion_masks = confusion_calc_func(comp_data)
         
         # add Total example to statistics functions for unified calculation in future ones (e.g. unique calculation)
-        confusion_masks[EXAMPLES_IN_SEGMENT_CONST] = pd.Series(np.ones(len(comp_data), dtype=bool))
+        confusion_masks[UserDefinedConstants.ALL_RAWS_IN_SEGMENT] = pd.Series(np.ones(len(comp_data), dtype=bool))
         
         # calculate the boolean masks of the partitions (which row/bounding box in the dataframes belongs to which partition)
         

@@ -37,21 +37,8 @@ def handel_pred(vars):
     :return: a tuple containing the prediction file path, the result of the comparison, and the output file path
     """
     gt_local_path = None 
-    pred, log_names_to_evaluate, pred_dir, evaluate_folders, local_gt_dir, predictionReaderFunction, gtReaderFunction, assiciation_function, transform_func, output_dir = vars
-    matched = False
-    for name in log_names_to_evaluate:
-            #Check if file is in log names to evaluate
-        name_to_match = pred
-        if os.path.dirname(name) == '':
-            name_to_match = os.path.basename(pred)
-        else:
-            name_to_match = os.path.relpath(pred, pred_dir)
-        if fnmatch.fnmatch(name_to_match, name):
-            matched = True
-            break
-    if not matched:
-        return pred, ProcessResult.skipped_not_in_lognames, None
-
+    pred, pred_dir, evaluate_folders, local_gt_dir, predictionReaderFunction, gtReaderFunction, assiciation_function, transform_func, output_dir = vars
+    
     try:
         log_name = os.path.basename(pred)
 
@@ -135,11 +122,23 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
     skipped_not_in_lognames = []
 
     print(f"total files num: {len(pred_path_list)}")
+    logs_to_evaluate = []
+    
+    for pred in pred_path_list:
+        for name in log_names_to_evaluate:
+                #Check if file is in log names to evaluate
+            name_to_match = pred
+            if os.path.dirname(name) == '':
+                name_to_match = os.path.basename(pred)
+            else:
+                name_to_match = os.path.relpath(pred, pred_dir)
+            if fnmatch.fnmatch(name_to_match, name):
+                logs_to_evaluate.append(pred)
+                break
     
     results = []
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         results = executor.map(handel_pred, [(pred,
-                                              log_names_to_evaluate,
                                               pred_dir,
                                               evaluate_folders,
                                               local_gt_dir,
@@ -147,7 +146,7 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
                                               gtReaderFunction,
                                               assiciation_function,
                                               transform_func,
-                                              output_dir) for pred in pred_path_list])
+                                              output_dir) for pred in logs_to_evaluate])
         executor.shutdown(wait=True) 
 
     output_files = []

@@ -14,6 +14,7 @@ class AppConfig():
         self.predictions_blobs_prefix = ''
         self.storage_connection_string = ''
         self.external_lib_path = ''
+        self.custom_storage_helper = ''
         if config_file:
             self.update_values_from_config(config_file)
         if secrets_file:

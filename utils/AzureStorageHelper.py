@@ -1,15 +1,14 @@
-import os, sys
+import os
 from azure.storage.blob import BlobServiceClient
 from colorama import Fore
-sys.path.append(os.path.join(__file__, '..',).split('StatisticsTool')[0])  # this is the root of the repo
+import concurrent
 
 
 class AzureStorageHelper():
     '''
     A helper class for interacting with Azure Blob Storage
     '''
-
-    def __init__(self, storage_id, container_name, connection_string):
+    def set_storage(self, storage_id, container_name, connection_string):
         '''
         Initializes the AzureStorageHelper object with the given storage ID, container name, and connection string
 
@@ -81,7 +80,23 @@ class AzureStorageHelper():
             if relative_path and (recursive or not '/' in relative_path):
                 files.append(relative_path)
         return files
-
+    
+    @staticmethod
+    def handle_file_wrapper(vars):
+        path, name, dst_folder_path, self = vars
+        blob = path+'/'+name
+        dst_folder_path = path+'/'+name
+        return self.download_blob(path, blob, dst_folder_path)
+    
+    def download_folder(self, blob_base_path, dst_folder_path):
+        files_in_folder = self.storage_handler.ls_files(blob_base_path)
+       
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = executor.map(AzureStorageHelper.handle_file_wrapper, [(blob_base_path, file, dst_folder_path, self) for file in files_in_folder])
+            executor.shutdown(wait=True) 
+        
+        return dst_folder_path
+            
     def download_blob(self, blob_path, dst_file_path):
         '''
         Downloads a blob from Azure Blob Storage to the given local file path
