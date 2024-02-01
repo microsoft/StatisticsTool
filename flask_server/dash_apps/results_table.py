@@ -20,13 +20,13 @@ import flask_server.dash_apps.my_pivot_table as pt
 from flask_server.dash_apps.results_table_css import css
 from app_config.color_scheme import COLOR_GRADIENT_RED_BLUE, COLOR_GRADIENT_RED_WHITE_BLUE
 from experiment_engine.unique_helper import UniqueHelper
-
+import math
 
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
 
 def get_color_from_gradient(x, gradient):
-    if x<0 or x>1:
+    if x<0 or x>1 or math.isnan(x):
         #print ("values must be between 0-1")
         return 'white'
     
