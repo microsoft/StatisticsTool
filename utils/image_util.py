@@ -6,22 +6,29 @@ from io import BytesIO
 
 from experiment_engine.file_storage_handler import StoreType, find_in_blob_by_video_name, get_file_on_local_storage
 
-def read_frame_from_video(video_file, frame_id, local_store = None):
+def read_frame_from_video(video_file, frame_id, file_name, local_store = None):
     frame = None
     vid = None
+   
     if local_store:
         local_video_path = os.path.join(local_store,video_file)
     else:
-        path_on_blob = find_in_blob_by_video_name(video_file, '', StoreType.Data, '.mp4')
-        local_video_path = get_file_on_local_storage(path_on_blob)
-        if local_video_path is None:
-            return None
+        if file_name:
+            path_on_blob = video_file+'/'+file_name
+        else:
+            if not os.path.splitext(str(video_file))[1]:
+                video_file = video_file + '.mp4' #Add default mp4 extension for all video names without extension
+            path_on_blob = find_in_blob_by_video_name(video_file, '', StoreType.Data)
         
-    if pathlib.Path(local_video_path).suffix == ".mp4":
-        vid= cv2.VideoCapture(local_video_path)
-        if is_video(local_video_path):
-            vid.set(cv2.CAP_PROP_POS_FRAMES, int(frame_id))
-        _, frame = vid.read()
+        local_video_path = get_file_on_local_storage(path_on_blob)
+    
+    if local_video_path is None:
+        return None
+        
+    vid= cv2.VideoCapture(local_video_path)
+    if is_video(local_video_path):
+        vid.set(cv2.CAP_PROP_POS_FRAMES, int(frame_id))
+    _, frame = vid.read()
     
     if frame is not None:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -33,7 +40,7 @@ def read_frame_from_video(video_file, frame_id, local_store = None):
         
 def is_video(file_path):
     extension = os.path.splitext(file_path)[1].lower()
-    if extension in ['.mp4', '.avi', '.mov', '.wmv', '.flv']:
+    if extension in ['.mp4', '.avi', '.mov', '.wmv', '.flv', '']:
         return True
     else:
         return False

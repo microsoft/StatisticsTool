@@ -16,10 +16,10 @@ class UdfObject:
     - func (function): The user-defined function.
     - params (dict): The parameters of the user-defined function.
     """
-    def __init__(self,func_type,func_name,params):
-        self.func_type  = func_type
+    def __init__(self,func_path,func_name,params):
+        self.func_path  = func_path
         self.func_name  = func_name
-        self.func       = get_userdefined_function(self.func_type,self.func_name)
+        self.func       = get_userdefined_function(self.func_path,self.func_name)
         self.params     = params
     
     def __call__(self, *kargs):
@@ -42,7 +42,20 @@ def get_external_lib_path():
     - The path to the external library.
     """
     app_config = AppConfig.get_app_config() 
+    
     return app_config.external_lib_path
+
+#Add external lib to path when importing this file
+if get_external_lib_path() not in sys.path:
+    sys.path.append(get_external_lib_path())
+
+def get_function_arguments(func_path_in_lib):
+    function_module = func_path_in_lib.replace("/",".").replace("\\",".")    
+    module = importlib.import_module(function_module)
+    if hasattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION):
+        return getattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION)
+    else:
+        return None   
 
 def get_configs_folder():
     """
@@ -68,7 +81,7 @@ def get_suites_folder():
         os.makedirs(suites_folder)
     return suites_folder
 
-def get_userdefined_function(func_type,func_name):
+def get_userdefined_function(func_path_in_module,func_name):
     """
     Gets the user-defined function with the given type and name.
 
@@ -81,12 +94,9 @@ def get_userdefined_function(func_type,func_name):
     """
     if not func_name or func_name == 'none' or func_name == 'None':
         return None
-    path = os.path.abspath(os.path.join(get_external_lib_path(),Constants.USER_DEFINED_FUNCTIONS,func_type))
+    func_path_in_module = func_path_in_module.replace("/",".").replace("\\",".")    
     
-    if path not in sys.path:
-        sys.path.append(path)
-    
-    module = importlib.import_module(func_name)
+    module = importlib.import_module(func_path_in_module+'.'+func_name)
     return getattr(module,func_name)
 
 def get_udf_argument_function(func_type,func_name):
@@ -102,16 +112,10 @@ def get_udf_argument_function(func_type,func_name):
     """
     if not func_name or func_name == 'none' or func_name == 'None':
         return None
-    path = os.path.abspath(os.path.join(get_external_lib_path(),Constants.USER_DEFINED_FUNCTIONS))
     
-    if path not in sys.path:
-        sys.path.append(path)
-        
-    module = importlib.import_module(func_type+"."+func_name)
-    if hasattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION):
-        return getattr(module,Constants.UDF_USER_ARGUMENT_FUNCTION)
-    else:
-        return None
+    func_type = Constants.USER_DEFINED_FUNCTIONS + '.' + func_type
+    return get_function_arguments(func_type+"."+func_name)
+   
 
 def get_users_defined_functions(directoryName):
     """
@@ -157,7 +161,7 @@ def load_config_dict(config_file_name):
 
     return config_dict
 
-def load_function_object(func_conf, func_type):
+def get_user_defined_function(func_conf, func_type):
     """
     Loads the user-defined function object from the given configuration and type.
 
@@ -170,6 +174,7 @@ def load_function_object(func_conf, func_type):
     """
     if func_conf == None:
         return None
+    func_type = Constants.USER_DEFINED_FUNCTIONS + '.' + func_type
     func = UdfObject(func_type,func_conf[Constants.CONFIG_FUNCTION_NAME_TOKEN],func_conf[Constants.CONFIG_FUNCTION_PARAMS_TOKEN] if Constants.CONFIG_FUNCTION_PARAMS_TOKEN in func_conf.keys() else None)
     return func
 
@@ -187,7 +192,7 @@ def load_function_from_dict(config_dict, func_type):
     func = None
     func_conf = config_dict.get(func_type)
     if func_conf:
-        func = load_function_object(func_conf, func_type)
+        func = get_user_defined_function(func_conf, func_type)
     return func
 
 def load_config(config_file_name):

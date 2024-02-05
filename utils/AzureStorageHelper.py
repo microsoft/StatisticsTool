@@ -20,6 +20,7 @@ class AzureStorageHelper():
         self.account_url = f"https://{storage_id}.blob.core.windows.net"
         self.container_client_obj = None
         self.blob_service_client_obj = None
+        self.container_name = container_name
 
         print(f"Try create client for container: {container_name}")
         if not connection_string:
@@ -32,7 +33,8 @@ class AzureStorageHelper():
         
         return
 
-        
+    def get_container_name(self):
+        return self.container_name      
 
     def upload_file(self, source, dest):
         '''

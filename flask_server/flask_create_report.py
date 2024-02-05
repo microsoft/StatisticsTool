@@ -176,7 +176,7 @@ def calculating():
             result[NewReport_Tags.OK] = False
             result[NewReport_Tags.LINK] = ''
             result[NewReport_Tags.MESSAGE] = ''
-            result[NewReport_Tags.ERROR_MESSAGE] = f'An error occurred while executing the {config_file_name} configuration file' 
+            result[NewReport_Tags.ERROR_MESSAGE] = f'An error occurred while executing the {config_file_name} configuration file with exception: {e}' 
             return  json.dumps(result)
 
     #link =  ReportViewer_Constants.URL + "?&" + ReportViewer_Args.REPORT_FILE_PATH + "=" + urllib.parse.quote(output_path)

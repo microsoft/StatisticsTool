@@ -3,6 +3,7 @@ class DataFrameTokens():
     LABELS_GROUP_KEY = 'frame_id'
     END_EVENT_TOKEN = 'end_frame'
     VIDEO_TOKEN = 'video'
+    FRAME_FILE_TOKEN = 'frame_file_name'
     UNIQUE_BATCH_TOKEN = 'batch_unique_id'
     HAS_VALUE_TOKEN = 'has_value'
     BB_X = 'x'

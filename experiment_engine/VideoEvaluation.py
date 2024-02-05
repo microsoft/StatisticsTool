@@ -67,7 +67,6 @@ class VideoEvaluation:
         tuple
             a tuple containing the prediction data and ground truth data as pandas dataframes
         """
-        self.prediction_reading_function.params[UserDefinedConstants.VIDEO_NAME_PARAM_READING_FNC] = video_name
         pred_data = self.prediction_reading_function(pred_file)
         if pred_data is None: #The user defined reader function doesn't recognize this file
             print (f"reader function could't parse {pred_file} log")
@@ -78,8 +77,6 @@ class VideoEvaluation:
             pred_data[DataFrameTokens.LABELS_GROUP_KEY] = pred_data.index
         
         pred_data[DataFrameTokens.HAS_VALUE_TOKEN] = True
-        
-        self.gt_reading_function.params[UserDefinedConstants.VIDEO_NAME_PARAM_READING_FNC] = video_name
         gt_data = self.gt_reading_function(gt_file)
 
         if gt_data is None:

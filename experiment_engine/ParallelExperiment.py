@@ -65,7 +65,7 @@ class ParallelExperiment:
             batch_key = DataFrameTokens.VIDEO_TOKEN
         else:
             batch_key = DataFrameTokens.UNIQUE_BATCH_TOKEN
-
+            
         arr = self.comp_data[mask][[batch_key,DataFrameTokens.LABELS_GROUP_KEY,DataFrameTokens.END_EVENT_TOKEN]].to_numpy()
         list_arr = np.insert(arr,1,self.comp_data[mask].index.to_numpy(), axis=1)
         return list_arr
@@ -75,9 +75,15 @@ class ParallelExperiment:
         confusion_masks = self.get_statistics_masks(segmentations)
         
         return self.get_list_array(confusion_masks[state])
-        
-    def get_detection_bounding_boxes(self, detection_index):
-        bb_obj = self.comp_data.loc[detection_index]
+    
+    def get_detection_file_name(self, sample_index)    :
+        detection = self.comp_data.loc[sample_index]
+        if DataFrameTokens.FRAME_FILE_TOKEN in detection:
+            return detection[DataFrameTokens.FRAME_FILE_TOKEN]
+        return None
+     
+    def get_detection_bounding_boxes(self, sample_index):
+        bb_obj = self.comp_data.loc[sample_index]
 
         label_bbs = []
         prd_bbs = []
@@ -93,11 +99,11 @@ class ParallelExperiment:
             obj=all_frmae_obj.loc[ind]
             if DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX in obj and not math.isnan(obj[DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX]):
                 label_bbs.append([obj[DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_Y+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_WIDTH+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_HEIGHT+DataFrameTokens.GT_ANNOT_SUFFIX]])
-                if ind == detection_index:
+                if ind == sample_index:
                     label_index = len(label_bbs)-1
             if DataFrameTokens.BB_X in obj  and not math.isnan(obj[DataFrameTokens.BB_X]):
                 prd_bbs.append([obj[DataFrameTokens.BB_X], obj[DataFrameTokens.BB_Y], obj[DataFrameTokens.BB_WIDTH], obj[DataFrameTokens.BB_HEIGHT]])
-                if ind == detection_index:
+                if ind == sample_index:
                     pred_index = len(prd_bbs) -1            
     
 

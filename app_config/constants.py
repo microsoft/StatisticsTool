@@ -37,7 +37,6 @@ class UserDefinedConstants:
     ASSOCIATION_FUNCTIONS_KEY       = 'association_functions'
     LOGS_TO_EVALUATE_KEY            = 'logs_file_names_to_evaluate'
     EVALUATE_FOLDERS_KEY            = 'evaluate_folders'
-    VIDEO_NAME_PARAM_READING_FNC    = 'video_name'
     ALL_RAWS_IN_SEGMENT             = 'all_raws'
 
 class StorageHelper:

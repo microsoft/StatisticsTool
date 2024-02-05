@@ -9,6 +9,8 @@ class AppConfig():
     def __init__(self, config_file = None, secrets_file = None):
         self.storage_id = ''
         self.data_container_name = ''
+        self.annotation_container_name = ''
+        self.prediction_container_name = ''
         self.annotation_store_blobs_prefix = ''
         self.data_store_blobs_prefix = ''
         self.predictions_blobs_prefix = ''
@@ -33,7 +35,7 @@ class AppConfig():
         for arg_name, arg_value in vars(args).items():
             if arg_value and hasattr(self, arg_name):
                  setattr(AppConfig.app_config, arg_name, arg_value)
-        
+    
     @staticmethod
     def get_app_config(config_file_name = default_config_file_name, storage_file_name = default_secrets_file_name):
         if not AppConfig.app_config:

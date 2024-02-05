@@ -65,14 +65,14 @@ def show_image():
     
     video_name = request.args.get(ExampleList_Tags.EXAMPLE_VID)
     example_index = int(request.args.get(ExampleList_Tags.EXAMPLE_INDEX))
-    frame_num = int(request.args.get(ExampleList_Tags.EXAMPLE_FRAME))
+    frame_id = request.args.get(ExampleList_Tags.EXAMPLE_FRAME)
 
     main_exp = experiments_manager.get_or_load_experiment(main_path)
     ref_exp = experiments_manager.get_or_load_experiment(ref_path)
 
     main_dir,_ = os.path.split(main_path)
     
-    detection_text_list, data, save_path = manage_image_request(request,main_exp, ref_exp,main_dir, comp_index>-1, local_path, example_index, video_name, frame_num)
+    detection_text_list, data, save_path = manage_image_request(request,main_exp, ref_exp,main_dir, comp_index>-1, local_path, example_index, video_name, frame_id)
 
     return render_template(ExamplesList_Routes.EXAMPLE_IMAGE_HTML, 
                            data=data, 
@@ -80,13 +80,13 @@ def show_image():
                            detection_text_list=detection_text_list, 
                            video_name = video_name, 
                            example_index = example_index, 
-                           frame_num = frame_num, 
+                           frame_num = frame_id, 
                            main_path=main_path, 
                            ref_path=ref_path, 
                            comp_index = comp_index)
 
 
-def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, local_path, bb_index, video, frame_id):
+def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, local_path, sample_index, video, frame_id):
     """
     Accepts the requests to /show_im route and returns an encoded image and the path where the image was saved (if it was saved)
 
@@ -99,7 +99,8 @@ def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, loc
     data = None
     image = None
     try:
-        image = read_frame_from_video(video, frame_id, local_path)
+        file_name = main_exp.get_detection_file_name(sample_index)
+        image = read_frame_from_video(video, frame_id, file_name, local_path)
     except Exception as ex:
         print (f'failed to load image with exception: {ex}')
     
@@ -107,8 +108,8 @@ def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, loc
     if use_ref:
         exp = ref_exp
     
-    pred_bbs, label_bbs, selected_pred_index, selected_label_index = exp.get_detection_bounding_boxes(bb_index)
-    detection_text_list = exp.get_detection_properties_text_list(bb_index)
+    pred_bbs, label_bbs, selected_pred_index, selected_label_index = exp.get_detection_bounding_boxes(sample_index)
+    detection_text_list = exp.get_detection_properties_text_list(sample_index)
     out_figure = draw_detection_on_figure(image, pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
     if out_figure is not None:
         data = base64.b64encode(out_figure.getbuffer()).decode("ascii")
@@ -123,7 +124,7 @@ def manage_image_request(request, main_exp, ref_exp,main_directory, use_ref, loc
         save_path = os.path.normpath(save_path)
         if os.path.exists(save_path) == False:
             os.makedirs(save_path)
-        save_file = os.path.join(save_path,  str(bb_index) + Constants.PNG_EXTENSION)
+        save_file = os.path.join(save_path,  str(sample_index) + Constants.PNG_EXTENSION)
         with open(save_file, "wb") as outfile:
             outfile.write(out_figure.getbuffer())
         

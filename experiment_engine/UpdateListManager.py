@@ -103,6 +103,10 @@ class UpdateListManager():
         return list_html, saved_json
 
     @staticmethod
+    def export_list(images_list, report_path, ref_report_path, cell_name, states, is_unique, show_ref_report):
+        
+        return UpdateListManager.export_list_to_json(images_list, report_path, ref_report_path, cell_name, states, is_unique, show_ref_report)
+    @staticmethod
     def export_list_to_json(images_list, report_path, ref_report_path, cell_name, states, is_unique, show_ref_report):
         segmentation_list = cell_name.split("*") if cell_name !="*" else ['All']
         json_list = []

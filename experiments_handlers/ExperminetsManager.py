@@ -5,7 +5,7 @@ from threading import Lock
 import uuid,os
 from app_config.constants import Constants, UserDefinedConstants
 from experiment_engine.ParallelExperiment import ParallelExperiment
-from experiment_engine.UserDefinedFunctionsHelper import load_function_object
+from experiment_engine.UserDefinedFunctionsHelper import get_user_defined_function
 from utils.report_metadata import CONFIG_TOKEN
 
 
@@ -119,7 +119,7 @@ class ExperimentsManager:
     @staticmethod
     def get_udf_from_config(udf_type, metadata):
         func_conf = metadata[CONFIG_TOKEN].get(udf_type)
-        func = load_function_object(func_conf, udf_type)
+        func = get_user_defined_function(func_conf, udf_type)
         return func
 
     @staticmethod
