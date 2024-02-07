@@ -12,15 +12,52 @@ Legend: <span style="color:blue;">Prediction ----     </span> <span style="color
 <br>
 <div id="openseadragon-viewer"></div>
 <script type="text/javascript">
-    if (typeof OpenSeadragon !== 'undefined') {
+      imgs = ['data:image/png;base64,{{ data }}', 'data:image/png;base64,{{ data }}']
+      
+      cur_img = 0
+      // Initialize the viewer if OpenSeadragon is available
+      if (typeof OpenSeadragon !== 'undefined') {
         var viewer = OpenSeadragon({
             id: "openseadragon-viewer",
             prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.2/images/", // CDN path to OpenSeadragon images
             tileSources: {
                 type: 'image',
-                url: 'data:image/png;base64,{{ data }}'
-            }
+                url: imgs[cur_img] // URL or path to the initial image
+            },
+            maxZoomPixelRatio: 10 // Set maximum zoom level to 10
         });
+        viewer.preserveViewport = true;
+        // Function to switch between images on mouse click
+        function switchImages() {
+            if (!event.altKey) {
+                rerutn;
+            }
+            cur_img = 1 - cur_img;
+            // Determine the currently visible image
+            var currentImage = viewer.source;
+            var viewportState = {
+                zoom: viewer.viewport.getZoom(),
+                pan: viewer.viewport.getCenter(),
+                rotation: viewer.viewport.getRotation()
+            };
+
+            // Switch tileSources
+            viewer.open({
+                type: 'image',
+                url: imgs[cur_img],
+                success: function() {
+                    //setTimeout(function() {
+                        viewer.viewport.zoomTo(viewportState.zoom, null, true);
+                        viewer.viewport.panTo(viewportState.pan, true);
+                        viewer.viewport.setRotation(viewportState.rotation);
+                  //  }, 0); 
+                }
+            });
+            viewer.preserveViewport = true;
+        }
+
+        // Add click event handler to the viewer
+        viewer.addHandler('canvas-click', switchImages);
     } else {
         // Fallback to simple <img> tag if OpenSeadragon is not available
         var imgTag = document.createElement("img");
@@ -29,6 +66,7 @@ Legend: <span style="color:blue;">Prediction ----     </span> <span style="color
         imgTag.style.maxHeight = '100%';
         document.getElementById("openseadragon-viewer").appendChild(imgTag);
     }
+        
 </script>
 <p>
    <a style="font-family: Arial, Helvetica, sans-serif;" target="" href='javascript:window.parent.postMessage({"action":"show_image","value":"/show_im?example_vid={{video_name}}&example_index={{example_index}}&example_frame={{frame_num}}&comp_index={{comp_index}}&main_path={{main_path}}&ref_path={{ref_path}}&save_image"})'> Save Image</a> 
