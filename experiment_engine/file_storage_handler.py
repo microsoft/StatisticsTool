@@ -151,7 +151,7 @@ def get_file_wrapper(vars):
     return local_path
 
 
-def parallel_get_files_on_local_storage(paths:dict, dst_paths:list = None):
+def parallel_get_files_on_local_storage(paths:list, store_type:list, dst_paths:list = None):
     """_summary_
 
     Args:
@@ -163,7 +163,7 @@ def parallel_get_files_on_local_storage(paths:dict, dst_paths:list = None):
     if dst_paths is None:
         dst_paths = ['']*len(paths)
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = executor.map(get_file_wrapper, [(path, type, dst) for path, type, dst in zip(paths.keys(), paths.values(), dst_paths)])
+        results = executor.map(get_file_wrapper, [(path, type, dst) for path, type, dst in zip(paths, store_type, dst_paths)])
         executor.shutdown(wait=True) 
     ret = []
     for result in results:

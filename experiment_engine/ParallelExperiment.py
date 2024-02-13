@@ -114,7 +114,7 @@ class ParallelExperiment:
     
     def get_example_images_local_path(self, sample_index, local_store)    :
         sample = self.comp_data.loc[sample_index]
-        local_paths = {}
+        store_paths = {}
         pred_bbs, label_bbs, selected_pred_index, selected_label_index = self.get_detection_bounding_boxes(sample_index)
        
         frame_id = None
@@ -123,21 +123,22 @@ class ParallelExperiment:
         except:
             pass
         
-        local_paths = self.get_sample_images_paths(sample, local_store)
+        store_paths = self.get_sample_images_paths(sample, local_store)
         
-        file_store_dict = {value: key for key, value in local_paths.items()}
-        
-        local_video_path = parallel_get_files_on_local_storage(file_store_dict)
+        local_video_path = parallel_get_files_on_local_storage(list(store_paths.values()), list(store_paths.keys()))
         
         images = {}
-        if len (local_video_path) > 0 and local_video_path[0]: images[StoreType.Predictions] = local_video_path[0]
-        if len (local_video_path) > 1 and local_video_path[1]: images[StoreType.Annotations] = local_video_path[1]
-        if len (local_video_path) > 2 and local_video_path[2]: images[StoreType.Data] = local_video_path[2]
+        if StoreType.Predictions in store_paths: 
+            pos = list(store_paths.keys()).index(StoreType.Predictions)
+            images[StoreType.Predictions] = prepare_example_image(local_video_path[pos], frame_id, prd_bbs=pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
+        if StoreType.Annotations in store_paths: 
+            pos = list(store_paths.keys()).index(StoreType.Annotations)
+            images[StoreType.Annotations] = prepare_example_image(local_video_path[pos], frame_id, prd_bbs=pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
+        if StoreType.Data in store_paths: 
+            pos = list(store_paths.keys()).index(StoreType.Data)
+            images[StoreType.Data] = prepare_example_image(local_video_path[pos], frame_id, prd_bbs=pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
         
-        for key,image in images.items():
-            if image:
-                images[key] = prepare_example_image(image, frame_id, prd_bbs=pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
-        
+     
         return images
     
     def get_detection_bounding_boxes(self, sample_index):
