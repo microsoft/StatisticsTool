@@ -88,7 +88,7 @@ class AzureStorageHelper():
         path, name, dst_folder_path, self = vars
         blob = path+'/'+name
         dst_folder_path = path+'/'+name
-        return self.download_blob(path, blob, dst_folder_path)
+        return self.download_blob(blob, dst_folder_path)
     
     def download_folder(self, blob_base_path, dst_folder_path):
         files_in_folder = self.storage_handler.ls_files(blob_base_path)
@@ -116,7 +116,7 @@ class AzureStorageHelper():
         with open(dst_file_path, "wb") as file:
             file.write(blob_data)
         
-        print (f'{Fore.YELLOW}Finished download{Fore.RESET}')
+        print (f'{Fore.YELLOW}Finished download{Fore.RESET}. locl path: {dst_file_path}')
         
         return dst_file_path
 

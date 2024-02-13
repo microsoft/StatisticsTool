@@ -3,6 +3,7 @@ import os
 from app_config.config import AppConfig
 from app_config.constants import Constants
 from experiment_engine.UserDefinedFunctionsHelper import load_function_from_file
+from flask_server.dash_apps.results_table import Results_table
 
 from utils.report_metadata import *
 
@@ -89,9 +90,7 @@ class UpdateListManager():
         
         if save_json_file:
             output_path = UpdateListManager.export_list(per_video_example_hash,
-                                        results_table.get_main_exp(), 
-                                        results_table.get_ref_exp(),
-                                        os.path.dirname(main_path) if not show_ref_report else os.path.dirname(ref_path),
+                                        results_table,
                                         cell_name,
                                         stat, 
                                         show_unique, 
@@ -108,7 +107,7 @@ class UpdateListManager():
 
  
     @staticmethod
-    def export_list(images_list, exp_main, exp_ref, output_dir, cell_name, states, is_unique, show_ref_report):
+    def export_list(images_list, results_table:Results_table, cell_name, states, is_unique, show_ref_report):
         app_config = AppConfig.get_app_config()
         if (app_config.custom_export_function):
             try:
@@ -118,13 +117,14 @@ class UpdateListManager():
                     path = os.path.join(Constants.SDK_CUSTOMIZATION_FOLDER, app_config.custom_export_function)
                                
                 func = load_function_from_file(path)
-                output_file = func(images_list, exp_main, exp_ref, output_dir, cell_name, states, is_unique, show_ref_report)
+                output_dir = results_table.main_path if not show_ref_report else results_table.ref_path
+                output_file = func(images_list, results_table.get_main_exp(), results_table.get_ref_exp(), output_dir, cell_name, states, is_unique, show_ref_report)
             except Exception as ex:
                 print('\nFatal Error: \nFailed to load external storage helper.')
                 print (ex)
                 return 'Failed!!'
         else:        
-            output_file = UpdateListManager.export_list_to_json(images_list, exp_main, exp_ref, output_dir, cell_name, states, is_unique, show_ref_report)
+            output_file = UpdateListManager.export_list_to_json(images_list, results_table.main_path, results_table.ref_path, cell_name, states, is_unique, show_ref_report)
         
                     
         return output_file 
@@ -134,8 +134,8 @@ class UpdateListManager():
         segmentation_list = cell_name.split("*") if cell_name !="*" else ['All']
         json_list = []
         header = {}
-
         output_dir = os.path.dirname(report_path)
+       
         #TODO: Move json header to here
         #Jump file header should be created only when exporting it (on UI)
         new_json_header = create_run_info(\

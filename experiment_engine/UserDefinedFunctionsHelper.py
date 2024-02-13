@@ -41,7 +41,12 @@ def get_external_lib_path():
     Returns:
     - The path to the external library.
     """
+    #Add external lib to path when importing this file
+    
     app_config = AppConfig.get_app_config() 
+    
+    if app_config.external_lib_path not in sys.path:
+        sys.path.append(app_config.external_lib_path)
     
     return app_config.external_lib_path
 
@@ -259,6 +264,4 @@ def load_config(config_file_name):
     return log_names_to_evaluate, prediction_reading_obj, gt_reading_obj, association_obj, transform_obj, evaluate_folders, statistics_obj, partitioning_obj, confusion_obj
 
 
-#Add external lib to path when importing this file
-if get_external_lib_path() not in sys.path:
-    sys.path.append(get_external_lib_path())
+

@@ -241,7 +241,7 @@ class VideoEvaluation:
         
         end = time.time()
         load_time = end-start
-        if gt_data:
+        if gt_data is not None:
             self.comp_data = self.create_associated_labels_dataframe(pred_data, gt_data, self.association_function)
         else:
             self.comp_data = pred_data

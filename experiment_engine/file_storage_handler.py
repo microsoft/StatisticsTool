@@ -240,9 +240,10 @@ def find_in_store_by_video_name(base_path, full_video_name, log_name, path_exist
     
     #set gt_file path to be as full path in data store. the log is {video_full_name(path)}.json
     folder = os.path.split(full_video_name)[0]
-    video_file_name = os.path.split(full_video_name)[1]
+    video_file_name = Path(full_video_name).stem
+    
     folder = os.path.normpath(folder)
-    gt_local_path = os.path.join(base_path, folder, video_file_name)
+    gt_local_path = os.path.join(base_path, folder, video_file_name+".json")
     if path_exists_func(gt_local_path):
         return gt_local_path
     
@@ -254,8 +255,7 @@ def find_in_store_by_video_name(base_path, full_video_name, log_name, path_exist
     if path_exists_func(gt_local_path):
         return gt_local_path
     
-    video_file_name = pathlib.Path(full_video_name).stem
-    
+   
     #if not exists set gt_file to be as algo_logs file format
     gt_local_path = os.path.join(base_path, video_file_name, log_name)
     if path_exists_func(gt_local_path):

@@ -88,7 +88,8 @@ class LocalStorageFileCache:
             self.free_overused_storage()
         
         full_path = self.get_path_on_cache(file_name, storage_handler)
-
+        
+        Path(os.path.split(full_path)[0]).mkdir(parents=True, exist_ok=True)
         if touch_file:
             Path(full_path).touch()
         
@@ -197,6 +198,7 @@ class LocalStorageFileCache:
                 
             path_on_cache = self.get_path_on_cache(blob_path, storage_handler, blob_name)
             
+            Path(os.path.split(path_on_cache)[0]).mkdir(parents=True, exist_ok=True)
             Path(path_on_cache).touch()
             if blob_name:
                 blob_path = blob_path + '/' + blob_name
