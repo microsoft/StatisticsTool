@@ -1,4 +1,7 @@
 {
+    "data_container_name": "<<DATA_CONTAINER_NAME>>",
+    "prediction_container_name":"<<DPREDICTION_CONTAINER_NAME>>" ,
+    "annotation_container_name":"<<ANNOTATION_CONTAINER_NAME>>" ,
     "annotation_store_blobs_prefix": "<<ANNOTATION_STORE_BLOBS_PREFIX>>",
     "data_store_blobs_prefix": "<<DATA_STORE_BLOBS_PREFIX>>",
     "predictions_blobs_prefix": "<<PREDICTION_BLOB_PREFIX>>",

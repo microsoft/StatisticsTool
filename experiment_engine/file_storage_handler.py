@@ -1,20 +1,22 @@
 import os,sys
+import shutil
 import pathlib
-import importlib.util
 from threading import Lock
+import concurrent
+from pathlib import Path
 
-from app_config.constants import StorageHelper
+from app_config.constants import Constants, StorageHelper
 from app_config.config import AppConfig
+from experiment_engine.UserDefinedFunctionsHelper import load_class_from_file
 from utils.LocalStorageFileCache import LocalStorageFileCache
 from utils.AzureStorageHelper import AzureStorageHelper
 from utils.LocalStorageHelper import list_local_dir
 
 
-
 class StoreType():
-    Data = 1
-    Annotations = 2
-    Predictions = 3
+    Data = 'Data'
+    Annotations = 'Annotation'
+    Predictions = 'Prediction'
 
 
 local_storage_cache = None
@@ -34,11 +36,19 @@ def GetStorageHandler(store_type):
             return external_storage_wrapper[container_name]
         app_config = AppConfig.get_app_config()
         if (app_config.custom_storage_helper):
-            spec = importlib.util.spec_from_file_location(StorageHelper.CUSTOM_CLASS_NAME, app_config.custom_storage_helper)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module) 
-            Class = getattr(module, StorageHelper.CUSTOM_CLASS_NAME)
-            external_storage_wrapper[container_name] = Class()
+            try:
+                if os.path.exists(app_config.custom_storage_helper):
+                    path = app_config.custom_storage_helper
+                else:
+                    path = os.path.join(app_config.external_lib_path,  Constants.SDK_CUSTOMIZATION_FOLDER, app_config.custom_storage_helper)
+                if not Path(path).suffix:
+                    path = path+'.py'
+                
+                external_storage_wrapper[container_name] = load_class_from_file(path)
+            except Exception as ex:
+                print('\nFatal Error: \nFailed to load external storage helper.')
+                print (ex)
+                raise ex
         else:        
             external_storage_wrapper[container_name] = AzureStorageHelper()
     
@@ -146,6 +156,46 @@ def export_list(images_list, report_path, ref_report_path, segmentations_string,
     """
     return False
 
+
+def get_file_wrapper(vars):
+    path, store_type, dst_path = vars
+    local_path = ''
+    try:
+        if dst_path:
+             download_file_to_path(path, store_type, dst_path)
+        else:
+            local_path = get_file_on_local_storage(path, store_type)
+    except Exception as ex:
+        print(f'Failed to download blob: {path} from store: {store_type} with exception: {ex}')
+    return local_path
+
+
+def parallel_get_files_on_local_storage(paths:dict, dst_paths:list = None):
+    """_summary_
+
+    Args:
+        paths (dict): dictionary where path on blob is the keys and the values are store_types.
+
+    Returns:
+        list: list of local paths
+    """
+    if dst_paths is None:
+        dst_paths = ['']*len(paths)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = executor.map(get_file_wrapper, [(path, type, dst) for path, type, dst in zip(paths.keys(), paths.values(), dst_paths)])
+        executor.shutdown(wait=True) 
+    ret = []
+    for result in results:
+        ret.append(result)
+    return ret
+
+def download_file_to_path(path, store_type, local_path):
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        shutil.copyfile(path, local_path)
+        
+    path_on_blob = get_path_on_store(path, store_type)
+    GetStorageHandler(store_type).download_blob(path_on_blob, local_path)
+    
 def get_file_on_local_storage(path, store_type:StoreType = None, get_folder = False):  
     """
     Returns the local path of a file. If the file exists locally, it returns the local path. If the file does not exist locally, it downloads the file from Azure Blob Storage and returns the local path.
@@ -174,7 +224,7 @@ def get_file_on_local_storage(path, store_type:StoreType = None, get_folder = Fa
 
 def find_in_store_by_video_name(base_path, full_video_name, log_name, path_exists_func):
     """
-    Finds a file in Azure Blob Storage by video name.
+    Finds a file in store by video name.
 
     Args:
         base_path (str): The base path of the file.
@@ -190,7 +240,7 @@ def find_in_store_by_video_name(base_path, full_video_name, log_name, path_exist
     
     #set gt_file path to be as full path in data store. the log is {video_full_name(path)}.json
     folder = os.path.split(full_video_name)[0]
-    video_file_name = os.path.split(full_video_name)[0]
+    video_file_name = os.path.split(full_video_name)[1]
     folder = os.path.normpath(folder)
     gt_local_path = os.path.join(base_path, folder, video_file_name)
     if path_exists_func(gt_local_path):

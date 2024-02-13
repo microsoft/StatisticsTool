@@ -17,6 +17,7 @@ class AppConfig():
         self.storage_connection_string = ''
         self.external_lib_path = ''
         self.custom_storage_helper = ''
+        self.custom_export_function = ''
         if config_file:
             self.update_values_from_config(config_file)
         if secrets_file:

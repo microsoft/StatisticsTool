@@ -9,6 +9,8 @@ import shutil
 from app_config.constants import Constants, UserDefinedConstants
 from app_config.dataframe_tokens import DataFrameTokens
 from experiment_engine.UserDefinedFunctionsHelper import load_config_dict
+from experiment_engine.file_storage_handler import StoreType, get_path_on_store, parallel_get_files_on_local_storage
+from utils.image_util import prepare_example_image
 from utils.report_metadata import create_metadata
 
 
@@ -70,18 +72,74 @@ class ParallelExperiment:
         list_arr = np.insert(arr,1,self.comp_data[mask].index.to_numpy(), axis=1)
         return list_arr
 
+    
     def get_ids(self, cell_key, state):
         segmentations = ParallelExperiment.segmentations_from_name(cell_name=cell_key)
         confusion_masks = self.get_statistics_masks(segmentations)
         
         return self.get_list_array(confusion_masks[state])
     
-    def get_detection_file_name(self, sample_index)    :
-        detection = self.comp_data.loc[sample_index]
-        if DataFrameTokens.FRAME_FILE_TOKEN in detection:
-            return detection[DataFrameTokens.FRAME_FILE_TOKEN]
-        return None
-     
+    def get_sample_images_paths(self, sample, local_store):
+        paths = {}
+        
+        video = sample[DataFrameTokens.VIDEO_TOKEN]
+        
+        data_file = ''
+        if DataFrameTokens.FRAME_FILE_DATA_TOKEN in sample:
+            data_file = sample[DataFrameTokens.FRAME_FILE_DATA_TOKEN]
+        paths[StoreType.Predictions]=self.get_sample_image_path_on_store(video, data_file, StoreType.Predictions, local_store)
+                      
+        if DataFrameTokens.FRAME_FILE_ANNOTATION_TOKEN in sample:
+            paths[StoreType.Annotations]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.FRAME_FILE_ANNOTATION_TOKEN], StoreType.Annotations, local_store)
+            
+        if DataFrameTokens.FRAME_FILE_GT_TOKEN in sample:
+            paths[StoreType.Data]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.FRAME_FILE_GT_TOKEN], StoreType.Data, local_store) 
+            
+        return paths
+        
+    
+    def get_sample_image_path_on_store(self, video_file, file_name, store_type, local_store):
+       
+        if file_name:
+            path_on_blob = file_name
+        if local_store:
+            path_on_blob = os.path.join(local_store,video_file)
+        if not os.path.splitext(str(path_on_blob))[1]:
+            path_on_blob = path_on_blob + '.mp4' #Add default mp4 extension for all video names without extension
+        
+        path_on_blob = get_path_on_store(path_on_blob, store_type)
+    
+        return path_on_blob
+    
+    
+    def get_example_images_local_path(self, sample_index, local_store)    :
+        sample = self.comp_data.loc[sample_index]
+        local_paths = {}
+        pred_bbs, label_bbs, selected_pred_index, selected_label_index = self.get_detection_bounding_boxes(sample_index)
+        video = sample[DataFrameTokens.VIDEO_TOKEN]
+        frame_id = None
+        try:
+            frame_id = int(sample[DataFrameTokens.LABELS_GROUP_KEY])
+        except:
+            pass
+        
+        local_paths = self.get_sample_images_paths(sample, local_store)
+        
+        file_store_dict = {value: key for key, value in local_paths.items()}
+        
+        local_video_path = parallel_get_files_on_local_storage(file_store_dict)
+        
+        images = {}
+        if local_video_path[0]: images[StoreType.Predictions] = local_video_path[0]
+        if local_video_path[1]: images['Annotation'] = local_video_path[1]
+        if local_video_path[2]: images['Data'] = local_video_path[2]
+        
+        for key,image in images.items():
+            if image:
+                images[key] = prepare_example_image(image, frame_id, prd_bbs=pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
+        
+        return images
+    
     def get_detection_bounding_boxes(self, sample_index):
         bb_obj = self.comp_data.loc[sample_index]
 
@@ -109,12 +167,12 @@ class ParallelExperiment:
 
         return prd_bbs, label_bbs, pred_index, label_index
     
-    def get_detection_properties_text_list(self, detection_index):
-        data = self.comp_data.loc[detection_index]
+    def get_sample_properties_text_list(self, sample_index):
+        data = self.comp_data.loc[sample_index]
 
-        detection_variables_text_list = [f"{key}: {data[key]}" for key in data.keys()]
+        sample_variables_text_list = [f"{key}: {data[key]}" for key in data.keys()]
 
-        return detection_variables_text_list
+        return sample_variables_text_list
     
     @staticmethod
     def combine_evaluation_files(compared_videos):

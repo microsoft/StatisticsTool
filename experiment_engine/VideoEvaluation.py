@@ -76,17 +76,15 @@ class VideoEvaluation:
         if DataFrameTokens.LABELS_GROUP_KEY not in pred_data.columns:
             pred_data[DataFrameTokens.LABELS_GROUP_KEY] = pred_data.index
         
-        pred_data[DataFrameTokens.HAS_VALUE_TOKEN] = True
-        gt_data = self.gt_reading_function(gt_file)
+        gt_data =  None
+        if gt_file and self.gt_reading_function:
+            pred_data[DataFrameTokens.HAS_VALUE_TOKEN] = True
+            gt_data = self.gt_reading_function(gt_file)
 
-        if gt_data is None:
+        if gt_data is None or len(gt_data) == 0:
             print (f"failed to parse or no data for gt file: {gt_file}")
             return pred_data, None
 
-        if  len(gt_data) == 0:
-            print(f"gt file parser returns with no lines for file: {gt_file}")
-            return None, None
-      
         if DataFrameTokens.LABELS_GROUP_KEY not in gt_data.columns:
             gt_data[DataFrameTokens.LABELS_GROUP_KEY] = gt_data.index
         

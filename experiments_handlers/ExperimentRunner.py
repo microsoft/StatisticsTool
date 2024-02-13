@@ -60,12 +60,13 @@ def handel_pred(vars):
             gt_local_path = os.path.join(local_gt_dir, gt_local_path)
         else: #read gt from blob
             path_on_blob = find_in_blob_by_video_name(video_name, log_name, StoreType.Annotations)
-            gt_local_path = get_file_on_local_storage(path_on_blob, None, get_folder=evaluate_folders)
+            if path_on_blob:
+                gt_local_path = get_file_on_local_storage(path_on_blob, None, get_folder=evaluate_folders)
             
         if gt_local_path is None:
-            print(f"GT file: {gt_local_path} not found for prediction: {pred}, continue with next prediction log..")
-            return pred, ProcessResult.failed_with_error, None
-
+            print(f"GT file: {gt_local_path} not found for prediction: {pred}, continue without gt..")
+            gtReaderFunction = None
+            
         print(f"Starting comparing files for video {video_name}: {pred} and {gt_local_path}")
 
         V = VideoEvaluation(predictionReaderFunction=predictionReaderFunction,gtReaderFunction=gtReaderFunction ,associationFunction=assiciation_function, transform_func = transform_func)
@@ -137,7 +138,7 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
                 break
     
     results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
         results = executor.map(handel_pred, [(pred,
                                               pred_dir,
                                               evaluate_folders,

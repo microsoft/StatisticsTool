@@ -23,6 +23,7 @@ class Constants:
     EXTERNAL_LIBRARY = 'statisticstool_external_library'
     USER_DEFINED_FUNCTIONS = 'user_defined_functions'
     UDF_USER_ARGUMENT_FUNCTION = 'get_function_arguments'
+    SDK_CUSTOMIZATION_FOLDER = 'sdk_customizations'
     CONFIG_FUNCTION_NAME_TOKEN = 'func_name'
     CONFIG_FUNCTION_PARAMS_TOKEN = 'params'
     EVALUATE_FOLDER_TOKEN = '*FOLDER*'

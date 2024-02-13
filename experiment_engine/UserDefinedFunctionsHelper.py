@@ -19,7 +19,7 @@ class UdfObject:
     def __init__(self,func_path,func_name,params):
         self.func_path  = func_path
         self.func_name  = func_name
-        self.func       = get_userdefined_function(self.func_path,self.func_name)
+        self.func       = load_function_from_file(os.path.join(self.func_path,self.func_name))
         self.params     = params
     
     def __call__(self, *kargs):
@@ -44,10 +44,6 @@ def get_external_lib_path():
     app_config = AppConfig.get_app_config() 
     
     return app_config.external_lib_path
-
-#Add external lib to path when importing this file
-if get_external_lib_path() not in sys.path:
-    sys.path.append(get_external_lib_path())
 
 def get_function_arguments(func_path_in_lib):
     function_module = func_path_in_lib.replace("/",".").replace("\\",".")    
@@ -81,7 +77,26 @@ def get_suites_folder():
         os.makedirs(suites_folder)
     return suites_folder
 
-def get_userdefined_function(func_path_in_module,func_name):
+def load_class_from_file(file_path):
+    """Loads class from python file
+
+    Args:
+        file_path (str): Path to the file contains the class to load
+        class_name (str): Name of the class to load
+
+    Returns:
+        Object: New instance of the class
+    """
+    
+    class_name = Path(file_path).stem
+    spec = importlib.util.spec_from_file_location(class_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module) 
+    Class = getattr(module, class_name)
+    obj = Class()
+    return obj
+
+def load_function_from_file(file_path):
     """
     Gets the user-defined function with the given type and name.
 
@@ -92,12 +107,15 @@ def get_userdefined_function(func_path_in_module,func_name):
     Returns:
     - The user-defined function.
     """
+    func_name = Path(file_path).stem
     if not func_name or func_name == 'none' or func_name == 'None':
         return None
-    func_path_in_module = func_path_in_module.replace("/",".").replace("\\",".")    
+    file_path = os.path.splitext(file_path)[0]
+    file_path = file_path.replace("/",".").replace("\\",".")    
     
-    module = importlib.import_module(func_path_in_module+'.'+func_name)
-    return getattr(module,func_name)
+    module = importlib.import_module(file_path)
+    func = getattr(module,func_name)
+    return func
 
 def get_udf_argument_function(func_type,func_name):
     """
@@ -174,7 +192,7 @@ def get_user_defined_function(func_conf, func_type):
     """
     if func_conf == None:
         return None
-    func_type = Constants.USER_DEFINED_FUNCTIONS + '.' + func_type
+    func_type = os.path.join(Constants.USER_DEFINED_FUNCTIONS,func_type)
     func = UdfObject(func_type,func_conf[Constants.CONFIG_FUNCTION_NAME_TOKEN],func_conf[Constants.CONFIG_FUNCTION_PARAMS_TOKEN] if Constants.CONFIG_FUNCTION_PARAMS_TOKEN in func_conf.keys() else None)
     return func
 
@@ -239,3 +257,8 @@ def load_config(config_file_name):
                 log_names_to_evaluate = log_names_to_evaluate.split(',')
 
     return log_names_to_evaluate, prediction_reading_obj, gt_reading_obj, association_obj, transform_obj, evaluate_folders, statistics_obj, partitioning_obj, confusion_obj
+
+
+#Add external lib to path when importing this file
+if get_external_lib_path() not in sys.path:
+    sys.path.append(get_external_lib_path())

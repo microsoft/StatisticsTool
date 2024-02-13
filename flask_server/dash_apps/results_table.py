@@ -53,7 +53,7 @@ def get_text_color_by_stat(main, gradient):
 
 class Results_table():
     
-    def __init__(self, server, main_exp,ref_exp, main_path, ref_path, segmentations, statistics_func, association_function):
+    def __init__(self, server, main_exp:ParallelExperiment,ref_exp:ParallelExperiment, main_path, ref_path, segmentations, statistics_func, association_function):
         
         self.unique_helper = None
         self.main_exp = main_exp
