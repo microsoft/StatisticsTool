@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import os
 from app_config.config import AppConfig
@@ -96,7 +97,7 @@ class UpdateListManager():
                                         show_unique, 
                                         show_ref_report)
             
-
+            
         # extracting the example list for requested partitions and state
 
         # exp_in_UpdateList.state = state ## TODO: TEMP - move it to the right place
@@ -118,6 +119,7 @@ class UpdateListManager():
                                
                 func = load_function_from_file(path)
                 output_dir = results_table.main_path if not show_ref_report else results_table.ref_path
+                output_dir = Path(output_dir).parent
                 output_file = func(images_list, results_table.get_main_exp(), results_table.get_ref_exp(), output_dir, cell_name, states, is_unique, show_ref_report)
             except Exception as ex:
                 print('\nFatal Error: \nFailed to load external storage helper.')
@@ -126,7 +128,7 @@ class UpdateListManager():
         else:        
             output_file = UpdateListManager.export_list_to_json(images_list, results_table.main_path, results_table.ref_path, cell_name, states, is_unique, show_ref_report)
         
-                    
+        output_file = os.path.normpath(output_file)            
         return output_file 
     
     @staticmethod
