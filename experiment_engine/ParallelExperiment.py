@@ -85,15 +85,15 @@ class ParallelExperiment:
         video = sample[DataFrameTokens.VIDEO_TOKEN]
         
         data_file = ''
-        if DataFrameTokens.FRAME_FILE_DATA_TOKEN in sample:
-            data_file = sample[DataFrameTokens.FRAME_FILE_DATA_TOKEN]
-        paths[StoreType.Predictions]=self.get_sample_image_path_on_store(video, data_file, StoreType.Predictions, local_store)
+        if DataFrameTokens.IMAGE_FILE_PRED_TOKEN in sample:
+            paths[StoreType.Predictions]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.IMAGE_FILE_PRED_TOKEN], StoreType.Predictions, local_store)
                       
-        if DataFrameTokens.FRAME_FILE_ANNOTATION_TOKEN in sample:
-            paths[StoreType.Annotations]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.FRAME_FILE_ANNOTATION_TOKEN], StoreType.Annotations, local_store)
+        if DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN in sample:
+            paths[StoreType.Annotations]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN], StoreType.Annotations, local_store)
             
-        if DataFrameTokens.FRAME_FILE_GT_TOKEN in sample:
-            paths[StoreType.Data]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.FRAME_FILE_GT_TOKEN], StoreType.Data, local_store) 
+        if DataFrameTokens.IMAGE_FILE_DATA_TOKEN in sample:
+            data_file = sample[DataFrameTokens.IMAGE_FILE_DATA_TOKEN]
+        paths[StoreType.Data]=self.get_sample_image_path_on_store(video, data_file, StoreType.Data, local_store) 
             
         return paths
         
