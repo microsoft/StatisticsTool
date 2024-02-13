@@ -99,7 +99,7 @@ class ParallelExperiment:
         
     
     def get_sample_image_path_on_store(self, video_file, file_name, store_type, local_store):
-       
+        path_on_blob = video_file
         if file_name:
             path_on_blob = file_name
         if local_store:
@@ -116,7 +116,7 @@ class ParallelExperiment:
         sample = self.comp_data.loc[sample_index]
         local_paths = {}
         pred_bbs, label_bbs, selected_pred_index, selected_label_index = self.get_detection_bounding_boxes(sample_index)
-        video = sample[DataFrameTokens.VIDEO_TOKEN]
+       
         frame_id = None
         try:
             frame_id = int(sample[DataFrameTokens.LABELS_GROUP_KEY])
@@ -130,9 +130,9 @@ class ParallelExperiment:
         local_video_path = parallel_get_files_on_local_storage(file_store_dict)
         
         images = {}
-        if local_video_path[0]: images[StoreType.Predictions] = local_video_path[0]
-        if local_video_path[1]: images['Annotation'] = local_video_path[1]
-        if local_video_path[2]: images['Data'] = local_video_path[2]
+        if len (local_video_path) > 0 and local_video_path[0]: images[StoreType.Predictions] = local_video_path[0]
+        if len (local_video_path) > 1 and local_video_path[1]: images[StoreType.Annotations] = local_video_path[1]
+        if len (local_video_path) > 2 and local_video_path[2]: images[StoreType.Data] = local_video_path[2]
         
         for key,image in images.items():
             if image:
