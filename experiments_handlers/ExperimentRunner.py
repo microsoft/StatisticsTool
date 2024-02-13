@@ -137,7 +137,7 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
                 break
     
     results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
         results = executor.map(handel_pred, [(pred,
                                               pred_dir,
                                               evaluate_folders,

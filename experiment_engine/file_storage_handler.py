@@ -138,25 +138,6 @@ def get_path_on_store(path, store_type:StoreType):
     else:
         return path
 
-def export_list(images_list, report_path, ref_report_path, segmentations_string, statistics_string, is_unique, is_ref, dst_path):
-    """Export images_list
-
-    Args:
-        images_list (list(str)): list of images
-        report_path (str): the path of the main report
-        ref_report_path (str): refference report path
-        segmentations_string (str): Current segmentations concatenated to string
-        statistics_string (str): List statistics category
-        is_unique (bool): Is list of unique frames
-        is_ref (bool): Is list of ref report
-        dst_path (str): Dst path to save output file
-
-    Returns:
-        bool: return True not to contiue with default export operation, False will perform default export list operation.
-    """
-    return False
-
-
 def get_file_wrapper(vars):
     path, store_type, dst_path = vars
     local_path = ''
