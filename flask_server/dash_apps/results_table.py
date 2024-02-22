@@ -1,10 +1,9 @@
-from base64 import urlsafe_b64decode
 import json
-import sys, os
 from urllib.parse import parse_qsl, urlparse
 from threading import Lock
 
-from dash import Dash, dcc, html, Input, Output, callback
+from dash import Dash, dcc, html, Input, Output
+import dash_dangerously_set_inner_html 
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import math
@@ -45,7 +44,11 @@ def get_color_by_two_values_diff(ref, main, gradient):
     color_presentage = (1 + precentage_change) * 0.5
     return get_color_from_gradient(color_presentage, gradient)
 
-def get_text_color_by_stat(main, gradient):
+def get_text_color_by_stat(main, val):
+    ret_val = 'black'
+    if not isinstance(val, float):
+        return ret_val
+    gradient = 1-val
     ret_val = get_color_from_gradient(main, gradient)
     if ret_val == 'white':
         ret_val = 'black'
@@ -222,9 +225,9 @@ class Results_table():
                         cur_style['color'] = 'black'
                     curr_metric = html.A(txt ,href=msg, target="", style=cur_style)                   
                 else:
-                    curr_metric = txt
+                    curr_metric = dash_dangerously_set_inner_html.DangerouslySetInnerHTML(txt)
                     if bg_color == 'white' or bg_color == '#ffffff':
-                        style['color'] = get_text_color_by_stat(1-exp_data[k], COLOR_GRADIENT_RED_BLUE)               
+                        style['color'] = get_text_color_by_stat(exp_data[k], COLOR_GRADIENT_RED_BLUE)               
                    
                 TDs.append(html.Td(curr_metric,style=style))
 
