@@ -44,12 +44,12 @@ def get_color_by_two_values_diff(ref, main, gradient):
     color_presentage = (1 + precentage_change) * 0.5
     return get_color_from_gradient(color_presentage, gradient)
 
-def get_text_color_by_stat(main, val):
+def get_text_color_by_stat(val, colors):
     ret_val = 'black'
     if not isinstance(val, float):
         return ret_val
-    gradient = 1-val
-    ret_val = get_color_from_gradient(main, gradient)
+    val = 1-val
+    ret_val = get_color_from_gradient(val, colors)
     if ret_val == 'white':
         ret_val = 'black'
     return ret_val
