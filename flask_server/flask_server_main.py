@@ -3,8 +3,10 @@ import argparse
 import mimetypes
 
 import sys, os
-current_file_directory = os.path.realpath(__file__)
-sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
+
+path = os.path.abspath(os.path.join(os.path.join(os.path.realpath(__file__), '..'), '..'))
+if path not in sys.path:
+    sys.path.append(path)
 
 from flask_server.flask_server import server
 

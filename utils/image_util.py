@@ -6,34 +6,29 @@ from io import BytesIO
 
 from experiment_engine.file_storage_handler import StoreType, find_in_blob_by_video_name, get_file_on_local_storage
 
-def read_frame_from_video(video_file, frame_id, local_store = None):
-    frame = None
-    vid = None
-    if local_store:
-        local_video_path = os.path.join(local_store,video_file)
-    else:
-        path_on_blob = find_in_blob_by_video_name(video_file, '', StoreType.Data, '.mp4')
-        local_video_path = get_file_on_local_storage(path_on_blob)
-        if local_video_path is None:
-            return None
-        
-    if pathlib.Path(local_video_path).suffix == ".mp4":
-        vid= cv2.VideoCapture(local_video_path)
-        if is_video(local_video_path):
-            vid.set(cv2.CAP_PROP_POS_FRAMES, int(frame_id))
-        _, frame = vid.read()
+def prepare_example_image(image_file, frame_id, prd_bbs, label_bbs, selected_pred = -1, selected_label = -1):
+ 
+    vid= cv2.VideoCapture(image_file)
+    if is_video(image_file) and frame_id:
+        vid.set(cv2.CAP_PROP_POS_FRAMES, int(frame_id))
+    _, frame = vid.read()
     
     if frame is not None:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         vid.release()
     else:
-        print(f'Cant find frmae {frame_id} for: {video_file}')
+        print(f'Cant find frmae {frame_id} for: {image_file}')
 
-    return frame
+    frame = draw_detections_on_figure(frame, prd_bbs, label_bbs, selected_pred, selected_label)
+    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)   
+    _, buffer = cv2.imencode(".png", image)
+    output = BytesIO(buffer)
+    
+    return output
         
 def is_video(file_path):
     extension = os.path.splitext(file_path)[1].lower()
-    if extension in ['.mp4', '.avi', '.mov', '.wmv', '.flv']:
+    if extension in ['.mp4', '.avi', '.mov', '.wmv', '.flv', '']:
         return True
     else:
         return False
@@ -49,7 +44,7 @@ def draw_rect_on_image(image, x, y, width, height, color, thickness):
    
     cv2.rectangle(image, start_point, end_point, color, thickness)
 
-def draw_detection_on_figure(image_in, prd_bbs, label_bbs, selected_pred = -1, selected_label = -1):
+def draw_detections_on_figure(image_in, prd_bbs, label_bbs, selected_pred = -1, selected_label = -1):
     """
     Overlay a frame's bounding boxes on top of the frame
 
@@ -77,8 +72,5 @@ def draw_detection_on_figure(image_in, prd_bbs, label_bbs, selected_pred = -1, s
             thikness = 3
         draw_rect_on_image(image, bb_x_coordinate, bb_y_coordinate, bb_width, bb_height, (0, 255, 0), thikness)
     
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)   
-    _, buffer = cv2.imencode(".png", image)
-    output = BytesIO(buffer)
-    
-    return output
+ 
+    return image

@@ -296,6 +296,19 @@ export class ConfigurationViewerComponent implements OnInit {
       return false;
     }
 
+    if (funcType == UDFTypeEnum.CONFUSION_FUNCTIONS  ){
+      if (this.newReportService.selectedConfusionFunction != '' 
+          && this.functionHasArguments(funcType,this.newReportService.selectedConfusionFunction))
+        return true;
+      return false;
+    }
+
+    if (funcType == UDFTypeEnum.STATISTICS_FUNCTIONS  ){
+      if (this.newReportService.selectedStatisticsFunction != '' 
+          && this.functionHasArguments(funcType,this.newReportService.selectedStatisticsFunction))
+        return true;
+      return false;
+    }
     return false;
   }
 

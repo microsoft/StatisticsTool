@@ -241,6 +241,34 @@
             </div>
           </div>
         </div>
+        
+        <!-- Confusion Function -->
+        <div class="row" style="width: 100%">
+          <div class="col">
+          <div class="form-group" style="width:100% !important">
+              <label for="Confusion_function" style="font-weight: bold">{{ udfTitles.CONFUSION_FUNCTION}}:</label>
+          </div>
+          <div style="display: flex; align-items: center;">
+                <select class="form-select form-select-sm" 
+                        id="Confusion_function" 
+                        name="confusion_functions"
+                        style="padding-right: 10px; width: 100%" 
+                        [(ngModel)]="newReportService.selectedConfusionFunction" required #confFunctionSelect="ngModel"
+                        (change)="onConfusionFunctionChange($event)"
+                        [ngClass]="{
+                          'is-invalid': confFunctionSelect.invalid && confFunctionSelect.touched,
+                          'is-valid': confFunctionSelect.valid && confFunctionSelect.touched
+                        }">
+                  <option *ngFor="let func of newReportService.confusion_functions" [value]="func">{{func}}</option>
+                </select>
+                <img #confusionFunctionImg 
+                      [src]="getArgumentSvg(udfTypes.CONFUSION_FUNCTIONS)" 
+                      (click)="showArgumentsPanel(confusionFunctionImgElement,udfTypes.CONFUSION_FUNCTIONS,udfTitles.CONFUSION_FUNCTION,newReportService.selectedConfusionFunction)"
+                      [ngStyle]="{'pointer-events': enableArgumentsButton(udfTypes.CONFUSION_FUNCTIONS) ? 'all' : 'none'}"
+                      style="margin-left: 5px; cursor: pointer;" />
+          </div>
+        </div>
+      </div>
 
         <!-- Statistics Function -->
         <div class="row" style="width: 100%">
@@ -270,36 +298,6 @@
             </div>
           </div>
         </div>
-        
-
-        
-        <!-- Confusion Function -->
-        <div class="row" style="width: 100%">
-          <div class="col">
-          <div class="form-group" style="width:100% !important">
-              <label for="Confusion_function" style="font-weight: bold">{{ udfTitles.CONFUSION_FUNCTION}}:</label>
-          </div>
-          <div style="display: flex; align-items: center;">
-                <select class="form-select form-select-sm" 
-                        id="Confusion_function" 
-                        name="confusion_functions"
-                        style="padding-right: 10px; width: 100%" 
-                        [(ngModel)]="newReportService.selectedConfusionFunction" required #confFunctionSelect="ngModel"
-                        (change)="onConfusionFunctionChange($event)"
-                        [ngClass]="{
-                          'is-invalid': confFunctionSelect.invalid && confFunctionSelect.touched,
-                          'is-valid': confFunctionSelect.valid && confFunctionSelect.touched
-                        }">
-                  <option *ngFor="let func of newReportService.confusion_functions" [value]="func">{{func}}</option>
-                </select>
-                <img #ConfusionFunctionImg 
-                      [src]="getArgumentSvg(udfTypes.CONFUSION_FUNCTIONS)" 
-                      (click)="showArgumentsPanel(confusionFunctionImgElement,udfTypes.CONFUSION_FUNCTIONS,udfTitles.CONFUSION_FUNCTION,newReportService.selectedConfusionFunction)"
-                      [ngStyle]="{'pointer-events': enableArgumentsButton(udfTypes.CONFUSION_FUNCTIONS) ? 'all' : 'none'}"
-                      style="margin-left: 5px; cursor: pointer;" />
-          </div>
-        </div>
-      </div>
       
       </div> 
     </div>     

@@ -67,31 +67,28 @@ class VideoEvaluation:
         tuple
             a tuple containing the prediction data and ground truth data as pandas dataframes
         """
-        self.prediction_reading_function.params[UserDefinedConstants.VIDEO_NAME_PARAM_READING_FNC] = video_name
         pred_data = self.prediction_reading_function(pred_file)
         if pred_data is None: #The user defined reader function doesn't recognize this file
             print (f"reader function could't parse {pred_file} log")
             return None, None
-
-        self.gt_reading_function.params[UserDefinedConstants.VIDEO_NAME_PARAM_READING_FNC] = video_name
-        gt_data = self.gt_reading_function(gt_file)
-
-        if gt_data is None:
-            print (f"failed to parse or no data for gt file: {gt_file}")
-            return None, None
-
-        if  len(gt_data) == 0:
-            print(f"gt file parser returns with no lines for file: {gt_file}")
-            return None, None
-        
+  
         #if there is no group key in the data, add it to be as the index
         if DataFrameTokens.LABELS_GROUP_KEY not in pred_data.columns:
             pred_data[DataFrameTokens.LABELS_GROUP_KEY] = pred_data.index
         
+        gt_data =  None
+        if gt_file and self.gt_reading_function:
+            pred_data[DataFrameTokens.HAS_VALUE_TOKEN] = True
+            gt_data = self.gt_reading_function(gt_file)
+
+        if gt_data is None or len(gt_data) == 0:
+            print (f"failed to parse or no data for gt file: {gt_file}")
+            return pred_data, None
+
         if DataFrameTokens.LABELS_GROUP_KEY not in gt_data.columns:
             gt_data[DataFrameTokens.LABELS_GROUP_KEY] = gt_data.index
         
-        pred_data[DataFrameTokens.HAS_VALUE_TOKEN] = True
+        
         gt_data[DataFrameTokens.HAS_VALUE_TOKEN] = True
 
         return pred_data, gt_data
@@ -244,7 +241,11 @@ class VideoEvaluation:
         
         end = time.time()
         load_time = end-start
-        self.comp_data = self.create_associated_labels_dataframe(pred_data, gt_data, self.association_function)
+        if gt_data is not None:
+            self.comp_data = self.create_associated_labels_dataframe(pred_data, gt_data, self.association_function)
+        else:
+            self.comp_data = pred_data
+            
         end2 = time.time()
         print(f'load: {load_time:.2f} association: {end2-end:.2f}')
         

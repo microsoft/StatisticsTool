@@ -1,5 +1,10 @@
+from pathlib import Path
 import numpy as np
 import os
+from app_config.config import AppConfig
+from app_config.constants import Constants
+from experiment_engine.UserDefinedFunctionsHelper import load_function_from_file
+from flask_server.dash_apps.results_table import Results_table
 
 from utils.report_metadata import *
 
@@ -78,37 +83,61 @@ class UpdateListManager():
         """
         # get the names of requested states and partitions, a save boolean and a dictionary of {partition_class: selected_option} (example {"vehicles":"bus"})
         
-        saved_json = ''
+        output_path = ''
 
         list_of_examples = results_table.get_ids(cell_name, stat, show_ref_report = show_ref_report, unique=show_unique)
 
         per_video_example_hash = UpdateListManager.create_collapsing_list(list_of_examples)
-
+        
         if save_json_file:
-            saved_json = UpdateListManager.export_list_to_json(per_video_example_hash,
-                                        main_path, 
-                                        ref_path,
+            output_path = UpdateListManager.export_list(per_video_example_hash,
+                                        results_table,
                                         cell_name,
                                         stat, 
                                         show_unique, 
                                         show_ref_report)
             
-
+            
         # extracting the example list for requested partitions and state
 
         # exp_in_UpdateList.state = state ## TODO: TEMP - move it to the right place
         # caculate a per_video_example_hash for a collapsing list of examples and a save path for the user to see
 
         list_html = UpdateListManager.create_list_html(per_video_example_hash, 0 if show_ref_report else -1, main_path, ref_path, show_unique)
-        return list_html, saved_json
+        return list_html, output_path
 
+ 
+    @staticmethod
+    def export_list(images_list, results_table:Results_table, cell_name, states, is_unique, show_ref_report):
+        app_config = AppConfig.get_app_config()
+        if (app_config.custom_export_function):
+            try:
+                if os.path.exists(app_config.custom_export_function):
+                    path = app_config.custom_export_function
+                else:
+                    path = os.path.join(Constants.SDK_CUSTOMIZATION_FOLDER, app_config.custom_export_function)
+                               
+                func = load_function_from_file(path)
+                output_dir = results_table.main_path if not show_ref_report else results_table.ref_path
+                output_dir = Path(output_dir).parent
+                output_file = func(images_list, results_table.get_main_exp(), results_table.get_ref_exp(), output_dir, cell_name, states, is_unique, show_ref_report)
+            except Exception as ex:
+                print('\nFatal Error: \nFailed to load external storage helper.')
+                print (ex)
+                return 'Failed!!'
+        else:        
+            output_file = UpdateListManager.export_list_to_json(images_list, results_table.main_path, results_table.ref_path, cell_name, states, is_unique, show_ref_report)
+        
+        output_file = os.path.normpath(output_file)            
+        return output_file 
+    
     @staticmethod
     def export_list_to_json(images_list, report_path, ref_report_path, cell_name, states, is_unique, show_ref_report):
         segmentation_list = cell_name.split("*") if cell_name !="*" else ['All']
         json_list = []
         header = {}
-
         output_dir = os.path.dirname(report_path)
+       
         #TODO: Move json header to here
         #Jump file header should be created only when exporting it (on UI)
         new_json_header = create_run_info(\

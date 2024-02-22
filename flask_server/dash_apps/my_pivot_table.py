@@ -1,7 +1,4 @@
 import sys, os
-# current_file_directory = os.path.realpath(__file__)
-# # adding the statistics_tool folder to path
-# sys.path.append(os.path.join(current_file_directory, '..'))
 
 from dash import Dash, html, dcc, Input, Output
 import pandas as pd

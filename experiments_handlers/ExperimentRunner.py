@@ -37,21 +37,8 @@ def handel_pred(vars):
     :return: a tuple containing the prediction file path, the result of the comparison, and the output file path
     """
     gt_local_path = None 
-    pred, log_names_to_evaluate, pred_dir, evaluate_folders, local_gt_dir, predictionReaderFunction, gtReaderFunction, assiciation_function, transform_func, output_dir = vars
-    matched = False
-    for name in log_names_to_evaluate:
-            #Check if file is in log names to evaluate
-        name_to_match = pred
-        if os.path.dirname(name) == '':
-            name_to_match = os.path.basename(pred)
-        else:
-            name_to_match = os.path.relpath(pred, pred_dir)
-        if fnmatch.fnmatch(name_to_match, name):
-            matched = True
-            break
-    if not matched:
-        return pred, ProcessResult.skipped_not_in_lognames, None
-
+    pred, pred_dir, evaluate_folders, local_gt_dir, predictionReaderFunction, gtReaderFunction, assiciation_function, transform_func, output_dir = vars
+    
     try:
         log_name = os.path.basename(pred)
 
@@ -64,21 +51,21 @@ def handel_pred(vars):
             return pred, ProcessResult.failed_with_error, None
                 
         video_name = get_video_name_from_pred_file(pred_file, pred, pred_dir)
-        file_ext = os.path.splitext(log_name)[1]
+        
         if evaluate_folders:
             file_ext = ''
         #if user set local gt folder
         if local_gt_dir:
-            gt_local_path = find_in_store_by_video_name(local_gt_dir, video_name, log_name, os.path.exists, ext=file_ext)
-            gt_local_path = os.path.join(local_gt_dir, gt_local_path)
+            gt_local_path = find_in_store_by_video_name(local_gt_dir, video_name, log_name, os.path.exists)
         else: #read gt from blob
-            path_on_blob = find_in_blob_by_video_name(video_name, log_name, StoreType.Annotation, ext=file_ext)
-            gt_local_path = get_file_on_local_storage(path_on_blob, None, get_folder=evaluate_folders)
+            path_on_blob = find_in_blob_by_video_name(video_name, log_name, StoreType.Annotations)
+            if path_on_blob:
+                gt_local_path = get_file_on_local_storage(path_on_blob, None, get_folder=evaluate_folders)
             
         if gt_local_path is None:
-            print(f"GT file: {gt_local_path} not found for prediction: {pred}, continue with next prediction log..")
-            return pred, ProcessResult.failed_with_error, None
-
+            print(f"GT file: {gt_local_path} not found for prediction: {pred}, continue without gt..")
+            gtReaderFunction = None
+            
         print(f"Starting comparing files for video {video_name}: {pred} and {gt_local_path}")
 
         V = VideoEvaluation(predictionReaderFunction=predictionReaderFunction,gtReaderFunction=gtReaderFunction ,associationFunction=assiciation_function, transform_func = transform_func)
@@ -135,11 +122,23 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
     skipped_not_in_lognames = []
 
     print(f"total files num: {len(pred_path_list)}")
+    logs_to_evaluate = []
+    
+    for pred in pred_path_list:
+        for name in log_names_to_evaluate:
+                #Check if file is in log names to evaluate
+            name_to_match = pred
+            if os.path.dirname(name) == '':
+                name_to_match = os.path.basename(pred)
+            else:
+                name_to_match = os.path.relpath(pred, pred_dir)
+            if fnmatch.fnmatch(name_to_match, name):
+                logs_to_evaluate.append(pred)
+                break
     
     results = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
         results = executor.map(handel_pred, [(pred,
-                                              log_names_to_evaluate,
                                               pred_dir,
                                               evaluate_folders,
                                               local_gt_dir,
@@ -147,7 +146,7 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
                                               gtReaderFunction,
                                               assiciation_function,
                                               transform_func,
-                                              output_dir) for pred in pred_path_list])
+                                              output_dir) for pred in logs_to_evaluate])
         executor.shutdown(wait=True) 
 
     output_files = []
@@ -180,7 +179,7 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
     if not os.path.exists(pred_dir):
         pred_dir = get_path_on_store(pred_dir, StoreType.Predictions)
     if not os.path.exists(local_gt_dir):
-        local_gt_dir = get_path_on_store(local_gt_dir, StoreType.Annotation)
+        local_gt_dir = get_path_on_store(local_gt_dir, StoreType.Annotations)
     video_dir = '' #TODO:ADD Blob link
     
     process_result = dict()

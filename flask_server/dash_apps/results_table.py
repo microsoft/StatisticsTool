@@ -1,32 +1,27 @@
-from base64 import urlsafe_b64decode
 import json
-import sys, os
 from urllib.parse import parse_qsl, urlparse
 from threading import Lock
 
-from dash import Dash, dcc, html, Input, Output, callback
+from dash import Dash, dcc, html, Input, Output
+import dash_dangerously_set_inner_html 
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import math
 import uuid
 from experiment_engine.ParallelExperiment import ParallelExperiment
 
-# adding the statistics_tool folder to path
-current_file_directory = os.path.realpath(__file__)
-sys.path.append(os.path.join(os.path.join(os.path.join(current_file_directory, '..'), '..'), '..'))
-
 from experiments_handlers.ExperimentsHelper import ExperimentsHelper
 import flask_server.dash_apps.my_pivot_table as pt
 from flask_server.dash_apps.results_table_css import css
 from app_config.color_scheme import COLOR_GRADIENT_RED_BLUE, COLOR_GRADIENT_RED_WHITE_BLUE
 from experiment_engine.unique_helper import UniqueHelper
-
+import math
 
 MAIN_EXP = 'main'
 REF_EXP = 'ref'
 
 def get_color_from_gradient(x, gradient):
-    if x<0 or x>1:
+    if x<0 or x>1 or math.isnan(x):
         #print ("values must be between 0-1")
         return 'white'
     
@@ -49,15 +44,19 @@ def get_color_by_two_values_diff(ref, main, gradient):
     color_presentage = (1 + precentage_change) * 0.5
     return get_color_from_gradient(color_presentage, gradient)
 
-def get_text_color_by_stat(main, gradient):
-    ret_val = get_color_from_gradient(main, gradient)
+def get_text_color_by_stat(val, colors):
+    ret_val = 'black'
+    if not isinstance(val, float):
+        return ret_val
+    val = 1-val
+    ret_val = get_color_from_gradient(val, colors)
     if ret_val == 'white':
         ret_val = 'black'
     return ret_val
 
 class Results_table():
     
-    def __init__(self, server, main_exp,ref_exp, main_path, ref_path, segmentations, statistics_func, association_function):
+    def __init__(self, server, main_exp:ParallelExperiment,ref_exp:ParallelExperiment, main_path, ref_path, segmentations, statistics_func, association_function):
         
         self.unique_helper = None
         self.main_exp = main_exp
@@ -226,9 +225,9 @@ class Results_table():
                         cur_style['color'] = 'black'
                     curr_metric = html.A(txt ,href=msg, target="", style=cur_style)                   
                 else:
-                    curr_metric = txt
+                    curr_metric = dash_dangerously_set_inner_html.DangerouslySetInnerHTML(txt)
                     if bg_color == 'white' or bg_color == '#ffffff':
-                        style['color'] = get_text_color_by_stat(1-exp_data[k], COLOR_GRADIENT_RED_BLUE)               
+                        style['color'] = get_text_color_by_stat(exp_data[k], COLOR_GRADIENT_RED_BLUE)               
                    
                 TDs.append(html.Td(curr_metric,style=style))
 

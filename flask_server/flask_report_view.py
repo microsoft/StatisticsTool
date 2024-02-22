@@ -11,12 +11,6 @@ from flask_server.dash_apps.results_table import Results_table
 from app_config.constants import Constants, Tags, URLs
 from urllib.parse import quote
 
-#from flask_server.configuration_results import ConfigurationResults
-# the absolute path for this file
-current_file_directory = os.path.realpath(__file__)
-# adding the statistics_tool folder to path
-sys.path.append(os.path.join(os.path.join(current_file_directory, '..'), '..'))
-
 from experiment_engine.TemplatesFilesHelper import *
 from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
 #endregion

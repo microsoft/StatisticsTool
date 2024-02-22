@@ -6,12 +6,13 @@ import pandas as pd, os
 import numpy as np
 import shutil
 
-from app_config.constants import Constants
+from app_config.constants import Constants, UserDefinedConstants
 from app_config.dataframe_tokens import DataFrameTokens
 from experiment_engine.UserDefinedFunctionsHelper import load_config_dict
+from experiment_engine.file_storage_handler import StoreType, get_path_on_store, parallel_get_files_on_local_storage
+from utils.image_util import prepare_example_image
 from utils.report_metadata import create_metadata
 
-EXAMPLES_IN_SEGMENT_CONST = 'rows_in_segment'
 
 class ParallelExperiment:
  
@@ -66,19 +67,82 @@ class ParallelExperiment:
             batch_key = DataFrameTokens.VIDEO_TOKEN
         else:
             batch_key = DataFrameTokens.UNIQUE_BATCH_TOKEN
-
+            
         arr = self.comp_data[mask][[batch_key,DataFrameTokens.LABELS_GROUP_KEY,DataFrameTokens.END_EVENT_TOKEN]].to_numpy()
         list_arr = np.insert(arr,1,self.comp_data[mask].index.to_numpy(), axis=1)
         return list_arr
 
+    
     def get_ids(self, cell_key, state):
         segmentations = ParallelExperiment.segmentations_from_name(cell_name=cell_key)
         confusion_masks = self.get_statistics_masks(segmentations)
         
         return self.get_list_array(confusion_masks[state])
+    
+    def get_sample_images_paths(self, sample, local_store):
+        paths = {}
         
-    def get_detection_bounding_boxes(self, detection_index):
-        bb_obj = self.comp_data.loc[detection_index]
+        video = sample[DataFrameTokens.VIDEO_TOKEN]
+        
+        data_file = ''
+        if DataFrameTokens.IMAGE_FILE_PRED_TOKEN in sample:
+            paths[StoreType.Predictions]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.IMAGE_FILE_PRED_TOKEN], StoreType.Predictions, local_store)
+                      
+        if DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN in sample:
+            paths[StoreType.Annotations]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN], StoreType.Annotations, local_store)
+            
+        if DataFrameTokens.IMAGE_FILE_DATA_TOKEN in sample:
+            data_file = sample[DataFrameTokens.IMAGE_FILE_DATA_TOKEN]
+        paths[StoreType.Data]=self.get_sample_image_path_on_store(video, data_file, StoreType.Data, local_store) 
+            
+        return paths
+        
+    
+    def get_sample_image_path_on_store(self, video_file, file_name, store_type, local_store):
+        path_on_blob = video_file
+        if file_name:
+            path_on_blob = file_name
+        if local_store:
+            path_on_blob = os.path.join(local_store,video_file)
+        if not os.path.splitext(str(path_on_blob))[1]:
+            path_on_blob = path_on_blob + '.mp4' #Add default mp4 extension for all video names without extension
+        
+        path_on_blob = get_path_on_store(path_on_blob, store_type)
+    
+        return path_on_blob
+    
+    
+    def get_example_images_local_path(self, sample_index, local_store)    :
+        sample = self.comp_data.loc[sample_index]
+        store_paths = {}
+        pred_bbs, label_bbs, selected_pred_index, selected_label_index = self.get_detection_bounding_boxes(sample_index)
+       
+        frame_id = None
+        try:
+            frame_id = int(sample[DataFrameTokens.LABELS_GROUP_KEY])
+        except:
+            pass
+        
+        store_paths = self.get_sample_images_paths(sample, local_store)
+        
+        local_video_path = parallel_get_files_on_local_storage(list(store_paths.values()), list(store_paths.keys()))
+        
+        images = {}
+        if StoreType.Predictions in store_paths: 
+            pos = list(store_paths.keys()).index(StoreType.Predictions)
+            images[StoreType.Predictions] = prepare_example_image(local_video_path[pos], frame_id, prd_bbs=pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
+        if StoreType.Annotations in store_paths: 
+            pos = list(store_paths.keys()).index(StoreType.Annotations)
+            images[StoreType.Annotations] = prepare_example_image(local_video_path[pos], frame_id, prd_bbs=pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
+        if StoreType.Data in store_paths: 
+            pos = list(store_paths.keys()).index(StoreType.Data)
+            images[StoreType.Data] = prepare_example_image(local_video_path[pos], frame_id, prd_bbs=pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
+        
+     
+        return images
+    
+    def get_detection_bounding_boxes(self, sample_index):
+        bb_obj = self.comp_data.loc[sample_index]
 
         label_bbs = []
         prd_bbs = []
@@ -94,22 +158,22 @@ class ParallelExperiment:
             obj=all_frmae_obj.loc[ind]
             if DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX in obj and not math.isnan(obj[DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX]):
                 label_bbs.append([obj[DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_Y+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_WIDTH+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_HEIGHT+DataFrameTokens.GT_ANNOT_SUFFIX]])
-                if ind == detection_index:
+                if ind == sample_index:
                     label_index = len(label_bbs)-1
             if DataFrameTokens.BB_X in obj  and not math.isnan(obj[DataFrameTokens.BB_X]):
                 prd_bbs.append([obj[DataFrameTokens.BB_X], obj[DataFrameTokens.BB_Y], obj[DataFrameTokens.BB_WIDTH], obj[DataFrameTokens.BB_HEIGHT]])
-                if ind == detection_index:
+                if ind == sample_index:
                     pred_index = len(prd_bbs) -1            
     
 
         return prd_bbs, label_bbs, pred_index, label_index
     
-    def get_detection_properties_text_list(self, detection_index):
-        data = self.comp_data.loc[detection_index]
+    def get_sample_properties_text_list(self, sample_index):
+        data = self.comp_data.loc[sample_index]
 
-        detection_variables_text_list = [f"{key}: {data[key]}" for key in data.keys()]
+        sample_variables_text_list = [f"{key}: {data[key]}" for key in data.keys()]
 
-        return detection_variables_text_list
+        return sample_variables_text_list
     
     @staticmethod
     def combine_evaluation_files(compared_videos):
@@ -137,7 +201,7 @@ class ParallelExperiment:
         confusion_masks = confusion_calc_func(comp_data)
         
         # add Total example to statistics functions for unified calculation in future ones (e.g. unique calculation)
-        confusion_masks[EXAMPLES_IN_SEGMENT_CONST] = pd.Series(np.ones(len(comp_data), dtype=bool))
+        confusion_masks[UserDefinedConstants.ALL_RAWS_IN_SEGMENT] = pd.Series(np.ones(len(comp_data), dtype=bool))
         
         # calculate the boolean masks of the partitions (which row/bounding box in the dataframes belongs to which partition)
         

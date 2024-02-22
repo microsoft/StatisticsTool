@@ -1,4 +1,5 @@
-<style>
+<head>
+    <style>
     .header{
       padding: 5px;
       text-align: center;
@@ -21,6 +22,7 @@
     }
     
     </style>
+   
     <script>
     window.onload = function  () {
         var li_ul = document.querySelectorAll(".col_ul li  ul");
@@ -40,9 +42,9 @@
             else
                 nextul.style.display = "block";
         }
-    }
-    </script>
-    
+           }
+        </script>
+        
         <div class="header" style="text-align: left; overflow: hidden; position:relative;">
     
                   <h1 style="font-family: Arial, Helvetica, sans-serif;"> Examples for {%if unique%}uniques {%endif%} {{state}}{%if comp_index > -1%} in ref{%endif%} </h1>
@@ -52,10 +54,10 @@
         </div>
     
     <div style="position:relative;">
-        <tr><td><form action="/example_list/update_list?save_json=true&cell_name={{cell_name}}&stat={{state}}&{{ref_flag}}&"{%if unique%}"unique"{%endif%}"&main_path={{main_path}}&ref_path={{ref_path}}" method="post">
-            <button type="submit"> Export To Json </button>    
+        <tr><td><form action="/example_list/update_list?save_json=true&cell_name={{cell_name}}&stat={{state}}&{{ref_flag}}&{%if unique%}unique{%endif%}&main_path={{main_path}}&ref_path={{ref_path}}" method="post">
+            <button type="submit"> Export List </button>    
         </form></td></tr>
-    
+        
         {% if saved_json:%}
         <p style="font-family: Arial, Helvetica, sans-serif;"> Exported file path: <br>
             {{saved_json}} </p>
@@ -67,3 +69,4 @@
             {{list_html}}
         </ul>
     </div>
+</body>
