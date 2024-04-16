@@ -2,8 +2,8 @@ import json
 import os
 
 
-default_secrets_file_name = os.path.join(os.path.split(__file__)[0], r"blob_storage_config.json")
-default_config_file_name = os.path.join(os.path.split(__file__)[0], r"app_config.json")
+default_secrets_file_name = os.path.join(os.path.split(os.path.abspath(__file__))[0], r"blob_storage_config.json")
+default_config_file_name = os.path.join(os.path.split(os.path.abspath(__file__))[0], r"app_config.json")
 class AppConfig():
     app_config = None
     def __init__(self, config_file = None, secrets_file = None):
