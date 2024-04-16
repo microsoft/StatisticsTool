@@ -95,7 +95,7 @@ def list_files_in_path(path, store_type):
     else:
         full_path = get_path_on_store(path, store_type)
         dirs = GetStorageHandler(store_type).ls_files(full_path, True)
-        if not path.endswith('/'):
+        if not path.endswith('/') and not path.endswith('\\'):
             path = path+'/'
         dirs = [path+dir for dir in dirs]
     return dirs
