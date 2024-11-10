@@ -1,6 +1,7 @@
 import os
 from azure.storage.blob import BlobServiceClient
 from colorama import Fore
+from azure.identity import DefaultAzureCredential, AzureCliCredential
 import concurrent
 
 
@@ -28,7 +29,8 @@ class AzureStorageHelper():
             print("No connection string, work only with local files\n\n")
         else:
             # Create the BlobServiceClient object
-            self.blob_service_client_obj = BlobServiceClient.from_connection_string(connection_string)
+            #self.blob_service_client_obj = AzureStorageHelper._get_blob_service_client_using_connection_string(connection_string)
+            self.blob_service_client_obj = AzureStorageHelper._get_blob_service_client_using_credential(self.account_url, AzureStorageHelper._get_token_credential())
             self.container_client_obj = self.blob_service_client_obj.get_container_client(container_name)
         
         return
@@ -110,6 +112,7 @@ class AzureStorageHelper():
         Returns:
             str: The path to the downloaded file
         '''
+        blob_path = blob_path.replace("\\", "/")
         print (f'{Fore.YELLOW}Start download blob{Fore.RESET} {blob_path} to local path {dst_file_path}')
         
         blob_data = self.container_client_obj.get_blob_client(blob_path).download_blob().readall()
@@ -120,4 +123,42 @@ class AzureStorageHelper():
         
         return dst_file_path
 
-  
+    def _get_token_credential():
+        ''' Retrieve the token credential '''
+        token_credential = None
+
+        try:        
+            token_credential = DefaultAzureCredential()
+        except Exception as e:
+            print(f"AzureWrapper::__init__: DefaultAzureCredential failed with: {e}. Trying AzureCliCredential.")
+            token_credential = None
+
+        if token_credential is None:        
+            try:
+                token_credential = AzureCliCredential()
+            except Exception as e:
+                print(f"AzureWrapper::__init__: AzureCliCredential failed with: {e}. Sorry, no Credential were found. Try on the terminal: az login --use-device-code")
+                token_credential = None
+        
+        return token_credential
+      
+    def _get_blob_service_client_using_credential(account_url, token_credential):
+        '''
+        Initializes the AzureStorageHelper object with the given storage ID, container name, and connection string
+
+        Args:
+            connection_string (str): The connection string for the Azure Blob Storage account
+        '''
+        blob_service_client_obj = BlobServiceClient(account_url=account_url, credential=token_credential)
+        return blob_service_client_obj
+    
+    
+    def _get_blob_service_client_using_connection_string(connection_string):
+        '''
+        Initializes the AzureStorageHelper object with the given storage ID, container name, and connection string
+
+        Args:
+            connection_string (str): The connection string for the Azure Blob Storage account
+        '''
+        blob_service_client_obj = BlobServiceClient.from_connection_string(connection_string)
+        return blob_service_client_obj
