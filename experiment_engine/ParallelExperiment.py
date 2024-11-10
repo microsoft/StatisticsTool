@@ -86,14 +86,14 @@ class ParallelExperiment:
         
         data_file = ''
         if DataFrameTokens.IMAGE_FILE_PRED_TOKEN in sample:
-            paths[StoreType.Predictions]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.IMAGE_FILE_PRED_TOKEN], StoreType.Predictions, local_store)
+            paths[StoreType.Predictions]=sample[DataFrameTokens.IMAGE_FILE_PRED_TOKEN]
                       
         if DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN in sample:
-            paths[StoreType.Annotations]=self.get_sample_image_path_on_store(video, sample[DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN], StoreType.Annotations, local_store)
+            paths[StoreType.Annotations]=sample[DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN]
             
         if DataFrameTokens.IMAGE_FILE_DATA_TOKEN in sample:
             data_file = sample[DataFrameTokens.IMAGE_FILE_DATA_TOKEN]
-        paths[StoreType.Data]=self.get_sample_image_path_on_store(video, data_file, StoreType.Data, local_store) 
+        paths[StoreType.Data]=data_file
             
         return paths
         

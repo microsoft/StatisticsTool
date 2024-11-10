@@ -2,7 +2,7 @@ Legend: <span style="color:blue;">Prediction ----     </span> <span style="color
 <div>
 Image Store 
 {%if images_num>1%} 
-    (Alt + Left click to switch images) 
+    (Alt + Left click to switch next images. Ctl + Left click to switch previous images) 
 {%endif%}: 
 <label id="image-name-label"  style="color:blue;"></label>
 </div>
@@ -33,10 +33,24 @@ Image Store
     // Initialize the viewer if OpenSeadragon is available
 
     function switchImages() {
-        if (!event.altKey) {
-            return;
+        var next = false
+        if (event.ctrlKey) {
+            next = false;
         }
-        cur_img = (1 + cur_img) %  Object.keys(imgs).length;
+        else if (event.altKey) {
+            next = true;
+        }
+        else 
+            return;
+        if (next)
+        {
+            cur_img = (cur_img + 1) %  Object.keys(imgs).length;
+        }
+        else
+        {
+            cur_img = (cur_img - 1 + Object.keys(imgs).length) % Object.keys(imgs).length;
+        }
+        
         if (typeof OpenSeadragon !== 'undefined') {
             // Determine the currently visible image
             var currentImage = viewer.source;
