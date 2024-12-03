@@ -24,14 +24,11 @@ class AzureStorageHelper():
         self.container_name = container_name
 
         print(f"Try create client for container: {container_name}")
-        if not connection_string:
-            print("******************** ERROR ************")
-            print("No connection string, work only with local files\n\n")
-        else:
-            # Create the BlobServiceClient object
-            #self.blob_service_client_obj = AzureStorageHelper._get_blob_service_client_using_connection_string(connection_string)
-            self.blob_service_client_obj = AzureStorageHelper._get_blob_service_client_using_credential(self.account_url, AzureStorageHelper._get_token_credential())
-            self.container_client_obj = self.blob_service_client_obj.get_container_client(container_name)
+        
+        # Create the BlobServiceClient object
+        #self.blob_service_client_obj = AzureStorageHelper._get_blob_service_client_using_connection_string(connection_string)
+        self.blob_service_client_obj = AzureStorageHelper._get_blob_service_client_using_credential(self.account_url, AzureStorageHelper._get_token_credential())
+        self.container_client_obj = self.blob_service_client_obj.get_container_client(container_name)
         
         return
 

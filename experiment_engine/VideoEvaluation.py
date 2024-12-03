@@ -227,7 +227,8 @@ class VideoEvaluation:
         """
         # load the per frame bounding box hash table (dictionary) for labels and predictions
         start = time.time()
-        
+        if not self.association_function:
+            True
         try:
             pred_data, gt_data = self.load_data(pred_file, gt_file, video_name)
             if pred_data is None:
