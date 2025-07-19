@@ -1,70 +1,184 @@
 <head>
+    <meta charset="utf-8">
+    <title>Examples List</title>
     <style>
-    .header{
-      padding: 5px;
-      text-align: center;
-      color: #3e8e41;
-      font-size: 13px;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-      border: 1px solid #ddd;
-    }
-    
-    ul li {
-      padding: 8px 16px;
-      border-bottom: 1px solid #ddd;
-    }
-    
-    ul li:last-child {
-      border-bottom: none
-    }
-    
-    </style>
-   
-    <script>
-    window.onload = function  () {
-        var li_ul = document.querySelectorAll(".col_ul li  ul");
-        for (var i = 0; i < li_ul.length; i++) {
-            li_ul[i].style.display = "none"
-        };
-    
-        var exp_li = document.querySelectorAll(".col_ul li > span");
-        for (var i = 0; i < exp_li.length; i++) {
-            exp_li[i].style.cursor = "pointer";
-            exp_li[i].onclick = showul;
-        };
-        function showul () {
-            nextul = this.nextElementSibling;
-            if(nextul.style.display == "block")
-                nextul.style.display = "none";
-            else
-                nextul.style.display = "block";
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f7f9fa;
+            color: #222;
         }
-           }
-        </script>
-        
-        <div class="header" style="text-align: left; overflow: hidden; position:relative;">
-    
-                  <h1 style="font-family: Arial, Helvetica, sans-serif;"> Examples for {%if unique%}uniques {%endif%} {{state}}{%if comp_index > -1%} in ref{%endif%} </h1>
-                    <h3 style="font-family: Arial, Helvetica, sans-serif;white-space:nowrap; display: inline-block;"> Cell Name: {{cell_name}} </h3>
-    
-                    
-        </div>
-    
-    <div style="position:relative;">
-        <tr><td><form action="/example_list/update_list?save_json=true&cell_name={{cell_name}}&stat={{state}}&{{ref_flag}}&{%if unique%}unique{%endif%}&main_path={{main_path}}&ref_path={{ref_path}}" method="post">
-            <button type="submit"> Export List </button>    
-        </form></td></tr>
-        
+        .header {
+            background: #e3eaf2;
+            border-radius: 10px;
+            padding: 18px 24px 12px 24px;
+            margin: 24px auto 12px auto;
+            max-width: 900px;
+            box-shadow: 0 2px 8px #0001;
+            text-align: left;
+        }
+        .header h1 {
+            font-size: 1.5em;
+            color: #2a5d9f;
+            margin: 0 0 8px 0;
+        }
+        .header h3 {
+            font-size: 1.1em;
+            color: #3e8e41;
+            margin: 0 0 0 0;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .export-section {
+            max-width: 900px;
+            margin: 0 auto 18px auto;
+            background: #f3f7fa;
+            border-radius: 8px;
+            padding: 12px 18px;
+            box-shadow: 0 1px 4px #0001;
+        }
+        .export-section button {
+            background: #2a5d9f;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 7px 18px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .export-section button:hover {
+            background: #17406a;
+        }
+        .export-section .save-path {
+            font-size: 0.98em;
+            color: #2a5d9f;
+            margin: 8px 0 0 0;
+            background: #eaf1f7;
+            border-radius: 6px;
+            padding: 7px 12px;
+        }
+        .list-container {
+            max-width: 900px;
+            margin: 0 auto 24px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px #0001;
+            padding: 0;
+            overflow: hidden;
+        }
+        .col_ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 600px;
+            overflow-y: auto;
+            font-size: 0.97em;
+        }
+        .col_ul li {
+            padding: 6px 12px;
+            border-bottom: 1px solid #f0f2f5;
+            background: #fcfdfe;
+            transition: background 0.12s;
+            line-height: 1.5;
+        }
+        .col_ul li:hover {
+            background: #f2f6fa;
+        }
+        .col_ul li ul {
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+        .col_ul li:last-child {
+            border-bottom: none;
+        }
+        .col_ul li > span {
+            cursor: pointer;
+            color: #2a5d9f;
+            font-weight: 400;
+            font-size: 1em;
+            padding: 1px 2px;
+            border-radius: 3px;
+            background: none;
+        }
+        .col_ul li > span:after {
+            content: ' ▸';
+            font-size: 0.92em;
+            color: #bbb;
+            margin-left: 2px;
+        }
+        .col_ul li.expanded > span:after {
+            content: ' ▾';
+        }
+        .col_ul li ul li {
+            background: #f7fafd;
+            border-bottom: 1px solid #f0f2f5;
+            padding-left: 22px;
+        }
+    </style>
+    <script>
+    // Virtualize list rendering for large lists
+    document.addEventListener('DOMContentLoaded', function() {
+        var li_ul = document.querySelectorAll('.col_ul li ul');
+        for (var i = 0; i < li_ul.length; i++) {
+            li_ul[i].style.display = 'none';
+        }
+        var exp_li = document.querySelectorAll('.col_ul li > span');
+        for (var i = 0; i < exp_li.length; i++) {
+            exp_li[i].style.cursor = 'pointer';
+            exp_li[i].onclick = showul;
+        }
+        function showul() {
+            var nextul = this.nextElementSibling;
+            var parentLi = this.parentElement;
+            if (nextul.style.display == 'block') {
+                nextul.style.display = 'none';
+                parentLi.classList.remove('expanded');
+            } else {
+                nextul.style.display = 'block';
+                parentLi.classList.add('expanded');
+            }
+        }
+        // Lazy rendering for very large lists
+        var list = document.querySelector('.col_ul');
+        if (list && list.children.length > 200) {
+            var batch = 100;
+            var shown = batch;
+            for (var i = batch; i < list.children.length; i++) {
+                list.children[i].style.display = 'none';
+            }
+            var loadMore = document.createElement('button');
+            loadMore.textContent = 'Load More';
+            loadMore.className = 'lean-loadmore';
+            loadMore.onclick = function() {
+                var next = Math.min(list.children.length, shown + batch);
+                for (var i = shown; i < next; i++) {
+                    list.children[i].style.display = '';
+                }
+                shown = next;
+                if (shown >= list.children.length) {
+                    loadMore.style.display = 'none';
+                }
+            };
+            list.parentElement.appendChild(loadMore);
+        }
+    });
+    </script>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Examples for {%if unique%}uniques {%endif%} {{state}}{%if comp_index > -1%} in ref{%endif%}</h1>
+        <h3>Cell Name: {{cell_name}}</h3>
+    </div>
+    <div class="export-section">
+        <form action="/example_list/update_list?save_json=true&cell_name={{cell_name}}&stat={{state}}&{{ref_flag}}&{%if unique%}unique{%endif%}&main_path={{main_path}}&ref_path={{ref_path}}" method="post">
+            <button type="submit">Export List</button>
+        </form>
         {% if saved_json:%}
-        <p style="font-family: Arial, Helvetica, sans-serif;"> Exported file path: <br>
-            {{saved_json}} </p>
+            <div class="save-path">Exported file path:<br>{{saved_json}}</div>
         {%endif%}
     </div>
-    
-    <div style="position:relative;top: 0px; left: 0px;display: inline-block;">
+    <div class="list-container">
         <ul class="col_ul">
             {{list_html}}
         </ul>

@@ -187,7 +187,6 @@ class ParallelExperiment:
         return sample_variables_text_list
 
     
-    @staticmethod
     def combine_evaluation_files(compared_videos):
         
 

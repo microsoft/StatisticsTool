@@ -1,28 +1,117 @@
 Legend: <span style="color:blue;">Prediction ----     </span> <span style="color: green;">GT ----</span>
-<div>
-Image Store 
-{%if images_num>1%} 
-    (Alt + Left click to switch next images. Ctl + Left click to switch previous images) 
-{%endif%}: 
-<label id="image-name-label"  style="color:blue;"></label>
-</div>
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.2/openseadragon.min.js"></script>
     <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f7f9fa;
+            color: #222;
+        }
+        .image-header {
+            background: #e3eaf2;
+            border-radius: 10px;
+            padding: 18px 24px 12px 24px;
+            margin: 24px auto 12px auto;
+            max-width: 900px;
+            box-shadow: 0 2px 8px #0001;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .image-header .legend {
+            font-size: 1.08em;
+            margin-bottom: 4px;
+        }
+        .image-header .instructions {
+            font-size: 0.98em;
+            color: #555;
+            margin-left: 16px;
+        }
+        .image-header .image-label {
+            font-weight: 600;
+            color: #2a5d9f;
+            font-size: 1.1em;
+            margin-left: 12px;
+        }
         #openseadragon-viewer {
             width: 100%;
-            height: 500px; /* Adjust height as needed */
+            height: 500px;
+            background: #eaf1f7;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #0001;
+            margin: 0 auto 18px auto;
+            max-width: 900px;
+        }
+        .save-link {
+            display: inline-block;
+            margin: 18px 0 0 0;
+            font-size: 1.05em;
+            color: #2a5d9f;
+            background: #e3eaf2;
+            border-radius: 6px;
+            padding: 7px 18px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .save-link:hover {
+            background: #d0e0f0;
+            color: #17406a;
+        }
+        .save-path {
+            font-size: 0.98em;
+            color: #2a5d9f;
+            margin: 8px 0 0 0;
+            background: #f3f7fa;
+            border-radius: 6px;
+            padding: 7px 12px;
+            max-width: 900px;
+        }
+        .detection-details {
+            background: #f8fafc;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px #0001;
+            padding: 14px 18px;
+            margin: 18px auto 0 auto;
+            max-width: 900px;
+            font-size: 1.01em;
+        }
+        .detection-details-title {
+            font-weight: 600;
+            color: #2a5d9f;
+            margin-bottom: 6px;
         }
     </style>
 </head>
-<br>
-<br>
+
+<div class="image-header">
+    <div>
+        <span class="legend">Legend:</span>
+        <span style="color:blue;">Prediction</span> <span style="color:#888;">----</span> <span style="color: green;">GT</span> <span style="color:#888;">----</span>
+        {% if images_num>1 %}
+            <span class="instructions">(Alt + Left click: next image, Ctrl + Left click: previous image, Ctrl+Shift+Left click: toggle all/one)</span>
+        {% endif %}
+    </div>
+    <span class="image-label">Image: <label id="image-name-label"></label></span>
+</div>
 <div id="openseadragon-viewer"></div>
 <script type="text/javascript">
     function updateImageName() {
         var currentImage = Object.keys(imgs)[cur_img];
-        var imageNameLabel = document.getElementById('image-name-label');
-        imageNameLabel.textContent = currentImage;
+        // If the element is not yet in the DOM, wait until it is.
+        let imageNameLabel = document.getElementById('image-name-label');
+        if (!imageNameLabel) {
+            window.addEventListener('DOMContentLoaded', updateImageName, { once: true });
+            return;
+        }
+        if (imageNameLabel) {
+            // Update the label text with the current image name
+            imageNameLabel.textContent = currentImage;
+        } else {
+            // If the label is not found, log an error
+            console.error("Image name label not found in the document.");
+        }
+        
     }
     
     imgs = {};
@@ -207,20 +296,23 @@ Image Store
     }
     updateImageName() ;    
 </script>
-<p>
-   <a style="font-family: Arial, Helvetica, sans-serif;" target="" href='javascript:window.parent.postMessage({"action":"show_image","value":"/show_im?example_vid={{video_name}}&example_index={{example_index}}}}&comp_index={{comp_index}}&main_path={{main_path}}&ref_path={{ref_path}}&save_image"})'> Save Image</a> 
-    {% if save_path: %}
-    <p style="font-family: Arial, Helvetica, sans-serif;"> Image was saved to: <br>
-        {{save_path}} 
-    </p>
-    {%endif%}
-</p>
-<br>
-<p style="display: inline-block;">
-Detection Details:<br>
-{% for line in detection_text_list %}
-    {{line}}
-    <br>
-{%endfor%}
-</p>
+<div style="max-width:900px;margin:0 auto;">
+    <a class="save-link" target="" href='javascript:window.parent.postMessage({"action":"show_image","value":"/show_im?example_vid={{video_name}}&example_index={{example_index}}}}&comp_index={{comp_index}}&main_path={{main_path}}&ref_path={{ref_path}}&save_image"})'>💾 Save Image</a>
+    {% if save_path %}
+        <div class="save-path">Image was saved to:<br>{{save_path}}</div>
+    {% endif %}
+</div>
+<div class="detection-details">
+    <div class="detection-details-title">Detection Details:</div>
+
+    <table style="width:100%;border-collapse:collapse;font-size:0.98em;">
+        <tbody>
+            {% for line in detection_text_list %}
+                <tr style="background-color:{{ loop.cycle('#ffffff', '#f5f8fb') }};border-bottom:1px solid #e1e6ed;">
+                    <td style="padding:6px 8px;">{{ line }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
