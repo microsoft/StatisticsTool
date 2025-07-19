@@ -4,6 +4,8 @@ def naive_event_transform(all_comp_data, **kwargs):
     key = 'detection'
     transform_data = []
     for comp_data in all_comp_data:
+        if isinstance(comp_data, str):
+            comp_data = pd.read_parquet(comp_data)
         in_event = False
         prediction = comp_data[key]
         label = comp_data[key+'_gt']
