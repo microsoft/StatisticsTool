@@ -24,13 +24,12 @@ class VideoEvaluation:
         a function to read the ground truth data structure as a pandas dataframe
     associationFunction : function
         a function to associate predictions with ground truth data
-    transform_func : function
-        a function to transform the data before processing
+   
     comp_data : list
         a list that contains each frames bounding boxes data and overlap matrix (first object is the image folder name)
     """
 
-    def __init__(self, predictionReaderFunction, gtReaderFunction, associationFunction, transform_func):
+    def __init__(self, predictionReaderFunction, gtReaderFunction, associationFunction):
         """
         Parameters
         ----------
@@ -40,13 +39,11 @@ class VideoEvaluation:
             a function to read the ground truth data structure as a pandas dataframe
         associationFunction : function
             a function to associate predictions with ground truth data
-        transform_func : function
-            a function to transform the data before processing
+      
         """
         self.association_function = associationFunction
         self.prediction_reading_function = predictionReaderFunction
         self.gt_reading_function = gtReaderFunction
-        self.transform_func = transform_func
         self.comp_data = []
 
     def load_data(self, pred_file, gt_file, video_name):
@@ -109,7 +106,7 @@ class VideoEvaluation:
                 if os.path.exists(dir) == False:
                     os.makedirs(dir)
         
-        self.comp_data.to_json(output_file_path)
+        self.comp_data.to_parquet(output_file_path)
 
     @staticmethod
     def add_dict_recursive(dict_in, key, new_obj, add_gt=False):
@@ -254,17 +251,6 @@ class VideoEvaluation:
             self.comp_data[DataFrameTokens.VIDEO_TOKEN] = video_name
         self.comp_data[DataFrameTokens.END_EVENT_TOKEN] = self.comp_data[DataFrameTokens.LABELS_GROUP_KEY]
         
-        try:
-            
-            if self.transform_func:
-                self.comp_data=self.transform_func(self.comp_data) 
-               
-        except Exception as ex:
-            print ("\n\n\n----------- EXCEPTION IN UDF TRANSFORM FUNCTION --------------------")
-            print(f"Failed in user defined transform function for prediction: {pred_file} and gt: {gt_file}")
-            print (ex)
-            print('\n\n\n')
-            raise ex
        
         return True  
         

@@ -75,6 +75,8 @@ def get_video_name_from_pred_file(pred_file, pred_name, pred_dir):
             video_name = header[Constants.log_header_token][Constants.log_header_video_name_token]
     except:
         video_name = os.path.relpath(pred_name, pred_dir)
+        if not os.path.dirname(video_name):
+            video_name = os.path.join(pred_dir)
     
     # Convert path to Unix style
     video_name = video_name.replace('\\', '/')

@@ -71,7 +71,7 @@ def show_image():
 
     main_dir,_ = os.path.split(main_path)
     
-    detection_text_list, images_list, save_path = manage_image_request(request,main_exp, ref_exp,main_dir, comp_index>-1, local_path, example_index, video_name)
+    detection_text_list, images_list, save_path, images_coords = manage_image_request(request,main_exp, ref_exp,main_dir, comp_index>-1, local_path, example_index, video_name)
 
     return render_template(ExamplesList_Routes.EXAMPLE_IMAGE_HTML, 
                            images_list=images_list, 
@@ -82,7 +82,8 @@ def show_image():
                            example_index = example_index, 
                            main_path=main_path, 
                            ref_path=ref_path, 
-                           comp_index = comp_index)
+                           comp_index = comp_index,
+                           images_coords = images_coords)
 
 
 def manage_image_request(request, main_exp:ParallelExperiment, ref_exp:ParallelExperiment,main_directory, use_ref, local_path, sample_index, video):
@@ -102,7 +103,7 @@ def manage_image_request(request, main_exp:ParallelExperiment, ref_exp:ParallelE
         exp = ref_exp
     
     try:
-       images = exp.get_example_images_local_path(sample_index, local_path)
+       images, coords = exp.get_example_images_local_path(sample_index, local_path)
     except Exception as ex:
         print (f'failed to load image with exception: {ex}')
         
@@ -125,6 +126,6 @@ def manage_image_request(request, main_exp:ParallelExperiment, ref_exp:ParallelE
             with open(save_file, "wb") as outfile:
                 outfile.write(images[image].getbuffer())
         
-    return detection_text_list, encoded_images, save_path
+    return detection_text_list, encoded_images, save_path, coords
 
 

@@ -30,7 +30,96 @@ Image Store
         imgs["{{ image }}"] = 'data:image/png;base64,{{ images_list[image] }}'
     {%endfor%} 
     cur_img = 0
+    
+    // Bounding box coordinates (x, y, width, height)
+    var boundingBox = {{ images_coords|default('null')|safe }};
+    boundingBox = boundingBox ? {
+        x: boundingBox[0],
+        y: boundingBox[1],
+        width: boundingBox[2],
+        height: boundingBox[3]
+    } : null;
+    // Store relative viewport state (as percentage of bounding box)
+    var relativeViewportState = {
+        zoom: 1.0,
+        panX: 0.5,  // relative to bounding box (0-1)
+        panY: 0.5,  // relative to bounding box (0-1)
+        rotation: 0
+    };
     // Initialize the viewer if OpenSeadragon is available
+
+
+    // --- Improved viewport sync for images of different sizes ---
+    function calculateRelativePosition(absolutePos, imageWidth, imageHeight) {
+        // Convert absolute viewport position to relative position within bounding box
+
+        var relativePosX = absolutePos.x;
+        var relativePosY = absolutePos.y;
+        if (!boundingBox) return absolutePos;
+        if (imageWidth >= boundingBox.width + boundingBox.x) {
+            relativePosX = Math.round(absolutePos.x - boundingBox.x);
+        }
+        if (imageHeight >= boundingBox.height + boundingBox.y) {
+            relativePosY = Math.round(absolutePos.y - boundingBox.y);
+        }
+
+        return {
+            x: relativePosX,
+            y: relativePosY
+        };
+    }
+
+    function calculateAbsolutePosition(relativePos, imageWidth, imageHeight) {
+        var absolutePosX = relativePos.x;
+        var absolutePosY = relativePos.y;
+        if (!boundingBox) return absolutePos;
+        if (imageWidth >= boundingBox.width + boundingBox.x) {
+            absolutePosX = Math.round(boundingBox.x + relativePos.x);
+        }
+        if (imageHeight >= boundingBox.height + boundingBox.y) {
+            absolutePosY = Math.round(boundingBox.y + relativePos.y);
+        }
+
+        return {
+            x: absolutePosX,
+            y: absolutePosY
+        };
+    }
+
+    function saveViewportState() {
+        // Save current viewport state as relative position
+        if (viewer && boundingBox) {
+            var center = viewer.viewport.viewportToImageCoordinates(viewer.viewport.getCenter());
+            var imageWidth = viewer.source.dimensions.x;
+            var imageHeight = viewer.source.dimensions.y;
+            var relativePos = calculateRelativePosition(center, imageWidth, imageHeight);
+            // Save zoom as a ratio relative to the bounding box
+            relativeViewportState.zoom = viewer.viewport.getZoom(true) * (boundingBox.width / imageWidth );
+            relativeViewportState.panX = relativePos.x;
+            relativeViewportState.panY = relativePos.y;
+            relativeViewportState.rotation = viewer.viewport.getRotation();
+        }
+    }
+
+    function restoreViewportState() {
+        // Restore viewport state using relative position
+        
+        setTimeout(function() {
+            var imageWidth = viewer.source.dimensions.x;
+            var imageHeight = viewer.source.dimensions.y;
+            var absolutePos = calculateAbsolutePosition({
+                x: relativeViewportState.panX,
+                y: relativeViewportState.panY
+            }, imageWidth, imageHeight);
+            var ptVp = viewer.viewport.imageToViewportCoordinates(new OpenSeadragon.Point(absolutePos.x, absolutePos.y));
+            // Convert relative zoom back to image zoom for this image
+            var zoom = relativeViewportState.zoom * (imageWidth / boundingBox.width);
+            viewer.viewport.zoomTo(zoom, ptVp, true);
+            viewer.viewport.panTo(ptVp, true);
+            viewer.viewport.setRotation(relativeViewportState.rotation);
+        }, 5); // Small delay to ensure image is loaded
+        
+    }
 
     function switchImages() {
         var next = false
@@ -52,13 +141,14 @@ Image Store
         }
         
         if (typeof OpenSeadragon !== 'undefined') {
-            // Determine the currently visible image
-            var currentImage = viewer.source;
-            var viewportState = {
-                zoom: viewer.viewport.getZoom(),
-                pan: viewer.viewport.getCenter(),
-                rotation: viewer.viewport.getRotation()
-            };
+            // Save current viewport state before switching
+            saveViewportState();
+
+            // Remove previous image if any
+            if (viewer && viewer.drawer && viewer.drawer.canvas) {
+                // Clear the canvas to avoid ghost images
+                viewer.drawer.canvas.getContext('2d').clearRect(0, 0, viewer.drawer.canvas.width, viewer.drawer.canvas.height);
+            }
 
             // Switch tileSources
             viewer.open({
@@ -66,24 +156,23 @@ Image Store
                 url: imgs[Object.keys(imgs)[cur_img]],
                 title: Object.keys(imgs)[cur_img],
                 success: function() {
-                    //setTimeout(function() {
-                        viewer.viewport.zoomTo(viewportState.zoom, null, true);
-                        viewer.viewport.panTo(viewportState.pan, true);
-                        viewer.viewport.setRotation(viewportState.rotation);
-                    //  }, 0); 
+                    restoreViewportState();
                 }
             });
             viewer.preserveViewport = true;
-            
+            // Restore viewport after image loads
+            //viewer.addOnceHandler('open', restoreViewportState);
         } else {
             // Fallback to simple <img> tag if OpenSeadragon is not available
+            var container = document.getElementById("openseadragon-viewer");
+            container.innerHTML = ""; // Clear previous image
             var imgTag = document.createElement("img");
             imgTag.src = 'data:image/png;base64,'+imgs[Object.keys(imgs)[cur_img]]; // Provide image data here
             imgTag.style.maxWidth = '100%';
             imgTag.style.maxHeight = '100%';
-            document.getElementById("openseadragon-viewer").appendChild(imgTag);
+            container.appendChild(imgTag);
         }
-        updateImageName() ;
+        updateImageName();
     }
     
  
@@ -99,10 +188,14 @@ Image Store
             maxZoomPixelRatio: 10 // Set maximum zoom level to 10
         });
         viewer.preserveViewport = true;
-        // Function to switch between images on mouse click
         
+        // Add viewport change handler to track position changes
+        //viewer.addHandler('viewport-change', function(event) {
+            // Update relative viewport state when user navigates
+        //    saveViewportState();
+        //});
 
-            // Add click event handler to the viewer
+        // Add click event handler to the viewer
         viewer.addHandler('canvas-click', switchImages);
     } else {
         // Fallback to simple <img> tag if OpenSeadragon is not available

@@ -3,7 +3,7 @@ import numpy as np
 pd.options.mode.chained_assignment = None
 
 
-def basic_event_transform(df, **kwargs):
+def basic_event_transform(all_dfs, **kwargs):
     """
     purpose:
     -------- 
@@ -37,23 +37,27 @@ def basic_event_transform(df, **kwargs):
     only metadata of first row (frame) of event is kept! partitioning functions comsuming per-frame annotations will be distorted
 
     """
-
+    for df in all_dfs:
+        #if df is string so load from parquet file
+        if isinstance(df, str):
+            df = pd.read_parquet(df)
+        
     # detect changes for detection and detection_gt separately
-    df['diff_gt'] = df['detection_gt'].astype(int).diff().fillna(0)
-    df['diff_det'] = df['detection'].astype(int).diff().fillna(0)
+        df['diff_gt'] = df['detection_gt'].astype(int).diff().fillna(0)
+        df['diff_det'] = df['detection'].astype(int).diff().fillna(0)
 
-    # generate event_idx column --> rows which belong to the same event will have the same event_idx
-    df['diff_of_diffs'] = df['diff_gt'] - df['diff_det']
-    df['event_start_flag'] = 0
-    df['event_start_flag'][0] = 1 # first event starts at first index (row)
-    df.loc[df['diff_of_diffs'] != 0, 'event_start_flag'] = 1
-    df['event_idx'] = df['event_start_flag'].cumsum() # rows which belong to the same event have the same event_idx
-    df['row_index'] = df['frame_id'] # copy original index to prepare for 'end_frame' 
-
+        # generate event_idx column --> rows which belong to the same event will have the same event_idx
+        df['diff_of_diffs'] = df['diff_gt'] - df['diff_det']
+        df['event_start_flag'] = 0
+        df['event_start_flag'][0] = 1 # first event starts at first index (row)
+        df.loc[df['diff_of_diffs'] != 0, 'event_start_flag'] = 1
+        df['event_idx'] = df['event_start_flag'].cumsum() # rows which belong to the same event have the same event_idx
+        df['row_index'] = df['frame_id'] # copy original index to prepare for 'end_frame' 
+    df_out = pd.concat(all_dfs, ignore_index=True) # concatenate all dataframes into one     
     # group events --> squash rows that have the same event_idx
-    df_out = df.groupby('event_idx').first().reset_index()
+    df_out = df_out.groupby('event_idx').first().reset_index()
     df_out['frame_id'] = df_out['row_index'] # frame_id is convention for 'first index of event'
-    df_out['end_frame'] = df.groupby('event_idx').last().reset_index()['row_index'] # end_frame is convention for 'last index of event'
+    df_out['end_frame'] = df_out.groupby('event_idx').last().reset_index()['row_index'] # end_frame is convention for 'last index of event'
 
     df_out.drop(['diff_gt', 'diff_det', 'diff_of_diffs', 'event_start_flag', 'event_idx', 'row_index'], axis=1, inplace=True) # drop aux calculation columns
 

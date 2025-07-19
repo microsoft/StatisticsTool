@@ -30,14 +30,14 @@ def handel_pred(vars):
         - local_gt_dir: the path to the local ground truth directory
         - predictionReaderFunction: a function that reads the prediction file
         - gtReaderFunction: a function that reads the ground truth file
-        - assiciation_function: a function that associates predictions with ground truth
+        - assiciation_function: a function that associates predictions with ground truth    
         - transform_func: a function that transforms the data
         - output_dir: the path to the output directory
 
     :return: a tuple containing the prediction file path, the result of the comparison, and the output file path
     """
     gt_local_path = None 
-    pred, pred_dir, evaluate_folders, local_gt_dir, predictionReaderFunction, gtReaderFunction, assiciation_function, transform_func, output_dir = vars
+    pred, pred_dir, evaluate_folders, local_gt_dir, predictionReaderFunction, gtReaderFunction, assiciation_function, output_dir = vars
     
     try:
         log_name = os.path.basename(pred)
@@ -68,12 +68,12 @@ def handel_pred(vars):
             
         print(f"Starting comparing files for video {video_name}: {pred} and {gt_local_path}")
 
-        V = VideoEvaluation(predictionReaderFunction=predictionReaderFunction,gtReaderFunction=gtReaderFunction ,associationFunction=assiciation_function, transform_func = transform_func)
+        V = VideoEvaluation(predictionReaderFunction=predictionReaderFunction,gtReaderFunction=gtReaderFunction ,associationFunction=assiciation_function)
         res = V.compute_dataframe(pred_file, gt_local_path, video_name)
         if not res:
             return pred, ProcessResult.skipped_reading, None
 
-        output_file_name = video_name.replace('/', '_')[:10] + '_' + str(uuid.uuid4().hex[:6]) + '.json'
+        output_file_name = video_name.replace('/', '_') + '_' + str(uuid.uuid4().hex[:6]) + '.parquet'
         output_file_name = os.path.join(output_dir, output_file_name)
         output_file_name = os.path.normpath(output_file_name)
         V.save_data(output_file_name)
@@ -88,7 +88,7 @@ def handel_pred(vars):
 
     return pred, ProcessResult.sucess, output_file_name
 
-def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction,gtReaderFunction,transform_func, assiciation_function, local_gt_dir = None, log_names_to_evaluate = None, evaluate_folders=False):
+def compare_predictions_directory(pred_dir_string, output_dir, predictionReaderFunction,gtReaderFunction,assiciation_function, local_gt_dir = None, log_names_to_evaluate = None, evaluate_folders=False):
     """
     This function compares all prediction files in a directory to their corresponding ground truth files.
     It returns a dictionary that maps each video file location to its annotations (prediction and ground truth) file location.
@@ -97,7 +97,6 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
     :param output_dir: the path to the output directory
     :param predictionReaderFunction: a function that reads the prediction file
     :param gtReaderFunction: a function that reads the ground truth file
-    :param transform_func: a function that transforms the data
     :param assiciation_function: a function that associates predictions with ground truth
     :param local_gt_dir: the path to the local ground truth directory
     :param log_names_to_evaluate: a list of log names to evaluate
@@ -105,48 +104,52 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
 
     :return: a dictionary that maps each video file location to its annotations (prediction and ground truth) file location
     """
-    pred_path_list = list_files_in_path(pred_dir, StoreType.Predictions)
-    
-    if evaluate_folders:
-        pred_path_list = list_files_parent_dirs(pred_path_list)
-
-    output_files = []
-
+    pred_path_list = []
+    pred_dirs = pred_dir_string.split(',')
+    pred_files=[]
     pred_file_name = ''
     gt_file_name = ''
-    
-    succeded = []
-    failed = []
-    skipped_not_json = []
-    skipped_reading_fnc = []
-    skipped_not_in_lognames = []
+    for d in pred_dirs:
+        pred_path_list = list_files_in_path(d, StoreType.Predictions)
+        
+        if evaluate_folders:
+            pred_path_list = list_files_parent_dirs(pred_path_list)
 
-    print(f"total files num: {len(pred_path_list)}")
-    logs_to_evaluate = []
-    
-    for pred in pred_path_list:
-        for name in log_names_to_evaluate:
-                #Check if file is in log names to evaluate
-            name_to_match = pred
-            if os.path.dirname(name) == '':
-                name_to_match = os.path.basename(pred)
-            else:
-                name_to_match = os.path.relpath(pred, pred_dir)
-            if fnmatch.fnmatch(name_to_match, name):
-                logs_to_evaluate.append(pred)
-                break
-    
+        pred_dir = d
+        output_files = []
+
+        
+        succeded = []
+        failed = []
+        skipped_not_json = []
+        skipped_reading_fnc = []
+        skipped_not_in_lognames = []
+        if not log_names_to_evaluate:
+            log_names_to_evaluate = '*.*'
+        print(f"total files num: {len(pred_path_list)}")
+        for pred in pred_path_list:
+            for name in log_names_to_evaluate:
+                    #Check if file is in log names to evaluate
+                name_to_match = pred
+                if os.path.dirname(name) == '':
+                    name_to_match = os.path.basename(pred)
+                else:
+                    name_to_match = os.path.relpath(pred, pred_dir)
+                if fnmatch.fnmatch(name_to_match, name):
+                    pred_files.append((pred,
+                        pred_dir,
+                        evaluate_folders,
+                        local_gt_dir,
+                        predictionReaderFunction,
+                        gtReaderFunction,
+                        assiciation_function,
+                        output_dir))
+                    break
+            
+    assert len(pred_files) > 0, f"No prediction files found to evaluate with extension: {log_names_to_evaluate}"
     results = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = executor.map(handel_pred, [(pred,
-                                              pred_dir,
-                                              evaluate_folders,
-                                              local_gt_dir,
-                                              predictionReaderFunction,
-                                              gtReaderFunction,
-                                              assiciation_function,
-                                              transform_func,
-                                              output_dir) for pred in logs_to_evaluate])
+        results = executor.map(handel_pred, pred_files)
         executor.shutdown(wait=True) 
 
     output_files = []
@@ -176,10 +179,10 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
     print ("\n Skipped by reading func: ")
     for x in skipped_reading_fnc: print(x)
 
-    if not os.path.exists(pred_dir):
-        pred_dir = get_path_on_store(pred_dir, StoreType.Predictions)
-    if not os.path.exists(local_gt_dir):
-        local_gt_dir = get_path_on_store(local_gt_dir, StoreType.Annotations)
+    if not os.path.exists(pred_dirs[0]):
+        pred_dir = get_path_on_store(pred_dirs[0], StoreType.Predictions)
+    # if not os.path.exists(local_gt_dir):
+    #     local_gt_dir = get_path_on_store(local_gt_dir, StoreType.Annotations)
     video_dir = '' #TODO:ADD Blob link
     
     process_result = dict()
@@ -189,7 +192,7 @@ def compare_predictions_directory(pred_dir, output_dir, predictionReaderFunction
     process_result['failed_with_error'] = len(failed)
     process_result['skipped_not_in_lognames'] = len(skipped_not_in_lognames)
 
-    report_run_info = create_run_info(primary_path=pred_dir, primary_name=pred_file_name, secondary_path=local_gt_dir, secondary_name=gt_file_name, video_path=video_dir)
+    report_run_info = create_run_info(primary_path=pred_dirs, primary_name=pred_file_name, secondary_path=local_gt_dir, secondary_name=gt_file_name, video_path=video_dir)
     return output_files, report_run_info,process_result
 
 def run_experiment(pred_dir, output_dir, predictionReaderFunction,gtReaderFunction,transform_func, assiciation_function, local_gt_dir, log_names_to_evaluate, evaluate_folders):
@@ -211,10 +214,9 @@ def run_experiment(pred_dir, output_dir, predictionReaderFunction,gtReaderFuncti
         tuple: A tuple containing the combined evaluation data, a report of the experiment run, and the process result.
     """
     # extract all the intermediate results from the raw prediction-label files
-    compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir=pred_dir, output_dir=output_dir,
+    compared_videos, report_run_info, process_result = compare_predictions_directory(pred_dir_string=pred_dir, output_dir=output_dir,
                                                                                      predictionReaderFunction=predictionReaderFunction,
-                                                                                     gtReaderFunction=gtReaderFunction, 
-                                                                                     transform_func=transform_func, 
+                                                                                     gtReaderFunction=gtReaderFunction,
                                                                                      assiciation_function=assiciation_function, 
                                                                                      local_gt_dir=local_gt_dir, 
                                                                                      log_names_to_evaluate=log_names_to_evaluate,
@@ -222,8 +224,20 @@ def run_experiment(pred_dir, output_dir, predictionReaderFunction,gtReaderFuncti
 
     if len(compared_videos) == 0:
         return None, None, process_result
+    comp_data = None
+    if not transform_func:
+        # combine the intermediate results for further statistics and example extraction
+        comp_data = ParallelExperiment.combine_evaluation_files(compared_videos)
+    else:
+        try:
+            print(f"Running user defined transform function on {len(compared_videos)} data frames")
+            comp_data=transform_func(compared_videos)
 
-    # combine the intermediate results for further statistics and example extraction
-    comp_data = ParallelExperiment.combine_evaluation_files(compared_videos)
-
+        except Exception as ex:
+            print ("\n\n\n----------- EXCEPTION IN UDF TRANSFORM FUNCTION --------------------")
+            print(f"Failed in user defined transform function for prediction: {pred_dir}")
+            print (ex)
+            print('\n\n\n')
+            raise ex
+        
     return comp_data, report_run_info, process_result

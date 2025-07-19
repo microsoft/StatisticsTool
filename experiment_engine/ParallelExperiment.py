@@ -5,7 +5,9 @@ import pickle
 import pandas as pd, os
 import numpy as np
 import shutil
-
+import posixpath  # add close to the other imports ...
+                
+from app_config.config import AppConfig
 from app_config.constants import Constants, UserDefinedConstants
 from app_config.dataframe_tokens import DataFrameTokens
 from experiment_engine.UserDefinedFunctionsHelper import load_config_dict
@@ -81,21 +83,27 @@ class ParallelExperiment:
     
     def get_sample_images_paths(self, sample, local_store):
         paths = {}
+        coords = {}
         
         video = sample[DataFrameTokens.VIDEO_TOKEN]
         
         data_file = ''
-        if DataFrameTokens.IMAGE_FILE_PRED_TOKEN in sample:
-            paths[StoreType.Predictions]=sample[DataFrameTokens.IMAGE_FILE_PRED_TOKEN]
-                      
-        if DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN in sample:
-            paths[StoreType.Annotations]=sample[DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN]
-            
-        if DataFrameTokens.IMAGE_FILE_DATA_TOKEN in sample:
-            data_file = sample[DataFrameTokens.IMAGE_FILE_DATA_TOKEN]
         paths[StoreType.Data]=data_file
-            
-        return paths
+
+        if DataFrameTokens.IMAGE_FILE_PRED_TOKEN in sample and sample[DataFrameTokens.IMAGE_FILE_PRED_TOKEN] is not None:
+            app_config = AppConfig.get_app_config()
+            path = sample[DataFrameTokens.IMAGE_FILE_PRED_TOKEN]
+            if not app_config.predictions_blobs_prefix:
+                path = posixpath.join(video, path)
+                path = posixpath.normpath(path).replace("//", "/")
+
+            paths[StoreType.Predictions] = path
+        if DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN in sample and sample[DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN] is not None:
+            paths[StoreType.Annotations] = sample[DataFrameTokens.IMAGE_FILE_ANNOTATION_TOKEN]
+        if DataFrameTokens.IMAGE_FILE_DATA_TOKEN in sample and sample[DataFrameTokens.IMAGE_FILE_DATA_TOKEN] is not None:
+            paths[StoreType.Data] = sample[DataFrameTokens.IMAGE_FILE_DATA_TOKEN]
+        coords = [sample.get(DataFrameTokens.BB_X), sample.get(DataFrameTokens.BB_Y), sample.get(DataFrameTokens.BB_WIDTH), sample.get(DataFrameTokens.BB_HEIGHT)]
+        return paths, coords
         
     
     def get_sample_image_path_on_store(self, video_file, file_name, store_type, local_store):
@@ -119,11 +127,11 @@ class ParallelExperiment:
        
         frame_id = None
         try:
-            frame_id = int(sample[DataFrameTokens.LABELS_GROUP_KEY])
+            frame_id = sample[DataFrameTokens.LABELS_GROUP_KEY]
         except:
             pass
         
-        store_paths = self.get_sample_images_paths(sample, local_store)
+        store_paths, coords = self.get_sample_images_paths(sample, local_store)
         
         local_video_path = parallel_get_files_on_local_storage(list(store_paths.values()), list(store_paths.keys()))
         
@@ -139,7 +147,7 @@ class ParallelExperiment:
             images[StoreType.Data] = prepare_example_image(local_video_path[pos], frame_id, prd_bbs=pred_bbs, label_bbs=label_bbs, selected_pred=selected_pred_index, selected_label=selected_label_index)
         
      
-        return images
+        return images, coords
     
     def get_detection_bounding_boxes(self, sample_index):
         bb_obj = self.comp_data.loc[sample_index]
@@ -148,14 +156,17 @@ class ParallelExperiment:
         prd_bbs = []
         matched = []
         
-        all_frmae_obj=self.comp_data[((self.comp_data[DataFrameTokens.LABELS_GROUP_KEY]==bb_obj[DataFrameTokens.LABELS_GROUP_KEY]) & (self.comp_data[DataFrameTokens.UNIQUE_BATCH_TOKEN]==bb_obj[DataFrameTokens.UNIQUE_BATCH_TOKEN]))]
-
+        all_frame_obj = None
+        if DataFrameTokens.LABELS_GROUP_KEY in bb_obj and DataFrameTokens.UNIQUE_BATCH_TOKEN in bb_obj:
+            all_frame_obj=self.comp_data[((self.comp_data[DataFrameTokens.LABELS_GROUP_KEY]==bb_obj[DataFrameTokens.LABELS_GROUP_KEY]) & (self.comp_data[DataFrameTokens.UNIQUE_BATCH_TOKEN]==bb_obj[DataFrameTokens.UNIQUE_BATCH_TOKEN]))]
+        else:
+            all_frame_obj = self.comp_data[self.comp_data.index == sample_index]
         if DataFrameTokens.BB_X in bb_obj and bb_obj[DataFrameTokens.BB_X] is not None:  
             matched.append([bb_obj[DataFrameTokens.BB_X], bb_obj[DataFrameTokens.BB_Y], bb_obj[DataFrameTokens.BB_WIDTH], bb_obj[DataFrameTokens.BB_HEIGHT]])
         pred_index = -1
         label_index = -1
-        for ind in all_frmae_obj.index:
-            obj=all_frmae_obj.loc[ind]
+        for ind in all_frame_obj.index:
+            obj=all_frame_obj.loc[ind]
             if DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX in obj and not math.isnan(obj[DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX]):
                 label_bbs.append([obj[DataFrameTokens.BB_X+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_Y+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_WIDTH+DataFrameTokens.GT_ANNOT_SUFFIX],obj[DataFrameTokens.BB_HEIGHT+DataFrameTokens.GT_ANNOT_SUFFIX]])
                 if ind == sample_index:
@@ -174,6 +185,7 @@ class ParallelExperiment:
         sample_variables_text_list = [f"{key}: {data[key]}" for key in data.keys()]
 
         return sample_variables_text_list
+
     
     @staticmethod
     def combine_evaluation_files(compared_videos):
@@ -182,7 +194,7 @@ class ParallelExperiment:
         batch_id = 0
         datafrme_dict = []
         for file_name in compared_videos:
-            df = pd.read_json (file_name)
+            df = pd.read_parquet(file_name)
             df[DataFrameTokens.UNIQUE_BATCH_TOKEN] = batch_id
             batch_id = batch_id + 1
             datafrme_dict.append(df)

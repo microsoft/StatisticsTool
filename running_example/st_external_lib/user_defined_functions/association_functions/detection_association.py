@@ -43,7 +43,7 @@ def detection_association(predictions_list, gt_list, **kwargs):
     return prediction_associate
 
 def get_function_arguments():
-    return { "threshold":"string"}
+    return { "threshold":"string","test":"string"}
 
 
 def is_valid_bb(row):
