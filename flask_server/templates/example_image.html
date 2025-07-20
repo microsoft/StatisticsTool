@@ -1,4 +1,3 @@
-Legend: <span style="color:blue;">Prediction ----     </span> <span style="color: green;">GT ----</span>
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.2/openseadragon.min.js"></script>
     <style>
@@ -89,7 +88,7 @@ Legend: <span style="color:blue;">Prediction ----     </span> <span style="color
         <span class="legend">Legend:</span>
         <span style="color:blue;">Prediction</span> <span style="color:#888;">----</span> <span style="color: green;">GT</span> <span style="color:#888;">----</span>
         {% if images_num>1 %}
-            <span class="instructions">(Alt + Left click: next image, Ctrl + Left click: previous image, Ctrl+Shift+Left click: toggle all/one)</span>
+            <span class="instructions">(Alt + Left click: next image, Ctrl + Left click: previous image)</span>
         {% endif %}
     </div>
     <span class="image-label">Image: <label id="image-name-label"></label></span>
@@ -206,7 +205,7 @@ Legend: <span style="color:blue;">Prediction ----     </span> <span style="color
             viewer.viewport.zoomTo(zoom, ptVp, true);
             viewer.viewport.panTo(ptVp, true);
             viewer.viewport.setRotation(relativeViewportState.rotation);
-        }, 5); // Small delay to ensure image is loaded
+        }, 1); // Small delay to ensure image is loaded
         
     }
 

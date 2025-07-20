@@ -1,165 +1,338 @@
 <head>
     <meta charset="utf-8">
     <title>Examples List</title>
+
+    
     <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f7f9fa;
-            color: #222;
+        :root{
+            --fg:#222;
+            --brand:#2a5d9f;
+            --brand-dark:#17406a;
+            --card:#fff;
+            --card-alt:#f7fafd;
+            --border:#e5e8ee;
         }
-        .header {
-            background: #e3eaf2;
-            border-radius: 10px;
-            padding: 18px 24px 12px 24px;
-            margin: 24px auto 12px auto;
-            max-width: 900px;
-            box-shadow: 0 2px 8px #0001;
-            text-align: left;
+
+        *{box-sizing:border-box;margin:0;padding:0}
+
+        body{
+            font:400 15px/1.45 'Segoe UI',Arial,sans-serif;
+            background:#f7f9fa;
+            color:var(--fg);
         }
-        .header h1 {
-            font-size: 1.5em;
-            color: #2a5d9f;
-            margin: 0 0 8px 0;
+
+        .header{
+            width:min(900px,94%);
+            margin:22px auto;
+            border-radius:8px;
+            box-shadow:0 1px 4px #0001;
+            background:var(--card);
+            padding:14px 20px;
         }
-        .header h3 {
-            font-size: 1.1em;
-            color: #3e8e41;
-            margin: 0 0 0 0;
+
+        .list-container{
+            width:min(900px,94%);
+            margin:0 auto 22px auto;
+            border-radius:8px;
+            box-shadow:0 1px 4px #0001;
+            background:var(--card);
+            padding:0;
+        }
+
+        .header{
+            background:#e3eaf2;
+            padding:8px 14px 6px 14px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+        }
+        .header .title-section {
+            flex:1;
+        }
+        .header h1{font-size:1.1em;color:var(--brand);margin-bottom:2px}
+        .header h3{font-size:0.95em;color:#3e8e41}
+
+        .header button{
+            background:var(--brand);
+            color:#fff;
+            border:none;
+            border-radius:5px;
+            padding:4px 14px;
+            cursor:pointer;
+            transition:.15s;
+            font-size:0.9em;
+            white-space:nowrap;
+        }
+        .header button:hover{background:var(--brand-dark)}
+        .save-path{
+            background:#eaf1f7;
+            padding:4px 8px;
+            border-radius:6px;
+            color:var(--brand);
+            font-size:.85em;
+            word-break:break-all;
+            margin-top:4px;
+            width:100%;
+        }
+
+        /* LIST / TREE  --------------------------------------------------*/
+        .list-container{
+            overflow:hidden;
+            height:calc(100vh - 120px);
+        }
+        .col_ul{
+            list-style:none;
+            height:100%;
+            overflow-y:auto;
+            padding:4px 0;
+            margin:0;
+        }
+        .col_ul li{border-bottom:1px solid var(--border)}
+        .col_ul li:last-child{border-bottom:none}
+
+        /* top-level items */
+        .item{
+            display:flex;
+            align-items:center;
+            gap:4px;
+            padding:5px 20px;
+            user-select:none;
+            background:var(--card);
+            transition:background .12s;
+            cursor:pointer;
+        }
+        .item:hover{background:#f2f6fa}
+        .item.expandable{cursor:pointer}
+        .item.non-expandable{cursor:default}
+        .caret{
+            font-size:.8em;
+            color:#888;
+            transition:transform .15s;
+            padding:2px;
+            border-radius:2px;
+        }
+        .expanded>.item .caret{transform:rotate(90deg)}
+        .name{color:var(--brand);flex:1}
+        .name a{
+            color:var(--brand);
+            text-decoration:none;
+            position:relative;
+            z-index:1;
+            display:block;
+            padding:0;
+            margin:0;
+        }
+        .name a:hover{
+            text-decoration:none;
+            background:transparent;
+        }
+        /* Make links look identical to folder items */
+        .item.link-item {
+            padding:5px 20px;
+        }
+        .item.link-item:hover {
+            background:#f2f6fa;
+        }
+        .item.link-item .name a {
+            color:var(--brand);
+            padding:0;
+            background:transparent;
+        }
+
+        /* children list (injected on demand) */
+        .sub{padding-left:22px;background:var(--card-alt)}
+
+        /* Loading spinner styles */
+        .loading-container {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--brand);
+        }
+        .spinner {
             display: inline-block;
-            white-space: nowrap;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border);
+            border-radius: 50%;
+            border-top-color: var(--brand);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 10px;
         }
-        .export-section {
-            max-width: 900px;
-            margin: 0 auto 18px auto;
-            background: #f3f7fa;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 0.95em;
+            margin-top: 8px;
+        }
+        #initial-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card);
             border-radius: 8px;
-            padding: 12px 18px;
-            box-shadow: 0 1px 4px #0001;
-        }
-        .export-section button {
-            background: #2a5d9f;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 7px 18px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .export-section button:hover {
-            background: #17406a;
-        }
-        .export-section .save-path {
-            font-size: 0.98em;
-            color: #2a5d9f;
-            margin: 8px 0 0 0;
-            background: #eaf1f7;
-            border-radius: 6px;
-            padding: 7px 12px;
-        }
-        .list-container {
-            max-width: 900px;
-            margin: 0 auto 24px auto;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 1px 4px #0001;
-            padding: 0;
-            overflow: hidden;
-        }
-        .col_ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            max-height: 600px;
-            overflow-y: auto;
-            font-size: 0.97em;
-        }
-        .col_ul li {
-            padding: 6px 12px;
-            border-bottom: 1px solid #f0f2f5;
-            background: #fcfdfe;
-            transition: background 0.12s;
-            line-height: 1.5;
-        }
-        .col_ul li:hover {
-            background: #f2f6fa;
-        }
-        .col_ul li ul {
-            margin-top: 2px;
-            margin-bottom: 2px;
-        }
-        .col_ul li:last-child {
-            border-bottom: none;
-        }
-        .col_ul li > span {
-            cursor: pointer;
-            color: #2a5d9f;
-            font-weight: 400;
-            font-size: 1em;
-            padding: 1px 2px;
-            border-radius: 3px;
-            background: none;
-        }
-        .col_ul li > span:after {
-            content: ' ▸';
-            font-size: 0.92em;
-            color: #bbb;
-            margin-left: 2px;
-        }
-        .col_ul li.expanded > span:after {
-            content: ' ▾';
-        }
-        .col_ul li ul li {
-            background: #f7fafd;
-            border-bottom: 1px solid #f0f2f5;
-            padding-left: 22px;
+            padding: 20px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
     </style>
+
+    <!---- PROGRESSIVE LIST LOADING  ------------------------->
     <script>
-    // Virtualize list rendering for large lists
-    document.addEventListener('DOMContentLoaded', function() {
-        var li_ul = document.querySelectorAll('.col_ul li ul');
-        for (var i = 0; i < li_ul.length; i++) {
-            li_ul[i].style.display = 'none';
-        }
-        var exp_li = document.querySelectorAll('.col_ul li > span');
-        for (var i = 0; i < exp_li.length; i++) {
-            exp_li[i].style.cursor = 'pointer';
-            exp_li[i].onclick = showul;
-        }
-        function showul() {
-            var nextul = this.nextElementSibling;
-            var parentLi = this.parentElement;
-            if (nextul.style.display == 'block') {
-                nextul.style.display = 'none';
-                parentLi.classList.remove('expanded');
+    document.addEventListener('DOMContentLoaded',() => {
+        const top = document.querySelector('.col_ul');
+        const initialLoading = document.getElementById('initial-loading');
+        const lazyLoading = document.getElementById('lazy-loading');
+        const fullDataScript = document.getElementById('full-list-data');
+        
+        if(!top || !fullDataScript) return;
+
+        // Parse full HTML from template
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = fullDataScript.innerHTML;
+        const allItems = [...tempDiv.children];
+        
+        // Progressive loading - start with small batch
+        const INITIAL_BATCH = 20;
+        const LOAD_BATCH = 30;
+        let loaded = 0;
+        let isLoading = false;
+        
+        function loadBatch() {
+            if(isLoading) return;
+            isLoading = true;
+            
+            // Show appropriate loading indicator
+            if(loaded === 0) {
+                initialLoading.style.display = 'block';
             } else {
-                nextul.style.display = 'block';
-                parentLi.classList.add('expanded');
+                lazyLoading.style.display = 'block';
+            }
+            
+            const fragment = document.createDocumentFragment();
+            const endIndex = Math.min(loaded + (loaded === 0 ? INITIAL_BATCH : LOAD_BATCH), allItems.length);
+            
+            // Process items in this batch
+            for(let i = loaded; i < endIndex; i++) {
+                const li = allItems[i].cloneNode(true);
+                
+                // Store nested content for lazy loading
+                const sub = li.querySelector(':scope > ul');
+                if(sub){
+                    li.dataset.sub = sub.outerHTML;
+                    sub.remove();
+                }
+                wrapItem(li);
+                fragment.appendChild(li);
+            }
+            
+            top.appendChild(fragment);
+            loaded = endIndex;
+            
+            // Hide loading indicators and show list when done or after first batch
+            if(loaded >= allItems.length) {
+                initialLoading.style.display = 'none';
+                lazyLoading.style.display = 'none';
+                top.style.display = '';
+                isLoading = false;
+            } else {
+                if(loaded === INITIAL_BATCH) {
+                    // Show list after first batch
+                    initialLoading.style.display = 'none';
+                    top.style.display = '';
+                }
+                lazyLoading.style.display = 'none';
+                isLoading = false;
+                // Continue loading more batches with small delay
+                setTimeout(loadBatch, 50);
             }
         }
-        // Lazy rendering for very large lists
-        var list = document.querySelector('.col_ul');
-        if (list && list.children.length > 200) {
-            var batch = 100;
-            var shown = batch;
-            for (var i = batch; i < list.children.length; i++) {
-                list.children[i].style.display = 'none';
+        
+        // Start progressive loading
+        loadBatch();
+
+        function wrapItem(li){
+            const span = li.querySelector(':scope > span');
+            if(!span) return;
+            
+            // Store the original content (including links)
+            const originalContent = span.innerHTML || span.textContent || '';
+            const hasSub = li.dataset.sub ? true : false;
+            
+            // Clear and rebuild with proper structure
+            li.innerHTML = '';
+            const caretIcon = hasSub ? '▸' : '';
+            
+            // Create wrapper that preserves original content including links
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item';
+            
+            if(hasSub) {
+                const caret = document.createElement('span');
+                caret.className = 'caret';
+                caret.textContent = caretIcon;
+                itemDiv.appendChild(caret);
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'name';
+                nameSpan.innerHTML = originalContent; // Preserve HTML including links
+                itemDiv.appendChild(nameSpan);
+                
+                // Make the entire item clickable for expansion
+                itemDiv.className = 'item expandable';
+                itemDiv.onclick = (e) => {
+                    // Don't expand if clicking on a link
+                    if(e.target.tagName === 'A') {
+                        return; // Let the link work normally
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggle(li);
+                };
+            } else {
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'name';
+                nameSpan.innerHTML = originalContent; // Preserve HTML including links
+                itemDiv.appendChild(nameSpan);
+                itemDiv.className = 'item non-expandable';
+                
+                // If this item contains a link, make it behave like folders
+                if(originalContent.includes('<a ')) {
+                    itemDiv.className = 'item link-item';
+                }
             }
-            var loadMore = document.createElement('button');
-            loadMore.textContent = 'Load More';
-            loadMore.className = 'lean-loadmore';
-            loadMore.onclick = function() {
-                var next = Math.min(list.children.length, shown + batch);
-                for (var i = shown; i < next; i++) {
-                    list.children[i].style.display = '';
+            
+            li.appendChild(itemDiv);
+        }
+
+        function toggle(li){
+            const isOpen = li.classList.toggle('expanded');
+            if(!isOpen) {
+                const sub = li.querySelector(':scope > ul');
+                if(sub) sub.style.display='none';
+                return;
+            }
+            // Lazy inject nested content only when first opened
+            if(!li.querySelector(':scope > ul') && li.dataset.sub){
+                li.insertAdjacentHTML('beforeend', li.dataset.sub);
+                const newSub = li.querySelector(':scope > ul');
+                if(newSub) {
+                    newSub.classList.add('sub');
+                    // Process newly injected nested items
+                    newSub.querySelectorAll('li').forEach(nestedLi => {
+                        const nestedSub = nestedLi.querySelector(':scope > ul');
+                        if(nestedSub){
+                            nestedLi.dataset.sub = nestedSub.outerHTML;
+                            nestedSub.remove();
+                        }
+                        wrapItem(nestedLi);
+                    });
                 }
-                shown = next;
-                if (shown >= list.children.length) {
-                    loadMore.style.display = 'none';
-                }
-            };
-            list.parentElement.appendChild(loadMore);
+            }
+            const sub = li.querySelector(':scope > ul');
+            if(sub) sub.style.display='';
         }
     });
     </script>
@@ -167,20 +340,38 @@
 
 <body>
     <div class="header">
-        <h1>Examples for {%if unique%}uniques {%endif%} {{state}}{%if comp_index > -1%} in ref{%endif%}</h1>
-        <h3>Cell Name: {{cell_name}}</h3>
-    </div>
-    <div class="export-section">
-        <form action="/example_list/update_list?save_json=true&cell_name={{cell_name}}&stat={{state}}&{{ref_flag}}&{%if unique%}unique{%endif%}&main_path={{main_path}}&ref_path={{ref_path}}" method="post">
+        <div class="title-section">
+            <h1>Examples for {% if unique %}uniques {% endif %}{{ state }}{% if comp_index > -1 %} in ref{% endif %}</h1>
+            <h3>Cell Name: {{ cell_name }}</h3>
+            {% if saved_json %}
+                <div class="save-path">Exported file path:<br>{{ saved_json }}</div>
+            {% endif %}
+        </div>
+        <form action="/example_list/update_list?save_json=true&cell_name={{cell_name}}&stat={{state}}&{{ref_flag}}&{% if unique %}unique{% endif %}&main_path={{main_path}}&ref_path={{ref_path}}" method="post">
             <button type="submit">Export List</button>
         </form>
-        {% if saved_json:%}
-            <div class="save-path">Exported file path:<br>{{saved_json}}</div>
-        {%endif%}
     </div>
+
     <div class="list-container">
-        <ul class="col_ul">
-            {{list_html}}
+        <!-- Initial loading spinner -->
+        <div id="initial-loading" class="loading-container">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading list...</div>
+        </div>
+        
+        <ul class="col_ul" style="display:none;">
+            <!-- Initial batch only - rest loaded progressively -->
         </ul>
+        
+        <!-- Lazy loading indicator -->
+        <div id="lazy-loading" class="loading-container" style="display:none;">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading more items...</div>
+        </div>
     </div>
+
+    <!-- Store full HTML for progressive loading -->
+    <script type="text/template" id="full-list-data">
+        {{ list_html }}
+    </script>
 </body>

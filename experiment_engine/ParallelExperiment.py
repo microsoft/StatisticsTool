@@ -65,7 +65,10 @@ class ParallelExperiment:
         return confusion_sums, statistics
 
     def get_list_array(self, mask):
-        if DataFrameTokens.VIDEO_TOKEN in self.comp_data.columns:
+        if DataFrameTokens.IMAGE_LIST_GROUP_TOKEN in self.comp_data.columns:
+            # If the DataFrame has a column for image list groups, use it
+            batch_key = DataFrameTokens.IMAGE_LIST_GROUP_TOKEN
+        elif DataFrameTokens.VIDEO_TOKEN in self.comp_data.columns:
             batch_key = DataFrameTokens.VIDEO_TOKEN
         else:
             batch_key = DataFrameTokens.UNIQUE_BATCH_TOKEN

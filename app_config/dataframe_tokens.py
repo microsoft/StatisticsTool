@@ -7,6 +7,7 @@ class DataFrameTokens():
     IMAGE_FILE_ANNOTATION_TOKEN = 'image_file_name_annotation'
     IMAGE_FILE_DATA_TOKEN = 'image_file_name_data'
     UNIQUE_BATCH_TOKEN = 'batch_unique_id'
+    IMAGE_LIST_GROUP_TOKEN = 'image_list_group'
     HAS_VALUE_TOKEN = 'has_value'
     BB_X = 'x'
     BB_Y = 'y'
